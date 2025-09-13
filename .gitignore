@@ -1,0 +1,7 @@
+.env
+venv/
+secrets/credential1.json
+secrets/credential2.json
+financial_analyst/__pycache__/playground.cpython-311.pyc
+financial_analyst/token.json
+financial_analyst/googledrive.py
