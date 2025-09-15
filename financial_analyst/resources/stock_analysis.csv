@@ -1,0 +1,5063 @@
+Symbol,DCF Price,Last Close
+AACB,error: 'beta',10.1459
+AACBR,error: 'beta',0.1599
+AACBU,error: 'beta',10.5
+AACG,-23.88,2.12
+AACI,error: 'Free Cash Flow',10.25
+AACIU,error: 'Free Cash Flow',10.55
+AACIW,error: 'Free Cash Flow',0.7298
+AADR,error: 'beta',85.015
+AAL,543.53,12.95
+AALG,error: 'beta',14.07
+AAME,error: 'EBITDA',3.26
+AAOI,-25.65,26.85
+AAON,"3,403.78",82.47
+AAPB,error: 'beta',24.68
+AAPD,error: 'beta',15.64
+AAPG,-186.74,39.89
+AAPL,297.93,230.03
+AAPU,error: 'beta',26.81
+AARD,error: 'beta',7.79
+AAUS,error: 'beta',52.59
+AAVM,error: 'beta',28.76
+AAXJ,error: 'beta',90.34
+ABAT,-6.32,2.39
+ABCL,-21.16,4.61
+ABCS,error: 'beta',30.6409
+ABEO,-16.33,6.75
+ABI,error: 'beta',25.27
+ABIG,error: 'beta',31.31
+ABL,"4,857.73",6.45
+ABLLL,error: 'beta',25.05
+ABLV,-6.31,0.9731
+ABLVW,-inf,0.0172
+ABNB,"1,451,666.75",123.05
+ABOS,-50.20,1.39
+ABP,-5.55,0.1628
+ABPWW,-inf,0.031
+ABSI,-5.66,2.74
+ABTS,-2.15,4.087
+ABUS,-6.90,4.9
+ABVC,-13.57,2.77
+ABVE,-1.12,1.67
+ABVEW,-inf,0.237
+ABVX,-86.14,85.96
+ACAD,21.95,24.2
+ACB,-0.64,4.93
+ACDC,779.44,3.9
+ACET,-11.91,0.882
+ACFN,"125,764,292.79",30.4
+ACGL,error: 'EBITDA',92.29
+ACGLN,error: 'EBITDA',18.265
+ACGLO,error: 'EBITDA',22.2
+ACHC,-167.91,22.31
+ACHV,-10.13,3.16
+ACIC,error: 'EBITDA',11.06
+ACIU,4.66,2.38
+ACIW,178.74,50.63
+ACLS,147.59,86.36
+ACLX,-225.70,77.68
+ACMR,628.14,30.1
+ACNB,error: 'EBITDA',45.19
+ACNT,34.36,12.26
+ACOG,-4.63,9.78
+ACON,-108.36,7.45
+ACONW,-inf,0.0284
+ACRS,-44.04,1.97
+ACRV,-20.84,1.55
+ACT,error: 'EBITDA',39.23
+ACTG,-34.09,3.26
+ACTU,error: 'beta',6.96
+ACWI,error: 'beta',136.55
+ACWX,error: 'beta',64.5
+ACXP,"-1,757.33",4.275
+ADAG,-18.55,2.34
+ADAP,-2.71,0.0505
+ADBE,386.89,350.55
+ADBG,error: 'beta',10.94
+ADEA,43.37,15.66
+ADGM,-90.86,1.68
+ADI,400.52,248.24
+ADIL,-5.96,0.3526
+ADMA,"159,439,889.19",16.11
+ADN,-25.39,3.08
+ADNWW,-inf,0.0097
+ADP,"1,690.84",296.49
+ADPT,-16.65,13.49
+ADSE,-22.69,9.18
+ADSEW,-inf,0.82
+ADSK,901.45,324.52
+ADTN,-15.73,10.61
+ADTX,-77.64,1.07
+ADUR,-4.74,13.0
+ADUS,"1,181.54",112.38
+ADV,-4.45,1.9
+ADVB,error: 'beta',0.4876
+ADVM,-106.02,3.14
+ADVWW,-inf,0.0105
+ADXN,-57.37,8.78
+AEBI,error: 'beta',12.49
+AEHL,-191.45,3.95
+AEHR,-3.32,26.57
+AEI,1.20,3.72
+AEIS,24.21,159.52
+AEMD,-28.19,0.79
+AENT,"506,520,016.35",5.915
+AENTW,inf,0.36
+AEP,"-1,496.36",108.74
+AERT,-12.74,0.6263
+AERTW,-inf,0.045
+AEVA,-22.33,15.85
+AEVAW,-inf,0.3601
+AEYE,6.24,13.49
+AFBI,error: 'EBITDA',19.56
+AFCG,error: 'EBITDA',4.56
+AFJK,error: 'beta',11.25
+AFJKR,error: 'beta',0.385
+AFJKU,error: 'beta',11.25
+AFOS,error: 'beta',28.1
+AFRI,27.64,8.42
+AFRIW,inf,0.56
+AFRM,411.09,81.41
+AFSC,error: 'beta',30.6
+AFYA,"11,395.97",15.71
+AGAE,-6.88,0.9111
+AGEM,error: 'beta',36.16
+AGEN,-66.59,4.74
+AGFY,-70.41,45.88
+AGGA,error: 'beta',25.42
+AGH,error: 'beta',4.22
+AGIO,-153.70,36.5
+AGIX,error: 'beta',35.795
+AGMH,41.11,1.99
+AGMI,error: 'beta',49.14
+AGNC,error: 'EBITDA',10.23
+AGNCL,error: 'EBITDA',25.1801
+AGNCM,error: 'EBITDA',25.07
+AGNCN,error: 'EBITDA',25.81
+AGNCO,error: 'EBITDA',25.64
+AGNCP,error: 'EBITDA',25.32
+AGNG,error: 'beta',33.7928
+AGRI,-441.27,2.27
+AGYS,"2,170.82",109.05
+AGZD,error: 'beta',22.4599
+AHCO,301.99,9.53
+AHG,0.26,1.83
+AIA,error: 'beta',91.26
+AIFD,error: 'beta',34.52
+AIFF,error: 'beta',2.77
+AIFU,"2,683.67",6.42
+AIHS,0.18,2.13
+AIIO,-0.97,1.4
+AIIOW,-inf,0.0501
+AIMD,-27.33,3.61
+AIMDW,-inf,0.1347
+AIOT,"141,421,106.97",5.24
+AIP,-2.62,8.93
+AIPI,error: 'beta',42.09
+AIPO,error: 'beta',21.26
+AIQ,error: 'beta',47.2
+AIRE,error: 'beta',1.23
+AIRG,-9.21,4.15
+AIRJ,-16.30,4.81
+AIRJW,-inf,0.767
+AIRL,error: 'beta',34.93
+AIRO,error: 'beta',19.86
+AIRR,error: 'beta',93.41
+AIRS,-1.42,6.31
+AIRT,80.41,25.1
+AIRTP,71.38,19.2036
+AISP,-27.89,4.57
+AISPW,-inf,1.36
+AIXI,-15.36,1.68
+AKAM,305.74,79.2
+AKAN,-84.06,3.34
+AKBA,-6.41,2.99
+AKRO,-434.28,44.93
+AKTX,-43.55,0.77
+ALAB,error: 'beta',232.9
+ALAR,393.52,16.505
+ALBT,-73.83,2.73
+ALCO,-147.77,34.15
+ALCY,inf,11.56
+ALCYU,inf,10.96
+ALCYW,error: 'beta',0.1
+ALDF,error: 'beta',10.44
+ALDFU,error: 'beta',10.53
+ALDFW,error: 'beta',0.4
+ALDX,-22.67,5.56
+ALEC,-60.26,2.87
+ALF,error: 'beta',10.58
+ALFUU,error: 'beta',10.63
+ALFUW,error: 'beta',0.251
+ALGM,-0.62,29.97
+ALGN,107.03,135.91
+ALGS,-83.72,10.88
+ALGT,-74.56,64.77
+ALHC,-6.50,16.35
+ALIL,error: 'beta',30.06
+ALKS,"3,250.97",27.71
+ALKT,2.54,25.3
+ALLO,-77.67,1.17
+ALLR,-51.88,1.86
+ALLT,0.67,9.39
+ALLW,error: 'beta',27.645
+ALM,-9.44,4.54
+ALMS,error: 'beta',4.36
+ALMU,-26.86,14.86
+ALNT,188.87,46.47
+ALNY,-53.20,468.58
+ALOT,4.11,10.12
+ALRM,850.65,56.56
+ALRS,error: 'EBITDA',22.81
+ALT,-36.15,3.69
+ALTI,-20.20,3.88
+ALTO,-69.27,1.16
+ALTS,-0.13,3.97
+ALTY,error: 'beta',11.89
+ALVO,-39.32,8.05
+ALVOW,-inf,1.1676
+ALXO,-37.18,1.18
+ALZN,-330.98,2.4
+AMAL,error: 'EBITDA',28.88
+AMAT,204.01,170.15
+AMBA,-2.23,83.14
+AMBR,error: 'beta',4.2
+AMCX,"3,737.77",7.98
+AMD,29.55,155.67
+AMDD,error: 'beta',15.09
+AMDG,error: 'beta',18.32
+AMDL,error: 'beta',9.62
+AMDU,error: 'beta',17.23
+AMGN,900.13,282.73
+AMID,error: 'beta',35.03
+AMIX,error: 'beta',1.16
+AMKR,9.44,25.38
+AMLX,-271.53,11.84
+AMOD,-0.65,1.09
+AMODW,-inf,0.08
+AMPG,-48.65,3.82
+AMPGW,-inf,0.3841
+AMPH,"1,779.22",28.68
+AMPL,-2.46,11.34
+AMRK,60.24,25.01
+AMRN,-48.19,14.97
+AMRX,1.83,10.09
+AMSC,"1,777,603.42",54.72
+AMSF,error: 'EBITDA',45.0
+AMST,-13.22,3.87
+AMTX,-21.10,2.16
+AMUU,error: 'beta',38.18
+AMWD,"6,001.54",68.455
+AMZD,error: 'beta',10.39
+AMZN,587.91,229.95
+AMZU,error: 'beta',38.7
+AMZZ,error: 'beta',32.83
+ANAB,-709.18,23.2
+ANDE,221.60,40.9
+ANEB,-41.56,2.01
+ANGH,-144.07,3.1806
+ANGHW,-inf,0.0142
+ANGI,"68,556,440.88",17.97
+ANGL,error: 'beta',29.55
+ANGO,-8.81,10.96
+ANIK,-6.57,8.63
+ANIP,"43,133,932.82",98.73
+ANIX,error: 'beta',2.95
+ANL,error: 'beta',1.8
+ANNA,-47.16,4.3902
+ANNAW,-inf,0.2016
+ANNX,-22.00,2.55
+ANPA,error: 'beta',48.0
+ANSC,error: 'beta',10.94
+ANSCU,error: 'beta',10.82
+ANSCW,error: 'beta',0.225
+ANTA,error: 'beta',11.98
+ANTE,-0.46,4.94
+ANTX,-136.52,1.27
+ANY,-2.44,0.7094
+AOHY,error: 'beta',11.21
+AOSL,-5.74,29.16
+AOTG,error: 'beta',53.31
+AOUT,-8.27,8.94
+APA,32.32,22.98
+APAD,error: 'beta',9.9
+APADR,error: 'beta',0.17
+APADU,error: 'beta',10.01
+APDN,-427.30,2.53
+APED,error: 'beta',20.9795
+APEI,866.12,35.33
+APGE,-57.66,37.27
+API,-23.79,3.87
+APLD,-19.55,17.18
+APLM,-262.66,6.27
+APLMW,error: 'beta',0.0157
+APLS,-455.39,25.4
+APLT,-7.25,0.4414
+APM,-16.48,1.85
+APOG,"1,192.11",43.69
+APP,"35,354.08",571.31
+APPF,"2,466,467.95",281.48
+APPN,-11.81,31.5
+APPS,-6.17,4.56
+APPX,error: 'beta',94.85
+APRE,-22.49,1.58
+APVO,-36.01,1.5
+APWC,"8,369.93",1.855
+APYX,-77.20,2.0
+AQB,-231.58,1.155
+AQMS,"-2,044.98",3.72
+AQST,-3.55,4.95
+AQWA,error: 'beta',19.37
+ARAI,error: 'beta',3.87
+ARAY,9.59,1.59
+ARBB,"27,028.37",4.6398
+ARBE,-18.90,1.4
+ARBEW,-inf,0.1799
+ARBK,-4.95,0.28
+ARBKL,error: 'beta',2.2
+ARCB,31.91,73.33
+ARCC,error: 'EBITDA',22.4
+ARCT,-24.81,18.04
+ARDX,-18.26,6.689
+AREB,-19.75,0.6455
+AREBW,error: 'beta',0.0276
+AREC,-8.74,2.11
+ARGX,-104.40,763.4925
+ARHS,"1,315.77",11.24
+ARKO,16.86,5.19
+ARKOW,inf,0.0089
+ARKR,145.75,7.01
+ARLP,127.92,22.54
+ARM,error: 'beta',154.7
+ARMG,error: 'beta',13.28
+AROW,error: 'EBITDA',29.38
+ARQ,-10.93,7.06
+ARQQ,-21.13,30.255
+ARQQW,-inf,0.15
+ARQT,-18.32,17.69
+ARRY,5.23,7.85
+ARTL,-93.52,4.92
+ARTNA,-338.65,33.225
+ARTV,error: 'beta',2.66
+ARTW,10.01,3.185
+ARVN,-25.56,7.81
+ARVR,error: 'beta',47.76
+ARWR,-200.62,29.72
+ASBP,-1.51,0.4515
+ASBPW,-inf,0.0393
+ASET,error: 'beta',33.63
+ASLE,-89.56,8.79
+ASMB,-201.33,22.59
+ASMG,error: 'beta',15.3
+ASML,705.37,804.16
+ASND,-270.90,197.67
+ASNS,-10.14,0.4425
+ASO,99.00,48.02
+ASPC,error: 'beta',10.3
+ASPCR,error: 'beta',0.1541
+ASPCU,error: 'beta',10.99
+ASPI,-9.22,8.65
+ASPS,-43.32,11.29
+ASPSW,-inf,0.7317
+ASPSZ,-inf,0.6201
+ASRT,954.81,0.8052
+ASRV,error: 'EBITDA',2.85
+ASST,-0.35,8.91
+ASTC,-345.13,4.975
+ASTE,2.23,47.57
+ASTH,81.40,30.38
+ASTI,-37.11,1.9
+ASTL,339.34,4.61
+ASTLW,inf,0.217
+ASTS,-17.58,38.37
+ASUR,-40.20,8.03
+ASYS,2.13,8.8
+ATAI,-6.54,4.6
+ATAT,"189,625.61",39.99
+ATEC,-43.32,15.63
+ATER,-1.20,0.9649
+ATEX,-54.25,21.59
+ATGL,error: 'beta',29.0
+ATHA,-13.95,0.3821
+ATHE,-43.20,4.938
+ATHR,error: 'beta',5.425
+ATII,error: 'beta',10.25
+ATIIU,error: 'beta',10.31
+ATIIW,error: 'beta',0.3451
+ATLC,error: 'EBITDA',67.95
+ATLCL,error: 'beta',24.93
+ATLCP,error: 'EBITDA',23.94
+ATLCZ,error: 'beta',25.7
+ATLN,error: 'beta',4.3
+ATLO,error: 'EBITDA',20.7
+ATLX,"-1,484.54",4.9
+ATMC,-4.08,11.9081
+ATMCR,error: 'Free Cash Flow',0.2997
+ATMCU,-inf,11.83
+ATMCW,-inf,0.0599
+ATMV,inf,15.0
+ATMVR,error: 'Free Cash Flow',0.5525
+ATMVU,inf,19.0
+ATNI,117.83,16.38
+ATOM,-8.20,3.28
+ATOS,-3.09,0.8232
+ATPC,-2.15,1.34
+ATRA,"-1,556.60",12.16
+ATRC,-5.63,37.56
+ATRO,10.74,40.46
+ATXG,"-468,215,336.82",0.69
+ATXS,-70.07,7.84
+ATYR,-15.32,5.26
+AUBN,error: 'EBITDA',25.5
+AUDC,8.62,10.45
+AUGO,42.23,31.6
+AUID,-11.75,3.15
+AUMI,error: 'beta',74.57
+AUPH,5.30,12.78
+AUR,-4.14,5.57
+AURA,-63.06,6.64
+AUROW,-inf,0.58
+AUTL,-18.21,1.43
+AUUD,-54.57,2.23
+AUUDW,-inf,0.0152
+AVAH,1.06,8.42
+AVAV,58.78,241.81
+AVBH,error: 'Free Cash Flow',25.89
+AVBP,error: 'beta',19.02
+AVDL,error: 'beta',15.86
+AVDX,4.17,9.94
+AVGB,error: 'beta',51.84
+AVGG,error: 'beta',32.96
+AVGO,296.54,359.63
+AVGU,error: 'beta',40.82
+AVGX,error: 'beta',57.3
+AVIR,-201.21,3.3
+AVL,error: 'beta',62.69
+AVNW,-9.38,25.57
+AVO,43.48,12.19
+AVPT,"7,465.68",16.09
+AVR,nan,5.0
+AVS,error: 'beta',9.76
+AVT,223.14,54.11
+AVTX,-86.57,10.88
+AVUQ,error: 'beta',58.57
+AVXC,error: 'beta',59.52
+AVXL,-8.81,9.58
+AWRE,-4.41,2.8
+AXGN,-1.12,16.8
+AXIN,error: 'beta',9.97
+AXINR,error: 'beta',0.16
+AXINU,error: 'beta',10.1
+AXON,"1,315.91",751.11
+AXSM,-131.88,122.96
+AXTI,-5.12,3.39
+AYTU,-8.49,2.3
+AZ,-5.20,8.61
+AZI,error: 'beta',0.1944
+AZN,"3,342.59",81.1
+AZTA,2.68,31.21
+BABX,error: 'beta',43.73
+BACC,error: 'beta',9.97
+BACCR,error: 'beta',0.15
+BACCU,error: 'beta',10.1
+BACQ,error: 'beta',10.3946
+BACQR,error: 'beta',0.6
+BACQU,error: 'beta',10.75
+BAER,335.26,1.91
+BAERW,inf,0.125
+BAFE,error: 'beta',27.08
+BAFN,error: 'EBITDA',8.635
+BAIG,error: 'beta',11.34
+BAND,"3,920.28",16.4
+BANF,error: 'EBITDA',134.55
+BANFP,error: 'beta',26.25
+BANL,-1.89,0.7299
+BANR,error: 'EBITDA',67.3
+BANX,error: 'EBITDA',21.28
+BAOS,-77.99,3.02
+BASE,-12.25,24.42
+BASG,error: 'beta',26.14
+BASV,error: 'beta',26.95
+BATRA,-455.65,46.12
+BATRK,-91.36,42.4
+BAYA,error: 'beta',11.12
+BAYAR,error: 'beta',0.2513
+BAYAU,error: 'beta',11.35
+BBCP,400.50,7.14
+BBGI,-417.65,5.12
+BBH,error: 'beta',168.98
+BBIO,-53.11,52.6
+BBLG,-35.52,2.11
+BBLGW,-inf,10.79
+BBNX,error: 'beta',25.34
+BBOT,error: 'beta',10.17
+BBSI,2.20,47.31
+BCAB,-25.53,0.7741
+BCAL,error: 'EBITDA',17.29
+BCAR,error: 'beta',9.91
+BCARU,error: 'beta',9.98
+BCARW,error: 'beta',0.165
+BCAX,error: 'beta',11.98
+BCBP,error: 'EBITDA',8.86
+BCDA,-30.73,2.27
+BCG,-2.63,1.8
+BCGWW,-inf,0.0495
+BCIC,error: 'Free Cash Flow',12.2
+BCLO,error: 'beta',49.98
+BCML,error: 'EBITDA',30.17
+BCPC,126.08,159.36
+BCRX,-7.14,8.07
+BCTX,-143.90,8.1
+BCTXW,-inf,0.0283
+BCTXZ,-inf,0.21
+BCYC,-36.15,7.02
+BDGS,error: 'beta',34.05
+BDMD,-41.98,2.5
+BDMDW,-inf,0.0888
+BDRX,-425.16,5.9301
+BDSX,-18.51,0.413
+BDTX,-8.85,3.37
+BEAG,error: 'beta',10.37
+BEAGR,error: 'beta',0.2741
+BEAGU,error: 'beta',10.6
+BEAM,-42.05,21.55
+BEAT,-83.45,1.42
+BEATW,error: 'beta',0.232
+BEEM,-2.48,2.39
+BEEP,210.34,3.64
+BEEX,error: 'beta',24.88
+BEEZ,error: 'beta',33.4
+BELFA,"4,107.27",124.78
+BELFB,894.04,148.32
+BELT,error: 'beta',32.9325
+BENF,"-3,067.46",0.466
+BENFW,-inf,0.0089
+BETR,"-19,213.59",24.61
+BETRW,-inf,0.1981
+BFC,error: 'EBITDA',128.25
+BFIN,error: 'EBITDA',12.38
+BFRG,-23.45,1.3
+BFRGW,error: 'beta',0.4
+BFRI,-38.57,0.833
+BFRIW,-inf,0.1079
+BFST,error: 'EBITDA',24.82
+BGC,23.72,10.21
+BGFV,-70.97,1.42
+BGL,error: 'Free Cash Flow',7.23
+BGLC,-13.96,4.3005
+BGLWW,error: 'Free Cash Flow',0.3303
+BGM,-0.18,7.59
+BGRN,error: 'beta',48.21
+BGRO,error: 'beta',38.2699
+BHAT,-10.37,1.64
+BHF,error: 'EBITDA',48.88
+BHFAL,error: 'beta',18.48
+BHFAM,error: 'EBITDA',11.75
+BHFAN,error: 'EBITDA',13.18
+BHFAO,error: 'EBITDA',16.52
+BHFAP,error: 'EBITDA',16.4
+BHRB,error: 'EBITDA',62.4
+BHST,-8.84,7.331
+BIAF,-2.19,0.2549
+BIAFW,-inf,0.07
+BIB,error: 'beta',59.34
+BIDU,"8,788.59",111.82
+BIIB,657.75,148.84
+BILI,333.75,24.45
+BINI,-242.85,0.0834
+BIOA,error: 'beta',4.91
+BIOX,51.34,2.09
+BIRD,-213.99,6.11
+BIS,error: 'beta',13.39
+BITF,-4.00,2.04
+BITS,error: 'beta',87.485
+BIVI,-43.23,1.88
+BIVIW,-inf,0.45
+BIYA,error: 'beta',0.629
+BJDX,-186.92,1.47
+BJK,error: 'beta',45.86
+BJRI,56.46,32.36
+BKCH,error: 'beta',71.42
+BKHA,error: 'beta',11.05
+BKHAR,error: 'beta',1.9
+BKHAU,error: 'beta',10.77
+BKIV,error: 'beta',39.935
+BKNG,"819,178.01",5498.0
+BKR,"1,123.20",46.97
+BKWO,error: 'beta',37.7082
+BKYI,-19.15,0.755
+BL,"1,395.20",55.09
+BLBD,"6,927.77",58.26
+BLBX,-14.36,6.56
+BLCN,error: 'beta',25.22
+BLCR,error: 'beta',39.4622
+BLDP,-7.43,2.05
+BLFS,0.47,26.74
+BLFY,error: 'EBITDA',9.37
+BLIN,-1.52,1.33
+BLIV,error: 'beta',3.77
+BLKB,193.21,70.17
+BLMN,7.20,6.92
+BLMZ,error: 'beta',0.158
+BLNE,error: 'beta',2.42
+BLNK,-5.80,1.25
+BLRX,-283.13,4.01
+BLTE,-268.34,68.55
+BLUW,error: 'beta',10.0
+BLUWU,error: 'beta',10.09
+BLUWW,error: 'beta',0.17
+BLZE,-3.62,9.46
+BMAX,error: 'beta',27.96
+BMBL,-7.68,6.75
+BMDL,error: 'beta',24.84
+BMEA,-192.23,1.98
+BMGL,error: 'beta',2.0
+BMHL,error: 'beta',3.64
+BMR,-0.91,2.89
+BMRA,-99.11,2.95
+BMRC,error: 'EBITDA',25.02
+BMRN,"4,637,705.53",55.91
+BNAI,-22.83,0.2979
+BNAIW,-inf,0.0181
+BNC,-1.65,15.45
+BNCWW,-inf,0.143
+BND,error: 'beta',74.66
+BNDW,error: 'beta',69.85
+BNDX,error: 'beta',49.51
+BNGO,-217.85,4.06
+BNR,-338.90,8.9381
+BNRG,-535.11,2.185
+BNTC,-34.13,13.98
+BNTX,-18.08,104.31
+BNZI,-274.32,2.61
+BNZIW,-inf,0.0199
+BOED,error: 'beta',18.03
+BOEG,error: 'beta',16.655
+BOEU,error: 'beta',42.53
+BOF,-904.84,2.38
+BOKF,error: 'EBITDA',111.24
+BOLD,error: 'beta',1.16
+BOLT,-885.20,5.27
+BON,-320.61,1.82
+BOOM,-1.83,7.03
+BOSC,29.69,4.895
+BOTJ,error: 'EBITDA',14.75
+BOTT,error: 'beta',36.7199
+BOTZ,error: 'beta',34.21
+BOWN,-11.90,9.2
+BOWNR,error: 'Free Cash Flow',0.2212
+BOWNU,-inf,13.02
+BOXL,"1,047.55",1.7472
+BPOP,error: 'EBITDA',124.05
+BPOPM,error: 'beta',25.23
+BPRN,error: 'EBITDA',32.78
+BPYPM,error: 'beta',16.2
+BPYPN,inf,13.275
+BPYPO,inf,14.91
+BPYPP,inf,15.2
+BRAG,-130.88,2.67
+BREA,-122.37,6.58
+BRFH,-2.83,3.05
+BRHY,error: 'beta',52.21
+BRID,"1,075.84",8.15
+BRKD,error: 'beta',23.365
+BRKL,error: 'EBITDA',10.95
+BRKR,20.85,32.07
+BRKU,error: 'beta',25.53
+BRLS,-85.16,2.627
+BRLSW,-inf,0.08
+BRLT,13.64,2.64
+BRNS,-129.03,1.1857
+BRNY,error: 'beta',47.4038
+BRR,error: 'beta',10.15
+BRRR,error: 'beta',32.35
+BRRWU,error: 'beta',10.68
+BRRWW,error: 'beta',1.229
+BRTR,error: 'beta',51.215
+BRTX,-184.82,1.6
+BRY,23.92,3.29
+BRZE,-3.50,30.88
+BSAA,error: 'beta',10.03
+BSAAR,error: 'beta',0.14
+BSAAU,error: 'beta',10.13
+BSBK,error: 'EBITDA',9.21
+BSCP,error: 'beta',20.72
+BSCQ,error: 'beta',19.59
+BSCR,error: 'beta',19.765
+BSCS,error: 'beta',20.64
+BSCT,error: 'beta',18.92
+BSCU,error: 'beta',17.01
+BSCV,error: 'beta',16.81
+BSCW,error: 'beta',21.075
+BSCX,error: 'beta',21.59
+BSCY,error: 'beta',21.22
+BSCZ,error: 'beta',20.997
+BSET,-20.62,17.04
+BSGM,-2.21,4.45
+BSJP,error: 'beta',23.1
+BSJQ,error: 'beta',23.468
+BSJR,error: 'beta',22.8
+BSJS,error: 'beta',22.17
+BSJT,error: 'beta',21.59
+BSJU,error: 'beta',26.27
+BSJV,error: 'beta',26.83
+BSJW,error: 'beta',25.93
+BSJX,error: 'beta',25.73
+BSLK,-881.70,3.85
+BSLKW,-inf,0.0431
+BSMP,error: 'beta',24.54
+BSMQ,error: 'beta',23.69
+BSMR,error: 'beta',23.7006
+BSMS,error: 'beta',23.51
+BSMT,error: 'beta',23.205
+BSMU,error: 'beta',22.01
+BSMV,error: 'beta',21.105
+BSMW,error: 'beta',25.0099
+BSMY,error: 'beta',24.34
+BSRR,error: 'EBITDA',30.6
+BSSX,error: 'beta',25.53
+BSVN,error: 'EBITDA',49.065
+BSVO,error: 'beta',23.13
+BSY,481.47,53.46
+BTAI,-993.34,3.39
+BTBD,-7.18,1.7
+BTBDW,error: 'beta',0.3989
+BTBT,4.54,2.945
+BTCS,-1.94,4.44
+BTCT,-0.49,2.7
+BTDR,-71.45,14.11
+BTF,error: 'beta',17.98
+BTFX,error: 'beta',57.75
+BTGD,error: 'beta',40.91
+BTM,19.08,3.77
+BTMD,12.84,3.37
+BTMWW,error: 'beta',0.3007
+BTOC,error: 'beta',1.26
+BTOG,-1.49,0.4455
+BTSG,error: 'beta',27.99
+BTSGU,error: 'beta',96.32
+BUFC,error: 'beta',40.42
+BUFI,error: 'beta',38.9
+BUFM,error: 'beta',37.87
+BUG,error: 'beta',34.38
+BULD,error: 'beta',24.3
+BULG,error: 'beta',11.7
+BULL,47.70,13.6
+BULLW,inf,5.3
+BUSE,error: 'EBITDA',24.63
+BUSEP,error: 'EBITDA',25.47
+BUUU,error: 'beta',6.7
+BVFL,error: 'EBITDA',16.67
+BVS,"29,613.37",7.28
+BWAY,27.40,15.7
+BWB,error: 'EBITDA',16.55
+BWBBP,error: 'EBITDA',20.16
+BWEN,6.16,2.29
+BWFG,error: 'EBITDA',44.69
+BWIN,910.47,31.05
+BWMN,"5,957.34",41.54
+BYFC,error: 'EBITDA',7.4
+BYND,-32.64,2.6
+BYRN,229.18,20.31
+BYSI,-73.42,1.87
+BZ,773.23,24.56
+BZAI,-2.55,3.27
+BZAIW,-17.26,0.465
+BZFD,-11.47,2.07
+BZFDW,-inf,0.0601
+BZUN,-288.78,4.46
+CA,error: 'beta',24.81
+CAAS,-0.52,4.67
+CABA,-6.65,1.81
+CAC,error: 'EBITDA',40.68
+CACC,"8,442.31",525.0
+CADL,-106.30,4.915
+CAEP,error: 'beta',10.27
+CAFG,error: 'beta',26.21
+CAI,error: 'beta',34.21
+CAKE,"2,450.57",58.21
+CALC,-54.26,3.43
+CALI,error: 'beta',50.64
+CALM,"2,624,504.43",111.01
+CAMP,error: 'beta',2.78
+CAMT,304.78,84.11
+CAN,-3.32,0.8198
+CANC,error: 'beta',27.657
+CANQ,error: 'beta',29.96
+CAPN,error: 'beta',10.43
+CAPNR,error: 'beta',0.18
+CAPNU,error: 'beta',10.3738
+CAPR,-23.11,6.44
+CAPS,154.13,1.26
+CAPT,-14.50,1.13
+CAPTW,-inf,0.0333
+CAR,"-2,173.43",157.03
+CARE,error: 'EBITDA',19.99
+CARG,70.06,36.29
+CARL,error: 'beta',13.74
+CARM,-8.31,0.377
+CART,error: 'beta',45.93
+CARV,error: 'EBITDA',2.2
+CARY,error: 'beta',21.035
+CARZ,error: 'beta',68.42
+CASH,error: 'EBITDA',76.45
+CASI,-51.74,2.33
+CASK,error: 'beta',0.4402
+CASS,error: 'EBITDA',43.52
+CASY,"1,353.50",553.99
+CATH,error: 'beta',79.993
+CATY,error: 'EBITDA',49.27
+CBAT,852.07,0.875
+CBFV,error: 'EBITDA',33.45
+CBIO,error: 'beta',12.55
+CBLL,error: 'beta',11.56
+CBNK,error: 'EBITDA',33.7
+CBRL,49.34,52.13
+CBSH,error: 'EBITDA',60.11
+CBUS,-86.87,1.4
+CCAP,error: 'EBITDA',15.82
+CCB,error: 'EBITDA',111.33
+CCBG,error: 'EBITDA',43.71
+CCCC,-11.20,2.73
+CCCS,63.99,9.72
+CCCX,error: 'beta',10.28
+CCCXU,error: 'beta',10.59
+CCCXW,error: 'beta',1.45
+CCD,error: 'beta',21.175
+CCEC,"-9,212.43",21.36
+CCEP,647.06,90.06
+CCFE,error: 'beta',27.86
+CCG,-199.35,1.06
+CCGWW,-inf,0.0349
+CCII,error: 'beta',10.11
+CCIIU,error: 'beta',10.2723
+CCIIW,error: 'beta',0.774
+CCIX,error: 'beta',10.51
+CCIXU,error: 'beta',10.66
+CCIXW,error: 'beta',0.72
+CCLD,33.70,3.79
+CCLDO,inf,21.6911
+CCNE,error: 'EBITDA',26.05
+CCNEP,error: 'EBITDA',24.7901
+CCNR,error: 'beta',29.51
+CCOI,-236.00,35.96
+CCRN,155.63,12.66
+CCSB,error: 'beta',20.5924
+CCSI,14.00,28.29
+CCSO,error: 'beta',24.12
+CCTG,error: 'beta',1.86
+CDC,error: 'beta',66.16
+CDIO,-18.78,3.8238
+CDIOW,-inf,0.018
+CDL,error: 'beta',69.03
+CDLX,-82.22,1.15
+CDNA,2.15,13.53
+CDNS,215.23,354.81
+CDRO,3.79,8.07
+CDROW,inf,1.03
+CDT,-61.80,0.6
+CDTG,error: 'beta',0.93
+CDTTW,-inf,0.0168
+CDTX,-107.61,64.87
+CDW,"1,676.58",165.73
+CDXS,-11.11,2.44
+CDZI,-10.98,3.8
+CDZIP,-inf,19.05
+CECO,500.44,47.66
+CEFA,error: 'beta',35.89
+CEG,493.37,318.0
+CELC,-328.54,57.43
+CELH,110.34,57.92
+CELU,-16.06,2.33
+CELUW,-inf,0.0451
+CELZ,-8.21,3.56
+CENN,-5.88,0.5479
+CENT,"7,749.34",36.65
+CENTA,"1,447.19",33.24
+CENX,-4.89,24.52
+CEP,error: 'beta',21.7
+CEPF,error: 'beta',10.165
+CEPI,error: 'beta',40.04
+CEPO,error: 'beta',10.4
+CEPT,error: 'beta',10.46
+CERO,-183.60,5.5
+CEROW,-inf,0.0138
+CERS,0.16,1.25
+CERT,5.23,10.92
+CETX,-129.51,0.8141
+CETY,-8.54,0.2614
+CEVA,-0.55,23.86
+CFA,error: 'beta',91.02
+CFBK,error: 'EBITDA',25.075
+CFFI,error: 'EBITDA',70.35
+CFFN,error: 'EBITDA',6.56
+CFLT,-12.27,19.45
+CFO,error: 'beta',73.9413
+CFSB,error: 'EBITDA',14.1
+CG,error: 'EBITDA',67.4
+CGABL,error: 'beta',18.4279
+CGBD,error: 'EBITDA',13.74
+CGBDL,error: 'beta',25.5981
+CGC,-12.73,1.39
+CGCT,error: 'beta',10.04
+CGCTU,error: 'beta',10.15
+CGCTW,error: 'beta',0.2799
+CGEM,-190.46,6.62
+CGEN,3.09,1.4
+CGNT,8.93,8.72
+CGNX,11.12,44.95
+CGO,error: 'EBITDA',12.13
+CGON,error: 'beta',33.16
+CGTL,error: 'beta',0.6945
+CGTX,-5.37,2.36
+CHA,error: 'beta',17.16
+CHAC,error: 'beta',10.01
+CHACR,error: 'beta',0.2
+CHACU,error: 'beta',10.26
+CHAR,error: 'beta',10.32
+CHARR,error: 'beta',0.16
+CHARU,error: 'beta',10.82
+CHCI,192.69,16.58
+CHCO,error: 'EBITDA',126.57
+CHDN,"1,889.20",98.82
+CHEF,"202,108,798.99",65.99
+CHEK,-92.01,0.6901
+CHGX,error: 'beta',27.17
+CHI,error: 'EBITDA',10.65
+CHKP,282.82,196.54
+CHMG,error: 'EBITDA',53.49
+CHNR,-973.60,4.1
+CHPG,error: 'beta',10.0486
+CHPGR,error: 'beta',0.14
+CHPGU,error: 'beta',10.1552
+CHPS,error: 'beta',36.79
+CHR,8.33,0.7245
+CHRD,"188,009.67",104.87
+CHRS,-4.20,1.33
+CHRW,"88,929.36",131.02
+CHSCL,error: 'beta',25.96
+CHSCM,error: 'beta',25.22
+CHSCN,error: 'beta',25.41
+CHSCO,error: 'beta',27.1
+CHSCP,error: 'beta',30.19
+CHSN,951.91,2.71
+CHTR,"18,203.98",263.92
+CHW,error: 'EBITDA',7.46
+CHY,error: 'EBITDA',11.2
+CHYM,error: 'beta',23.94
+CIBR,error: 'beta',75.59
+CIFR,-7.26,9.97
+CIFRW,-inf,3.0799
+CIGI,"476,865,890.67",168.295
+CIGL,error: 'beta',3.76
+CIIT,0.33,0.7294
+CIL,error: 'beta',51.4564
+CINF,error: 'EBITDA',156.76
+CING,-542.23,3.93
+CINGW,-inf,0.0551
+CISO,-4.67,1.24
+CISS,"65,813,225.50",2.28
+CIVB,error: 'EBITDA',21.06
+CJET,-266.43,0.123
+CJMB,error: 'beta',5.2
+CLAR,-8.44,3.92
+CLBK,error: 'EBITDA',15.38
+CLBT,79.19,17.18
+CLDX,-41.89,25.2
+CLFD,7.24,34.01
+CLGN,-33.20,2.71
+CLIK,error: 'beta',0.3385
+CLIR,-1.66,0.545
+CLLS,0.65,2.98
+CLMB,"5,341.86",130.59
+CLMT,-47.44,17.61
+CLNE,-2.64,2.53
+CLNN,-78.03,6.18
+CLNNW,-inf,0.0286
+CLOA,error: 'beta',51.9
+CLOD,error: 'beta',34.98
+CLOU,error: 'beta',23.4
+CLOV,0.32,3.14
+CLPS,8.40,1.05
+CLPT,-26.00,11.09
+CLRB,-580.29,5.28
+CLRO,-209.50,4.73
+CLSD,-4.04,0.3496
+CLSK,"6,117.85",10.2
+CLSKW,inf,0.4611
+CLSM,error: 'beta',22.59
+CLST,error: 'EBITDA',13.0
+CLWT,2.33,1.4381
+CLYM,-16.71,2.4
+CMBM,-49.05,0.7533
+CMCO,-0.91,14.89
+CMCSA,100.53,33.4
+CMCT,-753.82,7.09
+CME,980.73,262.38
+CMMB,-97.02,3.05
+CMND,-228.31,1.05
+CMPO,28.84,19.22
+CMPOW,inf,11.31
+CMPR,38.77,61.17
+CMPS,-15.86,5.24
+CMPX,-4.66,3.53
+CMRC,44.93,4.66
+CMTL,-68.79,2.32
+CNCK,-908.94,4.616
+CNCKW,-inf,0.907
+CNDT,163.51,2.9
+CNET,-30.29,1.67
+CNEY,-21.95,2.15
+CNFR,error: 'EBITDA',0.93
+CNFRZ,error: 'Free Cash Flow',19.4
+CNOB,error: 'EBITDA',25.21
+CNOBP,error: 'EBITDA',23.5952
+CNSP,-687.64,7.635
+CNTA,-22.35,22.67
+CNTB,-33.46,1.63
+CNTX,-2.67,0.836
+CNTY,-112.32,2.54
+CNVS,90.99,3.44
+CNXC,753.74,54.01
+CNXN,"1,326.53",65.15
+COCH,-10.17,1.33
+COCHW,-inf,0.0351
+COCO,770.36,38.99
+COCP,-19.67,1.44
+CODA,6.58,7.78
+CODX,-20.15,0.344
+COEP,-239.63,12.41
+COEPW,error: 'beta',0.0208
+COFS,error: 'EBITDA',30.45
+COGT,-173.88,12.81
+COHU,-4.39,21.25
+COIG,error: 'beta',35.05
+COIN,67.45,323.95
+COKE,"2,588.43",124.15
+COLA,error: 'beta',10.21
+COLAR,error: 'beta',0.15
+COLAU,error: 'beta',10.75
+COLB,error: 'EBITDA',26.29
+COLL,"2,306.95",39.06
+COLM,197.25,55.69
+COMM,23.75,16.58
+COMT,error: 'beta',26.515
+CONI,error: 'beta',47.1
+CONL,error: 'beta',35.32
+COO,74.76,68.46
+COOP,"-3,348.11",219.7
+COOT,-28.77,0.5601
+COOTW,-inf,0.0159
+COPJ,error: 'beta',28.3744
+COPP,error: 'beta',26.13
+CORO,error: 'beta',29.98
+CORT,135.71,74.33
+CORZ,error: 'beta',15.55
+CORZW,error: 'beta',9.23
+CORZZ,error: 'beta',15.8
+COSM,-3.34,0.8399
+COST,568.58,964.32
+COWG,error: 'beta',36.2
+COWS,error: 'beta',32.296
+COYA,-64.28,6.21
+COYY,error: 'beta',19.13568
+CPAG,error: 'beta',101.9
+CPB,92.72,33.76
+CPBI,error: 'beta',15.75
+CPHC,-155.84,16.68
+CPHY,error: 'beta',50.71
+CPIX,-8.40,3.43
+CPLS,error: 'beta',36.01
+CPOP,-3.63,1.59
+CPRT,46.70,48.9
+CPRX,"4,803.38",20.25
+CPSH,-3.78,3.35
+CPSS,error: 'EBITDA',8.83
+CPZ,error: 'beta',16.72
+CRAI,295.88,198.59
+CRAQ,error: 'beta',9.97
+CRAQR,error: 'beta',0.21
+CRAQU,error: 'beta',10.2
+CRBP,-23.91,9.5
+CRBU,-15.82,1.91
+CRCG,error: 'beta',9.73
+CRCT,"3,225.03",6.48
+CRDF,-9.62,2.08
+CRDL,-10.14,1.07
+CRDO,4.97,159.32
+CRE,error: 'beta',0.6729
+CREG,-73.91,1.59
+CRESW,-inf,0.65
+CRESY,"-42,269.65",8.84
+CREV,"-14,767.59",4.11
+CREVW,-inf,0.0286
+CREX,-0.92,2.28
+CRGO,-5.01,3.11
+CRGOW,-inf,0.2365
+CRIS,-20.69,1.82
+CRMD,-6.73,13.09
+CRMG,error: 'beta',12.62
+CRML,-8.77,6.23
+CRMLW,-inf,1.9
+CRMT,-249.78,35.36
+CRNC,-58.17,9.83
+CRNT,220.08,2.0
+CRNX,-240.92,33.73
+CRON,-0.31,2.58
+CROX,"1,101.80",80.95
+CRSP,-34.44,55.89
+CRSR,11.61,9.1
+CRTO,108.57,21.9
+CRUS,"2,000.64",115.18
+CRVL,148.21,88.21
+CRVO,"-13,871.74",9.2
+CRVS,-12.72,6.06
+CRWD,275.70,433.38
+CRWG,error: 'beta',9.46
+CRWL,error: 'beta',29.1
+CRWS,25.72,2.94
+CRWV,error: 'beta',112.69
+CSAI,error: 'beta',1.59
+CSB,error: 'beta',60.16
+CSBR,844.37,6.46
+CSCI,-69.25,2.72
+CSCL,error: 'beta',24.25
+CSCO,78.06,67.69
+CSCS,error: 'beta',25.32
+CSGP,-12.06,87.06
+CSGS,263.80,65.74
+CSIQ,"-1,517.55",10.78
+CSPI,27.64,11.6
+CSQ,error: 'EBITDA',19.06
+CSTE,10.15,1.44
+CSTL,24.90,22.75
+CSWC,error: 'EBITDA',22.92
+CSWCZ,error: 'beta',25.28
+CSX,53.07,32.85
+CTAS,271.15,204.5
+CTBI,error: 'EBITDA',57.15
+CTEC,error: 'beta',45.34
+CTKB,"31,920.14",4.13
+CTLP,"4,676.90",10.8
+CTMX,-3.92,2.09
+CTNM,error: 'beta',11.81
+CTNT,-5.33,1.914
+CTOR,-0.94,1.89
+CTRM,-48.04,2.02
+CTRN,-78.44,33.77
+CTSH,75.39,70.55
+CTSO,-13.34,0.9533
+CTW,error: 'beta',1.92
+CTXR,-28.55,1.2
+CUB,error: 'beta',10.5
+CUBWU,error: 'beta',12.4
+CUBWW,error: 'beta',0.2402
+CUE,-8.42,0.7657
+CUPR,error: 'beta',1.31
+CURI,1.54,4.5
+CURIW,inf,0.0208
+CURR,error: 'beta',1.59
+CURX,error: 'beta',8.19
+CV,error: 'beta',3.7
+CVAC,2.79,5.39
+CVBF,error: 'EBITDA',20.33
+CVCO,342.96,554.22
+CVGI,-26.94,1.95
+CVGW,"11,394.86",27.76
+CVKD,-77.87,13.5
+CVLT,127.77,180.94
+CVNX,error: 'beta',21.7301
+CVRX,-49.02,8.24
+CVV,-4.97,2.98
+CWBC,error: 'EBITDA',21.24
+CWCO,"2,521.84",33.54
+CWD,-124.58,8.29
+CWST,411.79,92.73
+CXAI,-11.81,0.7367
+CXAIW,error: 'beta',0.0645
+CXDO,27.67,6.85
+CXSE,error: 'beta',42.79
+CYBR,876.54,471.19
+CYCC,-151.49,6.77
+CYCCP,-27.14,5.28
+CYCN,-19.33,2.548
+CYCU,-2.26,0.2089
+CYCUW,-inf,0.0383
+CYN,-100.28,5.46
+CYRX,-21.98,9.47
+CYTK,-112.82,53.32
+CZAR,error: 'beta',32.25
+CZFS,error: 'EBITDA',63.53
+CZNC,error: 'EBITDA',20.22
+CZR,269.46,25.9
+CZWI,error: 'EBITDA',16.62
+DAAQ,error: 'beta',10.18
+DAAQU,error: 'beta',10.5486
+DAAQW,error: 'beta',0.7526
+DADS,error: 'beta',20.65
+DAIC,-5.82,3.43
+DAICW,-inf,0.166
+DAIO,-4.05,3.45
+DAK,error: 'beta',25.91
+DAKT,74.20,22.21
+DALI,error: 'beta',28.0801
+DALN,-44.00,14.36
+DAPP,error: 'beta',19.31
+DARE,-3.29,2.11
+DASH,584.20,260.19
+DAVE,"16,764.13",224.87
+DAVEW,inf,1.2932
+DAWN,-391.70,7.37
+DAX,error: 'beta',44.39
+DBGI,-332.21,11.716
+DBVT,-168.56,9.95
+DBX,125.35,30.91
+DCBO,"123,798.78",30.2
+DCGO,164.56,1.57
+DCOM,error: 'EBITDA',30.98
+DCOMG,error: 'Free Cash Flow',26.5499
+DCOMP,error: 'EBITDA',20.3
+DCTH,-11.23,11.13
+DDI,143.09,9.31
+DDIV,error: 'beta',39.6208
+DDOG,"6,874.04",139.15
+DECO,error: 'beta',42.73
+DEFT,-1.06,2.36
+DEMZ,error: 'beta',40.85
+DENN,-5.95,5.24
+DERM,-67.01,7.35
+DEVS,-28.81,2.56
+DFDV,-480.56,16.02
+DFGP,error: 'beta',55.67
+DFGX,error: 'beta',54.01
+DFLI,-32.11,0.291
+DFLIW,-inf,0.0286
+DFSC,-250.85,3.02
+DFSCW,-inf,0.0345
+DGCB,error: 'beta',55.56
+DGICA,error: 'EBITDA',19.72
+DGICB,error: 'EBITDA',16.91
+DGII,454.07,36.46
+DGLO,error: 'beta',20.569
+DGLY,-137.16,1.9
+DGNX,error: 'beta',8.8
+DGRE,error: 'beta',28.66
+DGRS,error: 'beta',51.4
+DGRW,error: 'beta',88.91
+DGXX,3.01,2.77
+DH,2.06,4.13
+DHAI,2.15,0.198
+DHAIW,inf,0.0165
+DHC,"270,147.07",4.53
+DHCNI,error: 'beta',18.03
+DHCNL,error: 'beta',19.51
+DHIL,160.04,145.36
+DIBS,-4.68,2.75
+DIOD,20.89,54.32
+DIVD,error: 'beta',36.63
+DJCO,348.48,448.73
+DJT,-6.78,16.92
+DJTWW,-inf,8.8801
+DKI,error: 'beta',6.24
+DKNG,6.20,45.87
+DKNX,error: 'beta',19.495
+DLHC,82.56,5.5
+DLLL,error: 'beta',24.69
+DLO,79.84,13.62
+DLPN,-7.70,1.19
+DLTH,-27.79,3.63
+DLTR,"9,039.63",99.39
+DLXY,error: 'beta',5.365
+DMAA,error: 'beta',10.25
+DMAAR,error: 'beta',0.1697
+DMAAU,error: 'beta',10.6
+DMAC,-6.56,7.28
+DMAT,error: 'beta',21.59
+DMLP,198.69,25.49
+DMRC,-21.03,9.14
+DMXF,error: 'beta',75.86
+DNLI,-45.58,14.82
+DNTH,error: 'beta',37.86
+DNUT,-6.73,3.15
+DOCU,"6,743,718.17",80.24
+DOGZ,-10.79,12.58
+DOMH,-22.32,6.96
+DOMO,-12.35,16.86
+DOOO,"5,301.72",65.13
+DORM,916.31,163.64
+DOX,226.59,85.33
+DOYU,-216.07,8.03
+DPRO,-5.98,5.03
+DPZ,135.69,456.62
+DRCT,-5.59,0.4139
+DRDB,error: 'beta',10.29
+DRDBU,error: 'beta',10.5
+DRDBW,error: 'beta',0.4516
+DRIO,-443.92,7.1
+DRIV,error: 'beta',26.41
+DRMA,-545.41,5.45
+DRMAW,-inf,0.02
+DRRX,-18.20,1.91
+DRS,274.54,41.61
+DRTS,-6.26,3.85
+DRTSW,-inf,0.3
+DRUG,-30.22,49.38
+DRVN,-67.53,18.57
+DSGN,-10.93,5.96
+DSGR,"13,916.94",31.56
+DSGX,133.81,106.99
+DSP,52.82,9.985
+DSWL,23.99,4.17
+DSY,-1.05,1.8
+DSYWW,-inf,0.044
+DTCK,error: 'beta',0.9
+DTCR,error: 'beta',19.64
+DTI,-67.11,1.98
+DTIL,-80.18,5.0
+DTSQ,error: 'beta',10.47
+DTSQR,error: 'beta',0.1308
+DTSQU,error: 'beta',10.45
+DTSS,-45.27,2.13
+DTST,7.87,4.56
+DTSTW,inf,0.1944
+DUKH,error: 'beta',24.65
+DUKX,error: 'beta',25.3499
+DUO,error: 'beta',3.54
+DUOL,"3,513,198.21",309.34
+DUOT,-13.51,7.84
+DVAL,error: 'beta',14.53
+DVAX,8.46,9.74
+DVIN,error: 'beta',24.8156
+DVLT,-11.79,0.3481
+DVLU,error: 'beta',31.771
+DVOL,error: 'beta',35.3
+DVQQ,error: 'beta',24.75
+DVRE,error: 'beta',23.23
+DVSP,error: 'beta',25.405
+DVUT,error: 'beta',25.0644
+DVXB,error: 'beta',22.9356
+DVXC,error: 'beta',28.7401
+DVXE,error: 'beta',24.5407
+DVXF,error: 'beta',25.5799
+DVXK,error: 'beta',25.3954
+DVXP,error: 'beta',23.78
+DVXV,error: 'beta',24.3175
+DVXY,error: 'beta',26.2099
+DVY,error: 'beta',142.57
+DWAS,error: 'beta',90.84
+DWAW,error: 'beta',42.2612
+DWSH,error: 'beta',6.63
+DWSN,-4.73,1.63
+DWTX,-58.80,4.8968
+DWUS,error: 'beta',53.06
+DXCM,"6,840.32",76.0
+DXLG,-1.75,1.39
+DXPE,"5,776.79",118.39
+DXR,error: 'EBITDA',11.11
+DXST,error: 'beta',1.38
+DYAI,-2.56,0.9897
+DYCQ,error: 'beta',11.5
+DYCQR,error: 'beta',0.16
+DYCQU,error: 'beta',11.1
+DYFI,error: 'beta',23.3801
+DYN,-45.61,13.175
+DYTA,error: 'beta',28.8299
+EA,236.50,169.89
+EBAY,654.30,92.46
+EBC,error: 'EBITDA',17.41
+EBI,error: 'beta',54.45
+EBIZ,error: 'beta',35.2024
+EBMT,error: 'EBITDA',17.56
+EBON,-48.48,4.29
+ECBK,error: 'EBITDA',16.23
+ECDA,-28.86,0.117
+ECDAW,-inf,0.019
+ECOR,-46.87,5.02
+ECOW,error: 'beta',24.046
+ECPG,271.39,44.3
+ECX,-8.19,1.75
+ECXWW,-inf,0.0748
+EDAP,-52.63,2.61
+EDBL,-36.59,1.79
+EDBLW,-inf,0.1428
+EDHL,error: 'beta',0.9749
+EDIT,-46.51,2.71
+EDRY,-70.88,11.94
+EDSA,-31.33,2.41
+EDTK,-38.78,1.1
+EDUC,4.19,1.09
+EEFT,"2,863.01",91.34
+EEIQ,-9.44,0.5325
+EEMA,error: 'beta',90.21
+EFAS,error: 'beta',19.18
+EFOI,-4.45,2.54
+EFRA,error: 'beta',33.9
+EFSC,error: 'EBITDA',61.24
+EFSCP,error: 'EBITDA',20.62
+EFSI,error: 'EBITDA',37.16
+EFTY,error: 'beta',7.88
+EGAN,36.01,8.09
+EGBN,error: 'EBITDA',20.54
+EGGQ,error: 'beta',48.515
+EGHA,error: 'beta',10.05
+EGHAR,error: 'beta',0.2
+EGHAU,error: 'beta',10.18
+EGHT,287.94,2.22
+EH,9.63,16.18
+EHGO,error: 'beta',0.68
+EHLD,error: 'beta',6.75
+EHLS,error: 'beta',22.697
+EHTH,-14.00,4.06
+EJH,-11.19,1.13
+EKG,error: 'beta',17.57
+EKSO,-102.94,3.92
+ELAB,error: 'beta',4.78
+ELBM,-28.99,0.8532
+ELDN,-77.32,2.54
+ELFY,error: 'beta',34.7837
+ELIL,error: 'beta',16.61
+ELIS,error: 'beta',25.72
+ELOG,error: 'beta',2.47
+ELPW,error: 'beta',0.3208
+ELSE,3.90,4.745
+ELTK,59.21,10.1
+ELTX,-323.18,11.58
+ELUT,-16.79,1.31
+ELVA,0.10,5.97
+ELVN,-25.45,19.92
+ELWS,"-1,024.87",2.355
+EM,-16.29,1.36
+EMB,error: 'beta',95.53
+EMBC,-6.85,15.31
+EMCB,error: 'beta',66.93
+EMEQ,error: 'beta',34.0
+EMIF,error: 'beta',25.52
+EML,81.87,25.25
+EMPD,-75.87,7.14
+EMPG,error: 'beta',13.39
+EMXC,error: 'beta',66.33
+EMXF,error: 'beta',45.1181
+ENDW,error: 'beta',30.25
+ENGN,error: 'beta',6.06
+ENGNW,error: 'beta',0.72
+ENGS,error: 'beta',6.49
+ENLT,"7,871.92",29.37
+ENLV,-12.97,1.07
+ENPH,151.28,37.32
+ENSC,-52.42,2.1301
+ENSG,304.26,168.95
+ENTA,-657.84,8.66
+ENTG,142.09,83.53
+ENTO,-144.57,2.3
+ENTX,-2.05,1.85
+ENVB,-141.75,0.9949
+ENVX,-16.15,8.0
+ENVXW,-inf,1.13
+ENZL,error: 'beta',47.2004
+EOLS,-9.33,7.51
+EOSE,-12.54,7.22
+EOSEW,-inf,0.39
+EPIX,-6.78,0.2055
+EPOW,-25.33,0.8699
+EPRX,-10.96,5.47
+EPSM,error: 'beta',44.1
+EPSN,-27.99,5.52
+EPWK,error: 'beta',0.5979
+EQ,-3.67,1.99
+EQIX,179.11,797.48
+EQRR,error: 'beta',63.4
+ERAS,-9.78,1.61
+ERET,error: 'beta',27.75
+ERIC,"1,000.30",8.05
+ERIE,error: 'EBITDA',337.92
+ERII,39.40,14.53
+ERNA,-8.34,1.38
+ERNZ,error: 'beta',23.06
+ESCA,"6,664.42",12.53
+ESEA,"3,311.28",63.1
+ESGD,error: 'beta',92.87
+ESGE,error: 'beta',42.42
+ESGL,-0.56,3.55
+ESGLW,-inf,0.1255
+ESGU,error: 'beta',143.75
+ESHA,-27.36,11.36
+ESHAR,error: 'beta',0.098
+ESLA,-22.09,1.04
+ESLAW,-inf,0.05
+ESLT,"1,467.23",505.45
+ESMV,error: 'beta',29.09
+ESN,error: 'beta',16.9199
+ESOA,"694,438.51",10.42
+ESPO,error: 'beta',119.73
+ESPR,-5.29,2.79
+ESQ,error: 'EBITDA',97.51
+ESTA,-121.93,37.81
+ETEC,error: 'beta',23.78
+ETHA,error: 'beta',33.49
+ETHM,error: 'beta',10.7
+ETHMU,error: 'beta',12.25
+ETHMW,error: 'beta',2.198
+ETHZ,-0.87,2.41
+ETHZW,-inf,0.0697
+ETNB,-41.27,8.65
+ETON,-12.53,17.57
+ETOR,error: 'beta',44.39
+ETS,error: 'beta',0.9668
+ETSY,39.60,59.59
+EU,-5.28,2.34
+EUDA,-8.71,1.17
+EUDAW,-inf,0.0945
+EUFN,error: 'beta',34.1
+EURK,error: 'beta',10.68
+EURKR,error: 'beta',0.2201
+EURKU,error: 'beta',10.8
+EVAX,-98.05,2.88
+EVCM,249.64,11.92
+EVER,"19,992.51",24.72
+EVGN,-40.25,1.24
+EVGO,-10.51,3.94
+EVGOW,-inf,0.1639
+EVLV,-4.87,7.98
+EVLVW,-inf,0.8448
+EVMT,error: 'beta',15.73
+EVO,-9.63,3.48
+EVOK,-245.44,5.18
+EVRG,-251.57,72.3
+EVSD,error: 'beta',51.6
+EVTV,-87.53,2.74
+EVYM,error: 'beta',49.355
+EWBC,error: 'EBITDA',109.27
+EWCZ,155.73,3.91
+EWJV,error: 'beta',39.47
+EWTX,-109.46,14.67
+EWZS,error: 'beta',13.73
+EXAS,345.37,56.009
+EXC,"-1,309.15",43.5
+EXE,-9.76,95.84
+EXEEL,inf,84.4723
+EXEEW,inf,110.69
+EXEEZ,inf,107.24
+EXEL,661.38,39.07
+EXFY,2.02,1.96
+EXLS,118.51,44.13
+EXOZ,error: 'beta',12.24
+EXPE,"7,055.43",221.36
+EXPI,9.56,11.36
+EXPO,55.71,70.95
+EXTR,32.06,22.85
+EXUS,error: 'beta',26.45
+EYE,7.03,23.26
+EYEG,error: 'beta',36.33
+EYPT,-22.48,13.33
+EZGO,-32.11,0.1336
+EZPW,820.97,16.99
+FA,-13.25,16.28
+FAAR,error: 'beta',30.1342
+FAAS,-0.68,0.2169
+FAASW,-inf,0.0299
+FAB,error: 'beta',88.5863
+FACT,error: 'beta',10.28
+FACTU,error: 'beta',10.4
+FACTW,error: 'beta',0.2101
+FAD,error: 'beta',159.575
+FALN,error: 'beta',27.565
+FAMI,-143.23,1.79
+FANG,162.06,138.42
+FARM,-28.36,2.33
+FAST,34.35,47.33
+FAT,-178.26,1.96
+FATBB,"-2,330.56",2.665
+FATBP,-inf,2.2
+FATE,-10.51,1.02
+FATN,error: 'beta',6.4
+FBGL,error: 'beta',0.6636
+FBIO,-107.71,3.83
+FBIOP,-56.55,9.11
+FBIZ,error: 'EBITDA',52.54
+FBL,error: 'beta',45.65
+FBLA,error: 'beta',12.13
+FBLG,error: 'beta',0.5649
+FBNC,error: 'EBITDA',55.23
+FBOT,error: 'beta',32.005
+FBRX,-20.70,10.46
+FBYD,15.02,8.92
+FBYDW,inf,0.797
+FCA,error: 'beta',28.99
+FCAL,error: 'beta',48.83
+FCAP,error: 'EBITDA',43.54
+FCBC,error: 'EBITDA',37.75
+FCCO,error: 'EBITDA',28.12
+FCEF,error: 'beta',22.8432
+FCEL,-41.56,6.46
+FCFS,"74,193.07",148.07
+FCNCA,error: 'EBITDA',1964.43
+FCNCO,error: 'EBITDA',22.69
+FCNCP,error: 'EBITDA',21.74
+FCTE,error: 'beta',26.9
+FCUV,-23.34,2.71
+FCVT,error: 'beta',41.7828
+FDBC,error: 'EBITDA',47.33
+FDCF,error: 'beta',49.43
+FDFF,error: 'beta',37.4676
+FDIF,error: 'beta',35.2283
+FDIG,error: 'beta',43.79
+FDIV,error: 'beta',27.24
+FDMT,-25.91,7.07
+FDNI,error: 'beta',37.365
+FDSB,error: 'beta',13.9
+FDT,error: 'beta',75.77
+FDTS,error: 'beta',56.2233
+FDTX,error: 'beta',39.32
+FDUS,error: 'EBITDA',21.51
+FEAM,-22.72,4.14
+FEAT,error: 'beta',33.3448
+FEBO,error: 'beta',0.79
+FEIM,-2.83,34.35
+FELE,319.53,96.86
+FEM,error: 'beta',27.08
+FEMB,error: 'beta',29.44
+FEMS,error: 'beta',44.28
+FEMY,-101.85,0.367
+FENC,24.66,9.03
+FEP,error: 'beta',50.6421
+FEPI,error: 'beta',46.45
+FER,"6,273.20",57.28
+FERA,error: 'beta',10.16
+FERAR,error: 'beta',0.2273
+FERAU,error: 'beta',10.48
+FEUZ,error: 'beta',58.49
+FEX,error: 'beta',117.02
+FFAI,-10.34,1.88
+FFAIW,-inf,0.0519
+FFBC,error: 'EBITDA',26.15
+FFIC,error: 'EBITDA',14.13
+FFIN,error: 'EBITDA',36.1
+FFIV,348.58,334.59
+FFUT,error: 'beta',51.64
+FGBI,error: 'EBITDA',8.22
+FGBIP,error: 'EBITDA',19.29
+FGEN,-852.36,12.43
+FGI,-139.31,3.91
+FGIWW,-inf,0.0271
+FGL,error: 'beta',1.16
+FGM,error: 'beta',57.519
+FGMC,error: 'beta',9.96
+FGMCR,error: 'beta',0.2646
+FGMCU,error: 'beta',10.22
+FGNX,error: 'EBITDA',7.175
+FGNXP,error: 'EBITDA',18.75
+FGSI,error: 'beta',20.67
+FHB,error: 'EBITDA',25.72
+FHTX,-12.96,5.28
+FIBK,error: 'EBITDA',32.48
+FICS,error: 'beta',39.02
+FID,error: 'beta',20.04
+FIEE,-2.94,2.85
+FIGX,error: 'beta',10.01
+FIGXU,error: 'beta',10.08
+FIGXW,error: 'beta',0.2
+File Creation Time: 0829202521:31,error: 'beta',0
+FINE,error: 'beta',22.0799
+FINW,error: 'EBITDA',19.64
+FINX,error: 'beta',33.825
+FIP,-74.97,4.48
+FISI,error: 'EBITDA',27.24
+FITB,error: 'EBITDA',45.27
+FITBI,error: 'EBITDA',25.65
+FITBO,error: 'EBITDA',21.01
+FITBP,error: 'EBITDA',24.8572
+FIVE,335.85,145.77
+FIVN,241.66,26.1
+FIVY,error: 'beta',37.82
+FIXD,error: 'beta',44.715
+FIZZ,98.39,40.35
+FJP,error: 'beta',67.55
+FKU,error: 'beta',47.47
+FKWL,-35.93,4.06
+FLD,-5.16,3.39
+FLDB,error: 'beta',50.6186
+FLDDW,-inf,0.3793
+FLEX,178.25,57.73
+FLGC,-357.80,23.2578
+FLGT,-19.82,22.25
+FLL,-55.53,3.47
+FLN,error: 'beta',21.39
+FLNC,2.21,6.94
+FLNT,-28.14,2.03
+FLUX,-5.29,1.8
+FLWS,-70.66,5.26
+FLX,error: 'beta',3.14
+FLXS,"69,291.29",49.545
+FLY,error: 'beta',42.97
+FLYE,error: 'beta',0.8115
+FLYW,527.20,13.74
+FMAO,error: 'EBITDA',26.5
+FMB,error: 'beta',50.8
+FMBH,error: 'EBITDA',40.12
+FMED,error: 'beta',24.8532
+FMET,error: 'beta',36.7655
+FMFC,error: 'beta',11.47
+FMHI,error: 'beta',47.6
+FMNB,error: 'EBITDA',14.96
+FMST,-2.50,3.0
+FMSTW,-inf,0.3806
+FMTM,error: 'beta',29.52
+FMUB,error: 'beta',50.93
+FMUN,error: 'beta',49.84
+FNGR,-25.76,1.69
+FNK,error: 'beta',56.56
+FNKO,219.72,3.39
+FNLC,error: 'EBITDA',27.31
+FNWB,error: 'EBITDA',7.09
+FNWD,error: 'EBITDA',31.76
+FNX,error: 'beta',126.32
+FNY,error: 'beta',90.7041
+FOLD,-139.25,8.02
+FONR,40.04,15.7
+FORA,-0.59,2.21
+FORD,7.03,34.48
+FORL,-104.62,11.73
+FORLU,-inf,12.13
+FORLW,error: 'beta',0.0363
+FORM,16.01,30.57
+FORR,-9.15,10.01
+FORTY,"4,740.46",144.94
+FOSL,-1.37,3.1
+FOSLL,error: 'beta',22.56
+FOX,"2,379.98",52.84
+FOXA,"2,239.05",58.73
+FOXF,"5,236.36",28.81
+FOXX,-60.91,5.6
+FOXXW,-inf,0.1303
+FPA,error: 'beta',37.51
+FPAY,-155.19,0.6878
+FPXE,error: 'beta',32.43
+FPXI,error: 'beta',59.8639
+FRAF,error: 'EBITDA',47.61
+FRBA,error: 'EBITDA',16.91
+FRD,-6.25,21.38
+FRDD,error: 'beta',23.662
+FRDU,error: 'beta',27.71
+FRGT,-70.00,1.43
+FRHC,"1,247.80",161.89
+FRME,error: 'EBITDA',40.39
+FRMEP,error: 'EBITDA',25.72
+FROG,220.27,49.89
+FRPH,58.69,25.39
+FRPT,"45,525,516.98",53.2
+FRSH,"102,472.15",12.91
+FRST,error: 'EBITDA',10.96
+FRSX,-38.84,2.37
+FSBC,error: 'EBITDA',32.91
+FSBW,error: 'EBITDA',42.23
+FSCS,error: 'beta',37.3134
+FSEA,error: 'EBITDA',11.54
+FSFG,error: 'EBITDA',27.67
+FSGS,error: 'beta',31.6
+FSHP,error: 'beta',10.56
+FSHPR,error: 'beta',0.12
+FSHPU,error: 'beta',10.7
+FSLR,"1,763.65",203.31
+FSTR,100.37,27.41
+FSUN,error: 'EBITDA',38.49
+FSV,625.38,208.43
+FSZ,error: 'beta',79.0698
+FTA,error: 'beta',83.71
+FTAG,error: 'beta',26.71
+FTAI,-393.87,169.85
+FTAIM,-inf,26.4999
+FTAIN,-inf,25.53
+FTC,error: 'beta',161.13
+FTCI,-77.85,6.84
+FTCS,error: 'beta',93.74
+FTDR,812.40,67.24
+FTDS,error: 'beta',56.086
+FTEK,-0.50,3.39
+FTEL,-1.79,0.5693
+FTFT,-100.76,2.65
+FTGC,error: 'beta',25.685
+FTGS,error: 'beta',36.08
+FTHI,error: 'beta',23.66
+FTHM,-7.01,2.84
+FTLF,320.30,18.13
+FTNT,"2,509.28",80.89
+FTQI,error: 'beta',20.47
+FTRE,101.48,10.23
+FTRI,error: 'beta',15.31
+FTRK,error: 'beta',0.5853
+FTSL,error: 'beta',46.05
+FTSM,error: 'beta',60.03
+FTXG,error: 'beta',22.19
+FTXH,error: 'beta',28.4699
+FTXL,error: 'beta',104.73
+FTXN,error: 'beta',28.46
+FTXO,error: 'beta',35.92
+FTXR,error: 'beta',34.9051
+FUFU,"132,576.62",4.19
+FUFUW,inf,0.424
+FULC,-1.08,6.99
+FULT,error: 'EBITDA',19.35
+FULTP,error: 'EBITDA',19.87
+FUNC,error: 'EBITDA',36.74
+FUND,error: 'Free Cash Flow',8.383
+FUSB,error: 'EBITDA',11.64
+FUTU,"379,231.57",186.115
+FV,error: 'beta',62.1
+FVC,error: 'beta',36.23
+FVCB,error: 'EBITDA',13.49
+FVN,error: 'beta',10.43
+FVNNR,error: 'beta',0.1799
+FVNNU,error: 'beta',10.5
+FWONA,"1,128.11",92.43
+FWONK,121.02,102.14
+FWRD,-421.60,29.89
+FWRG,118.63,17.71
+FXNC,error: 'EBITDA',23.49
+FYBR,-433.93,37.49
+FYC,error: 'beta',88.9
+FYT,error: 'beta',57.33
+FYX,error: 'beta',109.393
+GABC,error: 'EBITDA',40.98
+GAIA,-4.69,5.96
+GAIN,error: 'EBITDA',14.3
+GAINI,error: 'Free Cash Flow',25.61
+GAINL,error: 'beta',25.5989
+GAINN,error: 'beta',25.3
+GAINZ,error: 'beta',23.87
+GALT,-16.35,5.94
+GAMB,418.05,8.14
+GAME,-10.32,0.73
+GANX,-22.26,1.72
+GASS,"914,956.94",7.3
+GAUZ,error: 'beta',5.55
+GBDC,error: 'EBITDA',14.78
+GBFH,error: 'EBITDA',40.345
+GBIO,-217.54,6.01
+GBUG,error: 'beta',34.46
+GCBC,error: 'EBITDA',24.33
+GCL,-4.71,3.0588
+GCLWW,-53.11,0.0748
+GCMG,11.57,12.85
+GCMGW,inf,1.38
+GCT,"46,707.66",29.07
+GCTK,"-2,120.42",4.87
+GDC,-7.51,6.415
+GDEN,28.74,24.81
+GDEV,25.82,16.82
+GDEVW,inf,0.02
+GDHG,"-2,267,046.68",7.85
+GDRX,"1,583.88",4.22
+GDS,217.10,38.5
+GDTC,-54.99,2.0
+GDYN,187.51,7.76
+GECC,error: 'EBITDA',11.28
+GECCH,error: 'beta',25.5113
+GECCI,error: 'beta',25.6583
+GECCO,error: 'beta',25.3201
+GECCZ,error: 'beta',25.5
+GEG,-9.47,2.84
+GEGGL,error: 'beta',24.7
+GEHC,67.91,77.96
+GELS,error: 'beta',1.5
+GEME,error: 'beta',30.87
+GEN,579.01,29.67
+GENK,-115.05,3.18
+GENVR,error: 'Free Cash Flow',9.09
+GEOS,-29.36,16.565
+GERN,-14.73,1.32
+GEVO,-5.81,1.66
+GFAI,-1.60,1.14
+GFAIW,-inf,0.2225
+GFGF,error: 'beta',33.21
+GFLW,error: 'beta',28.48
+GFS,18.89,32.17
+GGAL,error: 'EBITDA',31.27
+GGLL,error: 'beta',62.51
+GGLS,error: 'beta',9.02
+GGR,-45.17,0.3372
+GGROW,-inf,0.0201
+GH,-46.31,56.795
+GHRS,-13.11,12.46
+GIBO,error: 'beta',2.95
+GIBOW,error: 'beta',0.0539
+GIFI,"15,535.71",7.65
+GIFT,-26.89,1.07
+GIG,error: 'beta',10.39
+GIGGU,error: 'beta',10.5
+GIGGW,error: 'beta',0.12
+GIGM,-13.17,1.8121
+GIII,147.82,27.17
+GILD,"133,428.33",117.86
+GILT,422.06,11.0
+GIND,error: 'beta',26.72
+GINX,error: 'beta',29.695
+GIPR,-13.76,0.9645
+GIPRW,-inf,0.068
+GITS,-43.22,2.6458
+GKAT,error: 'beta',39.7263
+GLAD,error: 'EBITDA',23.6
+GLADZ,error: 'beta',25.21
+GLBE,"8,272.04",36.65
+GLBS,-174.17,1.08
+GLBZ,error: 'EBITDA',4.32
+GLCR,error: 'beta',26.249
+GLDD,-21.28,12.27
+GLDI,error: 'beta',165.944
+GLDY,error: 'beta',17.6
+GLE,error: 'beta',1.05
+GLGG,error: 'beta',20.029
+GLIBA,error: 'beta',37.05
+GLIBK,error: 'beta',36.42
+GLMD,-29.77,1.55
+GLNG,"19,185.09",40.66
+GLOW,error: 'beta',29.4747
+GLPG,-265.99,32.55
+GLPI,359.63,47.63
+GLRE,error: 'EBITDA',12.69
+GLSI,-4.62,11.42
+GLTO,-156.20,2.8
+GLUE,5.88,4.89
+GLXG,error: 'beta',5.865
+GLXY,-27.08,28.87
+GMAB,618.75,28.61
+GMGI,error: 'beta',1.03
+GMHS,83.76,1.8
+GMM,error: 'beta',2.19
+GNFT,5.67,4.19
+GNLN,-48.36,3.5
+GNLX,-91.82,3.65
+GNMA,error: 'beta',44.66
+GNOM,error: 'beta',37.275
+GNPX,-95.82,0.2585
+GNSS,-21.35,2.16
+GNTA,-11.18,2.75
+GNTX,35.07,28.41
+GO,-34.32,17.81
+GOCO,-68.44,4.86
+GOGO,80.14,10.36
+GOOD,68.65,13.1
+GOODN,inf,22.64
+GOODO,error: 'beta',20.63
+GOOG,348.55,240.78
+GOOGL,325.36,240.37
+GORV,"3,423.43",2.38
+GOSS,-1.62,3.46
+GOVI,error: 'beta',28.07
+GOVX,-5.83,0.7165
+GOVXW,-inf,0.008
+GP,-19.32,3.6599
+GPAT,error: 'beta',10.58
+GPATU,error: 'beta',10.66
+GPATW,error: 'beta',0.25
+GPCR,-808.81,20.88
+GPIQ,error: 'beta',51.32
+GPIX,error: 'beta',51.57
+GPRE,-48.28,9.77
+GPRF,error: 'beta',51.64
+GPRO,-27.64,2.0
+GQQQ,error: 'beta',28.85
+GRAB,3.72,5.53
+GRABW,inf,0.3787
+GRAL,error: 'beta',38.65
+GRAN,error: 'beta',3.99
+GRCE,-20.18,3.22
+GREE,-14.26,1.48
+GREEL,error: 'beta',9.1
+GRFS,233.49,10.04
+GRI,"-1,083.35",2.05
+GRID,error: 'beta',148.29
+GRIN,error: 'beta',26.98
+GRNQ,-2.10,1.235
+GROW,0.87,2.43
+GRPN,27.47,23.51
+GRRR,-267.93,17.95
+GRRRW,-inf,0.45
+GRVY,"187,516.77",64.51
+GRW,error: 'beta',32.92
+GRWG,-2.24,1.55
+GRYP,error: 'beta',1.54
+GSAT,"2,025.77",30.29
+GSBC,error: 'EBITDA',63.62
+GSHD,error: 'EBITDA',80.97
+GSHR,error: 'beta',10.14
+GSHRU,error: 'beta',10.3
+GSHRW,error: 'beta',0.3
+GSIB,error: 'beta',48.0499
+GSIT,-9.80,3.32
+GSIW,error: 'beta',0.139
+GSM,"1,400.64",4.26
+GSRT,error: 'beta',10.39
+GSRTR,error: 'beta',7.25
+GSRTU,error: 'beta',13.5
+GSUN,-6.70,2.88
+GT,-72.06,8.57
+GTBP,-53.61,0.745
+GTEC,35.52,1.35
+GTEN,error: 'beta',10.17
+GTENU,error: 'beta',10.3201
+GTENW,error: 'beta',0.74
+GTERA,error: 'beta',9.97
+GTERR,error: 'beta',0.1301
+GTERU,error: 'beta',10.17
+GTERW,error: 'beta',0.1294
+GTI,-111.68,3.31
+GTIM,3.06,1.64
+GTLB,-13.62,49.74
+GTM,16.01,11.75
+GTR,error: 'beta',25.83
+GTX,126.97,13.36
+GURE,-411.70,0.6831
+GUTS,error: 'beta',1.02
+GV,167.17,1.68
+GVH,error: 'beta',4.81
+GWAV,"-2,913.20",6.9
+GWRS,-8.28,9.91
+GXAI,-7.19,1.73
+GXDW,error: 'beta',27.22
+GYRE,error: 'beta',8.12
+GYRO,error: 'Free Cash Flow',9.87
+HAFC,error: 'EBITDA',25.11
+HAIN,32.50,2.12
+HALO,"1,947.08",77.53
+HAO,error: 'beta',1.48
+HAS,208.42,79.95
+HBAN,error: 'EBITDA',17.74
+HBANL,error: 'EBITDA',26.01
+HBANM,error: 'EBITDA',23.55
+HBANP,error: 'EBITDA',18.69
+HBCP,error: 'EBITDA',56.36
+HBDC,error: 'beta',25.27
+HBIO,-3.08,0.4435
+HBNB,error: 'beta',3.01
+HBNC,error: 'EBITDA',16.43
+HBT,error: 'EBITDA',25.98
+HCAI,error: 'beta',0.855
+HCAT,-3.99,3.24
+HCHL,error: 'beta',3.22
+HCKT,28.32,21.27
+HCM,-4.01,16.37
+HCMAU,error: 'beta',10.14
+HCOW,error: 'beta',24.555
+HCSG,13.31,16.54
+HCTI,-7.00,2.69
+HCWB,-213.32,3.32
+HDL,"82,188.04",19.03
+HDSN,58.71,10.31
+HEAL,error: 'beta',32.6
+HECO,error: 'beta',35.991
+HEJD,error: 'beta',26.845
+HELE,113.17,24.7
+HEPS,187.57,2.85
+HEQQ,error: 'beta',56.4
+HERD,error: 'beta',42.7
+HERO,error: 'beta',33.7256
+HERZ,error: 'Free Cash Flow',2.43
+HFBL,error: 'EBITDA',13.644
+HFFG,5.23,3.32
+HFSP,error: 'beta',18.48
+HFWA,error: 'EBITDA',24.89
+HGBL,119.83,1.85
+HHS,-48.37,3.72
+HIDE,error: 'beta',23.1092
+HIFS,error: 'EBITDA',283.98
+HIHO,-14.92,1.7126
+HIMX,4.71,8.33
+HIMY,error: 'beta',23.57
+HIMZ,error: 'beta',19.58
+HIND,error: 'beta',7.54
+HISF,error: 'beta',45.325
+HIT,error: 'beta',2.79
+HITI,53.06,3.38
+HIVE,-2.45,3.38
+HKIT,-0.74,1.99
+HKPD,error: 'beta',1.36
+HLAL,error: 'beta',57.54
+HLIT,127.92,10.12
+HLMN,46.72,9.97
+HLNE,258.00,153.8
+HLP,-0.42,0.96
+HLVX,-56.04,2.09
+HMR,error: 'beta',1.145
+HMST,error: 'EBITDA',13.62
+HNDL,error: 'beta',22.140615
+HNNA,31.43,11.76
+HNNAZ,error: 'beta',25.0
+HNRG,2.01,17.11
+HNST,-0.04,3.95
+HNVR,error: 'EBITDA',22.605
+HOFT,-41.58,10.73
+HOLO,-55.60,5.19
+HOLOW,-inf,0.1023
+HOLX,255.26,66.38
+HON,509.21,215.31
+HOND,error: 'beta',11.85
+HONDU,error: 'beta',13.1
+HONDW,error: 'beta',2.58
+HONE,error: 'EBITDA',13.07
+HOOD,-17.20,117.75
+HOOG,error: 'beta',80.22
+HOOI,error: 'beta',19.6
+HOOX,error: 'beta',124.85
+HOPE,error: 'EBITDA',11.15
+HOTH,-14.80,1.6
+HOUR,0.22,3.4
+HOVNP,error: 'beta',19.9
+HOVR,-2.21,1.73
+HOVRW,-inf,0.229
+HOWL,-78.13,1.43
+HPAI,"37,761.72",4.0474
+HPAIW,inf,0.2159
+HPK,"1,143.10",7.25
+HQGO,error: 'beta',56.09
+HQI,12.62,10.3
+HQY,645.49,92.34
+HRMY,"1,309.97",33.42
+HROW,"5,977.49",39.45
+HROWL,error: 'beta',25.63
+HROWM,error: 'beta',26.035
+HRTS,error: 'beta',30.675
+HRTX,-3.37,1.28
+HRZN,error: 'EBITDA',6.96
+HSAI,-37.28,27.99
+HSCS,-39.62,3.34
+HSCSW,-inf,0.061
+HSDT,-265.27,7.33
+HSIC,138.19,69.55
+HSII,103.84,50.73
+HSON,-45.21,9.87
+HSONP,-395.52,9.06
+HSPO,-15.01,12.23
+HSPOR,error: 'Free Cash Flow',0.1795
+HSPOU,-inf,12.21
+HSPOW,-inf,0.0304
+HSPT,error: 'beta',10.31
+HSPTR,error: 'beta',0.2
+HSPTU,error: 'beta',10.43
+HST,195.89,17.68
+HSTM,133.46,29.22
+HTBK,error: 'EBITDA',10.3
+HTCO,-139.03,8.18
+HTCR,-3.38,0.985
+HTFL,error: 'beta',33.17
+HTHT,"2,093,393.82",36.94
+HTLD,6.98,8.67
+HTLM,error: 'beta',3.85
+HTO,-663.05,49.79
+HTOO,error: 'beta',4.17
+HTOOW,error: 'beta',0.0274
+HTZ,-254.42,6.21
+HTZWW,-inf,3.3
+HUBC,-227.83,2.45
+HUBCW,error: 'beta',0.022
+HUBCZ,-inf,0.01
+HUBG,41.86,37.52
+HUDI,6.07,1.66
+HUHU,error: 'beta',6.955
+HUIZ,-160.57,2.83
+HUMA,-30.47,1.5
+HUMAW,-inf,0.2001
+HURA,error: 'beta',2.59
+HURC,-32.18,17.44
+HURN,"7,349,081.06",141.88
+HUT,error: 'beta',31.96
+HVII,error: 'beta',10.18
+HVIIR,error: 'beta',0.3
+HVIIU,error: 'beta',10.42
+HVMCU,error: 'beta',10.06
+HWAY,error: 'beta',29.85
+HWBK,error: 'EBITDA',32.55
+HWC,error: 'EBITDA',63.47
+HWCPZ,error: 'beta',24.18
+HWH,-45.42,3.07
+HWKN,"2,623.22",176.98
+HWSM,error: 'beta',27.0
+HXHX,error: 'beta',1.4
+HYBI,error: 'beta',50.89
+HYDR,error: 'beta',28.73
+HYFM,-65.74,3.24
+HYLS,error: 'beta',42.23
+HYMC,-12.33,5.92
+HYMCL,-inf,0.0128
+HYPD,-64.29,11.99
+HYPR,-11.39,1.35
+HYXF,error: 'beta',47.42
+HYZD,error: 'beta',22.56
+IAC,"1,887.72",36.75
+IART,-14.53,15.47
+IAS,"3,629.32",8.69
+IBAC,error: 'beta',10.58
+IBACR,error: 'beta',0.09
+IBAT,error: 'beta',26.6812
+IBB,error: 'beta',143.8
+IBBQ,error: 'beta',24.27
+IBCP,error: 'EBITDA',32.17
+IBEX,376.84,30.46
+IBG,error: 'beta',0.4293
+IBGA,error: 'beta',25.3353
+IBGB,error: 'beta',25.0503
+IBGK,error: 'beta',24.17
+IBGL,error: 'beta',25.0553
+IBIO,-21.27,0.9631
+IBIT,error: 'beta',65.03
+IBKR,"54,277.31",63.34
+IBOC,error: 'EBITDA',71.29
+IBOT,error: 'beta',48.76
+IBRX,-30.92,2.59
+IBTF,error: 'beta',23.315
+IBTG,error: 'beta',22.91
+IBTH,error: 'beta',22.5
+IBTI,error: 'beta',22.411
+IBTJ,error: 'beta',22.0293
+IBTK,error: 'beta',19.96
+IBTL,error: 'beta',20.695
+IBTM,error: 'beta',23.3
+IBTO,error: 'beta',24.85
+IBTP,error: 'beta',26.12
+IBTQ,error: 'beta',25.77
+ICCC,-4.28,6.13
+ICCM,-2.91,0.993
+ICFI,"1,218.09",98.86
+ICG,-38.56,1.8699
+ICHR,176.97,17.15
+ICLN,error: 'beta',14.69
+ICLR,"5,480.23",175.11
+ICMB,error: 'EBITDA',2.92
+ICON,error: 'beta',2.09
+ICOP,error: 'beta',34.38
+ICU,-130.90,0.8844
+ICUCW,-inf,0.0499
+ICUI,155.75,135.03
+IDAI,-425.41,3.08
+IDCC,"3,518.32",324.87
+IDEF,error: 'beta',30.224
+IDN,-2.80,5.48
+IDXX,299.94,645.16
+IDYA,-126.84,24.93
+IEF,error: 'beta',97.26
+IEI,error: 'beta',120.01
+IEP,"699,801.72",8.36
+IESC,"18,081.12",376.93
+IEUS,error: 'beta',67.3366
+IFBD,-6.18,1.16
+IFGL,error: 'beta',23.44
+IFLO,error: 'beta',27.84
+IFRX,-9.97,1.47
+IFV,error: 'beta',24.4163
+IGF,error: 'beta',60.9
+IGIB,error: 'beta',54.3
+IGIC,error: 'EBITDA',24.28
+IGOV,error: 'beta',42.83
+IGSB,error: 'beta',53.05
+IHRT,-58.96,2.37
+IHYF,error: 'beta',22.89
+III,6.98,5.24
+IIIV,100.72,31.15
+IINN,-3.46,1.16
+IINNW,-inf,0.3392
+IJT,error: 'beta',142.71
+IKT,-5.89,1.68
+ILAG,-2.36,0.68
+ILIT,error: 'beta',10.2616
+ILLR,error: 'beta',0.7373
+ILLRW,error: 'beta',0.0304
+ILMN,283.04,99.31
+ILPT,506.47,6.28
+IMA,error: 'beta',9.2
+IMAB,-9.51,3.9
+IMCC,-19.81,2.01
+IMCR,5.30,36.57
+IMCV,error: 'beta',80.59
+IMDX,-80.07,3.18
+IMG,-1.79,0.26
+IMKTA,95.21,69.745
+IMMP,-3.71,1.66
+IMMR,177.30,6.81
+IMMX,-116.70,2.22
+IMNM,-20.55,9.68
+IMNN,-96.68,5.65
+IMOM,error: 'beta',35.97
+IMOS,"1,517.00",17.56
+IMPP,"2,059,867.93",4.08
+IMPPP,inf,25.09
+IMRN,-34.00,1.89
+IMRX,-71.20,8.21
+IMTE,-105.28,1.14
+IMTX,-19.79,5.92
+IMUX,-12.89,0.852
+IMVT,-93.92,16.8
+IMXI,41.52,14.52
+INAB,-245.25,2.09
+INAC,error: 'beta',9.94
+INACR,error: 'beta',0.1252
+INACU,error: 'beta',10.09
+INBK,error: 'EBITDA',23.93
+INBKZ,error: 'beta',24.75
+INBS,-5.54,1.73
+INBX,error: 'beta',28.45
+INCR,-61.38,1.555
+INCY,32.80,86.17
+INDB,error: 'EBITDA',70.09
+INDH,error: 'beta',43.0874
+INDI,-8.66,3.9
+INDP,-210.77,2.83
+INDV,-1.26,23.88
+INDY,error: 'beta',52.0
+INEO,error: 'beta',0.9371
+INFR,error: 'beta',25.87
+INGN,-7.30,8.56
+INHD,error: 'beta',4.91
+INKT,-139.69,14.76
+INLF,error: 'beta',0.9333
+INM,-169.34,2.18
+INMB,-25.21,1.97
+INMD,17.50,15.34
+INNV,-16.45,4.62
+INO,-32.81,2.65
+INOD,"11,799,168.17",60.97
+INRO,error: 'beta',31.041
+INSE,2.86,9.46
+INSG,21.31,13.8
+INSM,-107.83,145.785
+INTA,"5,919.38",45.4
+INTC,-69.69,24.61
+INTG,-86.50,19.1
+INTJ,error: 'beta',0.6999
+INTR,error: 'EBITDA',8.98
+INTS,-1.96,0.2324
+INTU,"1,316.02",660.52
+INTW,error: 'beta',22.26
+INTZ,-111.03,1.66
+INV,-781.54,5.75
+INVA,246.38,19.43
+INVE,-8.43,3.69
+INVZ,-9.16,1.85
+INVZW,-inf,0.0756
+IOBT,-60.25,1.91
+IONL,error: 'beta',51.68
+IONR,-2.14,3.32
+IONS,-168.31,64.04
+IONX,error: 'beta',72.37
+IONZ,error: 'beta',10.84
+IOSP,323.52,83.65
+IOTR,error: 'beta',0.4484
+IOVA,-24.32,2.42
+IPA,-14.67,1.93
+IPAR,"7,017.17",108.53
+IPCX,error: 'beta',10.085
+IPCXR,error: 'beta',0.4
+IPCXU,error: 'beta',10.4827
+IPDN,-10.16,3.15
+IPGP,62.14,82.6
+IPHA,-24.10,2.04
+IPKW,error: 'beta',53.03
+IPM,-7.62,1.9
+IPOD,error: 'beta',10.08
+IPODU,error: 'beta',10.21
+IPODW,error: 'beta',0.188
+IPSC,-15.23,0.5183
+IPW,1.09,0.5015
+IPWR,-20.61,5.22
+IPX,-192.46,43.48
+IQ,312.26,2.62
+IQQQ,error: 'beta',42.82
+IQST,-15.53,6.42
+IRBT,-27.20,3.63
+IRD,-40.64,1.41
+IRDM,80.52,18.39
+IREN,"2,244,544.23",32.85
+IRIX,-25.40,1.37
+IRMD,207.10,74.27
+IROH,error: 'beta',9.5875
+IROHR,error: 'beta',0.495
+IROHU,error: 'beta',9.86
+IROHW,error: 'beta',0.0604
+IRON,-26.31,60.29
+IROQ,error: 'EBITDA',25.55
+IRTC,-93.80,181.03
+IRWD,34.52,1.24
+ISBA,error: 'EBITDA',32.2
+ISHG,error: 'beta',76.41
+ISHP,error: 'beta',41.96
+ISPC,-19.82,1.32
+ISPO,-56.72,2.98
+ISPOW,-inf,0.0145
+ISPR,-3.84,3.26
+ISRG,75.01,455.85
+ISRL,"145,651,671,183.53",12.5588
+ISRLU,inf,12.99
+ISRLW,error: 'beta',0.151
+ISSC,276.58,11.28
+ISTB,error: 'beta',48.88
+ISTR,error: 'EBITDA',22.97
+ITIC,error: 'EBITDA',256.99
+ITOS,-23.22,10.15
+ITRI,171.63,120.5
+ITRM,-4.83,0.7089
+ITRN,111.94,35.15
+IUS,error: 'beta',54.9528
+IUSB,error: 'beta',46.87
+IUSG,error: 'beta',162.32
+IUSV,error: 'beta',99.197
+IVA,-20.10,5.77
+IVAL,error: 'beta',30.7635
+IVDA,-63.79,1.51
+IVDAW,-inf,0.0915
+IVF,error: 'beta',1.02
+IVP,-180.91,0.9016
+IVVD,-29.14,1.23
+IXHL,-1.74,0.53
+IXUS,error: 'beta',82.07
+IZEA,-12.52,3.55
+IZM,0.96,2.47
+JACK,-200.23,18.13
+JAGX,-621.09,2.03
+JAKK,502.80,17.71
+JAMF,37.67,10.55
+JANX,-7.74,25.12
+JAPN,error: 'beta',28.625
+JAZZ,"3,182.54",128.46
+JBDI,error: 'beta',1.9
+JBHT,429.08,141.45
+JBIO,error: 'beta',7.76
+JBLU,-225.66,5.2
+JBSS,-114.27,63.95
+JCAP,error: 'beta',18.47
+JCSE,70.20,1.26
+JCTC,68.35,3.57
+JD,"6,319,245.85",34.4
+JDOC,error: 'beta',51.5099
+JDZG,error: 'beta',2.15
+JEM,error: 'beta',0.5
+JEPQ,error: 'beta',56.41
+JFB,error: 'beta',5.34
+JFBR,-150.78,4.73
+JFBRW,-inf,0.0303
+JFIN,"6,169.19",10.83
+JFU,62.37,2.6
+JG,3.98,10.15
+JGLO,error: 'beta',66.92
+JHAI,error: 'beta',26.51
+JIVE,error: 'beta',75.335
+JJSF,"1,157.63",107.53
+JKHY,209.51,161.42
+JL,error: 'beta',5.87
+JLHL,error: 'beta',4.15
+JMID,error: 'beta',30.3254
+JMSB,error: 'EBITDA',20.75
+JOUT,26.33,40.5
+JOYY,"67,691.81",61.67
+JPEF,error: 'beta',73.74
+JPX,error: 'beta',20.765
+JPY,error: 'beta',31.56
+JRSH,-0.36,3.43
+JRVR,error: 'EBITDA',5.41
+JSM,error: 'beta',19.165
+JSMD,error: 'beta',85.595
+JSML,error: 'beta',75.43
+JSPR,-34.41,2.56
+JSPRW,-inf,0.0628
+JTAI,-382.79,3.26
+JTEK,error: 'beta',90.23
+JUNS,error: 'beta',1.56
+JVA,32.16,4.22
+JWEL,-10.19,1.79
+JXG,-7.24,1.02
+JYD,-338.71,0.1399
+JYNT,6.38,10.2
+JZ,-49.95,1.74
+JZXN,-11.92,1.03
+KALA,"-1,509.43",17.0
+KALU,761.99,77.37
+KALV,-191.86,14.81
+KARO,"2,011.00",55.39
+KAT,error: 'beta',56.13
+KAVL,-13.05,0.688
+KBAB,error: 'beta',27.6988
+KBSX,-5.22,1.6341
+KBWB,error: 'beta',78.02
+KBWD,error: 'beta',14.205
+KBWP,error: 'beta',122.69
+KBWR,error: 'beta',62.4906
+KBWY,error: 'beta',16.62
+KC,-253.01,16.77
+KCHV,error: 'beta',10.025
+KCHVR,error: 'beta',0.1893
+KCHVU,error: 'beta',10.2
+KDP,96.69,27.59
+KE,"155,723.06",30.62
+KEAT,error: 'beta',29.24
+KELYA,5.98,13.81
+KELYB,58.23,13.7138
+KEQU,"145,091,063.60",43.2
+KFFB,error: 'EBITDA',3.4
+KFII,error: 'beta',10.2
+KFIIR,error: 'beta',0.16
+KFIIU,error: 'beta',10.3101
+KG,error: 'beta',26.25
+KGEI,2.08,5.43
+KHC,69.99,26.52
+KIDS,-36.24,20.33
+KIDZ,-0.84,1.48
+KIDZW,-inf,0.1674
+KINS,error: 'EBITDA',13.97
+KITT,-511.20,3.55
+KITTW,-inf,0.0399
+KLAC,"1,219.98",959.28
+KLIC,-0.34,39.02
+KLRS,error: 'beta',4.28
+KLTO,-0.52,0.6189
+KLTOW,-inf,0.1435
+KLTR,5.30,1.71
+KLXE,-21.78,1.87
+KMB,530.02,129.47
+KMDA,937.54,7.015
+KMLI,error: 'beta',23.1
+KMRK,error: 'beta',1.64
+KMTS,error: 'beta',18.4
+KNDI,-5.26,1.4
+KNGZ,error: 'beta',35.975
+KNSA,"16,823.68",37.01
+KOD,-38.72,9.92
+KOID,error: 'beta',30.39
+KOPN,-0.81,2.25
+KOSS,-24.23,5.72
+KOYNU,error: 'beta',10.05
+KPDD,error: 'beta',24.3
+KPLT,-90.37,19.93
+KPLTW,inf,0.0124
+KPRX,437.64,2.703
+KPTI,-832.58,6.64
+KQQQ,error: 'beta',28.945
+KRKR,-782.16,8.1976
+KRMA,error: 'beta',42.85
+KRMD,-2.04,4.02
+KRNT,4.21,14.88
+KRNY,error: 'EBITDA',6.7
+KROP,error: 'beta',32.08
+KROS,-77.23,15.76
+KRRO,error: 'beta',34.39
+KRT,867.05,24.76
+KRUS,-52.82,83.02
+KRYS,113.84,144.36
+KSCP,-40.48,5.86
+KSPI,"28,401,963.78",84.91
+KTCC,24.43,3.41
+KTOS,9.48,67.67
+KTTA,-153.13,0.789
+KTTAW,-inf,0.0137
+KURA,"1,003.97",8.825
+KVAC,error: 'beta',11.57
+KVACU,error: 'beta',11.5
+KVACW,error: 'beta',0.08
+KVHI,-18.61,5.94
+KWM,-4.61,2.1
+KWMWW,-inf,0.1111
+KXIN,-25.58,0.7988
+KYIV,error: 'beta',11.75
+KYIVW,error: 'beta',3.47
+KYMR,-32.30,46.2
+KYTX,error: 'beta',4.15
+KZIA,-99.95,8.15
+KZR,-291.57,3.98
+LAB,-12.09,1.33
+LAES,"-430,842.33",2.87
+LAKE,-43.17,14.24
+LAMR,"1,525.62",128.82
+LAND,10.29,8.91
+LANDM,173.84,24.8999
+LANDO,inf,19.79
+LANDP,inf,19.9045
+LARK,error: 'EBITDA',26.595
+LASE,-9.34,2.61
+LASR,-4.51,29.16
+LAUR,"976,168.47",29.04
+LAWR,error: 'beta',2.05
+LAYS,error: 'beta',38.19
+LAZR,-52.50,1.77
+LBGJ,error: 'beta',1.6
+LBRDA,4.19,60.48
+LBRDK,0.61,60.79
+LBRDP,inf,24.95
+LBTYA,189.26,11.95
+LBTYB,"2,555.40",12.22
+LBTYK,215.24,12.11
+LCCC,error: 'beta',10.05
+LCCCR,error: 'beta',0.2001
+LCCCU,error: 'beta',10.23
+LCDL,error: 'beta',13.55
+LCDS,error: 'beta',61.3901
+LCFY,-26.46,6.425
+LCFYW,-inf,10.52
+LCID,-365.40,19.9
+LCNB,error: 'EBITDA',16.245
+LCUT,7.29,4.2
+LDEM,error: 'beta',58.2292
+LDRX,error: 'beta',31.76
+LDSF,error: 'beta',19.19
+LDWY,-197.92,5.284
+LE,2.71,15.3
+LECO,"1,106.42",242.84
+LEDS,-2.94,1.97
+LEE,-88.01,4.42
+LEGH,41.19,27.71
+LEGN,-194.78,33.83
+LEGR,error: 'beta',55.74
+LENZ,error: 'beta',40.81
+LESL,-0.12,0.335
+LEXI,error: 'beta',34.175
+LEXX,-5.97,1.07
+LEXXW,-inf,0.0636
+LFCR,-789.97,7.77
+LFMD,"4,120,696,804.34",5.89
+LFMDP,inf,23.8
+LFSC,error: 'beta',29.0844
+LFST,2.62,5.34
+LFUS,136.42,271.17
+LFVN,183.78,11.72
+LFWD,-50.38,0.5844
+LGCB,error: 'beta',2.23
+LGCF,error: 'beta',33.5467
+LGCL,error: 'beta',0.1596
+LGHL,-134.98,1.73
+LGIH,-132.79,63.02
+LGND,67.43,167.06
+LGO,-9.86,1.595
+LGRO,error: 'beta',39.8299
+LGVN,-29.70,0.795
+LHAI,error: 'beta',8.78
+LHSW,error: 'beta',2.24
+LI,"487,791,963.03",24.35
+LICN,-217.81,5.0
+LIDR,-6.74,2.65
+LIDRW,-inf,0.1748
+LIEN,error: 'EBITDA',10.94
+LIF,"17,653.87",98.3
+LILA,-23.60,7.63
+LILAK,-5.74,7.75
+LIMN,-5.28,2.08
+LIMNW,-inf,0.1867
+LIN,668.32,483.59
+LINC,-22.10,19.91
+LIND,-3.53,13.73
+LINE,error: 'beta',42.39
+LINK,-2.45,9.48
+LIQT,-40.81,2.395
+LITE,-93.76,164.88
+LITM,-31.24,4.08
+LITP,error: 'beta',7.55
+LIVE,341.03,17.34
+LIVN,122.96,57.34
+LIVR,error: 'beta',28.8772
+LIXT,-27.57,5.27
+LIXTW,-inf,0.1792
+LKFN,error: 'EBITDA',65.73
+LKQ,99.36,32.92
+LLYVA,-87.24,98.96
+LLYVK,-34.98,101.905
+LMAT,100.12,94.23
+LMB,"3,579.35",103.25
+LMBS,error: 'beta',49.86
+LMFA,error: 'EBITDA',1.21
+LMNR,"1,135.18",15.49
+LMTL,error: 'beta',30.0
+LMTS,error: 'beta',23.2999
+LNKB,error: 'EBITDA',7.23
+LNKS,error: 'beta',0.5049
+LNSR,-8.16,12.13
+LNT,"3,109.25",64.66
+LNTH,"48,789.46",54.99
+LNW,"1,014.15",88.43
+LNZA,-515.80,19.8244
+LNZAW,error: 'beta',0.025
+LOAN,error: 'EBITDA',5.33
+LOBO,error: 'beta',0.6114
+LOCO,21.73,10.43
+LOGI,"1,700.48",108.65
+LOGO,error: 'beta',21.67
+LOKV,error: 'beta',10.17
+LOKVU,error: 'beta',10.41
+LOKVW,error: 'beta',0.4201
+LOOP,-1.47,1.83
+LOPE,253.04,209.5
+LOT,error: 'beta',2.005
+LOTWW,error: 'beta',0.0855
+LOVE,6.18,17.67
+LPAA,error: 'beta',10.46
+LPAAU,error: 'beta',10.574
+LPAAW,error: 'beta',0.196
+LPBB,error: 'beta',10.4335
+LPBBU,error: 'beta',10.68
+LPBBW,error: 'beta',0.3
+LPCN,-2.88,2.94
+LPLA,"6,227.64",347.71
+LPRO,-1.38,2.2
+LPSN,-14.26,0.95
+LPTH,-1.49,5.3
+LPTX,-202.01,0.2851
+LQDA,-67.89,27.0
+LQDT,25.03,27.25
+LRCX,168.41,115.58
+LRE,error: 'beta',1.41
+LRGE,error: 'beta',80.87
+LRHC,error: 'beta',8.775
+LRMR,-18.94,4.17
+LRND,error: 'beta',38.73
+LSAK,"21,519.01",4.25
+LSB,-216.79,0.8766
+LSBK,error: 'EBITDA',13.02
+LSBPW,-inf,0.0234
+LSCC,10.94,66.02
+LSE,error: 'beta',5.3185
+LSH,error: 'beta',1.09
+LSTA,-31.65,2.24
+LSTR,144.50,132.43
+LTBR,-4.42,14.07
+LTRN,-24.53,3.93
+LTRX,1.03,4.57
+LTRYW,error: 'beta',0.015
+LUCD,-40.55,1.07
+LUCY,-7.98,1.93
+LUCYW,-inf,0.071
+LULU,695.64,165.78
+LUNG,-118.63,1.69
+LUNR,-9.05,8.52
+LVHD,error: 'beta',41.1
+LVLU,-151.43,4.7
+LVO,-0.21,0.5322
+LVRO,123.88,1.39
+LVROW,error: 'beta',0.0307
+LVTX,-23.35,1.54
+LWAC,error: 'beta',9.96
+LWACU,error: 'beta',10.03
+LWACW,error: 'beta',0.1626
+LWAY,187.10,32.77
+LWLG,-1.33,3.07
+LX,229.33,5.87
+LXEH,-90.49,2.39
+LXEO,error: 'beta',5.18
+LXRX,-11.03,1.11
+LYEL,"-1,246.64",13.3
+LYFT,24.51,18.32
+LYRA,"-2,383.05",6.335
+LYTS,326.73,22.89
+LZ,26.97,10.55
+LZMH,error: 'beta',3.49
+MAAS,error: 'beta',3.89
+MACI,error: 'beta',10.51
+MACIU,error: 'beta',10.49
+MACIW,error: 'beta',0.165
+MAGH,error: 'beta',1.2131
+MAMA,"4,787.73",9.6
+MAMK,error: 'beta',2.35
+MAMO,error: 'beta',3.0
+MANH,212.77,219.26
+MAPS,"1,007.65",1.25
+MAPSW,inf,0.0211
+MAR,722.37,267.94
+MARA,"5,503,969,020.31",15.71
+MARPS,error: 'Free Cash Flow',4.5705
+MASI,20.49,146.21
+MASK,error: 'beta',0.6901
+MASS,-55.82,5.72
+MAT,335.48,18.0
+MATH,3.19,3.24
+MATW,11.47,25.16
+MAXI,error: 'beta',29.76
+MAXN,-335.07,3.96
+MAYA,error: 'beta',10.17
+MAYAR,error: 'beta',0.2
+MAYAU,error: 'beta',10.66
+MAYS,-40.76,38.0
+MAZE,error: 'beta',24.8
+MB,error: 'beta',10.21
+MBAV,error: 'beta',10.535
+MBAVU,error: 'beta',11.2
+MBAVW,error: 'beta',1.1
+MBB,error: 'beta',95.46
+MBBC,error: 'EBITDA',10.2
+MBCN,error: 'EBITDA',30.12
+MBIN,error: 'EBITDA',32.09
+MBINL,error: 'EBITDA',23.39
+MBINM,error: 'EBITDA',25.05
+MBINN,error: 'EBITDA',21.35
+MBIO,-12.85,1.57
+MBLY,-31.62,14.11
+MBNKO,error: 'beta',26.07
+MBOT,-3.20,3.89
+MBRX,-11.03,0.376
+MBS,error: 'beta',8.73
+MBUU,25.53,33.86
+MBVIU,error: 'beta',10.005
+MBWM,error: 'EBITDA',48.34
+MBX,error: 'beta',9.93
+MCBS,error: 'EBITDA',29.31
+MCDS,error: 'beta',57.73
+MCFT,28.81,23.2
+MCHI,error: 'beta',64.21
+MCHP,21.48,65.02
+MCHPP,inf,60.17
+MCHS,error: 'beta',33.05
+MCHX,-0.49,1.98
+MCRB,-833.22,17.57
+MCRI,67.20,104.48
+MCSE,error: 'beta',14.3
+MCTR,error: 'beta',2.34
+MCW,"21,660.14",5.52
+MDAI,-8.21,1.99
+MDAIW,-inf,0.58
+MDB,7.41,332.1
+MDBH,error: 'beta',3.85
+MDCX,error: 'beta',2.25
+MDCXW,error: 'beta',0.7346
+MDGL,"-4,326.85",439.45
+MDIA,726.28,1.43
+MDIV,error: 'beta',16.22
+MDLZ,373.51,62.05
+MDRR,512.69,13.0776
+MDWD,"-1,443.39",19.06
+MDXG,137.34,7.14
+MDXH,-1.70,3.83
+MEDP,"2,388.01",497.59
+MEDX,error: 'beta',29.6
+MEGL,-9.26,1.58
+MEIP,-243.06,2.78
+MELI,"3,326,120.38",2338.2
+MEMS,error: 'beta',27.39
+MENS,error: 'beta',64.42
+MEOH,179.03,39.78
+MERC,-6.04,3.12
+MESA,-1.45,1.4
+MESO,-9.86,15.37
+META,"1,554.47",750.9
+METC,39.69,24.19
+METCB,204.39,15.16
+METCI,error: 'Free Cash Flow',25.55
+METCZ,error: 'Free Cash Flow',25.45
+METD,error: 'beta',14.29
+METU,error: 'beta',45.05
+MFH,-0.33,7.39
+MFI,error: 'beta',35.62
+MFIC,error: 'EBITDA',12.58
+MFICL,error: 'Free Cash Flow',25.3
+MFIN,error: 'EBITDA',10.68
+MFLX,error: 'beta',17.02
+MGEE,"2,219.96",85.96
+MGIC,74.91,20.43
+MGIH,-17.50,2.19
+MGNI,36.03,24.14
+MGNX,-43.32,1.65
+MGPI,155.93,28.34
+MGRC,"1,301.61",125.99
+MGRM,-9.43,5.73
+MGRT,error: 'beta',3.5699
+MGRX,-4.88,2.13
+MGTX,-69.72,7.67
+MGX,error: 'beta',1.89
+MGYR,error: 'EBITDA',17.26
+MHUA,8.57,0.425
+MIDD,380.83,138.78
+MIGI,-2.22,0.4015
+MILN,error: 'beta',50.1155
+MIMI,error: 'beta',9.04
+MIND,3.35,8.48
+MIRA,-3.83,1.66
+MIRM,-22.96,75.99
+MIST,-11.76,1.91
+MITK,13.06,10.46
+MJID,error: 'beta',1.17
+MKAM,error: 'beta',30.13
+MKDW,error: 'beta',0.212
+MKDWW,error: 'beta',0.0134
+MKLYU,error: 'beta',9.98
+MKSI,105.91,116.0
+MKTW,-58.96,18.21
+MKTX,269.85,188.46
+MKZR,error: 'beta',5.61
+MLAB,386.03,63.09
+MLAC,error: 'beta',10.31
+MLACR,error: 'beta',0.22
+MLACU,error: 'beta',10.6
+MLCO,8.17,9.96
+MLEC,error: 'beta',1.38
+MLECW,error: 'beta',0.0137
+MLGO,112.57,8.77
+MLKN,32.94,21.09
+MLTX,-37.08,54.3
+MLYS,-334.12,37.16
+MMLP,-5.73,3.12
+MMSI,870.42,90.21
+MMYT,"131,724.80",100.7
+MNDO,5.17,1.185
+MNDR,error: 'beta',0.783
+MNDY,"3,060,901.83",191.8
+MNKD,2.11,5.42
+MNMD,-10.56,9.65
+MNOV,-10.05,1.25
+MNPR,-23.52,47.665
+MNRO,78.42,17.82
+MNSB,error: 'EBITDA',21.7
+MNSBP,error: 'EBITDA',25.0
+MNST,82.89,63.8
+MNTK,2.52,2.1
+MNTS,-31.10,1.16
+MNTSW,-inf,0.0237
+MNY,-15.25,2.05
+MNYWW,-inf,0.1024
+MOB,-6.45,6.59
+MOBBW,-0.17,2.42
+MOBX,-18.71,1.03
+MOBXW,-inf,0.1353
+MODD,-734.84,0.7002
+MODL,error: 'beta',45.65
+MOFG,error: 'EBITDA',29.41
+MOGO,-5.04,1.84
+MOLN,-61.76,3.75
+MOMO,577.58,7.53
+MOOD,error: 'beta',35.5709
+MORN,"1,378.89",256.97
+MOVE,-45.25,0.7725
+MPAA,28.05,16.04
+MPB,error: 'EBITDA',30.18
+MPWR,"1,800.47",840.38
+MQ,0.79,5.97
+MQQQ,error: 'beta',171.2
+MRAL,error: 'beta',17.91
+MRAM,16.06,6.85
+MRBK,error: 'EBITDA',15.52
+MRCC,error: 'EBITDA',7.6
+MRCY,"36,639.09",73.08
+MREO,-10.22,1.82
+MRKR,-9.56,0.9701
+MRM,"-126,813.60",1.85
+MRNA,-118.56,25.39
+MRNO,"-1,081.43",3.25
+MRNOW,-inf,0.1771
+MRSN,-283.48,7.47
+MRTN,-13.68,11.96
+MRUS,-46.23,69.8
+MRVI,-16.56,2.79
+MRVL,49.26,66.59
+MRX,error: 'beta',33.99
+MSAI,-86.71,0.7746
+MSAIW,-inf,0.0287
+MSBI,error: 'EBITDA',18.2
+MSBIP,error: 'EBITDA',24.05
+MSDD,error: 'beta',29.5732
+MSEX,74.50,53.89
+MSFD,error: 'beta',11.23
+MSFL,error: 'beta',30.02
+Symbol,DCF Price,Last Close
+MSFL,error: 'beta',30.02
+MSFT,461.64,501.01
+MSFU,error: 'beta',49.38
+MSGM,-4.93,2.845
+MSGY,error: 'beta',13.56
+MSPR,"-34,564.18",1.72
+MSPRW,-inf,0.002
+MSPRZ,-inf,0.019
+MSS,error: 'beta',1.11
+MST,error: 'beta',9.86
+MSTP,error: 'beta',15.22
+MSTR,-468.28,326.02
+MSTX,error: 'beta',22.69
+MSW,error: 'beta',2.44
+MTC,error: 'beta',1.0
+MTCH,448.61,38.02
+MTEK,-7.64,3.205
+MTEKW,-inf,0.302
+MTEN,error: 'beta',11.78
+MTEX,59.26,8.17
+MTLS,1.57,5.2
+MTRX,"4,597,165,187.08",13.05
+MTSI,28.68,131.07
+MTSR,error: 'beta',37.25
+MTVA,-108.77,0.6837
+MU,13.53,150.57
+MUD,error: 'beta',12.4301
+MULL,error: 'beta',29.81
+MULT,error: 'beta',25.345
+MURA,error: 'beta',2.07
+MUU,error: 'beta',34.16
+MVBF,error: 'EBITDA',24.17
+MVIS,-5.04,1.15
+MVLL,error: 'beta',15.11
+MVST,-3.97,2.83
+MVSTW,-inf,0.1262
+MWYN,error: 'beta',1.32
+MXCT,-29.39,1.48
+MXL,-18.38,16.04
+MYCF,error: 'beta',25.075
+MYCG,error: 'beta',25.0797
+MYCH,error: 'beta',25.1499
+MYCI,error: 'beta',25.14
+MYCJ,error: 'beta',25.1299
+MYCK,error: 'beta',25.19
+MYCL,error: 'beta',25.14
+MYCM,error: 'beta',25.0199
+MYCN,error: 'beta',24.88
+MYFW,error: 'EBITDA',23.5
+MYGN,-8.79,7.68
+MYMF,error: 'beta',24.98
+MYMG,error: 'beta',24.72
+MYMH,error: 'beta',24.6699
+MYMI,error: 'beta',24.685
+MYMJ,error: 'beta',24.8
+MYNZ,"-11,358.99",1.68
+MYPS,"4,302,328,292,248.52",0.9563
+MYPSW,inf,0.0197
+MYRG,39.64,179.17
+MYSE,-12.28,2.06
+MYSEW,-inf,0.117
+MYSZ,-68.46,1.2
+MZTI,748.12,185.295
+,error: 'float' object has no attribute 'upper',185.295
+NAAS,"-2,881.81",3.216
+NAGE,5.39,9.62
+NAII,-31.83,3.59
+NAKA,error: 'beta',3.945
+NAMI,error: 'beta',1.11
+NAMM,490.27,3.0
+NAMMW,inf,0.15
+NAMS,-87.12,26.6
+NAMSW,-inf,14.48
+NAOV,-40.05,6.25
+NATH,567.60,110.455
+NATO,error: 'beta',37.4
+NATR,14.63,17.04
+NAUT,-6.89,0.7062
+NAVI,error: 'EBITDA',13.19
+NB,-13.43,4.75
+NBBK,error: 'beta',18.75
+NBIS,-64.95,89.19
+NBIX,"8,324.20",143.607
+NBN,error: 'EBITDA',110.98
+NBTB,error: 'EBITDA',43.64
+NBTX,-9.49,9.95
+NCEW,error: 'beta',0.5882
+NCI,error: 'beta',2.05
+NCIQ,error: 'beta',31.33
+NCMI,5.30,4.73
+NCNA,-156.22,3.67
+NCNO,9.58,30.46
+NCPB,error: 'beta',25.46
+NCPL,-62.55,2.18
+NCPLW,-inf,0.035
+NCRA,-2.61,1.53
+NCSM,"428,611.16",47.97
+NCT,error: 'beta',1.33
+NCTY,-51.62,10.16
+NDAA,error: 'beta',21.46
+NDAQ,240.16,95.61
+NDLS,-11.10,0.6471
+NDRA,-879.02,4.61
+NDSN,323.15,227.98
+NECB,error: 'EBITDA',21.46
+NEGG,-8.75,37.77
+NEO,-7.33,8.34
+NEOG,-26.56,5.74
+NEON,-8.38,4.285
+NEOV,-5.04,4.92
+NEOVW,-inf,1.8
+NEPH,-0.73,4.21
+NERD,error: 'beta',28.37
+NERV,-402.89,2.13
+NESR,"8,279.39",10.34
+NETD,-3.97,11.27
+NETDU,-inf,11.35
+NETDW,-inf,0.2
+NEUP,error: 'beta',13.99
+NEWT,error: 'EBITDA',11.71
+NEWTG,error: 'beta',24.7114
+NEWTH,error: 'Free Cash Flow',25.03
+NEWTI,error: 'beta',25.0
+NEWTP,error: 'EBITDA',23.8
+NEWTZ,error: 'beta',24.99
+NEWZ,error: 'beta',28.45
+NEXM,-25.40,6.0594
+NEXN,22.59,10.0
+NEXT,-547.22,7.66
+NFBK,error: 'EBITDA',11.98
+NFE,-276.30,1.36
+NFLX,"12,025.66",1203.5
+NFTY,error: 'beta',58.2304
+NFXL,error: 'beta',57.26
+NFXS,error: 'beta',13.97
+NGNE,error: 'beta',20.08
+NHIC,error: 'beta',10.17
+NHICU,error: 'beta',10.31
+NHICW,error: 'beta',0.2726
+NHPAP,-inf,18.401
+NHPBP,-inf,17.82
+NHTC,-8.69,4.68
+NICE,"3,690.69",142.64
+NIKL,error: 'beta',13.052
+NIOBW,error: 'beta',0.8906
+NIPG,error: 'beta',1.92
+NISN,-164.95,3.63
+NITO,-1.50,0.21
+NIU,-145.59,4.12
+NIVF,-345.17,2.0794
+NIVFW,-inf,0.0248
+NIXT,error: 'beta',26.62
+NIXX,-7.10,1.68
+NIXXW,-inf,0.0239
+NKSH,error: 'EBITDA',29.91
+NKTR,-158.11,47.2
+NKTX,-35.86,2.07
+NLSP,-34.83,2.15
+NLSPW,-inf,0.0148
+NMFC,error: 'EBITDA',10.51
+NMFCZ,error: 'beta',25.395
+NMIH,error: 'EBITDA',40.34
+NMPAU,error: 'beta',10.09
+NMRA,error: 'beta',1.66
+NMRK,-12.46,19.24
+NMTC,-5.97,0.8943
+NN,-8.18,17.1
+NNAVW,-inf,6.9
+NNBR,-5.26,2.33
+NNDM,-3.86,1.47
+NNE,error: 'beta',32.96
+NNNN,error: 'beta',43.57
+NNOX,-7.42,3.97
+NODK,error: 'EBITDA',13.58
+NOEM,error: 'beta',10.14
+NOEMR,error: 'beta',0.29
+NOEMU,error: 'beta',10.62
+NOEMW,error: 'beta',0.1501
+NOTV,-31.27,1.44
+NOVT,233.95,117.97
+NOWL,error: 'beta',23.135
+NPAC,error: 'beta',10.1146
+NPACU,error: 'beta',10.21
+NPACW,error: 'beta',0.4
+NPCE,-28.71,10.01
+NPFI,error: 'beta',26.33
+NRC,36.90,16.2
+NRDS,19.66,10.7
+NRES,error: 'beta',27.09
+NRIM,error: 'EBITDA',92.15
+NRIX,-27.86,9.2
+NRSN,-5.26,1.15
+NRSNW,-inf,0.38
+NRXP,-8.13,2.88
+NRXPW,-inf,0.0822
+NSCR,error: 'beta',30.15
+NSI,error: 'beta',31.62
+NSIT,"13,648.36",129.21
+NSPR,-19.00,2.4
+NSSC,918.05,41.35
+NSTS,error: 'EBITDA',11.7375
+NSYS,-51.22,9.4
+NTAP,473.83,125.09
+NTCL,error: 'beta',1.73
+NTCT,46.62,25.8
+NTES,"2,730.31",150.095
+NTGR,"6,992.83",29.03
+NTHI,error: 'beta',9.879
+NTIC,29.97,7.89
+NTLA,-40.38,11.42
+NTNX,"2,547,644.78",81.12
+NTRA,-1.23,173.81
+NTRB,-8.13,6.93
+NTRBW,-inf,1.96
+NTRP,error: 'beta',3.8896
+NTRS,error: 'EBITDA',129.48
+NTRSO,error: 'EBITDA',21.09
+NTWK,5.82,4.66
+NTWO,error: 'beta',10.3372
+NTWOU,error: 'beta',10.49
+NTWOW,error: 'beta',0.1906
+NUAI,-51.05,0.5733
+NUAIW,-inf,0.1002
+NUKK,"-3,881.91",4.5
+NUKKW,-inf,0.1132
+NUSB,error: 'beta',25.28
+NUTR,error: 'beta',4.84
+NUTX,23.23,92.0
+NUVL,-48.49,82.22
+NUWE,"-8,681.07",4.21
+NVA,-169.88,11.98
+NVAWW,-inf,5.4
+NVAX,-31.24,8.28
+NVCR,-214.28,12.73
+NVCT,-76.40,6.51
+NVD,error: 'beta',9.78
+NVDA,"6,198.59",177.17
+NVDD,error: 'beta',4.16
+NVDG,error: 'beta',18.26
+NVDL,error: 'beta',85.36
+NVDS,error: 'beta',12.04
+NVDU,error: 'beta',119.74
+NVEC,46.17,67.75
+NVFY,-2.81,4.96
+NVMI,338.51,288.19
+NVNI,error: 'beta',0.59
+NVNIW,error: 'beta',0.0613
+NVNO,-15.13,0.786
+NVTS,-2.30,6.08
+NVVE,-9.31,0.2596
+NVVEW,-inf,0.0203
+NVX,-18.93,1.27
+NVYY,error: 'beta',23.8778
+NWBI,error: 'EBITDA',12.7
+NWE,-632.62,57.1
+NWFL,error: 'EBITDA',26.83
+NWGL,error: 'beta',1.33
+NWL,24.08,6.09
+NWPX,957.83,53.32
+NWS,71.70,32.27
+NWSA,34.04,29.52
+NWTG,-5.20,1.86
+NXGL,-27.28,2.47
+NXGLW,-inf,0.309
+NXL,-1.60,0.8675
+NXLIW,-inf,0.02
+NXPI,240.95,223.21
+NXPL,-6.91,0.701
+NXPLW,-inf,0.0498
+NXST,"2,506.23",206.22
+NXT,"334,652.73",67.5
+NXTC,-212.09,5.44
+NXTG,error: 'beta',103.37
+NXTT,-0.00,0.355
+NXXT,-14.42,1.99
+NYAX,44.41,50.57
+NYMT,error: 'EBITDA',7.22
+NYMTG,error: 'Free Cash Flow',25.0
+NYMTH,error: 'Free Cash Flow',25.5
+NYMTI,error: 'Free Cash Flow',25.1799
+NYMTL,error: 'EBITDA',21.89
+NYMTM,error: 'EBITDA',24.78
+NYMTN,error: 'EBITDA',21.5999
+NYMTZ,error: 'EBITDA',18.6304
+NYXH,-60.92,5.55
+NZAC,error: 'beta',41.75
+NZUS,error: 'beta',34.55
+OABI,-6.82,1.6
+OABIW,-inf,0.125
+OACC,error: 'beta',10.49
+OACCU,error: 'beta',10.58
+OACCW,error: 'beta',0.78
+OAKU,-25.02,11.79
+OAKUR,error: 'beta',0.29
+OAKUU,-inf,11.85
+OAKUW,error: 'beta',0.0373
+OBA,error: 'beta',9.94
+OBAWU,error: 'beta',10.01
+OBAWW,error: 'beta',0.1677
+OBIL,error: 'beta',50.2054
+OBIO,-53.79,2.62
+OBLG,-7.93,2.82
+OBT,error: 'EBITDA',26.64
+OCC,-25.13,8.73
+OCCI,error: 'EBITDA',6.13
+OCCIM,error: 'EBITDA',25.1512
+OCCIN,error: 'EBITDA',24.48
+OCCIO,error: 'EBITDA',24.97
+OCFC,error: 'EBITDA',18.28
+OCG,-6.91,4.06
+OCGN,-8.78,1.07
+OCS,-44.16,17.22
+OCSAW,error: 'beta',5.5
+OCSL,error: 'EBITDA',13.85
+OCTO,-131.28,24.11
+OCUL,-14.32,12.77
+ODD,"21,106.99",63.0
+ODDS,error: 'beta',34.7518
+ODFL,115.75,149.4
+ODP,4.01,21.3
+ODVWZ,-inf,0.2955
+ODYS,-27.87,3.9901
+OESX,-14.22,8.84
+OFAL,error: 'beta',1.47
+OFIX,-14.82,15.0
+OFLX,183.03,34.35
+OFS,error: 'EBITDA',8.7
+OFSSH,error: 'beta',23.4
+OFSSO,error: 'Free Cash Flow',25.3
+OGI,-0.83,1.66
+OKLL,error: 'beta',34.67
+OKTA,"7,268.80",91.96
+OKUR,error: 'beta',2.44
+OKYO,-96.33,2.17
+OLB,-4.73,1.29
+OLED,78.74,138.2
+OLLI,"20,232.49",131.57
+OLMA,-18.43,8.0
+OLPX,1.81,1.44
+OM,-103.10,14.15
+OMAB,"13,678.69",109.68
+OMCC,error: 'EBITDA',5.26
+OMCL,72.37,33.28
+OMDA,error: 'beta',22.12
+OMER,-26.14,4.2
+OMEX,5.58,1.74
+OMH,-22.26,1.22
+OMSE,error: 'beta',5.68
+ON,93.03,49.02
+ONB,error: 'EBITDA',22.4
+ONBPO,error: 'EBITDA',25.13
+ONBPP,error: 'EBITDA',25.15
+ONC,"-21,518.90",335.67
+ONCHU,error: 'beta',10.445
+ONCO,-225.84,3.13
+ONCY,-5.33,1.31
+ONDS,-1.40,6.42
+ONEG,error: 'beta',12.68
+ONEQ,error: 'beta',86.84
+ONEW,-30.46,16.55
+ONFO,-4.49,1.05
+ONFOW,-inf,0.23
+ONMD,-3.38,0.9078
+ONMDW,-inf,0.0346
+OOQB,error: 'beta',17.12
+OOSB,error: 'beta',17.28
+OP,-47.10,1.24
+OPAL,-81.07,2.22
+OPBK,error: 'EBITDA',14.65
+OPCH,149.78,29.37
+OPEN,-22.72,10.52
+OPI,0.48,0.3087
+OPINL,error: 'Free Cash Flow',6.34
+OPK,1.13,1.43
+OPOF,error: 'EBITDA',42.1
+OPPJ,error: 'beta',41.61
+OPRA,131.76,19.39
+OPRT,error: 'EBITDA',6.32
+OPRX,"1,793.87",18.83
+OPT,-17.19,3.41
+OPTX,"5,280.88",1.77
+OPTXW,inf,0.079
+OPTZ,error: 'beta',34.5199
+OPXS,157.59,11.84
+ORCX,error: 'beta',48.94
+ORGN,-9.25,0.5481
+ORGNW,-inf,0.02
+ORGO,0.38,5.04
+ORIC,-16.26,10.86
+ORIQU,error: 'beta',10.06
+ORIS,error: 'beta',0.127
+ORKA,error: 'beta',16.15
+ORKT,error: 'beta',0.62
+ORLY,71.64,107.82
+ORMP,-3.09,2.43
+ORR,error: 'beta',32.0
+ORRF,error: 'EBITDA',35.38
+OS,error: 'beta',19.3
+OSBC,error: 'EBITDA',18.39
+OSIS,383.23,239.55
+OSPN,17.26,15.41
+OSRH,-1.66,0.61
+OSRHW,-inf,0.0388
+OSS,-3.01,5.57
+OST,-62.97,1.72
+OSUR,11.03,3.32
+OSW,242.10,22.48
+OTEX,118.85,35.25
+OTGL,error: 'beta',9.5109
+OTLK,-60.05,1.09
+OTLY,-352.40,17.405
+OTTR,417.02,84.0
+OUST,-7.33,30.73
+OUSTW,-inf,0.0075
+OUSTZ,-inf,0.0649
+OVBC,error: 'EBITDA',36.9
+OVID,-67.61,1.25
+OVLY,error: 'EBITDA',29.15
+OXBR,error: 'EBITDA',2.3
+OXBRW,error: 'EBITDA',0.42
+OXLC,error: 'EBITDA',17.72
+OXLCG,error: 'Free Cash Flow',25.38
+OXLCI,error: 'Free Cash Flow',26.06
+OXLCL,error: 'beta',24.08
+OXLCN,error: 'EBITDA',24.465
+OXLCO,error: 'EBITDA',23.3234
+OXLCP,error: 'EBITDA',24.4
+OXLCZ,error: 'beta',24.33
+OXSQ,error: 'EBITDA',2.17
+OXSQG,error: 'beta',23.965
+OXSQH,error: 'Free Cash Flow',25.17
+OXSQZ,error: 'beta',25.17
+OYSE,error: 'beta',10.05
+OYSER,error: 'beta',0.17
+OYSEU,error: 'beta',10.17
+OZEM,error: 'beta',25.99
+OZK,error: 'EBITDA',52.5
+OZKAP,error: 'EBITDA',17.52
+PAA,118.02,17.35
+PABD,error: 'beta',62.78
+PABU,error: 'beta',70.84
+PACB,-31.49,1.26
+PACH,error: 'beta',9.95
+PACHU,error: 'beta',10.01
+PACHW,error: 'beta',0.17
+PAGP,411.59,18.64
+PAHC,271.36,41.19
+PAL,error: 'beta',7.72
+PALD,error: 'beta',22.8
+PALI,-22.53,0.582
+PALU,error: 'beta',23.88
+PAMT,-195.70,12.65
+PANG,error: 'beta',15.185
+PANL,-4.35,5.59
+PANW,"30,009,411.90",198.33
+PASG,-208.11,7.04
+PATK,174.18,113.81
+PATN,error: 'beta',25.23
+PAVM,-19.67,0.4279
+PAVS,-6.92,0.845
+PAX,77.07,14.48
+PAYO,25.11,6.64
+PAYS,3.78,5.32
+PAYX,215.78,135.46
+PBBK,error: 'EBITDA',19.58
+PBFS,error: 'EBITDA',13.37
+PBHC,error: 'EBITDA',14.95
+PBM,"-10,181.00",3.24
+PBMWW,-inf,0.0293
+PBPB,-1.19,17.02
+PBQQ,error: 'beta',27.74
+PBYI,28.34,4.5
+PC,error: 'beta',7.43
+PCAP,error: 'beta',10.25
+PCAPU,error: 'beta',10.4
+PCAPW,error: 'beta',0.65
+PCAR,"5,673.90",101.76
+PCB,error: 'EBITDA',21.81
+PCH,11.09,42.66
+PCLA,error: 'beta',0.4944
+PCMM,error: 'beta',50.43
+PCRX,"2,580.99",27.03
+PCSA,-3.39,0.1919
+PCSC,error: 'beta',10.55
+PCT,-25.48,13.31
+PCTTU,-inf,17.8
+PCTTW,-inf,4.0
+PCTY,"9,205.49",171.93
+PCVX,-79.89,33.06
+PCYO,2.52,11.28
+PDBA,error: 'beta',36.453
+PDBC,error: 'beta',13.24
+PDD,"324,927.80",125.72
+PDDL,error: 'beta',36.98
+PDEX,476.64,35.185
+PDFS,-3.90,19.97
+PDLB,error: 'EBITDA',14.93
+PDP,error: 'beta',116.089
+PDSB,-26.19,1.18
+PDYN,-4.13,7.16
+PDYNW,-inf,0.21
+PEBK,error: 'EBITDA',31.81
+PEBO,error: 'EBITDA',30.63
+PECO,292.23,35.96
+PEGA,"4,999.76",58.08
+PELI,error: 'beta',10.02
+PELIR,error: 'beta',0.24
+PELIU,error: 'beta',10.2278
+PENG,112.71,26.15
+PENN,-151.65,20.03
+PEP,169.08,144.23
+PEPG,-39.46,1.35
+PEPS,error: 'beta',27.82
+PERI,error: 'beta',9.38
+PESI,-109.50,8.19
+PETS,-0.26,2.83
+PETZ,-2.19,1.16
+PEY,error: 'beta',21.385
+PEZ,error: 'beta',102.14
+PFAI,error: 'beta',1.87
+PFBC,error: 'EBITDA',94.56
+PFF,error: 'beta',32.05
+PFG,error: 'EBITDA',82.08
+PFI,error: 'beta',57.67
+PFIS,error: 'EBITDA',53.37
+PFM,error: 'beta',50.8823
+PFSA,-8.76,0.4612
+PFX,error: 'EBITDA',47.95
+PFXNZ,error: 'beta',23.6627
+PGAC,error: 'beta',10.23
+PGACR,error: 'beta',0.16
+PGACU,error: 'beta',10.38
+PGC,error: 'EBITDA',29.46
+PGEN,-3.45,4.14
+PGJ,error: 'beta',32.69
+PGNY,"1,149.00",23.17
+PGY,-6.46,38.13
+PGYWW,-inf,0.5019
+PHAR,-2.51,14.79
+PHAT,-169.81,12.06
+PHH,error: 'beta',0.4646
+PHIO,-26.47,2.32
+PHLT,-0.70,7.69
+PHO,error: 'beta',72.35
+PHOE,error: 'beta',8.99
+PHUN,-4.45,2.69
+PHVS,"-1,201.86",23.5
+PI,76.94,183.43
+PID,error: 'beta',21.37
+PIE,error: 'beta',24.349
+PIII,"-4,062.17",8.674
+PIIIW,-inf,0.0124
+PINC,123.41,26.81
+PIO,error: 'beta',45.0901
+PIZ,error: 'beta',47.682
+PKBK,error: 'EBITDA',22.61
+PKOH,911.49,22.19
+PKW,error: 'beta',132.83
+PLAB,151.29,22.79
+PLAY,-259.04,23.03
+PLBC,error: 'EBITDA',45.58
+PLBL,error: 'beta',9.48
+PLBY,-14.43,1.75
+PLCE,-71.91,7.33
+PLL,-370.96,7.96
+PLMK,error: 'beta',10.28
+PLMKU,error: 'beta',10.36
+PLMKW,error: 'beta',0.252
+PLMR,error: 'EBITDA',118.9
+PLPC,"2,223.53",198.62
+PLRX,-35.05,1.65
+PLRZ,error: 'beta',0.9775
+PLSE,-8.23,15.1
+PLT,error: 'beta',17.43
+PLTD,error: 'beta',7.61
+PLTG,error: 'beta',29.65
+PLTK,12.94,3.68
+PLTR,20.15,164.36
+PLTU,error: 'beta',84.06
+PLTZ,error: 'beta',8.99
+PLUG,-17.82,1.51
+PLUR,-134.44,5.14
+PLUS,242.30,74.88
+PLUT,error: 'beta',3.2
+PLXS,"3,580.84",140.78
+PMAX,error: 'beta',0.3086
+PMBS,error: 'beta',49.825
+PMCB,-67.55,1.03
+PMEC,error: 'beta',1.835
+PMN,-28.80,0.418
+PMTR,error: 'beta',10.16
+PMTRU,error: 'beta',10.85
+PMTRW,error: 'beta',0.57
+PMTS,193.90,15.19
+PMVP,-10.10,1.23
+PN,error: 'beta',1.0
+PNBK,error: 'EBITDA',1.49
+PNFP,error: 'EBITDA',97.8
+PNFPP,error: 'EBITDA',25.11
+PNQI,error: 'beta',55.25
+PNRG,"109,876.60",165.55
+PNTG,794.07,25.71
+POAI,-14.03,0.95
+POCI,-25.30,4.34
+PODC,-2.95,1.67
+PODD,"1,227,261.83",337.94
+POET,-22.91,5.33
+POLA,-27.98,2.54
+POLE,error: 'beta',10.42
+POLEU,error: 'beta',10.49
+POLEW,error: 'beta',0.2292
+PONY,error: 'beta',15.24
+POOL,"1,942.97",329.8
+POWI,15.92,45.62
+POWL,"52,682,050.29",292.4
+POWW,-2.93,1.6
+POWWP,-inf,23.7351
+PPBI,error: 'EBITDA',24.49
+PPBT,-265.58,0.57
+PPC,"359,821.08",44.06
+PPCB,-0.10,1.98
+PPH,error: 'beta',90.12
+PPI,error: 'beta',17.81
+PPIH,"8,627.70",31.8
+PPSI,-13.43,4.54
+PPTA,-8.96,17.21
+PQAP,error: 'beta',27.68
+PQJA,error: 'beta',27.336
+PQJL,error: 'beta',27.85
+PQOC,error: 'beta',27.145
+PRAA,-191.03,17.32
+PRAX,-57.96,39.42
+PRCH,-5.88,18.15
+PRCT,-40.70,38.64
+PRDO,62.36,34.77
+PRE,-119.15,8.86
+PRENW,-inf,0.028
+PRFX,-167.90,1.44
+PRFZ,error: 'beta',45.825
+PRGS,178.11,43.01
+PRLD,-49.36,1.21
+PRME,-19.55,4.08
+PRN,error: 'beta',167.92
+PROF,-273.25,3.96
+PROK,-13.72,2.98
+PROP,-26.25,2.28
+PROV,error: 'EBITDA',15.56
+PRPH,-78.19,0.5151
+PRPL,-5.74,1.07
+PRPO,-8.11,20.2303
+PRQR,-30.37,2.19
+PRSO,-23.82,1.23
+PRTA,-180.69,8.43
+PRTC,-144.25,16.31
+PRTG,-71.94,6.96
+PRTH,133.55,7.63
+PRTS,-8.54,0.8386
+PRVA,45.13,22.91
+PRZO,-38.49,1.37
+PSC,error: 'beta',57.11
+PSCC,error: 'beta',34.61
+PSCD,error: 'beta',115.715
+PSCE,error: 'beta',41.5
+PSCF,error: 'beta',59.1517
+PSCH,error: 'beta',41.61
+PSCI,error: 'beta',149.312
+PSCM,error: 'beta',75.72
+PSCT,error: 'beta',50.75
+PSCU,error: 'beta',58.005
+PSEC,error: 'EBITDA',2.8
+PSET,error: 'beta',76.3232
+PSHG,96.55,1.87
+PSIG,-11.79,0.496
+PSIX,60.09,94.585
+PSKY,-25.19,17.46
+PSL,error: 'beta',112.67
+PSMT,229.41,118.1
+PSNL,-8.95,6.1
+PSNY,-10.49,0.9652
+PSNYW,-10.24,0.33
+PSTR,error: 'beta',28.11
+PSTV,-2.99,0.4699
+PSWD,error: 'beta',35.205
+PT,-18.81,1.02
+PTC,385.93,207.03
+PTCT,-108.52,60.96
+PTEN,632.57,5.56
+PTF,error: 'beta',72.25
+PTGX,31.39,59.68
+PTH,error: 'beta',40.8758
+PTHL,error: 'beta',0.93
+PTIR,error: 'beta',26.64
+PTIX,error: 'beta',3.32
+PTIXW,error: 'beta',0.064
+PTLE,error: 'beta',0.21
+PTLO,128.61,6.14
+PTNM,error: 'beta',6.5
+PTNQ,error: 'beta',75.37
+PTON,1.36,7.65
+PUBM,14.45,8.52
+PUI,error: 'beta',44.14
+PULM,-35.59,4.99
+PVBC,error: 'EBITDA',12.8
+PVLA,error: 'beta',58.45
+PWM,-1.04,0.5451
+PWP,48.95,22.67
+PWRD,error: 'beta',94.76
+PXI,error: 'beta',44.505
+PXLW,-60.22,12.465
+PXS,-374.44,2.82
+PXSAW,-inf,0.0101
+PY,error: 'beta',52.2532
+PYPD,-27.48,3.45
+PYPG,error: 'beta',15.91
+PYPL,157.45,67.27
+PYXS,-19.82,1.86
+PYZ,error: 'beta',103.64
+PZZA,-5.27,50.05
+QABA,error: 'beta',58.25
+QALT,error: 'beta',25.26
+QAT,error: 'beta',19.62
+QB,error: 'beta',41.0
+QBIG,error: 'beta',36.89
+QBUF,error: 'beta',28.46
+QCLN,error: 'beta',38.43
+QCLR,error: 'beta',32.01
+QCMD,error: 'beta',24.24
+QCML,error: 'beta',19.92
+QCMU,error: 'beta',26.1799
+QCOM,234.10,161.51
+QCRH,error: 'EBITDA',78.12
+QDEL,-209.22,29.94
+QDTY,error: 'beta',44.46
+QETA,error: 'beta',11.07
+QETAR,error: 'beta',1.7
+QETAU,error: 'beta',10.84
+QFIN,error: 'EBITDA',28.78
+QGRD,error: 'beta',26.0554
+QH,"-1,270.15",6.09
+QHDG,error: 'beta',28.59
+QIPT,"5,000.34",2.68
+QLGN,-462.56,2.09
+QLYS,458.34,135.65
+QMCO,-34.40,7.115
+QMID,error: 'beta',28.25
+QMMM,error: 'beta',75.53
+QMOM,error: 'beta',64.74
+QNCX,-30.01,1.58
+QNRX,-295.36,7.55
+QNST,473.55,16.28
+QNTM,-58.69,16.02
+QNXT,error: 'beta',26.48
+QOWZ,error: 'beta',36.68
+QPUX,error: 'beta',20.1
+QQA,error: 'beta',52.11
+QQDN,error: 'beta',29.013
+QQEW,error: 'beta',137.72
+QQHG,error: 'beta',56.3672
+QQJG,error: 'beta',26.755
+QQLV,error: 'beta',24.84
+QQMG,error: 'beta',40.0398
+QQQ,error: 'beta',584.08
+QQQA,error: 'beta',45.27
+QQQE,error: 'beta',99.07
+QQQG,error: 'beta',23.3001
+QQQH,error: 'beta',54.0885
+QQQI,error: 'beta',53.75
+QQQJ,error: 'beta',35.82
+QQQM,error: 'beta',240.46
+QQQP,error: 'beta',159.78
+QQQS,error: 'beta',32.0501
+QQQT,error: 'beta',18.09
+QQQX,error: 'beta',27.53
+QQQY,error: 'beta',25.43
+QQUP,error: 'beta',54.445
+QQWZ,error: 'beta',23.96
+QQXL,error: 'beta',40.1276
+QQXT,error: 'beta',98.45
+QRHC,-22.74,1.68
+QRMI,error: 'beta',15.901
+QRVO,77.14,87.67
+QSEA,error: 'beta',10.12
+QSEAR,error: 'beta',0.27
+QSEAU,error: 'beta',10.4
+QSG,"93,815.00",9.73
+QSI,-4.17,1.2
+QSIAW,-inf,0.21
+QSIX,error: 'beta',36.0999
+QSML,error: 'beta',28.6647
+QTEC,error: 'beta',218.34
+QTOP,error: 'beta',30.24
+QTR,error: 'beta',34.3302
+QTRX,-13.88,4.79
+QTTB,error: 'beta',1.88
+QTUM,error: 'beta',99.02
+QUBT,-1.06,15.89
+QUIK,-15.13,5.5
+QUMSU,error: 'beta',10.04
+QURE,-150.54,16.94
+QVAL,error: 'beta',46.7781
+QVCGA,-754.44,10.83
+QVCGP,-inf,7.1
+QXQ,error: 'beta',30.28
+QYLD,error: 'beta',16.95
+QYLG,error: 'beta',28.89
+RAA,error: 'beta',26.94
+RAAQ,error: 'beta',10.12
+RAAQU,error: 'beta',10.31
+RAAQW,error: 'beta',0.3502
+RADX,-75.28,6.28
+RAIL,"9,513.28",8.48
+RAIN,-32.27,6.83
+RAINW,-inf,0.1625
+RAND,error: 'EBITDA',14.88
+RANG,error: 'beta',10.26
+RANGR,error: 'beta',0.19
+RANGU,error: 'beta',11.0
+RANI,-47.29,0.5047
+RAPP,error: 'beta',23.2
+RAPT,-445.24,15.7
+RARE,-245.78,31.23
+RAVE,56.68,3.21
+RAY,error: 'beta',0.551
+RAYA,-3.22,0.04
+RBB,error: 'EBITDA',19.62
+RBBN,932.67,3.94
+RBCAA,error: 'EBITDA',77.07
+RBIL,error: 'beta',50.17
+RBKB,error: 'EBITDA',13.18
+RBNE,error: 'beta',1.43
+RCAT,-4.23,11.0
+RCEL,-29.49,4.38
+RCGE,error: 'beta',27.57
+RCKT,-64.76,3.28
+RCKTW,error: 'beta',0.0409
+RCKY,"1,654.60",29.42
+RCMT,"2,735.22",26.9
+RCON,-41.79,2.195
+RCT,error: 'beta',1.28
+RDAC,error: 'beta',10.38
+RDACR,error: 'beta',0.18
+RDACU,error: 'beta',10.65
+RDAG,error: 'beta',10.225
+RDAGU,error: 'beta',10.51
+RDAGW,error: 'beta',0.73
+RDCM,853.55,14.37
+RDGT,10.04,1.29
+RDHL,-19.64,1.6
+RDI,-21.08,1.5
+RDIB,-263.86,11.25
+RDNT,817.06,73.73
+RDNW,15.50,4.22
+RDTL,error: 'beta',77.07
+RDTY,error: 'beta',44.69
+RDVT,"3,713.02",48.36
+RDVY,error: 'beta',66.71
+RDWR,16.97,26.27
+RDZN,-18.66,0.98
+RDZNW,-inf,0.0751
+REAI,error: 'beta',19.79
+REAL,-5.89,9.4
+REAX,"13,199.98",5.11
+REBN,-8.93,2.44
+RECT,error: 'beta',3.6
+REE,-48.50,0.7224
+REFI,error: 'EBITDA',13.43
+REFR,-1.08,1.27
+REG,126.98,72.24
+REGCO,inf,22.77
+REGCP,inf,24.39
+REGN,"2,319.97",568.2
+REIT,error: 'beta',27.2099
+REKR,-5.58,1.19
+RELI,-48.00,0.78
+RELIW,-inf,0.0483
+RELL,966.34,9.91
+RELY,28.13,18.64
+REMG,error: 'beta',28.16
+RENB,-3.90,0.2006
+RENT,-153.08,7.89
+REPL,-121.93,6.01
+RETO,-11.60,1.56
+REVB,-597.34,2.0
+REVBW,-inf,0.0191
+REYN,424.92,23.33
+RFAI,error: 'beta',10.62
+RFAIR,error: 'beta',0.0837
+RFAIU,error: 'beta',10.51
+RFDI,error: 'beta',77.4901
+RFEM,error: 'beta',76.35
+RFEU,error: 'beta',70.12
+RFIL,error: 'beta',8.53
+RGC,-0.08,13.45
+RGCO,-76.55,22.385
+RGEN,304.82,119.51
+RGLD,375.24,189.19
+RGLO,error: 'beta',28.1801
+RGNX,-133.48,9.49
+RGP,13.66,5.09
+RGS,12.24,28.7
+RGTI,-4.22,16.69
+RGTIW,-inf,6.27
+RGTX,error: 'beta',50.44
+RHLD,error: 'beta',68.92
+RIBB,error: 'beta',10.21
+RIBBR,error: 'beta',0.22
+RIBBU,error: 'beta',10.45
+RICK,46.09,35.1
+RIFR,error: 'beta',25.468
+RIGL,"1,245.72",37.82
+RILY,-53.41,6.22
+RILYG,error: 'beta',20.08
+RILYK,error: 'beta',24.05
+RILYL,-inf,6.35
+RILYN,error: 'beta',20.9
+RILYP,-inf,6.25
+RILYT,error: 'beta',14.6
+RILYZ,error: 'beta',12.82
+RIME,-283.39,2.098
+RING,error: 'beta',59.62
+RINT,error: 'beta',28.01
+RIOT,"15,657,611.16",15.65
+RITR,error: 'beta',5.41
+RIVN,-51.92,13.97
+RKDA,-218.86,3.48
+RKLB,-5.28,48.43
+RKLX,error: 'beta',91.54
+RLAY,-22.42,4.12
+RLMD,-44.11,1.52
+RLYB,-259.96,0.5916
+RMBI,error: 'EBITDA',14.55
+RMBS,"1,624.48",88.58
+RMCF,-40.61,1.48
+RMCO,2.72,1.9
+RMCOW,inf,0.0495
+RMNI,-6.41,4.64
+RMR,53.32,17.16
+RMSG,error: 'beta',2.92
+RMSGW,error: 'beta',0.0621
+RMTI,0.96,1.69
+RNA,-48.92,41.04
+RNAC,error: 'beta',9.96
+RNAZ,-233.70,11.2
+RNEM,error: 'beta',55.43
+RNIN,error: 'beta',27.65
+RNRG,error: 'beta',30.995
+RNTX,-17.32,1.08
+RNW,"30,515.38",7.61
+RNWWW,inf,0.0555
+RNXT,-4.30,1.24
+ROAD,"2,793.67",124.91
+ROBT,error: 'beta',51.68
+ROCK,"75,417.57",62.5
+ROE,error: 'beta',34.12
+ROIV,-23.17,14.41
+ROKU,13.81,96.39
+ROMA,error: 'beta',3.19
+ROOT,error: 'EBITDA',99.62
+ROP,"1,352.37",517.38
+ROST,212.40,151.1
+RPAY,362.37,5.92
+RPD,"1,813.24",20.08
+RPID,-19.30,2.93
+RPRX,554.17,36.7
+RPTX,-27.78,1.81
+RR,error: 'beta',3.22
+RRBI,error: 'EBITDA',65.21
+RRGB,-38.80,6.8
+RRR,228.76,61.67
+RSSS,5.98,3.31
+RSVR,-27.84,8.0
+RSVRW,-inf,0.824
+RTAC,error: 'beta',10.6
+RTACU,error: 'beta',11.08
+RTACW,error: 'beta',1.04
+RTH,error: 'beta',253.58
+RTXG,error: 'beta',18.699
+RUBI,error: 'beta',2.425
+RUM,-11.98,7.33
+RUMBW,-inf,2.23
+RUN,-584.66,16.01
+RUNN,error: 'beta',34.94
+RUSC,error: 'beta',30.74
+RUSHA,150.12,57.59
+RUSHB,562.72,59.11
+RVMD,-59.64,46.24
+RVMDW,-inf,0.35
+RVNL,error: 'beta',34.58
+RVPH,-32.49,0.4431
+RVPHW,-inf,0.0602
+RVSB,error: 'EBITDA',4.97
+RVSN,-25.43,0.3739
+RVSNW,-inf,0.0739
+RVYL,1.94,0.3013
+RWAY,error: 'EBITDA',10.59
+RWAYL,error: 'beta',25.25
+RWAYZ,error: 'beta',25.28
+RXRX,-20.60,4.85
+RXST,-9.99,9.42
+RXT,-22.91,1.49
+RYAAY,"711,230.03",59.286
+RYET,error: 'beta',1.55
+RYOJ,error: 'beta',1.96
+RYTM,-37.86,97.92
+RZLT,-34.85,7.97
+RZLV,-20.02,6.79
+RZLVW,-inf,2.5
+SABR,-12.22,1.88
+SABS,-186.99,2.12
+SABSW,-inf,0.033
+SAFT,error: 'EBITDA',74.96
+SAFX,error: 'Free Cash Flow',1.3
+SAGT,error: 'beta',2.045
+SAIA,139.18,315.78
+SAIC,"4,147.50",106.37
+SAIH,-77.80,7.85
+SAIHW,-inf,0.17
+SAIL,error: 'beta',20.84
+SAMG,55.68,16.3
+SANA,-17.81,3.4
+SANG,69.46,5.51
+SANM,89.04,117.75
+SARK,error: 'beta',31.79
+SATL,-9.63,3.74
+SATLW,-inf,0.4144
+SATS,-492.00,77.04
+SAVA,-918.21,2.16
+SBAC,40.45,199.44
+SBC,69.56,4.49
+SBCF,error: 'EBITDA',30.94
+SBCWW,inf,0.2099
+SBET,-0.17,16.36
+SBFG,error: 'EBITDA',21.55
+SBFM,-144.00,1.48
+SBFMW,-inf,0.1517
+SBGI,-44.53,13.94
+SBLK,87.60,19.19
+SBLX,-97.33,5.6
+SBRA,706.64,19.13
+SBUX,43.15,82.36
+SCAG,error: 'beta',3.17
+SCAGW,error: 'beta',0.0425
+SCDS,error: 'beta',59.41
+SCHL,47.33,27.38
+SCKT,-5.29,1.01
+SCLX,-16.16,25.36
+SCLXW,-inf,0.4
+SCNI,-26.31,1.58
+SCNX,error: 'beta',0.8973
+SCOR,-69.22,6.43
+SCPH,-80.59,5.63
+SCSC,62.20,45.4
+SCVL,39.41,23.77
+SCWO,-11.10,0.39
+SCYX,-6.90,1.18
+SCZ,error: 'beta',77.13
+SDA,-1.49,2.74
+SDAWW,error: 'beta',0.0507
+SDG,error: 'beta',83.245
+SDGR,-42.47,18.78
+SDHI,error: 'beta',10.145
+SDHIR,error: 'beta',0.23
+SDHIU,error: 'beta',10.31
+SDM,error: 'beta',10.98
+SDOT,-3.05,0.793
+SDSI,error: 'beta',51.67
+SDST,-207.04,2.85
+SDSTW,-inf,0.0749
+SDTY,error: 'beta',45.2999
+SDVY,error: 'beta',38.64
+SEAT,"2,196.51",17.33
+SEATW,inf,0.1091
+SEDG,-355.09,29.49
+SEED,-18.84,1.05
+SEEM,error: 'beta',29.857
+SEER,-10.67,2.06
+SEGG,-43.15,5.63
+SEIC,91.68,87.77
+SEIE,error: 'beta',30.6
+SEIS,error: 'beta',28.25
+SELF,18.31,5.12
+SELX,-252.81,1.13
+SENEA,"11,892.86",111.49
+SENEB,"40,362.93",110.0
+SEPN,error: 'beta',14.42
+SERA,-10.05,3.07
+SERV,error: 'beta',11.4
+SETM,error: 'beta',22.0
+SEVN,nan,10.97
+SEZL,111.67,87.68
+SFBC,error: 'EBITDA',46.53
+SFD,error: 'beta',24.52
+SFHG,error: 'beta',0.7841
+SFIX,-2.67,5.8
+SFLO,error: 'beta',29.48
+SFM,537.92,137.72
+SFNC,error: 'EBITDA',20.66
+SFST,error: 'EBITDA',45.36
+SFWL,-187.87,1.1699
+SGA,34.77,12.04
+SGBX,-385.03,10.13
+SGC,28.03,12.25
+SGD,error: 'beta',1.48
+SGHT,-8.15,3.62
+SGLY,-14.24,1.09
+SGML,-18.33,5.43
+SGMO,-7.96,0.5318
+SGMT,-9.23,7.04
+SGRP,-3.40,1.13
+SGRY,"1,462.33",22.11
+SHBI,error: 'EBITDA',17.2
+SHC,7.64,16.12
+SHEN,-131.75,13.7
+SHFS,error: 'EBITDA',4.29
+SHFSW,error: 'EBITDA',0.0287
+SHIM,error: 'beta',3.13
+SHIP,11.02,8.66
+SHLS,71.43,6.92
+SHMD,"17,814,438,483.03",2.19
+SHMDW,inf,0.215
+SHOO,45.28,31.58
+SHOP,46.77,145.03
+SHOT,-2.08,0.3897
+SHOTW,-inf,0.0491
+SHPD,error: 'beta',20.68
+SHPH,-355.63,3.5
+SHPU,error: 'beta',30.99
+SHRY,error: 'beta',42.8401
+SHV,error: 'beta',110.28
+SHY,error: 'beta',82.94
+SIBN,-15.63,16.32
+SIDU,-183.98,1.3
+SIEB,162.68,2.81
+SIFY,"-2,857.33",11.71
+SIGA,152.65,9.07
+SIGI,error: 'EBITDA',79.7
+SIGIP,error: 'EBITDA',18.265
+SILC,35.79,18.7015
+SILO,-5.58,0.6802
+SIMA,error: 'beta',10.51
+SIMAU,error: 'beta',10.5
+SIMAW,error: 'beta',0.2579
+SIMO,32.94,89.08
+SINT,-174.80,4.54
+SION,error: 'beta',23.795
+SIRI,47.44,23.81
+SISI,"-1,134.04",6.06
+SITM,-11.26,258.57
+SIXG,error: 'beta',61.64
+SJ,25.30,0.75
+SJCP,error: 'beta',25.3995
+SJLD,error: 'beta',25.5699
+SKBL,error: 'beta',2.5
+SKIN,13.43,2.47
+SKK,error: 'beta',0.4249
+SKOR,error: 'beta',49.34
+SKRE,error: 'beta',9.647
+SKWD,error: 'EBITDA',47.72
+SKYE,-7.86,4.26
+SKYQ,error: 'beta',0.56
+SKYT,1.79,10.19
+SKYU,error: 'beta',41.58
+SKYW,584.19,109.325
+SKYX,-0.34,1.19
+SKYY,error: 'beta',135.33
+SLAB,-19.12,135.52
+SLDB,-12.78,5.31
+SLDE,error: 'beta',13.82
+SLDP,-5.17,3.68
+SLDPW,-inf,0.475
+SLE,-128.89,3.1
+SLGL,-81.11,24.08
+SLM,error: 'EBITDA',29.03
+SLMBP,error: 'EBITDA',76.37
+SLN,-20.56,4.88
+SLNG,"4,424.28",3.5818
+SLNH,-9.85,0.6989
+SLNHP,-inf,2.86
+SLNO,-651.05,56.72
+SLP,10.52,14.36
+SLQD,error: 'beta',50.82
+SLRC,error: 'EBITDA',16.32
+SLRX,-272.31,5.27
+SLS,-2.84,1.89
+SLSN,-1.06,3.39
+SLVO,error: 'beta',88.8126
+SLVR,error: 'beta',38.28
+SLXN,-669.59,4.93
+SLXNW,-inf,0.042
+SMBC,error: 'EBITDA',56.58
+SMCC,error: 'beta',20.15
+SMCF,error: 'beta',33.8099
+SMCI,825.48,43.95
+SMCL,error: 'beta',12.54
+SMCO,error: 'beta',27.18
+SMCX,error: 'beta',33.28
+SMCZ,error: 'beta',4.8
+SMH,error: 'beta',303.93
+SMHX,error: 'beta',37.18
+SMID,1.84,41.7
+SMLR,-147.37,28.54
+SMMT,-44.41,18.6
+SMPL,165.85,27.67
+SMRI,error: 'beta',34.71
+SMSI,-19.29,0.7335
+SMST,error: 'beta',30.07
+SMTC,-3.09,60.91
+SMTI,-8.50,35.28
+SMTK,-17.36,1.73
+SMX,"-3,140.17",1.38
+SMXT,error: 'beta',1.12
+SMXWW,-inf,0.0249
+SNAL,-5.62,0.8824
+SNBR,-34.30,10.27
+SNCR,"4,046,845.17",5.81
+SNCY,314.81,13.65
+SND,6.34,1.9
+SNDK,error: 'beta',84.3
+SNDL,-0.00,2.39
+SNDX,-514.27,16.37
+SNES,-327.45,4.985
+SNEX,"753,727.94",98.47
+SNFCA,error: 'EBITDA',8.68
+SNGX,-25.08,2.78
+SNOA,-10.91,4.55
+SNPS,280.64,438.1
+SNSE,"-2,172.47",9.35
+SNSR,error: 'beta',39.15
+SNT,97.39,4.58
+SNTG,-6.62,2.85
+SNTI,-36.87,1.38
+SNWV,-8.69,37.02
+SNY,135.15,47.65
+SNYR,-8.63,2.19
+SOBR,-146.99,3.43
+SOCAU,error: 'beta',10.06
+SOCL,error: 'beta',60.11
+SOFI,error: 'EBITDA',25.96
+SOFX,error: 'beta',38.17
+SOGP,-105.75,22.19
+SOHO,"10,401.07",0.7905
+SOHOB,inf,11.0
+SOHON,inf,10.8025
+SOHOO,inf,10.68
+SOHU,-114.26,16.0
+SOLT,error: 'beta',28.72
+SOLZ,error: 'beta',24.33
+SOND,-194.00,1.71
+SONDW,-inf,0.0125
+SONM,-9.21,0.6185
+SONN,-22.41,3.96
+SONO,9.21,15.145
+SOPA,3.71,1.2
+SOPH,-26.08,3.2
+SORA,error: 'beta',5.5998
+SOTK,1.54,4.08
+SOUN,-3.42,14.58
+SOUNW,-inf,6.615
+SOUX,error: 'beta',37.25
+SOWG,-18.89,0.82
+SOXQ,error: 'beta',47.23
+SOXX,error: 'beta',255.19
+SPAI,error: 'beta',8.61
+SPAM,error: 'beta',33.43
+SPAQ,error: 'beta',103.54
+SPBC,error: 'beta',44.2
+SPC,error: 'beta',21.6299
+SPCB,-20.82,10.71
+SPCX,error: 'beta',24.49
+SPCY,error: 'beta',27.52
+SPEGU,error: 'beta',10.1
+SPFI,error: 'EBITDA',40.1
+SPHL,error: 'beta',0.5916
+SPKL,error: 'beta',11.0
+SPKLU,error: 'beta',10.79
+SPKLW,error: 'beta',0.242
+SPNS,29.12,43.0
+SPOK,"34,898.71",17.65
+SPPL,error: 'beta',4.3026
+SPRC,-50.52,1.92
+SPRO,-9.84,1.95
+SPRX,error: 'beta',37.15
+SPRY,1.76,10.15
+SPSC,252.43,112.35
+SPT,11.62,14.42
+SPTN,415.20,26.51
+SPWH,574.90,3.07
+SPWR,-17.32,1.55
+SPWRW,-inf,0.3002
+SPXD,error: 'beta',25.47
+SPYQ,error: 'beta',152.32
+SQFT,-187.99,5.38
+SQFTP,-inf,14.8391
+SQFTW,-inf,0.0331
+SQLV,error: 'beta',43.6399
+SQQQ,error: 'beta',16.76
+SRAD,"58,050.19",30.0
+SRBK,error: 'beta',14.93
+SRCE,error: 'EBITDA',64.33
+SRDX,-4.29,32.27
+SRET,error: 'beta',22.0101
+SRPT,-393.63,17.91
+SRRK,-174.93,31.84
+SRTA,-63.27,4.21
+SRTAW,-inf,0.1539
+SRTS,22.05,3.24
+SRZN,-76.68,11.41
+SRZNW,-inf,0.0199
+SSBI,error: 'EBITDA',11.9074
+SSEAU,error: 'beta',10.06
+SSII,-1.20,6.2
+SSKN,-21.32,1.57
+SSNC,114.14,90.09
+SSP,463.64,2.91
+SSRM,-52.34,22.76
+SSSS,error: 'EBITDA',8.88
+SSSSL,error: 'beta',24.9
+SSTI,"1,102.56",12.87
+SSYS,-2.61,9.85
+STAA,-5.03,28.08
+STAI,-26.18,0.4425
+STAK,error: 'beta',0.759
+STBA,error: 'EBITDA',39.4
+STEC,7.32,2.12
+STEP,-5.05,63.47
+STFS,error: 'beta',0.186
+STGW,35.20,5.57
+STHO,-150.74,8.93
+STI,-223.98,5.58
+STIM,-29.80,3.46
+STKH,"-156,719,999,469,733,862,703,104.00",5.375
+STKL,61.37,6.39
+STKS,172.23,2.67
+STLD,34.51,133.99
+STNC,error: 'beta',32.83
+STNE,-386.79,18.12
+STOK,-28.42,23.88
+STRA,145.01,84.37
+STRC,-inf,97.37
+STRD,"-10,343.26",81.7
+STRF,-inf,112.65
+STRK,-inf,94.57
+STRL,"16,167.52",316.16
+STRO,-22.56,0.97
+STRS,-106.69,19.99
+STRT,"543,320,239.73",68.36
+STRZ,error: 'beta',13.4
+STSS,-2.72,9.3
+STSSW,-inf,0.0854
+STTK,-17.78,1.98
+STX,42.66,196.81
+SUGP,error: 'beta',6.4
+SUIG,error: 'EBITDA',4.3
+SUNE,-18.01,1.46
+SUNS,error: 'beta',11.19
+SUPN,103.49,46.66
+SUPP,error: 'beta',69.97
+SUPX,error: 'beta',59.71
+SURG,-69.75,2.87
+SUSB,error: 'beta',25.31
+SUSC,error: 'beta',23.69
+SUSL,error: 'beta',114.68
+SUUN,"11,040.79",1.85
+SVA,error: 'beta',6.47
+SVC,"1,825.21",2.91
+SVCC,error: 'beta',10.29
+SVCCU,error: 'beta',10.33
+SVCCW,error: 'beta',0.34
+SVCO,error: 'beta',5.15
+SVII,-5.23,12.05
+SVIIR,error: 'Free Cash Flow',0.36
+SVIIU,-inf,12.25
+SVIIW,-inf,0.3798
+SVRA,-22.49,3.59
+SVRE,-742.37,1.71
+SVREW,-inf,0.0269
+SWAG,0.15,1.88
+SWAGW,inf,0.06
+SWBI,-12.32,9.39
+SWIM,"4,789,800.30",7.97
+SWIN,-1.33,2.72
+SWKH,"1,612.46",14.56
+SWKHL,error: 'beta',25.85
+SWKS,258.28,74.68
+SWP,error: 'beta',28.2226
+SWVL,-22.63,3.6387
+SWVLW,error: 'beta',0.0139
+SXTC,-0.33,1.72
+SXTP,-12.99,1.42
+SXTPW,error: 'beta',0.0525
+SY,-13.37,3.81
+SYBT,error: 'EBITDA',77.52
+SYBX,-87.68,1.47
+SYM,-10.05,48.91
+SYNA,20.79,71.44
+SYPR,1.90,1.91
+SYRE,-20.97,16.2
+SYTA,-14.70,2.69
+SYTAW,-inf,0.0388
+SZZL,error: 'beta',10.09
+SZZLR,error: 'beta',0.1648
+SZZLU,error: 'beta',10.2
+TACH,error: 'beta',10.1
+TACHU,error: 'beta',10.23
+TACHW,error: 'beta',0.2999
+TACO,error: 'beta',10.2
+TACOU,error: 'beta',10.5202
+TACOW,error: 'beta',0.6151
+TACT,0.80,4.62
+TAIT,-3.80,2.86
+TALK,0.40,2.6
+TALKW,error: 'beta',0.084
+TANH,430.93,2.04
+TAOP,-188.18,3.49
+TAOX,-16.19,6.16
+TARA,-14.16,3.2
+TARK,error: 'beta',67.66
+TARS,-62.25,51.87
+TASK,30.56,17.39
+TATT,"140,769,437.57",36.93
+TAVI,error: 'beta',10.31
+TAVIR,error: 'beta',0.175
+TAVIU,error: 'beta',10.44
+TAX,error: 'beta',27.0799
+TAXE,error: 'beta',50.87
+TAXI,error: 'beta',50.14
+TAXS,error: 'beta',50.18
+TAXT,error: 'beta',50.14
+TAYD,"1,733.72",47.56
+TBBK,error: 'EBITDA',76.66
+TBCH,0.88,15.15
+TBH,error: 'beta',1.51
+TBHC,-17.71,2.21
+TBIL,error: 'beta',49.91
+TBLA,473.04,3.41
+TBLAW,inf,0.088
+TBLD,error: 'beta',20.17583
+TBMC,-24.73,11.65
+TBMCR,error: 'beta',0.3
+TBPH,-17.29,13.7
+TBRG,65.49,20.64
+TC,-691.78,18.5
+TCBI,error: 'EBITDA',87.35
+TCBIO,error: 'EBITDA',20.85
+TCBK,error: 'EBITDA',45.73
+TCBS,error: 'EBITDA',16.28
+TCBX,error: 'EBITDA',39.85
+TCHI,error: 'beta',24.9105
+TCMD,"2,325,272.50",13.71
+TCOM,"394,933.85",74.83
+TCPC,error: 'EBITDA',7.22
+TCRT,-457.44,2.29
+TCRX,-52.04,1.85
+TCX,-193.07,18.32
+TDAC,error: 'beta',10.34
+TDACU,error: 'beta',10.4
+TDACW,error: 'beta',0.25
+TDI,error: 'beta',37.28
+TDIC,error: 'beta',3.85
+TDIV,error: 'beta',97.89
+TDSB,error: 'beta',23.1601
+TDSC,error: 'beta',25.26
+TDTH,error: 'beta',1.07
+TDUP,-1.90,10.92
+TEAD,55.30,1.67
+TEAM,708.61,176.71
+TECH,22.79,53.21
+TECTP,error: 'beta',10.845
+TECX,error: 'beta',18.03
+TEKX,error: 'beta',36.57
+TEKY,error: 'beta',36.99
+TELA,-41.60,1.62
+TELO,error: 'beta',1.37
+TEM,error: 'beta',88.78
+TENB,439.19,30.54
+TENX,-47.82,6.14
+TER,40.05,115.56
+TERN,-56.44,7.44
+TEXN,error: 'beta',27.31
+TFNS,error: 'beta',26.66
+TFSL,error: 'EBITDA',13.46
+TGHL,error: 'beta',2.06
+TGL,-132.69,1.27
+TGTX,-4.18,32.46
+TH,59.96,8.91
+THAR,-47.18,3.13
+THCH,-248.49,2.45
+THFF,error: 'EBITDA',58.8
+THH,error: 'beta',6.1
+THMZ,error: 'beta',31.286
+THRM,18.21,36.01
+THRY,46.16,12.99
+THTX,-0.03,3.28
+TIGO,"52,733.48",47.16
+TIGR,"2,111.24",11.24
+TIL,-159.81,23.8
+TILE,56.95,28.64
+TIPT,error: 'EBITDA',24.665
+TIRX,error: 'beta',3.09
+TITN,-21.39,19.95
+TIVC,-38.00,3.07
+TKLF,154.42,3.68
+TKNO,-37.71,4.47
+TLF,8.72,3.06
+TLIH,error: 'beta',0.5843
+TLN,"3,010,644.32",400.92
+TLPH,-48.75,0.9959
+TLRY,-7.51,1.06
+TLS,-10.82,6.95
+TLSA,-4.79,1.79
+TLSI,-29.73,4.68
+TLSIW,-inf,1.81
+TLT,error: 'beta',90.34
+TLX,0.08,9.32
+TMB,error: 'beta',25.783
+TMC,-1.70,5.17
+TMCI,-36.35,7.44
+TMCWW,-inf,0.808
+TMDX,-49.18,116.99
+TMED,error: 'beta',26.209
+TMET,error: 'beta',25.33
+TMUS,"4,887.34",241.39
+TMUSI,error: 'beta',23.68
+TMUSL,error: 'beta',24.84
+TMUSZ,error: 'beta',23.4
+TNDM,-11.35,12.79
+TNFA,-46.71,4.04
+TNGX,-18.90,6.84
+TNMG,error: 'beta',0.3703
+TNON,-19.87,1.22
+TNONW,error: 'beta',0.0203
+TNXP,-82.00,31.21
+TNYA,-4.67,1.28
+TOI,-16.39,3.17
+TOIIW,-inf,0.105
+TOMZ,-5.08,0.8403
+TOP,-132.03,1.45
+TORO,93.61,2.92
+TOUR,9.79,0.92
+TOWN,error: 'EBITDA',36.2
+TOYO,11.46,5.86
+TPCS,-18.30,5.45
+TPG,error: 'EBITDA',62.09
+TPGXL,error: 'beta',25.76
+TPLS,error: 'beta',25.76
+TPST,"-1,926.34",10.82
+TQQQ,error: 'beta',95.57
+TQQY,error: 'beta',18.6974
+TRAW,-113.35,1.81
+TRDA,-100.35,5.33
+TREE,292.13,71.77
+TRI,634.72,173.51
+TRIB,-22.30,1.2
+TRIN,error: 'EBITDA',16.12
+TRINI,error: 'beta',25.6302
+TRINZ,error: 'beta',25.49
+TRIP,23.20,17.9
+TRMB,"4,429.09",82.85
+TRMD,"8,755.05",22.04
+TRMK,error: 'EBITDA',40.39
+TRML,error: 'beta',47.6
+TRNR,-547.33,3.55
+TRNS,827.71,76.41
+TRON,-0.02,3.74
+TROO,-0.10,1.15
+TROW,82.28,105.69
+TRS,18.07,39.2
+TRSG,error: 'beta',1.62
+TRST,error: 'EBITDA',40.05
+TRUD,error: 'beta',25.7794
+TRUG,-771.70,3.43
+TRUP,"37,741,207,373.53",43.46
+TRUT,error: 'beta',25.06
+TRVG,5.03,3.28
+TRVI,-8.52,9.75
+TSAT,-243.17,21.93
+TSBK,error: 'EBITDA',36.14
+TSCO,217.88,60.02
+TSDD,error: 'beta',15.21
+TSEL,error: 'beta',29.93
+TSEM,19.02,66.02
+TSHA,-7.55,3.24
+TSL,error: 'beta',14.93
+TSLA,75.87,368.81
+TSLG,error: 'beta',7.42
+TSLL,error: 'beta',14.83
+TSLQ,error: 'beta',12.18
+TSLR,error: 'beta',23.85
+TSLS,error: 'beta',6.6
+TSMG,error: 'beta',20.47
+TSMU,error: 'beta',34.25
+TSMX,error: 'beta',40.67
+TSMZ,error: 'beta',14.8041
+TSPY,error: 'beta',25.12
+TSSI,15.40,15.69
+TSYY,error: 'beta',8.17988
+TTAN,error: 'beta',117.06
+TTD,873.25,45.24
+TTEC,-222.97,3.69
+TTEK,100.17,36.19
+TTEQ,error: 'beta',31.34
+TTGT,-22.88,6.0
+TTMI,12.46,48.32
+TTNP,-43.53,4.3
+TTSH,11.15,6.31
+TTWO,-160.23,246.54
+TUG,error: 'beta',38.15
+TUGN,error: 'beta',25.58
+TUR,error: 'beta',32.32
+TURB,error: 'beta',2.59
+TURF,error: 'beta',27.2
+TURN,error: 'EBITDA',4.7179
+TUSK,"10,822,957.74",2.38
+TVA,error: 'beta',10.11
+TVACU,error: 'beta',10.23
+TVACW,error: 'beta',0.2399
+TVAI,error: 'beta',10.03
+TVAIR,error: 'beta',0.17
+TVAIU,error: 'beta',10.14
+TVGN,-12.15,0.8837
+TVGNW,-inf,0.0597
+TVRD,error: 'beta',35.4
+TVTX,-180.33,25.0
+TW,682.49,119.61
+TWFG,error: 'beta',24.945
+TWG,error: 'beta',5.4
+TWIN,14.10,13.185
+TWNP,error: 'beta',4.24
+TWST,-19.33,25.61
+TXG,-4.96,13.06
+TXMD,1.70,1.11
+TXN,76.79,184.35
+TXRH,770.61,167.16
+TXSS,error: 'beta',28.09
+TXUE,error: 'beta',30.43
+TXUG,error: 'beta',25.2
+TYGO,-16.02,1.76
+TYRA,-26.73,12.47
+TZOO,"196,439,215.07",9.61
+TZUP,-30.14,5.58
+UAE,error: 'beta',19.01
+UAL,"257,179.49",109.36
+UBCP,error: 'EBITDA',14.41
+UBFO,error: 'EBITDA',9.55
+UBND,error: 'beta',22.14
+UBRL,error: 'beta',33.33
+UBSI,error: 'EBITDA',37.72
+UBXG,error: 'beta',2.75
+UCAR,-267.92,2.04
+UCL,1.40,2.62
+UCRD,error: 'beta',21.8
+UCTT,-4.15,25.52
+UCYB,error: 'beta',61.07
+UDMY,1.19,7.4
+UEIC,2.88,4.8
+UEVM,error: 'beta',55.77
+UFCS,error: 'EBITDA',32.08
+UFG,error: 'beta',9.04
+UFIV,error: 'beta',49.61
+UFO,error: 'beta',34.335
+UFPI,91.67,102.4
+UFPT,"19,157.42",201.37
+UG,12.62,8.2525
+UGRO,-74.64,0.6226
+UHG,18.24,4.41
+UHGWW,error: 'beta',1.6408
+UITB,error: 'beta',47.72
+UIVM,error: 'beta',61.84
+UK,-183.28,1.06
+UKOMW,-inf,0.0064
+ULBI,"4,200.42",6.95
+ULCC,-100.73,5.38
+ULH,189.28,25.18
+ULTA,686.45,521.89
+ULVM,error: 'beta',89.22
+ULY,error: 'beta',3.99
+UMBF,error: 'EBITDA',121.68
+UMBFO,error: 'EBITDA',26.89
+UMMA,error: 'beta',27.14
+UNB,error: 'EBITDA',26.0
+UNCY,-19.99,4.09
+UNHG,error: 'beta',22.13
+UNIT,-23.57,7.11
+UNIY,error: 'beta',49.61
+UNTY,error: 'EBITDA',53.1
+UOKA,-224.12,2.81
+UONE,67.72,1.41
+UONEK,12.13,0.7781
+UPB,error: 'beta',17.92
+UPBD,48.57,25.52
+UPC,-235.59,4.08
+UPGR,error: 'beta',20.63
+UPLD,46.21,2.46
+UPST,error: 'EBITDA',62.19
+UPWK,"28,731.81",16.37
+UPXI,-2.80,5.68
+URBN,500.52,71.7
+URGN,-41.05,19.25
+URNJ,error: 'beta',25.08
+UROY,-2.16,3.22
+USAF,error: 'beta',27.02
+USAR,-0.54,14.53
+USARW,-inf,5.2
+USAU,-12.52,15.21
+USCB,error: 'EBITDA',17.43
+USCL,error: 'beta',77.365
+USDX,error: 'beta',25.743
+USEA,"4,352.44",1.69
+USEG,-6.03,1.13
+USFI,error: 'beta',24.48
+USGO,-7.09,9.33
+USGOW,error: 'beta',0.84
+USIG,error: 'beta',52.4
+USIN,error: 'beta',51.28
+USIO,1.39,1.565
+USLM,"1,583.46",128.18
+USMC,error: 'beta',67.115
+USOI,error: 'beta',50.81
+USOY,error: 'beta',8.08
+USRD,error: 'beta',32.01
+USSH,error: 'beta',50.925
+USTB,error: 'beta',50.94
+USVM,error: 'beta',90.68
+USVN,error: 'beta',49.11
+USXF,error: 'beta',57.23
+UTEN,error: 'beta',44.59
+UTHR,"3,971.40",404.84
+UTHY,error: 'beta',42.695
+UTMD,288.71,62.54
+UTRE,error: 'beta',49.95
+UTSI,-17.25,2.5011
+UTWO,error: 'beta',48.5672
+UTWY,error: 'beta',44.65
+UVSP,error: 'EBITDA',31.29
+UXIN,-27.31,3.61
+UYLD,error: 'beta',51.27
+UYSC,error: 'beta',10.11
+UYSCR,error: 'beta',0.23
+UYSCU,error: 'beta',10.32
+VABK,error: 'EBITDA',41.18
+VACH,error: 'beta',10.43
+VACHU,error: 'beta',11.5
+VACHW,error: 'beta',0.1798
+VALN,-31.07,9.18
+VALU,31.52,38.66
+VANI,-10.44,1.2
+VBIL,error: 'beta',75.465
+VBIX,-3.08,2.71
+VBNK,error: 'EBITDA',12.12
+VBTX,error: 'EBITDA',34.36
+VC,"4,228.12",128.28
+VCEL,-2.47,33.53
+VCIC,error: 'beta',10.55
+VCICU,error: 'beta',11.13
+VCICW,error: 'beta',1.46
+VCIG,151.98,0.778
+VCIT,error: 'beta',84.49
+VCLT,error: 'beta',78.39
+VCRB,error: 'beta',78.69
+VCSH,error: 'beta',79.95
+VCTR,120.03,70.7
+VCYT,43.08,31.86
+VECO,40.01,25.63
+VEEA,-139.23,0.5509
+VEEAW,-inf,0.0698
+VEEE,-118.41,2.51
+VELO,-42.84,3.2
+VEON,201.07,53.63
+VERA,-42.78,24.53
+VERB,-3.34,14.11
+VERI,-35.58,3.53
+VERO,-469.13,2.32
+VERU,-281.37,3.56
+VERX,661.01,24.33
+VFF,-0.79,2.5
+VFLO,error: 'beta',37.84
+VFS,"-432,827.05",3.27
+VFSWW,-inf,0.235
+VGAS,-87.18,3.1
+VGASW,error: 'beta',0.13
+VGIT,error: 'beta',60.34
+VGLT,error: 'beta',57.41
+VGSH,error: 'beta',58.82
+VGSR,error: 'beta',10.8233
+VGUS,error: 'beta',75.5
+VIASP,inf,26.1
+VIAV,9.54,12.26
+VICR,75.42,50.96
+VIGI,error: 'beta',90.54
+VINP,175.65,10.04
+VIOT,"-1,704.19",3.56
+VIR,-58.76,5.23
+VIRC,"5,924,613.67",8.22
+VITL,"175,889.99",48.48
+VIVK,-4.83,0.58
+VIVS,-55.45,3.695
+VIXI,error: 'beta',15.901
+VKTX,-22.97,25.74
+VLGEA,187.14,39.34
+VLY,error: 'EBITDA',10.78
+VLYPN,error: 'EBITDA',26.38
+VLYPO,error: 'EBITDA',25.55
+VLYPP,error: 'EBITDA',25.8355
+VMAR,"-2,790.20",1.5
+VMBS,error: 'beta',47.16
+VMD,17.38,6.92
+VMEO,21.75,7.72
+VNDA,-5.84,4.6
+VNET,-557.54,9.11
+VNME,error: 'beta',9.92
+VNMEU,error: 'beta',9.98
+VNMEW,error: 'beta',0.1801
+VNOM,error: 'beta',38.99
+VNQI,error: 'beta',48.15
+VOD,516.32,11.86
+VOLT,error: 'beta',27.95
+VONE,error: 'beta',299.27
+VONG,error: 'beta',118.01
+VONV,error: 'beta',89.44
+VOR,-8.50,1.815
+VOTE,error: 'beta',77.5093
+VOXR,3.22,3.54
+VPLS,error: 'beta',78.905
+VRA,-15.76,2.1
+VRAR,-4.52,1.47
+VRAX,-12.61,0.58
+VRCA,-81.60,4.975
+VRDN,-96.06,19.65
+VREX,13.76,11.5
+VRIG,error: 'beta',25.13
+VRM,error: 'beta',25.95
+VRME,-0.51,0.858
+VRNA,-71.95,106.4
+VRNS,"6,567,127,255.99",57.19
+VRNT,48.81,20.35
+VRRM,247.44,25.06
+VRSK,343.89,266.24
+VRSN,246.87,289.37
+VRTL,error: 'beta',40.17
+VRTX,-153.42,397.37
+VS,-8.07,2.033
+VSA,-210.20,3.37
+VSAT,730.78,31.91
+VSDA,error: 'beta',54.25
+VSEC,"51,002.02",167.92
+VSEE,-42.74,0.7309
+VSEEW,-inf,0.035
+VSME,error: 'beta',2.605
+VSMV,error: 'beta',52.42
+VSSYW,-inf,0.055
+VSTA,"16,646.32",4.53
+VSTL,error: 'beta',22.499
+VSTM,-160.44,9.35
+VTC,error: 'beta',78.73
+VTGN,-50.78,3.5
+VTHR,error: 'beta',291.13
+VTIP,error: 'beta',50.7
+VTRS,45.37,10.17
+VTSI,3.80,5.63
+VTVT,-279.06,20.06
+VTWG,error: 'beta',230.34
+VTWO,error: 'beta',97.37
+VTWV,error: 'beta',156.66
+VTYX,-29.53,2.38
+VUZI,-5.32,2.36
+VVOS,-19.56,3.64
+VVPR,-123.44,5.0
+VWAV,error: 'Free Cash Flow',10.31
+VWAVW,error: 'Free Cash Flow',0.4475
+VWOB,error: 'beta',67.16
+VXUS,error: 'beta',73.33
+VYGR,-14.74,4.38
+VYMI,error: 'beta',85.66
+VYNE,-16.62,0.3157
+WABC,error: 'EBITDA',49.66
+WABF,error: 'beta',25.63
+WAFD,error: 'EBITDA',31.55
+WAFDP,error: 'EBITDA',16.98
+WAFU,-3.09,1.7
+WAI,-179.13,2.99
+WALD,-0.35,1.79
+WALDW,-inf,0.0578
+WASH,error: 'EBITDA',29.82
+WATT,-419.62,7.8186
+WAVE,-51.79,9.57
+WAY,error: 'beta',38.35
+WB,136.38,11.91
+WBD,164.06,16.17
+WBTN,error: 'beta',14.04
+WBUY,error: 'beta',3.25
+WCBR,error: 'beta',31.2905
+WCLD,error: 'beta',36.09
+WCT,error: 'beta',0.2657
+WDAY,825.34,226.67
+WDC,73.25,96.15
+WDFC,294.15,212.8
+WEEI,error: 'beta',21.27
+WEN,57.90,9.89
+WENN,error: 'beta',10.14
+WENNU,error: 'beta',10.48
+WENNW,error: 'beta',0.6899
+WERN,-28.44,28.7
+WEST,-67.45,5.48
+WETH,42.22,1.17
+WETO,error: 'beta',2.24
+WEYS,"2,663.00",30.75
+WFCF,19.54,12.45
+WFF,error: 'beta',1.15
+WFRD,"9,948.38",62.72
+WGMI,error: 'beta',35.67
+WGRX,error: 'beta',1.53
+WGS,-16.65,125.89
+WGSWW,-inf,0.0866
+WHF,error: 'EBITDA',8.79
+WHFCL,error: 'beta',25.117
+WHLR,"12,921.38",2.34
+WHLRD,inf,37.195
+WHLRL,error: 'Free Cash Flow',140.0
+WHLRP,inf,4.2199
+WHWK,-29.92,2.01
+WILC,-5.40,21.1226
+WIMI,error: 'beta',4.39
+WINA,335.33,513.96
+WING,"1,244.35",274.7
+WISE,error: 'beta',41.715
+WIX,"33,663.60",169.45
+WKEY,-64.09,5.655
+WKHS,-83.21,1.19
+WKSP,-53.42,3.41
+WLAC,error: 'beta',10.3
+WLACU,error: 'beta',10.63
+WLACW,error: 'beta',0.2876
+WLDN,"390,897.10",105.89
+WLDS,error: 'beta',8.11
+WLDSW,error: 'beta',3.9
+WLFC,"-6,721.41",150.86
+WMG,"77,001.96",34.24
+WNEB,error: 'EBITDA',12.23
+WNW,-86.36,2.46
+WOK,error: 'beta',0.8013
+WOOD,error: 'beta',75.5001
+WOOF,-3.94,3.68
+WORX,-1.18,0.3109
+WPRT,-3.85,2.34
+WRAP,-3.37,1.91
+WRD,error: 'beta',9.9
+WRLD,error: 'EBITDA',169.5
+WRND,error: 'beta',35.575
+WSBC,error: 'EBITDA',31.88
+WSBCP,error: 'EBITDA',25.2262
+WSBF,error: 'EBITDA',14.77
+WSBK,error: 'beta',9.49
+WSC,155.05,23.54
+WSFS,error: 'EBITDA',56.64
+WSML,error: 'beta',30.33
+WTBA,error: 'EBITDA',20.68
+WTBN,error: 'beta',25.8296
+WTF,error: 'beta',7.1
+WTFC,error: 'EBITDA',136.09
+WTFCN,error: 'EBITDA',27.05
+WTG,error: 'beta',10.055
+WTGUR,error: 'beta',0.1302
+WTGUU,error: 'beta',10.18
+WTIP,error: 'beta',30.69
+WTMU,error: 'beta',25.73
+WTMY,error: 'beta',25.4676
+WTO,-99.11,1.28
+WTW,495.93,340.45
+WULF,-11.08,10.64
+WVE,-210.15,7.16
+WVVI,-78.17,4.8462
+WVVIP,-78.17,3.24
+WW,error: 'beta',33.76
+WWD,316.38,239.98
+WXM,error: 'beta',3.6195
+WYFI,error: 'beta',20.57
+WYHG,-811.18,1.39
+WYNN,"426,181.17",123.86
+XAGE,-111.17,2.32
+XAGEW,-inf,0.0317
+XAIR,-341.68,2.26
+XAIX,error: 'beta',40.43
+XBIL,error: 'beta',50.09
+XBIO,-18.03,3.1002
+XBIT,-18.79,2.82
+XBP,-9.07,0.9271
+XBPEW,-inf,0.0349
+XBTY,error: 'beta',21.605
+XCH,error: 'beta',1.37
+XCNY,error: 'beta',26.931
+XCUR,-3.59,3.6
+XEL,-116.58,72.85
+XELB,-60.61,1.46
+XENE,-45.78,37.22
+XERS,-6.03,7.68
+XFIX,error: 'beta',52.1402
+XFOR,-282.38,3.3
+XGN,-16.59,10.0
+XHG,-210.25,1.08
+XHLD,error: 'beta',0.3308
+XLO,-22.23,0.7297
+XMAG,error: 'beta',22.104
+XMTR,-42.63,50.63
+XNCR,-90.39,8.5
+XNET,60.04,7.51
+XOMA,-56.38,37.72
+XOMAO,-inf,25.5407
+XOMAP,-inf,26.7
+XOMX,error: 'beta',26.03
+XOMZ,error: 'beta',24.5
+XOS,-212.63,2.4
+XOSWW,error: 'beta',0.0128
+XOVR,error: 'beta',20.805
+XP,"200,055.00",18.91
+XPEL,163.89,35.9
+XPON,-50.12,1.47
+XRAY,29.36,13.94
+XRPI,error: 'beta',18.55
+XRPT,error: 'beta',18.05
+XRTX,-47.95,0.811
+XRX,50.35,3.7
+XT,error: 'beta',69.87
+XTIA,error: 'beta',2.03
+XTKG,-1.00,2.12
+XTLB,-3.45,1.395
+XWEL,-149.24,1.05
+XXII,-77.38,1.8
+XYZG,error: 'beta',22.529
+YAAS,error: 'beta',0.0745
+YB,error: 'beta',25.52
+YDES,-2.96,20.5
+YDESW,-inf,1.51
+YGMZ,-1.31,0.7617
+YHC,-4.13,0.7652
+YHGJ,-15.75,0.6214
+YHNA,error: 'beta',10.47
+YHNAR,error: 'beta',0.1633
+YHNAU,error: 'beta',10.45
+YI,"3,380.76",5.79
+YIBO,error: 'beta',1.58
+YJ,"-4,520.59",1.92
+YLDE,error: 'beta',54.64
+YMAB,-14.61,8.59
+YMAT,error: 'beta',1.48
+YMT,error: 'beta',2.23
+YNOT,error: 'beta',27.76
+YOKE,error: 'beta',27.435
+YORK,error: 'beta',10.65
+YORKU,error: 'beta',11.07
+YORKW,error: 'beta',1.42
+YORW,-14.86,30.95
+YOSH,-1.59,1.27
+YOUL,error: 'beta',1.61
+YQ,"-1,415.84",2.62
+YQQQ,error: 'beta',13.2199
+YSPY,error: 'beta',19.9569
+YSXT,error: 'beta',2.47
+YTRA,-97.52,1.51
+YXT,error: 'beta',0.89
+YYAI,error: 'beta',2.09
+YYGH,error: 'beta',0.4125
+Z,12.13,89.27
+ZAP,error: 'beta',28.44
+ZAZZT,error: 'beta',0
+ZBAI,-33.26,7.7
+ZBAO,error: 'beta',1.075
+ZBIO,error: 'beta',20.17
+ZBRA,294.11,316.01
+ZBZZT,error: 'beta',0
+ZCMD,-9.15,1.12
+ZCZZT,error: 'beta',0
+ZD,82.61,37.67
+ZDAI,error: 'beta',0.58
+ZENA,error: 'beta',4.9
+ZENV,16.16,1.33
+ZEO,-30.51,1.28
+ZEOWW,-inf,0.0601
+ZEUS,-6.15,33.8
+ZFZZT,error: 'beta',19.85
+ZG,45.03,85.75
+ZIMV,-1.99,18.88
+ZION,error: 'EBITDA',58.26
+ZIONP,error: 'EBITDA',22.9838
+ZIPP,error: 'beta',28.16
+ZJK,error: 'beta',3.93
+ZJYL,-0.12,0.685
+ZJZZT,error: 'beta',15.44
+ZKIN,-22.16,2.16
+ZLAB,-56.12,32.48
+ZM,208.26,84.75
+ZNB,-87.80,1.73
+ZNTL,-24.41,1.56
+ZOOZ,error: 'beta',2.42
+ZOOZW,error: 'beta',0.13
+ZS,"1,155.98",286.66
+ZSPC,error: 'beta',1.7
+ZTEK,-2.89,1.05
+ZTEN,error: 'beta',51.77
+ZTOP,error: 'beta',52.48
+ZTRE,error: 'beta',51.38
+ZTWO,error: 'beta',50.87
+ZUMZ,-3.63,21.09
+ZURA,-26.06,2.02
+ZVRA,-25.21,7.95
+ZVZZT,error: 'beta',30.87
+ZWZZT,error: 'beta',17.0
+ZXYZ.A,error: 'beta',0
+ZXZZT,error: 'beta',15.5
+ZYBT,error: 'beta',9.21
+ZYME,-24.61,16.32
+ZYXI,51.52,1.54
+ZZZ,error: 'beta',29.94
+true,-0.78,2.25
