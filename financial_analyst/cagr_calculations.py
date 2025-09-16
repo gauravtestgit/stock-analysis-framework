@@ -6,7 +6,8 @@ def check_outlier(values, suspect_outlier) -> bool:
     std_dev = np.std(values)
     mean_val = np.mean(values)
     outlier_threshold = mean_val - 2 * std_dev
-    return suspect_outlier < outlier_threshold
+    outlier = suspect_outlier < outlier_threshold
+    return outlier
 
 
 def calculate_traditional_cagr_with_outliers(values, max_threshold, default = 0.05):
@@ -31,7 +32,7 @@ def calculate_traditional_cagr_with_outliers(values, max_threshold, default = 0.
                     return adjusted_cagr
     
     # Standard CAGR calculation
-    if values[0] > 0 and values[-1] > 0:
+    if values[-1] != 0:
         period = len(values) - 1
         cagr = (values[0] / values[-1]) ** (1/period) - 1
         return min(cagr, max_threshold)
@@ -46,8 +47,8 @@ def calculate_average_growth_rate(values, default = 0.05):
         
     growth_rates = []
     for i in range(len(values)-1,0,-1):
-        if values[i] > 0:
-            growth = (values[i-1] / values[i]) - 1
+        if values[i] != 0:
+            growth = (values[i-1] - values[i]) / abs(values[i])
             # Cap extreme values
             growth = max(min(growth, growth_rate_default), -0.3)
             growth_rates.append(growth)
@@ -58,13 +59,13 @@ def calculate_median_growth_rate(values, default = 0.05):
     yoy_growth_rates = []
     growth_rate_default = default
     for i in range(len(values)-1,0,-1):
-        if values[i] > 0:  # Avoid division by zero
-            growth = (values[i-1] / values[i]) - 1
+        if values[i] != 0:  # Avoid division by zero
+            growth = (values[i-1] - values[i]) / abs(values[i])
             # Cap extreme growth rates
             growth = max(min(growth, 1.0), -0.5)  # Cap between -50% and 100%
             yoy_growth_rates.append(growth)
         
-        median_growth = np.median(yoy_growth_rates) if yoy_growth_rates else growth_rate_default
+    median_growth = np.median(yoy_growth_rates) if yoy_growth_rates else growth_rate_default
     return median_growth
 
 def calculate_simple_cagr(values, default = 0.05):
@@ -85,7 +86,7 @@ def get_cagr(values, max_threshold=0.15, default=0.05, simple_cagr:bool = True):
         return calculate_simple_cagr(values, default)
     
     debug_print(f"Calculating CAGR with max threshold: {max_threshold:.2%}, default: {default:.2%}")
-    traditional_cagr = cagr = calculate_traditional_cagr_with_outliers(values,0.15,0.05)
+    traditional_cagr = calculate_traditional_cagr_with_outliers(values,0.15,0.05)
     avg_cagr = calculate_average_growth_rate(values, 0.05)
     median_cagr = calculate_median_growth_rate(values, 0.05)
     conservative_default = 0.02
