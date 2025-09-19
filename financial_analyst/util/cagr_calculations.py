@@ -32,11 +32,38 @@ def calculate_traditional_cagr_with_outliers(values, max_threshold, default = 0.
                     return adjusted_cagr
     
     # Standard CAGR calculation
-    if values[-1] != 0:
+    if values[-1] == 0:
+        return cagr_default
+    else:
         period = len(values) - 1
+        # Case 1: Both values are positive - standard CAGR
+    if values[-1] > 0 and values[0] > 0:
         cagr = (values[0] / values[-1]) ** (1/period) - 1
         return min(cagr, max_threshold)
     
+    # Case 2: Started negative, ended positive (turnaround like ACDC)
+    elif values[-1] < 0 and values[0] > 0:
+        # Option A: Use absolute values and add turnaround premium
+        abs_cagr = (abs(values[0]) / abs(values[-1])) ** (1/period) - 1
+        turnaround_cagr = min(abs_cagr * 0.7, max_threshold)  # Apply 30% discount for risk
+        debug_print(f"Turnaround situation: Using adjusted CAGR of {turnaround_cagr:.2%}")
+        return turnaround_cagr
+        
+        # Option B: Alternative - treat as strong positive transformation
+        # return min(0.25, max_threshold)  # Fixed 25% for major turnarounds
+    
+    # Case 3: Started positive, ended negative (decline)
+    elif values[-1] > 0 and values[0] < 0:
+        debug_print("Company declined from positive to negative - using negative default")
+        return -0.15  # Significant decline
+    
+    # Case 4: Both negative - look at trend
+    elif values[-1] < 0 and values[0] < 0:
+        if abs(values[0]) < abs(values[-1]):  # Losses are decreasing (improving)
+            improvement_rate = (abs(values[-1]) - abs(values[0])) / abs(values[-1]) / period
+            return min(improvement_rate * 0.5, default)  # Conservative improvement assumption
+        else:  # Losses are increasing (getting worse)
+            return -0.10  # Declining business
     return cagr_default
 
 def calculate_average_growth_rate(values, default = 0.05):
@@ -86,19 +113,23 @@ def get_cagr(values, max_threshold=0.15, default=0.05, simple_cagr:bool = True):
         return calculate_simple_cagr(values, default)
     
     debug_print(f"Calculating CAGR with max threshold: {max_threshold:.2%}, default: {default:.2%}")
-    traditional_cagr = calculate_traditional_cagr_with_outliers(values,0.15,0.05)
-    avg_cagr = calculate_average_growth_rate(values, 0.05)
-    median_cagr = calculate_median_growth_rate(values, 0.05)
+    traditional_cagr = calculate_traditional_cagr_with_outliers(values,max_threshold=max_threshold,default=default)
+    debug_print(f"Traditional CAGR: {traditional_cagr:.2%}")
+    # return traditional_cagr
+
+    # Review again post validating results only with traditional cagr
+    avg_cagr = calculate_average_growth_rate(values,default=default)
+    median_cagr = calculate_median_growth_rate(values, default=default)
     conservative_default = 0.02
     debug_print(f"Traditional CAGR: {traditional_cagr:.2%}, Average CAGR: {avg_cagr:.2%}, Median CAGR: {median_cagr:.2%}")
-
+    
     valid_positive = [c for c in [traditional_cagr, avg_cagr, median_cagr] 
                      if c is not None and c >= 0]
     
     if valid_positive:
         return min(np.median(valid_positive), max_threshold)  # Use median of valid positive CAGRs
     
-    # If no valid positive CAGRs, check if we have any positive ones (even above threshold)
+    # # If no valid positive CAGRs, check if we have any positive ones (even above threshold)
     any_positive = [c for c in [traditional_cagr, avg_cagr, median_cagr] 
                    if c is not None and c >= 0]
     

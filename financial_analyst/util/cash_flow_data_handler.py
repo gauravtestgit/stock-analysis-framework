@@ -120,8 +120,8 @@ class CashFlowDataHandler:
             info = self.ticker.info
             if info.get('marketCap', 0) == 0 and not self.data_quality.get('price_data', False):
                 reasons_to_skip.append("Appears to be delisted or inactive")
-        except:
-            pass
+        except Exception as e:
+            debug_print(f"Warning: Could not check delisting status - {str(e)[:50]}...")
         
         return reasons_to_skip
     

@@ -15,10 +15,10 @@ class FinanceConfig:
     # Data Quality Thresholds
     min_data_points: int = 2
     max_ev_ebitda_multiple: float = 20.0
-    default_ev_ebitda_multiple: float = 15.0
-
+    default_ev_ebitda_multiple: float = 12.0
+    use_default_ebitda_multiple:bool = True
     # Return configs
-    market_return = 0.08
+    market_return = 0.1
     cost_of_debt = 0.04
     tax_rate = .21    
     years = 5

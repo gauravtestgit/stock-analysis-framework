@@ -2,10 +2,10 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import os
-from cagr_calculations import get_cagr
+from financial_analyst.util.cagr_calculations import get_cagr
 from util.debug_printer import debug_print
-import beta_calculator
-import cash_flow_data_handler as cf_handler
+import financial_analyst.util.beta_calculator as beta_calculator
+import financial_analyst.util.cash_flow_data_handler as cf_handler
 from config import FinanceConfig
 
 calculation_default_params = FinanceConfig()
@@ -54,7 +54,6 @@ def get_free_cash_flow_cagr(ticker : yf.ticker.Ticker, simple_cagr:bool = False)
     if fcf_data is None or fcf_data is None or fcf_data.empty or len(fcf_data) < 2:
         debug_print('No free cash flow data available')
         raise Exception("No Cash Flow Data Available")
-    fcf_data = ticker.cashflow.loc['Free Cash Flow'].dropna()
     fcf_values = fcf_data.values
     debug_print(f'FCF Beginning: ${fcf_values[-1]:,.2f}, FCF Ending: ${fcf_values[0]:,.2f}, Period: {len(fcf_values)}')
     cagr = get_cagr(fcf_values, simple_cagr=simple_cagr, 
@@ -65,6 +64,7 @@ def get_free_cash_flow_cagr(ticker : yf.ticker.Ticker, simple_cagr:bool = False)
 
 def get_simple_cagr(ticker : yf.ticker.Ticker):
     # Remove post validation of the cagr_calculations.get_cagr() function
+    # amazonq-ignore-next-line
     # default free cash flow cagr of 5% in case yfinance data is incorrect, includes nan, etc
 
     fcf_cagr = calculation_default_params.default_cagr
@@ -183,24 +183,25 @@ def get_terminal_value_perpetuity_growth(fcf_future, wacc, growth_rate):
     terminal_value_pg = fcf_future * (1 + growth_rate) / (wacc - growth_rate)
     return terminal_value_pg
 
-def get_terminal_value_ebitda_multiple(ticker: yf.ticker.Ticker, ebitda_future, useDefault:bool = True):
+def get_terminal_value_ebitda_multiple(ticker: yf.ticker.Ticker, ebitda_future, use_default:bool = True):
     ev_ebitda_multiple = ticker.info.get('enterpriseToEbitda', calculation_default_params.default_ev_ebitda_multiple)  # default multiple
+    
     if ev_ebitda_multiple is None or ev_ebitda_multiple <= 0 or ev_ebitda_multiple > 20:
-        if useDefault:
-            debug_print(f"Warning: Invalid EV/EBITDA multiple, using default of {calculation_default_params.default_ev_ebitda_multiple}x")
+        if use_default:
+            debug_print(f"Warning: Invalid EV/EBITDA multiple {ev_ebitda_multiple}x, using default of {calculation_default_params.default_ev_ebitda_multiple}x")
             ev_ebitda_multiple = calculation_default_params.default_ev_ebitda_multiple
         else:
             debug_print(f'using retrieved EV/EBITDA multiple: {ev_ebitda_multiple}x')
         
     terminal_enterprise_value = ebitda_future * ev_ebitda_multiple
-    total_debt = ticker.info.get('totalDebt', 0) or 0
-    terminal_equity_value = terminal_enterprise_value - total_debt
+    #total_debt = ticker.info.get('totalDebt', 0) or 0
+    #terminal_equity_value = terminal_enterprise_value - total_debt
     debug_print(f"EV/EBITDA Multiple: {ev_ebitda_multiple:.1f}x")
     debug_print(f"Terminal Enterprise Value: ${terminal_enterprise_value:,.0f}")
-    debug_print(f"Less Total Debt: ${total_debt:,.0f}")
-    debug_print(f"Terminal Equity Value: ${terminal_equity_value:,.0f}")
+    #debug_print(f"Less Total Debt: ${total_debt:,.0f}")
+    #debug_print(f"Terminal Equity Value: ${terminal_equity_value:,.0f}")
     
-    return terminal_equity_value
+    return terminal_enterprise_value
 
 def get_projected_free_cash_flows(ticker: yf.ticker.Ticker, fcf_cagr, years):
     cashflow = ticker.cashflow
@@ -238,10 +239,10 @@ def get_average_terminal_value(terminal_value_pg, terminal_value_ebitda_multiple
     
     if terminal_value_pg / terminal_value_ebitda_multiple > 1.5:
         debug_print("Warning: Terminal value perpetuity growth is more than 50% higher than terminal value EBITDA multiple. Adjusting weights")
-        return (0.4*terminal_value_pg + 0.6*terminal_value_ebitda_multiple)/2
+        return (0.4*terminal_value_pg + 0.6*terminal_value_ebitda_multiple)
     elif terminal_value_ebitda_multiple / terminal_value_pg > 1.5:
         debug_print("Warning: Terminal value EBITDA multiple is more than 50% higher than terminal value perpetuity growth. Adjusting weights")
-        return (0.6*terminal_value_pg + 0.4*terminal_value_ebitda_multiple)/2
+        return (0.6*terminal_value_pg + 0.4*terminal_value_ebitda_multiple)
     
     return (terminal_value_pg + terminal_value_ebitda_multiple)/2
 
@@ -270,6 +271,7 @@ def get_share_price(ticker_symbol, config : FinanceConfig=None):
     terminal_value_ebitda_multiple = 0
     fcf_calculation_error = False
     ebitda_calculation_error = False
+    fcf_cagr = calculation_default_params.default_cagr
     try:
         fcf_cagr = get_free_cash_flow_cagr(ticker, simple_cagr=False)
         debug_print(f'FCF CAGR: {fcf_cagr}')
@@ -288,6 +290,7 @@ def get_share_price(ticker_symbol, config : FinanceConfig=None):
     except Exception as e:
         debug_print(f'Error: {str(e)}')
         ebitda_calculation_error = True
+    # amazonq-ignore-next-line
     
     if fcf_calculation_error and ebitda_calculation_error:
         debug_print('Error: Unable to calculate both FCF and EBITDA future values. Using default terminal growth rate')
@@ -295,7 +298,7 @@ def get_share_price(ticker_symbol, config : FinanceConfig=None):
     
     terminal_value_pg = get_terminal_value_perpetuity_growth(fcf_future, wacc, terminal_growth_rate)
     debug_print(f"Terminal Value Perpetuity Growth: ${terminal_value_pg:,.0f}")
-    terminal_value_ebitda_multiple = get_terminal_value_ebitda_multiple(ticker, ebitda_future, True)
+    terminal_value_ebitda_multiple = get_terminal_value_ebitda_multiple(ticker, ebitda_future, calculation_default_params.use_default_ebitda_multiple)
     debug_print(f"Terminal Value EBITDA Multiple: ${terminal_value_ebitda_multiple:,.0f}")
     average_terminal_value = get_average_terminal_value(terminal_value_pg, terminal_value_ebitda_multiple)
     debug_print(f'Average Terminal Value: ${average_terminal_value:,.0f}')
@@ -313,14 +316,21 @@ def get_share_price(ticker_symbol, config : FinanceConfig=None):
     debug_print(f'PV Terminal Value: ${pv_terminal_value:,.0f}')
 
     enterprise_value = pv_fcf + pv_terminal_value
-    debug_print(f'Enterprise Value: ${enterprise_value:,.0f}')
+    
 
     total_debt = ticker.info.get('totalDebt', 0) or 0
+    # amazonq-ignore-next-line
     total_cash = ticker.info.get('totalCash', 0) or 0
-    adjusted_debt = (total_debt - total_cash,0)
-    equity_value = enterprise_value - total_debt #+ ticker.info.get('totalCash',0)
+    debug_print(f'Total Debt: ${total_debt:,.0f}, Total Cash: ${total_cash:,.0f}')
+    debug_print(f'Enterprise Value: ${enterprise_value:,.0f}, Net Debt: ${total_debt-total_cash:,.2f}')
+    adjusted_debt = max(total_debt - total_cash,0)
+    equity_value = enterprise_value - adjusted_debt
     if equity_value < enterprise_value *0.8:
         debug_print('High leverage detected. Adjusting equity')
+        # amazonq-ignore-next-line
+        #adjusted_debt = min(adjusted_debt, enterprise_value * 0.75)
+        debug_print(f'Adjusted debt to: ${adjusted_debt:,.0f}')
+        equity_value = enterprise_value - adjusted_debt
 
     debug_print(f'Equity Value: ${equity_value:,.0f}')
 
