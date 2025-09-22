@@ -3,8 +3,8 @@ import pandas as pd
 import dcf_yf
 import os
 import traceback
-import financial_analyst.util.cagr_calculations as cagr_calculations
-import financial_analyst.util.cash_flow_data_handler as cfh
+import util.cagr_calculations as cagr_calculations
+import util.cash_flow_data_handler as cfh
 from config import FinanceConfig
 from util.debug_printer import debug_print
 

@@ -5,6 +5,11 @@ from typing import Dict, List, Optional, Tuple
 from enum import Enum
 import warnings
 warnings.filterwarnings('ignore')
+import dcf_yf
+from config import FinanceConfig
+import os
+from util.debug_printer import debug_print
+import json
 
 class CompanyType(Enum):
     MATURE_PROFITABLE = "mature_profitable"
@@ -22,6 +27,7 @@ class StockAnalyzer:
         self.stock = yf.Ticker(ticker)
         self.info = self.stock.info
         self.company_type = None
+        self.error_analysis = []
         
     def classify_company(self) -> CompanyType:
         """Classify company type to determine appropriate valuation method"""
@@ -62,7 +68,8 @@ class StockAnalyzer:
             else:
                 return CompanyType.MATURE_PROFITABLE
                 
-        except Exception:
+        except Exception as e:
+            self.error_analysis.append(f"classify_company():{str(e)}")
             return CompanyType.MATURE_PROFITABLE  # Default fallback
 
     def get_financial_metrics(self) -> Dict:
@@ -102,18 +109,31 @@ class StockAnalyzer:
             
             return metrics
         except Exception as e:
+            self.error_analysis.append(f"get_financial_metrics():{str(e)}")
             print(f"Error getting financial metrics for {self.ticker}: {e}")
             return {}
 
     def dcf_analysis(self) -> Dict:
         """DCF analysis for mature/stable companies"""
         # This would integrate your existing DCF model
-        return {
-            'method': 'DCF Analysis',
-            'applicable': True,
-            'estimated_value': 0,  # Would call your DCF function here
-            'confidence': 'High' if self.company_type == CompanyType.MATURE_PROFITABLE else 'Medium'
-        }
+        try:
+            config = FinanceConfig()
+            config.default_cagr = 0.05
+            config.max_cagr_threshold = 0.15
+            config.use_default_ebitda_multiple = False
+            share_price, equity_value = dcf_yf.get_share_price(ticker_symbol=self.ticker, config=config)
+            current_price = self.info.get('currentPrice', 0)
+            return {
+                'method': 'DCF Analysis',
+                'applicable': True,
+                'estimated_value': share_price,  # Would call your DCF function here
+                'current_price': current_price,
+                'total_equity_value': equity_value,
+                'confidence': 'High' if self.company_type == CompanyType.MATURE_PROFITABLE else 'Medium'
+            }
+        except Exception as e:
+            self.error_analysis.append(f"dcf_analysis():{str(e)}")
+            return{}
 
     def comparable_company_analysis(self) -> Dict:
         """Compare valuation multiples to industry peers"""
@@ -161,6 +181,7 @@ class StockAnalyzer:
             }
             
         except Exception as e:
+            self.error_analysis.append(f"comparable_company_analysis():{str(e)}")
             return {'error': f"CCA analysis failed: {e}"}
 
     def technical_analysis(self) -> Dict:
@@ -174,8 +195,8 @@ class StockAnalyzer:
             current_price = hist['Close'].iloc[-1]
             
             # Calculate moving averages
-            ma_20 = hist['Close'].rolling(window=20).mean().iloc[-1]
-            ma_50 = hist['Close'].rolling(window=50).mean().iloc[-1]
+            ma_20 = hist['Close'].rolling(window=20).mean().iloc[-1] if len(hist) >= 20 else None
+            ma_50 = hist['Close'].rolling(window=50).mean().iloc[-1] if len(hist) >= 50 else None
             ma_200 = hist['Close'].rolling(window=200).mean().iloc[-1] if len(hist) >= 200 else None
             
             # Calculate volatility
@@ -189,13 +210,45 @@ class StockAnalyzer:
             avg_volume = hist['Volume'].mean()
             recent_volume = hist['Volume'].iloc[-10:].mean()
             
+            # Determine trend based on Moving averages
+            ma_trend = ''
+            if ma_200 is not None and ma_50 is not None:
+                # Full trend analysis with all 3 MAs
+                if current_price > ma_50 > ma_200:
+                    ma_trend = 'Strong Uptrend'
+                elif current_price < ma_50 < ma_200:
+                    ma_trend = 'Strong Downtrend'
+                elif current_price > ma_50:
+                    ma_trend = 'Uptrend'
+                elif current_price < ma_50:
+                    ma_trend = 'Downtrend'
+                else:
+                    ma_trend = 'Sideways'
+            elif ma_50 is not None:
+                # Simple trend analysis with just 50-day MA
+                if current_price > ma_50:
+                    ma_trend = 'Short-term Uptrend'
+                elif current_price < ma_50:
+                    ma_trend = 'Short-term Downtrend'
+                else:
+                    ma_trend = 'Sideways'
+            elif ma_20 is not None:
+                if current_price > ma_20:
+                    ma_trend = 'Near-term Uptrend'
+                elif current_price < ma_20:
+                    ma_trend = 'Near-term Downtrend'
+                else:
+                    ma_trend = 'Sideways'
+            else:
+                ma_trend = 'Insufficient Moving Averages Data'
+                
             return {
                 'method': 'Technical Analysis',
                 'current_price': current_price,
                 'ma_20': ma_20,
                 'ma_50': ma_50,
                 'ma_200': ma_200,
-                'trend': 'Uptrend' if current_price > ma_50 > ma_200 else 'Downtrend' if current_price < ma_50 < ma_200 else 'Sideways',
+                'trend': ma_trend,
                 'volatility_annual': volatility,
                 'high_52w': high_52w,
                 'low_52w': low_52w,
@@ -205,6 +258,7 @@ class StockAnalyzer:
             }
             
         except Exception as e:
+            self.error_analysis.append(f"technical_analysis():{str(e)}")
             return {'error': f"Technical analysis failed: {e}"}
 
     def startup_analysis(self) -> Dict:
@@ -246,6 +300,7 @@ class StockAnalyzer:
             }
             
         except Exception as e:
+            self.error_analysis.append(f"startup_analysis():{str(e)}")
             return {'error': f"Startup analysis failed: {e}"}
 
     def quality_score(self) -> Dict:
@@ -253,72 +308,106 @@ class StockAnalyzer:
         metrics = self.get_financial_metrics()
         score = 0
         max_score = 100
-        
+        missing_data_penalty = 0
+
+        try:
         # Profitability (25 points)
-        if metrics.get('roe', 0) > 0.15:
-            score += 15
-        elif metrics.get('roe', 0) > 0.10:
-            score += 10
-        elif metrics.get('roe', 0) > 0.05:
-            score += 5
-            
-        if metrics.get('net_income', 0) > 0:
-            score += 10
+            roe = metrics.get('roe', 0)
+            if roe is not None:
+                if roe > 0.15:
+                    score += 15
+                elif roe > 0.10:
+                    score += 10
+                elif roe > 0.05:
+                    score += 5
+            else:
+                missing_data_penalty += 3
+            net_income = metrics.get('net_income', 0)
+            if net_income > 0:
+                score += 10
         
         # Financial Health (25 points)
-        debt_equity = metrics.get('debt_to_equity', 0)
-        if debt_equity < 0.3:
-            score += 15
-        elif debt_equity < 0.6:
-            score += 10
-        elif debt_equity < 1.0:
-            score += 5
+            debt_equity = metrics.get('debt_to_equity', 0)
+            if debt_equity is not None:
+                if debt_equity < 0.3:
+                    score += 15
+                elif debt_equity < 0.6:
+                    score += 10
+                elif debt_equity < 1.0:
+                    score += 5
+            else:
+                missing_data_penalty += 2
             
-        current_ratio = metrics.get('current_ratio', 0)
-        if current_ratio > 2.0:
-            score += 10
-        elif current_ratio > 1.5:
-            score += 7
-        elif current_ratio > 1.0:
-            score += 3
+            current_ratio = metrics.get('current_ratio', 0)
+            if current_ratio is not None:
+                if current_ratio > 2.0:
+                    score += 10
+                elif current_ratio > 1.5:
+                    score += 7
+                elif current_ratio > 1.0:
+                    score += 3
+            else:
+                missing_data_penalty += 2
+
         
         # Growth (25 points)
-        revenue_growth = metrics.get('revenue_growth', 0)
-        if revenue_growth > 0.20:
-            score += 15
-        elif revenue_growth > 0.10:
-            score += 10
-        elif revenue_growth > 0.05:
-            score += 5
+            revenue_growth = metrics.get('revenue_growth', 0)
+            if revenue_growth is not None:
+                if revenue_growth > 0.20:
+                    score += 15
+                elif revenue_growth > 0.10:
+                    score += 10
+                elif revenue_growth > 0.05:
+                    score += 5
+            else:
+                missing_data_penalty += 2
+
         
-        earnings_growth = metrics.get('earnings_growth', 0)
-        if earnings_growth > 0.15:
-            score += 10
-        elif earnings_growth > 0.05:
-            score += 5
+            earnings_growth = metrics.get('earnings_growth', 0)
+            if earnings_growth is not None:
+                if earnings_growth > 0.15:
+                    score += 10
+                elif earnings_growth > 0.05:
+                    score += 5
+            else:
+                missing_data_penalty += 2
         
         # Valuation (25 points)
-        pe_ratio = metrics.get('pe_ratio', 0)
-        if pe_ratio and 10 < pe_ratio < 20:
-            score += 15
-        elif pe_ratio and 8 < pe_ratio < 25:
-            score += 10
-        elif pe_ratio and pe_ratio < 30:
-            score += 5
+            pe_ratio = metrics.get('pe_ratio', 0)
+            if pe_ratio is not None:
+                if pe_ratio and 10 < pe_ratio < 20:
+                    score += 15
+                elif pe_ratio and 8 < pe_ratio < 25:
+                    score += 10
+                elif pe_ratio and pe_ratio < 30:
+                    score += 5
+            else:
+                missing_data_penalty += 2
             
-        peg_ratio = metrics.get('peg_ratio', 0)
-        if peg_ratio and peg_ratio < 1.0:
-            score += 10
-        elif peg_ratio and peg_ratio < 1.5:
-            score += 5
+            peg_ratio = metrics.get('peg_ratio', 0)
+            if peg_ratio is not None and peg_ratio > 0:
+                if peg_ratio and peg_ratio < 1.0:
+                    score += 10
+                elif peg_ratio and peg_ratio < 1.5:
+                    score += 5
+            else:
+                missing_data_penalty += 1
+            
+            final_score = max(0, score - missing_data_penalty)
+            data_quality = "High" if missing_data_penalty <= 3 else "Medium" if missing_data_penalty <= 7 else "Low"
         
-        return {
-            'quality_score': score,
-            'max_score': max_score,
-            'quality_grade': 'A' if score >= 80 else 'B' if score >= 60 else 'C' if score >= 40 else 'D',
-            'strengths': [],
-            'weaknesses': []
-        }
+            return {
+                'quality_score': score,
+                'max_score': max_score,
+                'missing_data_penalty': missing_data_penalty,
+                'data_quality': data_quality,
+                'quality_grade': 'A' if final_score >= 80 else 'B' if final_score >= 60 else 'C' if final_score >= 40 else 'D',
+                'strengths': [],
+                'weaknesses': []
+            }
+        except Exception as e:
+            self.error_analysis.append(f"quality_score():{str(e)}")
+            return {'error': f"Quality score calculation failed: {e}"}
 
     def comprehensive_analysis(self) -> Dict:
         """Run complete analysis based on company type"""
@@ -335,7 +424,7 @@ class StockAnalyzer:
         analyses = {
             'company_type': self.company_type.value,
             'financial_metrics': metrics,
-            'quality_score': self.quality_score()
+            #'quality_score': self.quality_score() # remove post testing. add quality score at the end
         }
         
         # Always run technical analysis
@@ -354,7 +443,12 @@ class StockAnalyzer:
             analyses['comparable_analysis'] = self.comparable_company_analysis()
         
         # Generate summary recommendation
-        analyses['summary'] = self.generate_summary(analyses)
+        try:
+            analyses['quality_score'] = self.quality_score()
+            analyses['summary'] = self.generate_summary(analyses)
+        except Exception as e:
+            self.error_analysis.append(f"generate_summary():{str(e)}")
+            analyses['summary'] = {'error': f"Summary generation failed: {e}"}
         
         return analyses
 
@@ -398,7 +492,8 @@ def analyze_multiple_stocks(tickers: List[str]) -> pd.DataFrame:
                 'Revenue_Growth': analysis['financial_metrics'].get('revenue_growth'),
                 'Debt_to_Equity': analysis['financial_metrics'].get('debt_to_equity'),
                 'Recommendation': analysis['summary']['recommendation'],
-                'Technical_Trend': analysis['technical_analysis'].get('trend', 'Unknown') if 'error' not in analysis['technical_analysis'] else 'Unknown'
+                'Technical_Trend': analysis['technical_analysis'].get('trend', 'Unknown') if 'error' not in analysis['technical_analysis'] else 'Unknown',
+                'Errors':analyzer.error_analysis
             }
             results.append(result)
             
@@ -407,15 +502,86 @@ def analyze_multiple_stocks(tickers: List[str]) -> pd.DataFrame:
             continue
     
     return pd.DataFrame(results)
+def read_stock_data(file_path) -> pd.DataFrame:
+    # Read NASDAQ data from CSV file
+    df = pd.read_csv(file_path)
+    return df
 
+def save_analysis(stock_data, write_header=False):
+    row_df = pd.DataFrame([stock_data], columns=['Symbol', 'DCF Price', 'Equity Value', 'Last Close'])
+    row_df.to_csv('C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/stock_analysis.csv', 
+                  index=False, mode='a', header=write_header)
+    return
+
+def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/stock_analysis.csv'):
+    
+    """Save analysis results to CSV file"""
+    metrics = analysis.get('financial_metrics', {})
+    quality = analysis.get('quality_score', {})
+    summary = analysis.get('summary', {})
+    dcf = analysis.get('dcf_analysis', {})
+    
+    row_data = {
+        'Ticker': ticker,
+        'Company_Type': analysis.get('company_type', ''),
+        'Current_Price': f"${metrics.get('current_price', 0):,.2f}",
+        'DCF_Value': f"${dcf.get('estimated_value', 0):,.2f}",
+        'Market_Cap': f"${metrics.get('market_cap', 0):,.0f}",
+        'PE_Ratio': metrics.get('pe_ratio', ''),
+        'Revenue_Growth': metrics.get('revenue_growth', 0),
+        'Quality_Score': quality.get('quality_score', 0),
+        'Quality_Grade': quality.get('quality_grade', ''),
+        'Recommendation': summary.get('recommendation', ''),
+        'Confidence': summary.get('confidence', ''),
+        'Errors': analyzer.error_analysis
+    }
+    debug_print(row_data.keys())
+    df = pd.DataFrame([row_data])
+    df.to_csv(file_path, mode='a', header=not os.path.exists(file_path), index=False)
+
+
+def read_stock_from_file():
+    df = read_stock_data('C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/nasdaq.csv')
+    print(len(df['Symbol']))
+    count = 0
+    stock_data = []
+    config = FinanceConfig()
+    config.default_cagr = 0.05
+    config.max_cagr_threshold = 0.15
+    config.use_default_ebitda_multiple = False
+    debug_print(f'default settings\n{vars(config)}')
+    #stock_analysis_df = pd.DataFrame(stock_data, columns=['Symbol', 'DCF Price', 'Equity Value', 'Last Close'])
+    for symbol in df['Symbol']:
+        try:
+            count += 1
+            if count == 20:
+                break
+            print(f'Processing stock {count}...', end='\r', flush=True)
+            analyzer = StockAnalyzer(symbol)
+            analysis = analyzer.comprehensive_analysis()
+            save_analysis_to_csv(analyzer = analyzer, analysis = analysis, ticker = analyzer.ticker), analyzer.ticker
+            
+        except Exception as e:
+            #print(f'Symbol: {symbol}, Error: {str(e)}')
+            analysis = {'Ticker':symbol, 'Company_Type':'Error: {str(e)}'}
+            save_analysis_to_csv(analyzer = analyzer, analysis = analysis, ticker = analyzer.ticker)
+            continue
+    return
 # Example usage
 if __name__ == "__main__":
     # Analyze individual stock
-    analyzer = StockAnalyzer("AAPL")
+    os.environ['DEBUG'] = 'true'
+    analyzer = StockAnalyzer("AACB")
     analysis = analyzer.comprehensive_analysis()
+    debug_print(f"==========Analysis complete for {analyzer.ticker}==========")
+    debug_print(json.dumps(analysis, indent=2, default=str))
     
-    # Analyze multiple stocks for comparison
-    tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
-    comparison_df = analyze_multiple_stocks(tickers)
-    print("\n=== Multi-Stock Comparison ===")
-    print(comparison_df.to_string(index=False))
+    # read_stock_from_file()
+    #save_analysis_to_csv(analysis, analyzer.ticker)
+    
+    
+    # # Analyze multiple stocks for comparison
+    # tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
+    # comparison_df = analyze_multiple_stocks(tickers)
+    # print("\n=== Multi-Stock Comparison ===")
+    # print(comparison_df.to_string(index=False))

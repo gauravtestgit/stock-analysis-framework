@@ -2,10 +2,10 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import os
-from financial_analyst.util.cagr_calculations import get_cagr
+from util.cagr_calculations import get_cagr
 from util.debug_printer import debug_print
-import financial_analyst.util.beta_calculator as beta_calculator
-import financial_analyst.util.cash_flow_data_handler as cf_handler
+import util.beta_calculator as beta_calculator
+import util.cash_flow_data_handler as cf_handler
 from config import FinanceConfig
 
 calculation_default_params = FinanceConfig()
