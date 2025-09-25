@@ -110,7 +110,12 @@ def get_future_cash_flow(ticker : yf.ticker.Ticker, fcf_cagr, years):
     fcf_ending = cashflow.loc['Free Cash Flow'].iloc[0]
     fcf_future = 0
     try:
-        fcf_future = fcf_ending * (1 + fcf_cagr)**years
+        if fcf_ending < 0:
+            # For negative FCF, positive CAGR should reduce losses (improve toward zero)
+            fcf_future = fcf_ending * (1 - fcf_cagr)**years
+        else:
+            # For positive FCF, normal growth calculation
+            fcf_future = fcf_ending * (1 + fcf_cagr)**years
     except Exception as e:
         debug_print(f'Error: {str(e)}')
     finally:
@@ -167,13 +172,22 @@ def get_future_ebitda(ticker : yf.ticker.Ticker, ebitda_cagr, years):
     ebitda_ending = income_statement.loc['EBITDA'].iloc[0]
     ebitda_future = 0
     try:
-        ebitda_future = ebitda_ending * (1 + ebitda_cagr)**years
+        if ebitda_ending < 0:
+            # For negative EBITDA, positive CAGR should reduce losses (improve toward zero)
+            ebitda_future = ebitda_ending * (1 - ebitda_cagr)**years
+        else:
+            ebitda_future = ebitda_ending * (1 + ebitda_cagr)**years
     except Exception as e:
         debug_print(f'Error: {str(e)}')
     finally:
         return ebitda_future
     
 def get_terminal_value_perpetuity_growth(fcf_future, wacc, growth_rate):
+    
+    # Perpetuity growth model invalid for negative FCF
+    if fcf_future <= 0:
+        debug_print(f"Warning: Negative FCF ${fcf_future:,.0f} - perpetuity growth model not applicable")
+        return 0
     
     if growth_rate > wacc:
         debug_print(f'Error. Growth rate: {growth_rate} must be less than WACC: {wacc}. Using defaults')
@@ -208,7 +222,11 @@ def get_projected_free_cash_flows(ticker: yf.ticker.Ticker, fcf_cagr, years):
     fcf_ending = cashflow.loc['Free Cash Flow'].iloc[0]
     projected_free_cash_flows = []
     for i in range(1, years + 1):
-        projected_free_cash_flows.append(fcf_ending * (1 + fcf_cagr)**i)
+        if fcf_ending < 0:
+            # For negative FCF, positive CAGR should reduce losses
+            projected_free_cash_flows.append(fcf_ending * (1 - fcf_cagr)**i)
+        else:
+            projected_free_cash_flows.append(fcf_ending * (1 + fcf_cagr)**i)
     return projected_free_cash_flows
 
 def get_present_value_free_cash_flows(projected_free_cash_flows, wacc):

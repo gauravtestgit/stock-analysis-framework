@@ -31,6 +31,10 @@ class StockAnalyzer:
         self.error_analysis = []
         self.config = config if config is not None else FinanceConfig()
         
+        # Check if stock is delisted/invalid
+        if not self.info or self.info.get('regularMarketPrice') is None:
+            self.error_analysis.append(f"Stock {self.ticker} appears to be delisted or invalid")
+        
     def classify_company(self) -> CompanyType:
         """Classify company type to determine appropriate valuation method"""
         try:
@@ -131,6 +135,8 @@ class StockAnalyzer:
                                                          company_type=self.company_type, quality_grade=quality_grade)
 
             tmp_config = FinanceConfig()
+            tmp_config.use_default_ebitda_multiple = True
+            tmp_config.default_ev_ebitda_multiple = params.get('ev_ebitda_multiple', tmp_config.default_ev_ebitda_multiple)
             tmp_config.max_cagr_threshold = params.get('max_cagr', tmp_config.max_cagr_threshold)
             tmp_config.default_terminal_growth = params.get('terminal_growth', tmp_config.default_terminal_growth)            
 
@@ -642,10 +648,11 @@ class StockAnalyzer:
         elif self.company_type in [CompanyType.MATURE_PROFITABLE, CompanyType.GROWTH_PROFITABLE]:
             analyses['dcf_analysis'] = self.dcf_analysis()
             analyses['comparable_analysis'] = self.comparable_company_analysis()
-        elif self.company_type == CompanyType.CYCLICAL:
+        elif self.company_type in [CompanyType.CYCLICAL, CompanyType.FINANCIAL]:
             analyses['comparable_analysis'] = self.comparable_company_analysis()
             # Could add commodity price correlation analysis here
         else:
+            analyses['dcf_analysis'] = self.dcf_analysis()
             analyses['comparable_analysis'] = self.comparable_company_analysis()
         
         # Generate summary recommendation
@@ -963,10 +970,10 @@ def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:
         'Industry': analyzer.info.get('industry', ''),
         'Company_Type': analysis.get('company_type', ''),
         'Current_Price': f"${metrics.get('current_price', 0):,.2f}",
-        'DCF_Price': f"${dcf.get('predicted_price', 0):,.2f}",
-        'Technical_Price' : f"${technical.get('predicted_price', 0):,.2f}",
-        'Comparable_Price' : f"${comparable.get('predicted_price', 0):,.2f}",
-        'Startup_Price' : f"${startup.get('predicted_price', 0):,.2f}",
+        'DCF_Price': f"${dcf.get('predicted_price', 0) or 0:,.2f}",
+        'Technical_Price' : f"${technical.get('predicted_price', 0) or 0:,.2f}",
+        'Comparable_Price' : f"${comparable.get('predicted_price', 0) or 0:,.2f}",
+        'Startup_Price' : f"${startup.get('predicted_price', 0) or 0:,.2f}",
         'Equity Value': f"${dcf.get('total_equity_value', 0):,.0f}",
         'RSI 14': technical.get('rsi_14', 'RSI_14 Unavailable'),
         'Current_Multiples' : comparable.get('current_multiples'),
@@ -1042,19 +1049,22 @@ def test_single(symbol: str):
     debug_print(f"==========Analysis complete for {analyzer.ticker}==========")
     debug_print(json.dumps(analysis, indent=2, default=str))
     debug_print(analysis.get('comparable_analysis', {}).get('implied_values'))
-    debug_print(f"===========Generfic info for {analyzer.ticker}===========")
+    save_analysis_to_csv(analyzer, analysis, analyzer.ticker)
+    debug_print(f"===========Generic info for {analyzer.ticker}===========")
     debug_print(json.dumps(analyzer.info, indent=2, default=str))
 # Example usage
 if __name__ == "__main__":
     # Analyze individual stock
     
-    # test_single("orcl")
+    # test_single("jpm")
     
+
     # Analyze from a list in a csv file
+    
     file_path = "C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/test-eachsector.csv"
     read_stock_from_file(file_path=file_path)
     
-    # save_analysis_to_csv(analyzer, analysis, analyzer.ticker)    
+    
     
     # # Analyze multiple stocks for comparison
     # tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
