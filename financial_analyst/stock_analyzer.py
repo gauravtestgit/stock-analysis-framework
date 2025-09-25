@@ -42,6 +42,23 @@ class StockAnalyzer:
             sector = self.info.get('sector', '')
             industry = self.info.get('industry', '')
             
+            # Check for ETFs first
+            fund_family = self.info.get('fundFamily', '')
+            category = self.info.get('category', '')
+            quote_type = self.info.get('quoteType', '')
+            long_name = self.info.get('longName', '')
+            
+            # ETF Detection
+            if (quote_type == 'ETF' or 
+                'ETF' in long_name.upper() or 
+                'FUND' in long_name.upper() or
+                fund_family or
+                category or
+                self.ticker.endswith('ETF') or
+                any(etf_indicator in self.ticker for etf_indicator in ['QQQ', 'SPY', 'IWM', 'VTI', 'VOO'])):
+                # ETFs should not use traditional valuation methods
+                return CompanyType.FINANCIAL  # Treat as financial instrument
+            
             # Get financial data
             income_stmt = self.stock.income_stmt
             cashflow = self.stock.cashflow
@@ -1056,12 +1073,12 @@ def test_single(symbol: str):
 if __name__ == "__main__":
     # Analyze individual stock
     
-    # test_single("jpm")
+    # test_single("sqqq")
     
 
     # Analyze from a list in a csv file
     
-    file_path = "C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/test-eachsector.csv"
+    file_path = "C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/nasdaq.csv"
     read_stock_from_file(file_path=file_path)
     
     
