@@ -9,3 +9,4 @@ financial_analyst/stock_analysis.csv
 financial_analyst/util/__pycache__/debug_printer.cpython-311.pyc
 financial_analyst/__pycache__/dcf_yf.cpython-311.pyc
 financial_analyst/__pycache__/cagr_calculations.cpython-311.pyc
+financial_analyst/resources/

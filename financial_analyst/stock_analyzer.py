@@ -11,6 +11,8 @@ from config import FinanceConfig
 import os
 from util.debug_printer import debug_print
 import json
+from datetime import datetime, timedelta
+# from ..analyst_integration import AnalystDataProvider as adp
 
 class CompanyType(Enum):
     MATURE_PROFITABLE = "mature_profitable"
@@ -29,6 +31,7 @@ class StockAnalyzer:
         self.info = self.stock.info
         self.company_type = None
         self.error_analysis = []
+        self.metrics = self.get_financial_metrics()
         self.config = config if config is not None else FinanceConfig()
         
         # Check if stock is delisted/invalid
@@ -95,14 +98,64 @@ class StockAnalyzer:
             self.error_analysis.append(f"classify_company():{str(e)}")
             return CompanyType.MATURE_PROFITABLE  # Default fallback
 
+    def get_revenue_trend(self):
+        """Get revenue trend from yfinance"""
+    
+        stock = self.stock
+    
+        # Method 1: From income statement (quarterly and annual)
+        quarterly_income = stock.quarterly_income_stmt
+        annual_income = stock.income_stmt
+    
+        # Method 2: From financials (same as income_stmt)
+        quarterly_financials = stock.quarterly_financials
+        annual_financials = stock.financials
+        
+        # Extract revenue data
+        revenue_data = {}
+    
+        # Annual revenue
+        if not annual_income.empty and 'Total Revenue' in annual_income.index:
+            annual_revenue = annual_income.loc['Total Revenue'].dropna()
+            revenue_data['annual_revenue'] = annual_revenue.to_dict()
+            
+            # Calculate growth rates
+            revenue_values = annual_revenue.values
+            if len(revenue_values) >= 2:
+                recent_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
+                revenue_data['recent_annual_growth'] = recent_growth
+        
+        # Quarterly revenue
+        if not quarterly_income.empty and 'Total Revenue' in quarterly_income.index:
+            quarterly_revenue = quarterly_income.loc['Total Revenue'].dropna()
+            revenue_data['quarterly_revenue'] = quarterly_revenue.to_dict()
+            
+            # Calculate QoQ growth
+            revenue_values = quarterly_revenue.values
+            if len(revenue_values) >= 2:
+                qoq_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
+                revenue_data['recent_quarterly_growth'] = qoq_growth
+        
+        # Method 3: From info (current metrics)
+        info = stock.info
+        revenue_data['current_revenue'] = info.get('totalRevenue', 0)
+        revenue_data['revenue_growth'] = info.get('revenueGrowth', 0)
+        revenue_data['quarterly_revenue_growth'] = info.get('quarterlyRevenueGrowth', 0)
+        
+        return revenue_data
+
     def get_financial_metrics(self) -> Dict:
         """Extract key financial metrics for analysis"""
         try:
+            revenue_data = self.get_revenue_trend()
             metrics = {
                 'market_cap': self.info.get('marketCap', 0),
                 'enterprise_value': self.info.get('enterpriseValue', 0),
                 'total_revenue': self.info.get('totalRevenue', 0),
                 'net_income': self.info.get('netIncomeToCommon', 0),
+                'current_revenue': f"${revenue_data.get('current_revenue'):,.2f}",
+                'yearly_revenue_growth': revenue_data.get('revenue_growth'),
+                'quarterly_revenue_growth': revenue_data.get('quarterly_revenue_growth'),
                 'free_cash_flow': 0,
                 'total_debt': self.info.get('totalDebt', 0) or 0,
                 'total_cash': self.info.get('totalCash', 0) or 0,
@@ -129,11 +182,13 @@ class StockAnalyzer:
                 fcf_data = cashflow.loc['Free Cash Flow'].dropna()
                 if len(fcf_data) > 0:
                     metrics['free_cash_flow'] = fcf_data.iloc[0]
-            
+            debug_print(f"==========Financial Metrics for {self.ticker}=========")
+            debug_print(json.dumps(metrics, indent=2, default=str))
             return metrics
         except Exception as e:
             self.error_analysis.append(f"get_financial_metrics():{str(e)}")
             print(f"Error getting financial metrics for {self.ticker}: {e}")
+            
             return {}
 
     def dcf_analysis(self) -> Dict:
@@ -232,7 +287,7 @@ class StockAnalyzer:
             
             # sector_multiples = industry_multiples.get(sector, industry_multiples['Default'])
             
-            metrics = self.get_financial_metrics()
+            metrics = self.metrics
             
             # Calculate implied values based on multiples
             implied_values = {}
@@ -373,7 +428,7 @@ class StockAnalyzer:
                 'low_52w': low_52w,
                 'distance_from_high': (current_price - high_52w) / high_52w,
                 'distance_from_low': (current_price - low_52w) / low_52w,
-                'volume_trend': 'Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal',
+                'volume_trend': f"Average Daily Volume:{avg_volume}, Trend: " + ('Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal'),
                 'rsi_14' : rsi_14
             }
             
@@ -382,11 +437,13 @@ class StockAnalyzer:
             return {'error': f"Technical analysis failed: {e}"}
 
     def startup_analysis(self) -> Dict:
-        """Specialized analysis for loss-making startups"""
+        """Specialized analysis for loss-making startups with enhanced risk assessment"""
         try:
-            metrics = self.get_financial_metrics()
+            metrics = self.metrics
+            sector = self.info.get('sector', '')
+            industry = self.info.get('industry', '')
             
-            # Cash runway analysis
+            # Enhanced cash runway analysis
             cashflow = self.stock.cashflow
             burn_rate = 0
             runway_quarters = 0
@@ -398,10 +455,11 @@ class StockAnalyzer:
                     if metrics['total_cash'] > 0:
                         runway_quarters = metrics['total_cash'] / burn_rate
             
-            # Revenue growth analysis
+            # Enhanced revenue growth analysis
             income_stmt = self.stock.income_stmt
             revenue_growth_rates = []
             current_revenue = 0
+            revenue_volatility = 0
 
             if not income_stmt.empty and 'Total Revenue' in income_stmt.index:
                 revenue_data = income_stmt.loc['Total Revenue'].dropna()
@@ -410,121 +468,189 @@ class StockAnalyzer:
                     if revenue_data.iloc[i] > 0:
                         growth = (revenue_data.iloc[i-1] - revenue_data.iloc[i]) / revenue_data.iloc[i]
                         revenue_growth_rates.append(growth)
+                
+                # Calculate revenue volatility as risk factor
+                if len(revenue_growth_rates) > 1:
+                    revenue_volatility = np.std(revenue_growth_rates)
             
             runway_years = runway_quarters / 4 if runway_quarters > 0 else 0
             median_growth = np.median(revenue_growth_rates) if revenue_growth_rates else 0
             
+            # Enhanced risk assessment
             risk_factors = []
-            if runway_years < 1:
+            risk_score = 0  # 0-100 scale
+            
+            # Cash runway risks
+            if runway_years < 0.5:
+                risk_factors.append("CRITICAL: Less than 6 months cash runway")
+                risk_score += 40
+            elif runway_years < 1:
                 risk_factors.append("CRITICAL: Less than 1 year cash runway")
+                risk_score += 30
             elif runway_years < 2:
                 risk_factors.append("HIGH: Less than 2 years cash runway")
+                risk_score += 20
+            elif runway_years < 3:
+                risk_factors.append("MODERATE: Less than 3 years cash runway")
+                risk_score += 10
             
-            if median_growth < 0.20:
-                risk_factors.append("LOW GROWTH: Revenue growth below 20% threshold for startups")
+            # Growth quality risks
+            if median_growth < 0:
+                risk_factors.append("CRITICAL: Declining revenue")
+                risk_score += 25
+            elif median_growth < 0.10:
+                risk_factors.append("HIGH: Revenue growth below 10%")
+                risk_score += 20
+            elif median_growth < 0.20:
+                risk_factors.append("MODERATE: Revenue growth below 20% startup threshold")
+                risk_score += 10
             
+            # Revenue volatility risk
+            if revenue_volatility > 0.5:
+                risk_factors.append("HIGH: Highly volatile revenue pattern")
+                risk_score += 15
+            elif revenue_volatility > 0.3:
+                risk_factors.append("MODERATE: Volatile revenue pattern")
+                risk_score += 10
+            
+            # Data quality risks
             if len(revenue_growth_rates) < 2:
-                risk_factors.append("INSUFFICIENT DATA: Limited revenue history")
+                risk_factors.append("HIGH: Insufficient revenue history")
+                risk_score += 15
             
-            # Growth assessment
+            # Sector-specific risks
+            high_risk_sectors = ['Biotechnology', 'Energy', 'Materials']
+            if sector in high_risk_sectors:
+                risk_factors.append(f"SECTOR RISK: {sector} has high regulatory/commodity risks")
+                risk_score += 10
+            
+            # Get startup-specific parameters from config
+            startup_params = self.config.company_type_adjustments.get(
+                CompanyType.STARTUP_LOSS_MAKING, {}
+            )
+            base_multiple = startup_params.get('revenue_multiple_base', 2.0)
+            growth_premium = startup_params.get('growth_multiple_premium', 1.5)
+            startup_risk_premium = startup_params.get('risk_premium', 0.05)
+            
+            # Enhanced revenue multiple calculation using config
+            growth_multiple = self.config.get_startup_revenue_multiple(median_growth, sector)
+            
+            # Apply risk adjustments to multiple
+            risk_adjustment = 1.0
+            if risk_score > 60:
+                risk_adjustment = 0.5  # Severe risk discount
+            elif risk_score > 40:
+                risk_adjustment = 0.7  # High risk discount
+            elif risk_score > 20:
+                risk_adjustment = 0.85  # Moderate risk discount
+            
+            adjusted_multiple = growth_multiple * risk_adjustment
+            
+            # Stage-based differentiation
+            stage = "Unknown"
+            stage_multiple = 1.0
+            
+            if current_revenue < 1e6:  # <$1M revenue
+                stage = "Pre-Revenue/Seed"
+                stage_multiple = 0.5
+            elif current_revenue < 10e6:  # <$10M revenue
+                stage = "Early Stage"
+                stage_multiple = 0.7
+            elif current_revenue < 100e6:  # <$100M revenue
+                stage = "Growth Stage"
+                stage_multiple = 1.0
+            else:
+                stage = "Late Stage"
+                stage_multiple = 1.2
+            
+            final_multiple = adjusted_multiple * stage_multiple
+            
+            # Growth assessment with enhanced criteria
             growth_quality = "Unknown"
-            growth_multiple = 1.5
-            # Sector adjustment
-            sector = self.info.get('sector', '')
-            growth_multiple = self.config.get_startup_revenue_multiple(median_growth, sector=sector)
-            if growth_multiple is None:
-                growth_multiple = 1.5  # Default if not found
-            
             if revenue_growth_rates:
-                if median_growth > 0.50:
-                    growth_quality = "Exceptional (>50%)"
-                    # growth_multiple = 8.0
+                if median_growth > 1.0:  # >100% growth
+                    growth_quality = "Hypergrowth (>100%)"
+                elif median_growth > 0.50:
+                    growth_quality = "Exceptional (50-100%)"
                 elif median_growth > 0.30:
                     growth_quality = "Strong (30-50%)"
-                    # growth_multiple = 5.0
                 elif median_growth > 0.15:
-                    # growth_multiple = 3.0
                     growth_quality = "Moderate (15-30%)"
                 elif median_growth > 0:
-                    # growth_multiple = 2.0
                     growth_quality = "Weak (<15%)"
                 else:
                     growth_quality = "Declining"
             
-                # if sector == 'Technology':
-                #     growth_multiple *= 1.2
-                # elif sector == 'Healthcare':
-                #     growth_multiple *= 1.1
-                # elif sector == 'Energy':
-                #     growth_multiple *= 0.8
-                
-                
-             # Project forward revenue (1-2 years)
-            projected_revenue_1yr = current_revenue * (1 + min(median_growth, 0.50))  # Cap growth assumption
-            projected_revenue_2yr = projected_revenue_1yr * (1 + min(median_growth * 0.8, 0.40))  # Diminishing growth
+            # Conservative growth projections with risk adjustment
+            growth_decay = 0.8 if median_growth > 0.5 else 0.9  # High growth decays faster
+            projected_revenue_1yr = current_revenue * (1 + min(median_growth * 0.8, 0.40))  # More conservative
+            projected_revenue_2yr = projected_revenue_1yr * (1 + min(median_growth * growth_decay * 0.6, 0.30))
             
             # Calculate enterprise values
-            current_ev = current_revenue * growth_multiple
-            forward_ev_1yr = projected_revenue_1yr * growth_multiple
-            forward_ev_2yr = projected_revenue_2yr * growth_multiple
+            current_ev = current_revenue * final_multiple
+            forward_ev_1yr = projected_revenue_1yr * final_multiple
+            forward_ev_2yr = projected_revenue_2yr * final_multiple
             
             # Convert to equity value
             total_debt = metrics['total_debt']
             total_cash = metrics['total_cash']
             net_debt = total_debt - total_cash
             shares_outstanding = self.info.get('sharesOutstanding', 0)
+            
             current_price_est = 0
             forward_price_1yr = 0
             forward_price_2yr = 0
+            
             if shares_outstanding > 0:
-                current_price_est = (current_ev - net_debt) / shares_outstanding
-                forward_price_1yr = (forward_ev_1yr - net_debt) / shares_outstanding
-                forward_price_2yr = (forward_ev_2yr - net_debt) / shares_outstanding
-                
-            # Overall recommendation logic
+                current_price_est = max(0, (current_ev - net_debt) / shares_outstanding)
+                forward_price_1yr = max(0, (forward_ev_1yr - net_debt) / shares_outstanding)
+                forward_price_2yr = max(0, (forward_ev_2yr - net_debt) / shares_outstanding)
+            
+            # Enhanced recommendation logic
             def get_startup_recommendation():
-                if runway_years < 0.5:
-                    return "AVOID - Bankruptcy risk within 6 months"
-                elif runway_years < 1 and median_growth < 0.20:
+                if risk_score > 70:
+                    return "AVOID - Critical risk factors"
+                elif runway_years < 0.5:
+                    return "AVOID - Imminent bankruptcy risk"
+                elif runway_years < 1 and median_growth < 0.15:
                     return "AVOID - Insufficient runway with weak growth"
-                elif runway_years > 3 and median_growth > 0.30:
-                    return "SPECULATIVE BUY - Strong runway with good growth"
-                elif runway_years > 2 and median_growth > 0.20:
-                    return "HOLD/WATCH - Adequate runway, monitor progress"
-                elif median_growth > 0.50:
-                    return "HIGH RISK/HIGH REWARD - Exceptional growth but check runway"
+                elif runway_years > 4 and median_growth > 0.40 and risk_score < 30:
+                    return "SPECULATIVE BUY - Strong fundamentals"
+                elif runway_years > 2 and median_growth > 0.25 and risk_score < 40:
+                    return "HOLD/WATCH - Adequate metrics, monitor closely"
+                elif median_growth > 0.75 and runway_years > 1:
+                    return "HIGH RISK/HIGH REWARD - Exceptional growth"
+                elif risk_score > 50:
+                    return "AVOID - High risk without adequate compensation"
                 else:
-                    return "AVOID - High risk without compensating growth"
-
-
-            # Revenue multiple estimate (simplified)
-            current_revenue = revenue_data.iloc[0] if not income_stmt.empty and 'Total Revenue' in income_stmt.index else 0
-            # estimated_multiple = 0
-            # if growth_quality == "Exceptional (>50%)":
-            #     estimated_multiple = 8.0
-            # elif growth_quality == "Strong (30-50%)":
-            #     estimated_multiple = 5.0
-            # elif growth_quality == "Moderate (15-30%)":
-            #     estimated_multiple = 3.0
-            # else:
-            #     estimated_multiple = 1.5
+                    return "MONITOR - Mixed signals, wait for clarity"
 
             return {
-                'method': 'Startup Analysis',
+                'method': 'Enhanced Startup Analysis',
+                'stage': stage,
                 'cash_runway_years': runway_years,
-                'predicted_price' : current_price_est,
-                'price_1y' : forward_price_1yr,
-                'price_2y' : forward_price_2yr,
+                'predicted_price': current_price_est,
+                'price_1y': forward_price_1yr,
+                'price_2y': forward_price_2yr,
                 'quarterly_burn_rate': burn_rate,
                 'revenue_growth_rates': [f"{rate:.1%}" for rate in revenue_growth_rates],
                 'median_growth': f"{median_growth:.1%}",
+                'revenue_volatility': f"{revenue_volatility:.1%}",
                 'growth_quality': growth_quality,
                 'risk_factors': risk_factors,
-                'recommendation': get_startup_recommendation(),        
-                'estimated_revenue_multiple': growth_multiple,
+                'risk_score': risk_score,
+                'recommendation': get_startup_recommendation(),
+                'revenue_multiple_breakdown': {
+                    'base_multiple': growth_multiple,
+                    'risk_adjustment': risk_adjustment,
+                    'stage_adjustment': stage_multiple,
+                    'final_multiple': final_multiple
+                },
                 'current_revenue': current_revenue,
-                'implied_value_estimate': current_revenue * growth_multiple if current_revenue > 0 else 0,
-                'confidence_level': 'Very Low - High speculation',
+                'projected_revenue_1yr': projected_revenue_1yr,
+                'projected_revenue_2yr': projected_revenue_2yr,
+                'implied_value_estimate': current_revenue * final_multiple if current_revenue > 0 else 0,
+                'confidence_level': 'Very Low - Speculative' if risk_score > 40 else 'Low - High Risk',
                 'investment_type': 'Venture Capital Style - Total Loss Possible'
             }
             
@@ -534,7 +660,7 @@ class StockAnalyzer:
 
     def quality_score(self) -> Dict:
         """Assess overall company quality"""
-        metrics = self.get_financial_metrics()
+        metrics = self.metrics
         score = 0
         max_score = 100
         missing_data_penalty = 0
@@ -638,6 +764,11 @@ class StockAnalyzer:
             self.error_analysis.append(f"quality_score():{str(e)}")
             return {'error': f"Quality score calculation failed: {e}"}
 
+    # def get_analyst_data(self) -> Dict:
+    #     analyst_data = adp.get_analyst_data(self.ticker) or {}
+    #     return analyst_data
+
+
     def comprehensive_analysis(self) -> Dict:
         """Run complete analysis based on company type"""
         print(f"\n=== Analyzing {self.ticker} ===")
@@ -647,7 +778,7 @@ class StockAnalyzer:
         print(f"Company Type: {self.company_type.value}")
         
         # Get basic metrics
-        metrics = self.get_financial_metrics()
+        metrics = self.metrics
         
         # Run appropriate analyses based on company type
         analyses = {
@@ -656,6 +787,9 @@ class StockAnalyzer:
             'quality_score': self.quality_score()
         }
         
+        # Always get professional analsyt data
+        # analyses['professional_analysts'] = self.get_analyst_data()
+
         # Always run technical analysis
         analyses['technical_analysis'] = self.technical_analysis()
         
@@ -980,6 +1114,7 @@ def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:
     technical = analysis.get('technical_analysis', {})
     comparable = analysis.get('comparable_analysis', {})
     startup = analysis.get('startup_analysis', {})
+    professional = analysis.get('professional_analysis', {})
 
     row_data = {
         'Ticker': ticker,
@@ -991,6 +1126,7 @@ def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:
         'Technical_Price' : f"${technical.get('predicted_price', 0) or 0:,.2f}",
         'Comparable_Price' : f"${comparable.get('predicted_price', 0) or 0:,.2f}",
         'Startup_Price' : f"${startup.get('predicted_price', 0) or 0:,.2f}",
+        # 'Analyst_Price' : f"${professional.get('target_price', 0) or 0:,.2f}",
         'Equity Value': f"${dcf.get('total_equity_value', 0):,.0f}",
         'RSI 14': technical.get('rsi_14', 'RSI_14 Unavailable'),
         'Current_Multiples' : comparable.get('current_multiples'),
@@ -1011,6 +1147,8 @@ def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:
         'Implied_Value_Estimate' : f"${startup.get('implied_value_estimate', 0):,.0f}",
         'Key_Risks': summary.get('key_risks', []),        
         'Recommendation': summary.get('recommendation', ''),
+        # 'Professional_Recommendation' : professional.get('recommendation', ''),
+        # 'Professional_Count' : professional.get('analyst_count', 0),
         'Confidence': summary.get('confidence', ''),
         'Signal-Bullish' : summary.get('signals', {}).get('bullish', []),
         'Signal-Bearish' : summary.get('signals', {}).get('bearish', []),
@@ -1033,6 +1171,7 @@ def save_analysis_to_csv(analyzer:StockAnalyzer, analysis, ticker, file_path='C:
 def read_stock_from_file(file_path : str):
     df = read_stock_data(file_path=file_path)
     print(len(df['Symbol']))
+    total_stocks = len(df['Symbol'])
     count = 0
     stock_data = []
     config = FinanceConfig()
@@ -1043,10 +1182,19 @@ def read_stock_from_file(file_path : str):
     #stock_analysis_df = pd.DataFrame(stock_data, columns=['Symbol', 'DCF Price', 'Equity Value', 'Last Close'])
     for symbol in df['Symbol']:
         try:
+            time_start = datetime.now()
             count += 1
-            # if count == 20:
+            time_diff = 0
+            time_remaining = 0
+            if count == 10:
+                time_10 = datetime.now()
+                time_diff = time_10 - time_start
+                time_per_stock = time_diff / 10
+                time_remaining = time_per_stock * (total_stocks - count)
+            # if count == 200:
             #     break
-            print(f'Processing stock {count}...', end='\r', flush=True)
+            
+            print(f'Processing stock {count}. Time remaining {time_remaining}', end='\r', flush=True)
             analyzer = StockAnalyzer(symbol, config)
             analysis = analyzer.comprehensive_analysis()
             save_analysis_to_csv(analyzer = analyzer, analysis = analysis, ticker = analyzer.ticker), analyzer.ticker
@@ -1073,12 +1221,12 @@ def test_single(symbol: str):
 if __name__ == "__main__":
     # Analyze individual stock
     
-    # test_single("sqqq")
+    # test_single("aapl")
     
 
     # Analyze from a list in a csv file
     
-    file_path = "C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/nasdaq.csv"
+    file_path = "C:/Users/x_gau/source/repos/agentic/langchain/tutorials/finance-app/financial_analyst/resources/nyse.csv"
     read_stock_from_file(file_path=file_path)
     
     

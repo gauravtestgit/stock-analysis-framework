@@ -14,7 +14,7 @@ def main():
     print("=" * 70)
     
     # File paths
-    input_file = "financial_analyst/resources/stock_analysis1.csv"
+    input_file = "financial_analyst/resources/stock_analysis.csv"
     output_file = "financial_analyst/resources/batch_analysis_results.csv"
     
     try:

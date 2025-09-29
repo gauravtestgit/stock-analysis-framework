@@ -3,8 +3,7 @@ import numpy as np
 from datetime import datetime
 import json
 import re
-# from analyst_integration import AnalystDataProvider, ProfessionalVsAlgorithmicComparison, validate_against_analysts
-# Temporarily disable analyst integration for testing
+from analyst_integration import AnalystDataProvider, ProfessionalVsAlgorithmicComparison, validate_against_analysts
 
 def validate_price_accuracy(row):
     """Validate if DCF, technical, and comparable prices seem reasonable"""
@@ -82,9 +81,9 @@ def validate_price_accuracy(row):
 def analyze_batch(df_batch, batch_num, start_row, end_row):
     """Analyze a batch of 20 rows and return summary statistics"""
     
-    # Initialize analyst integration (disabled for testing)
-    # analyst_provider = AnalystDataProvider()
-    # comparison_engine = ProfessionalVsAlgorithmicComparison()
+    # Initialize analyst integration
+    analyst_provider = AnalystDataProvider()
+    comparison_engine = ProfessionalVsAlgorithmicComparison()
     
     # Basic stats
     total_stocks = len(df_batch)
@@ -134,22 +133,21 @@ def analyze_batch(df_batch, batch_num, start_row, end_row):
         # Original validations
         validations = validate_price_accuracy(row)
         
-        # Analyst-enhanced validations (disabled for testing)
-        # try:
-        #     analyst_data = analyst_provider.get_analyst_data(row['Ticker'])
-        #     analyst_validations = validate_against_analysts(row, analyst_data)
-        #     validations.extend(analyst_validations)
-        #     
-        #     # Professional vs Algorithmic comparison
-        #     comparison = comparison_engine.compare_analysis(row)
-        #     analyst_comparisons.append(comparison)
-        #     
-        #     if comparison.get('deviation_score'):
-        #         consensus_deviations.append(comparison['deviation_score'])
-        #         
-        # except Exception as e:
-        #     print(f"Analyst validation error for {row['Ticker']}: {e}")
-        pass
+        # Analyst-enhanced validations
+        try:
+            analyst_data = analyst_provider.get_analyst_data(row['Ticker'])
+            analyst_validations = validate_against_analysts(row, analyst_data)
+            validations.extend(analyst_validations)
+            
+            # Professional vs Algorithmic comparison
+            comparison = comparison_engine.compare_analysis(row)
+            analyst_comparisons.append(comparison)
+            
+            if comparison.get('deviation_score'):
+                consensus_deviations.append(comparison['deviation_score'])
+                
+        except Exception as e:
+            print(f"Analyst validation error for {row['Ticker']}: {e}")
         
         if validations:
             all_validations.extend(validations)
@@ -238,6 +236,15 @@ def process_file_in_batches(file_path, batch_size=20):
         batch_result = analyze_batch(batch_df, batch_num, start_idx+1, end_idx)
         results.append(batch_result)
         
+        # Save batch result immediately
+        batch_df_result = pd.DataFrame([batch_result])
+        output_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\analysis\\batch_analysis_results.csv"
+        
+        # Write header only for first batch
+        write_header = batch_num == 1
+        batch_df_result.to_csv(output_path, mode='a', header=write_header, index=False)
+        
+        print(f"Batch {batch_num} saved to {output_path}")
         batch_num += 1
         
         # Process all batches in the dataset
@@ -246,15 +253,11 @@ def process_file_in_batches(file_path, batch_size=20):
     return results
 
 if __name__ == "__main__":
-    file_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\stock_analysis1.csv"
+    file_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\stock_analysis.csv"
     results = process_file_in_batches(file_path)
     
-    # Convert to DataFrame and save
-    results_df = pd.DataFrame(results)
-    output_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\batch_analysis_results.csv"
-    
-    # Append to existing file
-    results_df.to_csv(output_path, mode='a', header=False, index=False)
+    # Results already saved batch by batch
+    output_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\analysis\\batch_analysis_results.csv"
     
     print(f"Analysis complete. Results saved to {output_path}")
     print(f"Processed {len(results)} batches")

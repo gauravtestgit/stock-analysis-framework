@@ -57,23 +57,38 @@ def calculate_consensus_deviation(our_price: float, analyst_target: float,
     our_upside = (our_price - current_price) / current_price
     analyst_upside = (analyst_target - current_price) / current_price
     
+    # Investment-focused alignment: both showing >20% upside is convergence
+    investment_threshold = 0.20  # 20% upside threshold
+    
+    # Check for directional convergence
+    both_bullish = our_upside > investment_threshold and analyst_upside > investment_threshold
+    both_bearish = our_upside < -investment_threshold and analyst_upside < -investment_threshold
+    
     # Deviation score (0-100, lower = more aligned)
     deviation = abs(our_upside - analyst_upside) * 100
     
-    # Confidence scoring
-    if deviation < 20:
+    # Investment-focused confidence scoring
+    if both_bullish or both_bearish:
+        confidence = 'High'  # Both see significant opportunity/risk
+        alignment = 'Investment_Aligned'
+    elif deviation < 20:
         confidence = 'High'
+        alignment = 'Precise_Aligned'
     elif deviation < 50:
         confidence = 'Medium'
+        alignment = 'Moderate_Aligned'
     else:
         confidence = 'Low'
+        alignment = 'Divergent'
     
     return {
         'deviation_score': round(deviation, 1),
         'our_upside': round(our_upside * 100, 1),
         'analyst_upside': round(analyst_upside * 100, 1),
         'confidence': confidence,
-        'alignment': 'Aligned' if deviation < 30 else 'Divergent'
+        'alignment': alignment,
+        'both_bullish': both_bullish,
+        'both_bearish': both_bearish
     }
 
 def validate_against_analysts(row: pd.Series, analyst_data: Dict) -> list:
@@ -153,13 +168,21 @@ class ProfessionalVsAlgorithmicComparison:
         # Validation flags
         comparison['validation_flags'] = validate_against_analysts(stock_row, analyst_data)
         
-        # Overall assessment
-        if comparison.get('confidence') == 'High' and len(comparison['validation_flags']) == 0:
-            comparison['assessment'] = 'CONSENSUS_ALIGNED'
-        elif comparison.get('deviation_score', 0) > 75:
-            comparison['assessment'] = 'HIGH_DIVERGENCE'
+        # Investment-focused assessment
+        alignment = comparison.get('alignment', 'Divergent')
+        both_bullish = comparison.get('both_bullish', False)
+        both_bearish = comparison.get('both_bearish', False)
+        
+        if alignment == 'Investment_Aligned' or alignment == 'Precise_Aligned':
+            comparison['assessment'] = 'INVESTMENT_ALIGNED'
+        elif both_bullish:
+            comparison['assessment'] = 'BULLISH_CONVERGENCE'
+        elif both_bearish:
+            comparison['assessment'] = 'BEARISH_CONVERGENCE'
         elif 'CONTRARIAN_POSITION' in str(comparison['validation_flags']):
             comparison['assessment'] = 'CONTRARIAN_OPPORTUNITY'
+        elif comparison.get('deviation_score', 0) > 100:
+            comparison['assessment'] = 'HIGH_DIVERGENCE'
         else:
             comparison['assessment'] = 'MODERATE_DEVIATION'
         

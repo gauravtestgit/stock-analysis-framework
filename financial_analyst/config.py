@@ -184,9 +184,20 @@ class FinanceConfig:
             'valuation_discount': 0.20
         },
         CompanyType.STARTUP_LOSS_MAKING: {
-            'revenue_multiple_base': 3.0,
-            'growth_multiple_premium': 2.0,
-            'risk_premium': 0.05
+            'revenue_multiple_base': 2.0,  # More conservative base
+            'growth_multiple_premium': 1.5,  # Reduced premium
+            'risk_premium': 0.05,
+            'min_growth_threshold': 0.15,  # 15% minimum for startups
+            'runway_critical_months': 6,  # Critical runway threshold
+            'runway_warning_months': 18,  # Warning threshold
+            'volatility_penalty': 0.2,  # Penalty for high revenue volatility
+            'stage_multipliers': {
+                'pre_revenue': 0.3,
+                'seed': 0.5, 
+                'early': 0.7,
+                'growth': 1.0,
+                'late': 1.2
+            }
         }
     })
     
@@ -209,6 +220,41 @@ class FinanceConfig:
             ps_multiple=2.5,
             pb_multiple=2.0
         )
+    
+    def get_startup_risk_adjustments(self, runway_years: float, revenue_volatility: float, 
+                                   data_quality: str) -> Dict[str, float]:
+        """Calculate risk adjustments specific to startup analysis"""
+        startup_config = self.company_type_adjustments[CompanyType.STARTUP_LOSS_MAKING]
+        
+        # Runway risk adjustment
+        runway_months = runway_years * 12
+        if runway_months < startup_config['runway_critical_months']:
+            runway_adjustment = 0.3  # Severe discount
+        elif runway_months < startup_config['runway_warning_months']:
+            runway_adjustment = 0.6  # High discount
+        elif runway_months < 36:  # Less than 3 years
+            runway_adjustment = 0.8  # Moderate discount
+        else:
+            runway_adjustment = 1.0  # No discount
+        
+        # Volatility adjustment
+        if revenue_volatility > 0.5:
+            volatility_adjustment = 0.7
+        elif revenue_volatility > 0.3:
+            volatility_adjustment = 0.85
+        else:
+            volatility_adjustment = 1.0
+        
+        # Data quality adjustment
+        data_adjustments = {'High': 1.0, 'Medium': 0.9, 'Low': 0.7}
+        data_adjustment = data_adjustments.get(data_quality, 0.8)
+        
+        return {
+            'runway_adjustment': runway_adjustment,
+            'volatility_adjustment': volatility_adjustment,
+            'data_adjustment': data_adjustment,
+            'combined_adjustment': runway_adjustment * volatility_adjustment * data_adjustment
+        }
     
     def get_adjusted_parameters(self, sector: str, industry: str, 
                               company_type: CompanyType, quality_grade: str) -> Dict[str, float]:
@@ -259,34 +305,50 @@ class FinanceConfig:
         return params
     
     def get_startup_revenue_multiple(self, revenue_growth: float, sector: str) -> float:
-        """Calculate appropriate revenue multiple for startups"""
-        base_multiple = 2.0
+        """Calculate appropriate revenue multiple for startups with enhanced risk controls"""
+        startup_config = self.company_type_adjustments[CompanyType.STARTUP_LOSS_MAKING]
+        base_multiple = startup_config['revenue_multiple_base']
         
-        # Growth-based premium
+        # More conservative growth-based premium
         if revenue_growth > 1.0:  # >100% growth
-            growth_premium = 6.0
+            growth_premium = 4.0  # Reduced from 6.0
         elif revenue_growth > 0.5:  # >50% growth
-            growth_premium = 4.0
+            growth_premium = 3.0  # Reduced from 4.0
         elif revenue_growth > 0.3:  # >30% growth
-            growth_premium = 3.0
+            growth_premium = 2.5  # Reduced from 3.0
         elif revenue_growth > 0.2:  # >20% growth
             growth_premium = 2.0
+        elif revenue_growth > 0.1:  # >10% growth
+            growth_premium = 1.5
         else:
             growth_premium = 1.0
         
-        # Sector premium
+        # More conservative sector multipliers
         sector_multipliers = {
-            'Technology': 1.3,
-            'Healthcare': 1.2,
-            'Biotechnology': 1.5,
+            'Technology': 1.2,  # Reduced from 1.3
+            'Healthcare': 1.1,  # Reduced from 1.2
+            'Biotechnology': 1.3,  # Reduced from 1.5
             'Consumer Cyclical': 0.8,
             'Energy': 0.6,
-            'Financial Services': 1.0
+            'Financial Services': 0.9,  # Reduced from 1.0
+            'Communication Services': 1.0,
+            'Industrials': 0.7,
+            'Materials': 0.6
         }
         
-        sector_mult = sector_multipliers.get(sector, 1.0)
+        sector_mult = sector_multipliers.get(sector, 0.9)  # Default reduced to 0.9
         
-        return min(base_multiple * growth_premium * sector_mult, 15.0)  # Cap at 15x
+        # Apply growth decay for very high growth (unsustainable)
+        if revenue_growth > 0.75:
+            sustainability_discount = 0.8
+        elif revenue_growth > 0.5:
+            sustainability_discount = 0.9
+        else:
+            sustainability_discount = 1.0
+        
+        final_multiple = base_multiple * growth_premium * sector_mult * sustainability_discount
+        
+        return min(final_multiple, 10.0)  # Reduced cap from 15x to 10x
 
 # Example usage and validation
 def validate_config():
