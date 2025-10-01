@@ -13,3 +13,26 @@ google-auth-httplib2
 google-auth-oauthlib
 pandas
 pandas-ta
+lxml
+langchain_openapi
+langchain_core
+python-dotenv
+# streamlit
+langchain-community
+langserve
+# fastapi
+# uvicorn
+# sse_starlette
+# langchain-ollama
+# bs4
+pypdf
+chromadb
+faiss-cpu
+arxiv
+wikipedia
+groq
+langchain-groq
+# beautifulsoup4
+# langchain-ollama
+# langchain-huggingface
+# sentence_transformers

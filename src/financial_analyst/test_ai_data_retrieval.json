@@ -1,0 +1,288 @@
+{
+  "AAPL": {
+    "ticker": "AAPL",
+    "retrieval_date": "2025-09-29 19:39:59",
+    "company_info": {
+      "company_name": "Apple Inc.",
+      "sector": "Technology",
+      "industry": "Consumer Electronics",
+      "market_cap": 3791126003712,
+      "employees": 150000,
+      "business_summary": "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple TV, Apple Watch, Beats products, and HomePod. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allow customers to discov..."
+    },
+    "earnings_data": {
+      "last_earnings_date": null,
+      "next_earnings_date": null,
+      "recent_revenue": "$94,036,000,000",
+      "revenue_growth": "-1.4%",
+      "recent_earnings": "$23,434,000,000",
+      "earnings_surprise": null
+    },
+    "recent_news": [
+      {
+        "title": "McLaren CEO: Teams are 'writing checks' to get into F1",
+        "summary": "The sport of Formula One is big business \u2014 and British team McLaren Racing is capitalizing.",
+        "publisher": "",
+        "publish_date": "2025-09-27",
+        "url": {
+          "url": "https://finance.yahoo.com/news/mclaren-ceo-teams-are-writing-checks-to-get-into-f1-130030470.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "QUALCOMM Incorporated (QCOM) Announces New Chips for PC\u2019s and Phones",
+        "summary": "\u200bQUALCOMM Incorporated (NASDAQ:QCOM) is one of the Most Undervalued Growth Stocks to Buy According to Hedge Funds. On September 24, Reuters reported that QUALCOMM Incorporated (NASDAQ:QCOM) had announced new chips for PCs and phones, including a laptop chip with a unique security feature. \u200bThe repor...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/qualcomm-incorporated-qcom-announces-chips-053937777.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Jim Cramer highlights Apple\u2019s Massive Resources",
+        "summary": "Apple Inc. (NASDAQ:AAPL) is one of the stocks on Jim Cramer\u2019s radar recently. Cramer commented on the company\u2019s resources and said: \u201cYes, Apple\u2019s just that rich, and it\u2019s committed to investing $600 billion in the United States. So why wouldn\u2019t some of that go to Intel if it asked? Heck, Apple could...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/jim-cramer-highlights-apple-massive-052142140.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Jim Cramer Says \u201cIntel Can\u2019t Be Allowed to Fail\u201d",
+        "summary": "Intel Corporation (NASDAQ:INTC) is one of the stocks on Jim Cramer\u2019s radar recently. Cramer commented on the company\u2019s position in the AI era and remarked: \u201cIntel, a once great semiconductor company that\u2019s been left behind by the AI revolution, needs money to get back in the game. Does it turn to a ...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/jim-cramer-says-intel-t-052140736.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Prediction: Apple Will Stage a Major Comeback in the Next 5 Years. Here's 1 Reason Why.",
+        "summary": "More than half of U.S. smartphone users rely on Apple.",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://www.fool.com/investing/2025/09/28/prediction-apple-will-stage-a-major-comeback-in-th/",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Solana Co-Founder Says '50/50' Chance Quantum Computing Breaks Bitcoin By 2030, Calls For Quick Action",
+        "summary": "The quantum computing threat to Bitcoin may be more urgent than some think, according to Solana co-founder Anatoly Yakovenko. \u200b \"I feel like 50/50, within five years, there is a quantum breakthrough,\" Yakovenko said at the All-In Summit 2025 earlier ...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/solana-co-founder-says-50-010116799.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "What's Next for These 3 Artificial Intelligence (AI) Stocks?",
+        "summary": "These stocks have reacted to AI in surprising ways, but investors should also consider their future prospects.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.fool.com/investing/2025/09/28/whats-next-for-these-3-ai-stocks/",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "3 Dividend Stocks Perfect for Millennial Investors",
+        "summary": "Millennials are entering their prime earning years, making it a perfect time to consider introducing dividend stocks to their portfolios.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.fool.com/investing/2025/09/28/3-dividend-stocks-perfect-for-millennial-investors/",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Prediction: Wall Street's Most Valuable Public Company by 2030 Will Be This Dual-Industry Leader (No, Not Nvidia)",
+        "summary": "A historically inexpensive trillion-dollar business has the necessary catalysts to leapfrog the likes of Nvidia, Apple, and Microsoft by the turn of the decade.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.fool.com/investing/2025/09/28/prediction-wall-street-most-valuable-company-2030/",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "White House may give Intel a huge gift",
+        "summary": "Intel could benefit from an unexpected proposal.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.thestreet.com/technology/white-house-may-give-intel-a-huge-gift-",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      }
+    ],
+    "data_quality": "Excellent"
+  },
+  "MSFT": {
+    "ticker": "MSFT",
+    "retrieval_date": "2025-09-29 19:40:07",
+    "company_info": {
+      "company_name": "Microsoft Corporation",
+      "sector": "Technology",
+      "industry": "Software - Infrastructure",
+      "market_cap": 3801767215104,
+      "employees": 228000,
+      "business_summary": "Microsoft Corporation develops and supports software, services, devices, and solutions worldwide. The company's Productivity and Business Processes segment offers Microsoft 365 Commercial, Enterprise Mobility + Security, Windows Commercial, Power BI, Exchange, SharePoint, Microsoft Teams, Security and Compliance, and Copilot; Microsoft 365 Commercial products, such as Windows Commercial on-premises and Office licensed services; Microsoft 365 Consumer products and cloud services, such as Microsof..."
+    },
+    "earnings_data": {
+      "last_earnings_date": null,
+      "next_earnings_date": null,
+      "recent_revenue": "$76,441,000,000",
+      "revenue_growth": "9.1%",
+      "recent_earnings": "$27,233,000,000",
+      "earnings_surprise": null
+    },
+    "recent_news": [
+      {
+        "title": "NVIDIA Corporation (NVDA) Plots $100B OpenAI Investment",
+        "summary": "NVIDIA Corporation (NASDAQ:NVDA) is one of the best growth stocks to buy and hold forever. On September 22, the company confirmed plans to invest up to $100 billion in OpenAI. In addition, the company is to supply the AI startup with data center chips as the two companies look to capitalize on the A...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/nvidia-corporation-nvda-plots-100b-045638569.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Solana Co-Founder Says '50/50' Chance Quantum Computing Breaks Bitcoin By 2030, Calls For Quick Action",
+        "summary": "The quantum computing threat to Bitcoin may be more urgent than some think, according to Solana co-founder Anatoly Yakovenko. \u200b \"I feel like 50/50, within five years, there is a quantum breakthrough,\" Yakovenko said at the All-In Summit 2025 earlier ...",
+        "publisher": "",
+        "publish_date": "2025-09-29",
+        "url": {
+          "url": "https://finance.yahoo.com/news/solana-co-founder-says-50-010116799.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Morgan Stanley Makes Huge Call on Microsoft",
+        "summary": "Morgan Stanley updates its Microsoft stock forecast",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.thestreet.com/technology/morgan-stanley-makes-huge-call-on-microsoft",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "IonQ, Inc. (IONQ): A Bull Case Theory",
+        "summary": "We came across a bullish thesis on IonQ, Inc. on Investing With Purpose\u2019s Substack. In this article, we will summarize the bulls\u2019 thesis on IONQ. IonQ, Inc.\u2019s share was trading at $66.81 as of September 18th. IonQ (IONQ) is making a deliberate bet on the commercial viability of quantum computing wit...",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/ionq-inc-ionq-bull-case-202325550.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "The billion-dollar infrastructure deals powering the AI boom",
+        "summary": "Here's everything we know about the biggest AI infrastructure projects, including major spending from Meta, Oracle, Microsoft, Google, and OpenAI.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/billion-dollar-infrastructure-deals-powering-173527896.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Dad Calls 28-Year-Old 'Cold' For Refusing To Share Her Savings After Promising To Pay Siblings' College, But Not Stepmom's Teenagers",
+        "summary": "A father called his 28-year-old daughter \"cold\" after she refused to share her college savings with her stepmother's two teenagers. She posted on Reddit's \"Am I the A**hole\" forum that she had promised years ago to cover tuition for her younger siblings, ages 19 and 17, and had saved specifically fo...",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/dad-calls-28-old-cold-180149734.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Constellation Energy Corporation (CEG): A Bull Case Theory",
+        "summary": "We came across a bullish thesis on Constellation Energy Corporation on Make Money, Make Time\u2019s Substack by Oliver | MMMT Wealth. In this article, we will summarize the bulls\u2019 thesis on CEG. Constellation Energy Corporation\u2019s share was trading at $321.27 as of September 17th. CEG\u2019s trailing and forwa...",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/constellation-energy-corporation-ceg-bull-154035543.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Microsoft Stock Keeps Beating the Stock Market. Time to Buy?",
+        "summary": "The tech titan's core growth engines are firing on all cylinders.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://www.fool.com/investing/2025/09/28/microsoft-stock-keeps-beating-stock-market-buy/",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "Everyone\u2019s wondering if, and when, the AI bubble will pop. Here\u2019s what went down 25 years ago that ultimately burst the dot-com boom",
+        "summary": "Sam Altman and Mark Zuckerberg have acknowledged the parallels.",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/everyone-wondering-ai-bubble-pop-120500253.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      },
+      {
+        "title": "If You Invested $10K In Rexford Industrial Realty Stock 10 Years Ago, How Much Would You Have Now?",
+        "summary": "Rexford Industrial Realty Inc. (NYSE: REXR) is a real estate investment trust that invests in, operates, and redevelops industrial properties throughout infill Southern California. It is set to report its Q3 2025 earnings on Oct. 15. Wall Street ...",
+        "publisher": "",
+        "publish_date": "2025-09-28",
+        "url": {
+          "url": "https://finance.yahoo.com/news/invested-10k-rexford-industrial-realty-120224304.html",
+          "site": "finance",
+          "region": "US",
+          "lang": "en-US"
+        }
+      }
+    ],
+    "data_quality": "Excellent"
+  }
+}
