@@ -1,0 +1,77 @@
+{
+  "ticker": "AMZN",
+  "analysis_date": "2023-10-01",
+  "backtest_type": "Historical Analysis",
+  "historical_metrics": {
+    "analysis_date": "2023-10-01",
+    "historical_price": 127.12000274658203,
+    "market_cap": 127120002746.58203,
+    "enterprise_value": 0,
+    "total_revenue": 513983000000.0,
+    "net_income": -2722000000.0,
+    "free_cash_flow": 0,
+    "total_debt": 0,
+    "total_cash": 0,
+    "shares_outstanding": 1000000000,
+    "beta": 1.0,
+    "pe_ratio": null,
+    "pb_ratio": null,
+    "ps_ratio": null,
+    "revenue_growth": 0.09399517263985084,
+    "earnings_growth": 0
+  },
+  "predictions": {
+    "technical_analysis": {
+      "method": "Historical Technical Analysis",
+      "analysis_date": "2023-10-01",
+      "historical_price": 127.12000274658203,
+      "predicted_price": 112.75895807255006,
+      "ma_20": 135.44000091552735,
+      "ma_50": 134.71140106201173,
+      "ma_200": 113.15660034179687,
+      "trend": "Downtrend",
+      "volatility_annual": 0.3765744798548394,
+      "high_52w": 145.86000061035156,
+      "low_52w": 81.43000030517578,
+      "rsi_14": 37.262339207225814,
+      "distance_from_high": -0.12847934859009982,
+      "distance_from_low": 0.5610954472574421
+    },
+    "dcf_analysis": {
+      "method": "Historical DCF Analysis",
+      "analysis_date": "2023-10-01",
+      "predicted_price": 187.21063976612035,
+      "historical_price": 127.12000274658203,
+      "upside_downside_pct": 47.27079587886024,
+      "total_equity_value": 1996585016728.8062,
+      "confidence": "Medium",
+      "valuation": "Undervalued"
+    }
+  },
+  "actual_performance": {
+    "analysis_date": "2023-10-01",
+    "end_date": "2024-09-25",
+    "start_price": 129.4600067138672,
+    "end_price": 192.52999877929688,
+    "actual_return_pct": 48.71774200106998,
+    "period_high": 201.1999969482422,
+    "period_low": 118.3499984741211,
+    "volatility": 0.2811473344831202,
+    "days_elapsed": 248
+  },
+  "accuracy_analysis": {
+    "technical": {
+      "predicted_return": -11.297234395645187,
+      "actual_return": 48.71774200106998,
+      "error_pct": 60.01497639671517,
+      "direction_correct": "False"
+    },
+    "dcf": {
+      "predicted_return": 47.27079587886024,
+      "actual_return": 48.71774200106998,
+      "error_pct": 1.446946122209738,
+      "direction_correct": "True"
+    }
+  },
+  "errors": []
+}

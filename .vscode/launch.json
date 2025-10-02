@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "Debug Test",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "module": "src.share_insights_v1.tests.test_dcf_analyzer",
+        //     "console": "integratedTerminal",
+        //     "cwd": "${workspaceFolder}"
+        // },
+        {
+            "name": "Debug Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.share_insights_v1.tests.test_startup_analyzer",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

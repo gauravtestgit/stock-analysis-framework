@@ -1,0 +1,15 @@
+from abc import ABC, abstractmethod
+from typing import Dict, Any
+
+class IDataProvider(ABC):
+    """Interface for financial data providers"""
+    
+    @abstractmethod
+    def get_financial_metrics(self, ticker: str) -> Dict[str, Any]:
+        """Get basic financial metrics for a ticker"""
+        pass
+    
+    @abstractmethod
+    def get_price_data(self, ticker: str) -> Dict[str, Any]:
+        """Get price and technical data"""
+        pass

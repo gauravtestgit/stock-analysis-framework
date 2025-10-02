@@ -23,6 +23,7 @@ class CompanyType(Enum):
     REIT = "reit"
     FINANCIAL = "financial"
     COMMODITY = "commodity"
+    ETF = "etf"
 
 class StockAnalyzer:
     def __init__(self, ticker: str, config : Optional['FinanceConfig']):
@@ -51,16 +52,25 @@ class StockAnalyzer:
             quote_type = self.info.get('quoteType', '')
             long_name = self.info.get('longName', '')
             
-            # ETF Detection
-            if (quote_type == 'ETF' or 
-                'ETF' in long_name.upper() or 
-                'FUND' in long_name.upper() or
-                fund_family or
-                category or
-                self.ticker.endswith('ETF') or
-                any(etf_indicator in self.ticker for etf_indicator in ['QQQ', 'SPY', 'IWM', 'VTI', 'VOO'])):
-                # ETFs should not use traditional valuation methods
-                return CompanyType.FINANCIAL  # Treat as financial instrument
+            # Enhanced ETF Detection
+            etf_indicators = [
+                quote_type == 'ETF',
+                'ETF' in long_name.upper(),
+                'FUND' in long_name.upper(),
+                'TRUST' in long_name.upper(),
+                bool(fund_family),
+                bool(category),
+                self.ticker.endswith('ETF'),
+                # Common ETF tickers
+                self.ticker in ['QQQ', 'SPY', 'IWM', 'VTI', 'VOO', 'SLV', 'GLD', 'TLT', 'EFA', 'EEM'],
+                # ETF naming patterns
+                any(pattern in self.ticker for pattern in ['SPDR', 'iShares', 'Vanguard']),
+                # Check if total revenue is 0 (typical for ETFs)
+                self.info.get('totalRevenue', 1) == 0
+            ]
+            
+            if any(etf_indicators):
+                return CompanyType.ETF
             
             # Get financial data
             income_stmt = self.stock.income_stmt
@@ -803,6 +813,9 @@ class StockAnalyzer:
         elif self.company_type in [CompanyType.CYCLICAL, CompanyType.FINANCIAL]:
             analyses['comparable_analysis'] = self.comparable_company_analysis()
             # Could add commodity price correlation analysis here
+        elif self.company_type == CompanyType.ETF:
+            # ETFs only get technical analysis - no fundamental analysis needed
+            pass
         else:
             analyses['dcf_analysis'] = self.dcf_analysis()
             analyses['comparable_analysis'] = self.comparable_company_analysis()
@@ -990,6 +1003,8 @@ class StockAnalyzer:
                 return f"Stable dividend-paying company. DCF suggests {dcf_signal or 'fair valuation'} with {quality} quality metrics."
             elif company_type == 'growth_profitable':
                 return f"Growth company with {quality} fundamentals. Multiple analysis methods suggest {overall_recommendation.lower()}."
+            elif company_type == 'etf':
+                return f"Exchange-traded fund - technical analysis only. Current trend: {technical_signal or 'neutral'}. Suitable for diversification and sector exposure."
             else:
                 return f"{company_type.replace('_', ' ').title()} company requiring careful timing. Current signals: {overall_recommendation.lower()}."
         
