@@ -125,3 +125,36 @@ class YahooFinanceProvider(IDataProvider):
             }
         except Exception as e:
             return {'error': str(e)}
+    
+    def get_professional_analyst_data(self, ticker: str) -> Dict:
+        """Fetch analyst data from multiple sources"""
+        data = {}
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            
+            # Price targets
+            data['target_price'] = info.get('targetMeanPrice', 0)
+            data['target_high'] = info.get('targetHighPrice', 0)
+            data['target_low'] = info.get('targetLowPrice', 0)
+            
+            # Recommendations
+            data['recommendation'] = info.get('recommendationMean')
+            data['recommendation_key'] = info.get('recommendationKey')
+            
+            # Estimates
+            data['forward_eps'] = info.get('forwardEps', 0)
+            data['eps_current_year'] = info.get('trailingEps', 0)
+            
+            # Growth estimates
+            data['earnings_growth'] = info.get('earningsGrowth', 0)
+            data['revenue_growth'] = info.get('revenueGrowth', 0)
+            
+            # Analyst count
+            data['analyst_count'] = info.get('numberOfAnalystOpinions', 0)       
+            
+        except Exception as e:
+            print(f"Error fetching data for {ticker}: {e}")
+            data = {}
+        
+        return data

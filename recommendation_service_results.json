@@ -1,0 +1,384 @@
+{
+  "AAPL": {
+    "ticker": "AAPL",
+    "company_type": "mature_profitable",
+    "financial_metrics": {
+      "market_cap": 3815909359616,
+      "sector": "Technology",
+      "industry": "Consumer Electronics",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Apple Inc.",
+      "enterprise_value": 3862235447296,
+      "total_revenue": 408624988160,
+      "net_income": 99280003072,
+      "current_revenue": "$408,624,988,160.00",
+      "yearly_revenue_growth": 0.096,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 2.021994077514121,
+      "calculated_quarterly_growth": -1.3873887100326137,
+      "free_cash_flow": 108807000000.0,
+      "total_debt": 101698002944,
+      "total_cash": 55372001280,
+      "shares_outstanding": 14840390000,
+      "current_price": 257.13,
+      "beta": 1.094,
+      "pe_ratio": 39.018208,
+      "pb_ratio": 58.02979,
+      "ps_ratio": 9.338414,
+      "peg_ratio": null,
+      "roe": 1.49814,
+      "roa": 0.24545999,
+      "debt_to_equity": 1.54486,
+      "current_ratio": 0.868,
+      "revenue_growth": 0.096,
+      "earnings_growth": 0.121,
+      "dividend_yield": 0.41,
+      "payout_ratio": 0.1533,
+      "fifty_two_week_high": 260.1,
+      "fifty_two_week_low": 169.21
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 257.1300048828125,
+        "predicted_price": 340.665876046285,
+        "price_targets": {
+          "short_term": 298.89794046454875,
+          "medium_term": 340.665876046285,
+          "support_level": 160.35698323976365
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 244.84099960327148,
+        "ma_50": 231.78159240722655,
+        "ma_200": 221.740161819458,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.32487795892021293,
+        "high_52w": 259.1799258751944,
+        "low_52w": 168.79682446290911,
+        "distance_from_high": -0.007909258348075172,
+        "distance_from_low": 0.5233106766135488,
+        "volume_trend": "Average Daily Volume:53760325.2, Trend: Normal",
+        "rsi_14": 70.28904115216953,
+        "analysis_type": "technical"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 257.13,
+        "predicted_price": 246.2347,
+        "target_high": 310.0,
+        "target_low": 175.0,
+        "upside_downside_pct": -4.237272974759846,
+        "recommendation": "Buy",
+        "recommendation_mean": 2.0,
+        "num_analysts": 41,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 229.73898941660113,
+        "current_price": 257.13,
+        "upside_downside_pct": -10.652592300936828,
+        "total_equity_value": 3409416201148.2334,
+        "confidence": "Medium",
+        "valuation": "Fair Value",
+        "recommendation": "Sell",
+        "parameters_used": {
+          "max_cagr": "16.0%",
+          "terminal_growth": "3.0%",
+          "sector": "Technology",
+          "industry": "Consumer Electronics",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 20.0,
+          "ps": 6.0,
+          "pb": 3.5,
+          "ev_ebitda": 14.4
+        },
+        "fair_values": {
+          "pe_fair_value": 133.7970269945736,
+          "ps_fair_value": 165.20791764636914
+        },
+        "average_fair_value": 149.50247232047138,
+        "current_price": 257.13,
+        "upside_downside_pct": -41.85724251527578,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "parameters_used": {
+          "pe_multiple": "20.0x",
+          "ps_multiple": "6.0x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='AAPL', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(258.5226509758974), upside_potential=np.float64(0.5416116620538398), risk_level='Low', bullish_signals=['TECHNICAL indicates Strong Buy', 'Technical: Strong Uptrend', 'ANALYST_CONSENSUS indicates Buy'], bearish_signals=['DCF indicates Sell', 'COMPARABLE indicates Strong Sell'], key_risks=[], summary='Consensus: Hold | Confidence: Low | Analyses: 4 | TECHNICAL: Strong Buy | ANALYST_CONSENSUS: Buy | DCF: Sell | COMPARABLE: Strong Sell')"
+  },
+  "TSLA": {
+    "ticker": "TSLA",
+    "company_type": "mature_profitable",
+    "financial_metrics": {
+      "market_cap": 1449765765120,
+      "sector": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Tesla, Inc.",
+      "enterprise_value": 1383405715456,
+      "total_revenue": 92719996928,
+      "net_income": 5879000064,
+      "current_revenue": "$92,719,996,928.00",
+      "yearly_revenue_growth": -0.118,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 0.9475783534663594,
+      "calculated_quarterly_growth": 16.348590638738038,
+      "free_cash_flow": 3581000000.0,
+      "total_debt": 13134000128,
+      "total_cash": 36781998080,
+      "shares_outstanding": 3325150886,
+      "current_price": 436.0,
+      "beta": 2.086,
+      "pe_ratio": 256.47058,
+      "pb_ratio": 18.181059,
+      "ps_ratio": 15.635956,
+      "peg_ratio": null,
+      "roe": 0.08177,
+      "roa": 0.0296,
+      "debt_to_equity": 0.16823,
+      "current_ratio": 2.037,
+      "revenue_growth": -0.118,
+      "earnings_growth": -0.175,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 488.54,
+      "fifty_two_week_low": 212.11
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 436.0,
+        "predicted_price": 746.2726010993086,
+        "price_targets": {
+          "short_term": 591.1363005496543,
+          "medium_term": 746.2726010993086,
+          "support_level": 201.50450057983397
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 410.36100006103516,
+        "ma_50": 361.17399963378904,
+        "ma_200": 335.22139976501467,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.7116344061910749,
+        "high_52w": 488.5400085449219,
+        "low_52w": 212.11000061035156,
+        "distance_from_high": -0.10754494540049682,
+        "distance_from_low": 1.0555372153382663,
+        "volume_trend": "Average Daily Volume:100345100.8, Trend: Normal",
+        "rsi_14": 62.148043713530434,
+        "analysis_type": "technical"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 436.0,
+        "predicted_price": 345.4979,
+        "target_high": 600.0,
+        "target_low": 115.0,
+        "upside_downside_pct": -20.7573623853211,
+        "recommendation": "Hold",
+        "recommendation_mean": 2.55556,
+        "num_analysts": 38,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 26.48585628098673,
+        "current_price": 436.0,
+        "upside_downside_pct": -93.92526232087461,
+        "total_equity_value": 88069468479.1917,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "parameters_used": {
+          "max_cagr": "8.0%",
+          "terminal_growth": "2.5%",
+          "sector": "Consumer Cyclical",
+          "industry": "Auto Manufacturers",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 14.4,
+          "ps": 1.5,
+          "pb": 2.0,
+          "ev_ebitda": 9.600000000000001
+        },
+        "fair_values": {
+          "pe_fair_value": 25.45977726245052,
+          "ps_fair_value": 41.826671979780954
+        },
+        "average_fair_value": 33.643224621115735,
+        "current_price": 436.0,
+        "upside_downside_pct": -92.28366407772575,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Consumer Cyclical",
+        "industry": "Auto Manufacturers",
+        "parameters_used": {
+          "pe_multiple": "14.4x",
+          "ps_multiple": "1.5x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='TSLA', recommendation=<RecommendationType.SELL: 'Sell'>, confidence='Medium', target_price=np.float64(298.0480227322564), upside_potential=np.float64(-31.640361758656788), risk_level='Medium', bullish_signals=['TECHNICAL indicates Strong Buy', 'Technical: Strong Uptrend'], bearish_signals=['DCF indicates Strong Sell', 'DCF: Overvalued', 'COMPARABLE indicates Strong Sell'], key_risks=['High volatility'], summary='Consensus: Sell | Confidence: Medium | Analyses: 4 | TECHNICAL: Strong Buy | ANALYST_CONSENSUS: Hold | DCF: Strong Sell | COMPARABLE: Strong Sell')"
+  },
+  "JPM": {
+    "ticker": "JPM",
+    "company_type": "financial",
+    "financial_metrics": {
+      "market_cap": 845686767616,
+      "sector": "Financial Services",
+      "industry": "Banks - Diversified",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "JPMorgan Chase & Co.",
+      "enterprise_value": 493683802112,
+      "total_revenue": 163748003840,
+      "net_income": 55154999296,
+      "current_revenue": "$163,748,003,840.00",
+      "yearly_revenue_growth": -0.106,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 9.349346894522174,
+      "calculated_quarterly_growth": -0.9817548039799678,
+      "free_cash_flow": -42012000000.0,
+      "total_debt": 1165543997440,
+      "total_cash": 1537592000512,
+      "shares_outstanding": 2749753854,
+      "current_price": 307.55,
+      "beta": 1.127,
+      "pe_ratio": 15.76371,
+      "pb_ratio": 2.5103662,
+      "ps_ratio": 5.164562,
+      "peg_ratio": null,
+      "roe": 0.16211,
+      "roa": 0.012999999,
+      "debt_to_equity": 0,
+      "current_ratio": null,
+      "revenue_growth": -0.106,
+      "earnings_growth": -0.144,
+      "dividend_yield": 1.93,
+      "payout_ratio": 0.2718,
+      "fifty_two_week_high": 318.01,
+      "fifty_two_week_low": 202.16
+    },
+    "quality_score": {
+      "quality_score": 55,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 307.54998779296875,
+        "predicted_price": 390.7397497521797,
+        "price_targets": {
+          "short_term": 349.1448687725742,
+          "medium_term": 390.7397497521797,
+          "support_level": 189.85956433225016
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 308.6745010375977,
+        "ma_50": 300.3980010986328,
+        "ma_200": 266.67989044189454,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.27049183957442147,
+        "high_52w": 318.010009765625,
+        "low_52w": 199.85217298131596,
+        "distance_from_high": -0.03289211550405391,
+        "distance_from_low": 0.5388873846356496,
+        "volume_trend": "Average Daily Volume:9357695.6, Trend: Normal",
+        "rsi_14": 50.9424169608676,
+        "analysis_type": "technical"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 307.55,
+        "predicted_price": 316.13043,
+        "target_high": 350.0,
+        "target_low": 235.0,
+        "upside_downside_pct": 2.7899300926678516,
+        "recommendation": "Buy",
+        "recommendation_mean": 2.28,
+        "num_analysts": 23,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 10.8,
+          "ps": 2.5,
+          "pb": 1.2,
+          "ev_ebitda": 9.0
+        },
+        "fair_values": {
+          "pe_fair_value": 216.6281143784152,
+          "ps_fair_value": 148.87514713526065
+        },
+        "average_fair_value": 182.75163075683793,
+        "current_price": 307.55,
+        "upside_downside_pct": -40.57823743884314,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Financial Services",
+        "industry": "Banks - Diversified",
+        "parameters_used": {
+          "pe_multiple": "10.8x",
+          "ps_multiple": "2.5x",
+          "quality_adjustment": "C"
+        },
+        "analysis_type": "comparable"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='JPM', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(341.0002032507266), upside_potential=np.float64(10.876350767497119), risk_level='Low', bullish_signals=['TECHNICAL indicates Strong Buy', 'Technical: Strong Uptrend', 'ANALYST_CONSENSUS indicates Buy'], bearish_signals=['COMPARABLE indicates Strong Sell'], key_risks=[], summary='Consensus: Hold | Confidence: Low | Analyses: 3 | TECHNICAL: Strong Buy | ANALYST_CONSENSUS: Buy | COMPARABLE: Strong Sell')"
+  }
+}

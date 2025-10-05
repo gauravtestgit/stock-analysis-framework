@@ -9,6 +9,7 @@ class RecommendationType(Enum):
     SELL = "Sell"
     STRONG_SELL = "Strong Sell"
     SPECULATIVE_BUY = "Speculative Buy"
+    MONITOR = "Monitor"
 
 @dataclass
 class Recommendation:

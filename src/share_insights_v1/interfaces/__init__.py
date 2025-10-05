@@ -3,7 +3,7 @@
 from .data_provider import IDataProvider
 from .analyzer import IAnalyzer
 from .calculator import ICalculator
-from .recommendation import IRecommendationEngine
+from .recommendation_engine import IRecommendationEngine
 from .classifier import ICompanyClassifier
 
 __all__ = [

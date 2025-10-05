@@ -1,0 +1,661 @@
+{
+  "lxrx": {
+    "ticker": "lxrx",
+    "company_type": "startup_loss_making",
+    "financial_metrics": {
+      "market_cap": 512392352,
+      "sector": "Healthcare",
+      "industry": "Biotechnology",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Lexicon Pharmaceuticals, Inc.",
+      "enterprise_value": 423899424,
+      "total_revenue": 58432000,
+      "net_income": -120620000,
+      "current_revenue": "$58,432,000.00",
+      "yearly_revenue_growth": 16.526,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 2481.4784053156145,
+      "calculated_quarterly_growth": 2187.321711568938,
+      "free_cash_flow": -179811000.0,
+      "total_debt": 61416000,
+      "total_cash": 139007008,
+      "shares_outstanding": 363398860,
+      "current_price": 1.41,
+      "beta": 1.237,
+      "pe_ratio": null,
+      "pb_ratio": 3.960674,
+      "ps_ratio": 8.769036,
+      "peg_ratio": null,
+      "roe": -0.65302,
+      "roa": -0.22138001,
+      "debt_to_equity": 0.47447,
+      "current_ratio": 4.165,
+      "revenue_growth": 16.526,
+      "earnings_growth": null,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 2.17,
+      "fifty_two_week_low": 0.28
+    },
+    "quality_score": {
+      "quality_score": 23,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 2
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 1.409999966621399,
+        "predicted_price": 3.328209993722244,
+        "price_targets": {
+          "short_term": 2.369104980171821,
+          "medium_term": 3.328209993722244,
+          "breakout_target": 2.2785000801086426,
+          "support_level": 0.26600000113248823
+        },
+        "recommendation": "Buy",
+        "ma_20": 1.232500010728836,
+        "ma_50": 1.1618000078201294,
+        "ma_200": 0.815550002604723,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 1.360432675539138,
+        "high_52w": 2.1700000762939453,
+        "low_52w": 0.2800000011920929,
+        "distance_from_high": -0.3502304529733103,
+        "distance_from_low": 4.035714145065571,
+        "volume_trend": "Average Daily Volume:6762563.064, Trend: Below Average",
+        "rsi_14": 65.86334540142286,
+        "analysis_type": "technical"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 1.41,
+        "predicted_price": 1.4804999999999997,
+        "recommendation": "Hold",
+        "confidence": "Low",
+        "ai_insights": {
+          "market_position": "Weak",
+          "growth_prospects": "High",
+          "competitive_advantage": "Weak",
+          "management_quality": "Average",
+          "industry_outlook": "Neutral",
+          "key_strengths": [
+            "High revenue growth rate of 1652.6%",
+            "Potential for future growth in the biotechnology industry"
+          ],
+          "key_risks": [
+            "Negative ROE of -65.3%, indicating significant financial struggles",
+            "High market volatility in the biotechnology sector",
+            "Dependence on the success of specific products or pipelines"
+          ],
+          "ai_method": "LLM"
+        },
+        "news_sentiment": {
+          "overall_sentiment": "Neutral",
+          "sentiment_score": 0.0,
+          "news_count": 2,
+          "key_themes": [
+            "earnings",
+            "business strategy"
+          ],
+          "sentiment_trend": "Stable",
+          "ai_method": "LLM"
+        },
+        "news_articles": [
+          {
+            "title": "lxrx reports quarterly earnings",
+            "summary": "Company reported financial results for the quarter",
+            "publish_date": "2025-10-04",
+            "source": "Financial News",
+            "url": "https://finance.yahoo.com/quote/lxrx/news"
+          },
+          {
+            "title": "lxrx announces strategic initiative",
+            "summary": "Company announced new business strategy",
+            "publish_date": "2025-10-04",
+            "source": "Business Wire",
+            "url": "https://finance.yahoo.com/quote/lxrx/news"
+          }
+        ],
+        "revenue_trends": {
+          "trend_assessment": "Strong Growth",
+          "growth_rate": 1652.6,
+          "growth_consistency": "Variable",
+          "future_outlook": "Very Positive",
+          "ai_method": "LLM"
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "news_sentiment": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [
+          "Weak market position"
+        ],
+        "analysis_type": "ai_insights"
+      },
+      "startup": {
+        "method": "Enhanced Startup Analysis",
+        "stage": "Growth Stage",
+        "cash_runway_years": 0.7730728820817414,
+        "predicted_price": 0.6349997245450908,
+        "price_1y": 0.8035937239869162,
+        "price_2y": 0.9806174234008329,
+        "quarterly_burn_rate": 44952750.0,
+        "revenue_growth_rates": [
+          "2481.5%",
+          "766.2%",
+          "-53.4%"
+        ],
+        "median_growth": "766.2%",
+        "revenue_volatility": "1056.2%",
+        "growth_quality": "Hypergrowth (>100%)",
+        "risk_factors": [
+          "CRITICAL: Less than 1 year cash runway",
+          "HIGH: Highly volatile revenue pattern"
+        ],
+        "risk_score": 45,
+        "recommendation": "Monitor",
+        "revenue_multiple_breakdown": {
+          "base_multiple": 7.040000000000001,
+          "risk_adjustment": 0.7,
+          "stage_adjustment": 1.0,
+          "final_multiple": 4.928
+        },
+        "current_revenue": 31081000.0,
+        "projected_revenue_1yr": 43513400.0,
+        "projected_revenue_2yr": 56567420.0,
+        "implied_value_estimate": 153167168.0,
+        "confidence_level": "Very Low - Speculative",
+        "investment_type": "Venture Capital Style - Total Loss Possible",
+        "analysis_type": "startup"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='lxrx', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(1.3932948412519612), upside_potential=np.float64(-1.1847606925456904), risk_level='High', bullish_signals=['TECHNICAL indicates Buy', 'Technical: Strong Uptrend'], bearish_signals=[], key_risks=['High volatility', 'Low confidence in ai_insights analysis'], summary='Consensus: Hold | Confidence: Low | Analyses: 3 | TECHNICAL: Buy | AI_INSIGHTS: Hold | STARTUP: Monitor')",
+    "analyst_comparison": {
+      "comparisons": [
+        "ComparisonResult(ticker='lxrx', method='technical', our_price=np.float64(3.328209993722244), analyst_target=2.75, current_price=1.41, our_upside=np.float64(136.0432619661166), analyst_upside=95.03546099290782, deviation_score=np.float64(41.00780097320879), alignment='Directional_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=5)",
+        "ComparisonResult(ticker='lxrx', method='ai_insights', our_price=1.4804999999999997, analyst_target=2.75, current_price=1.41, our_upside=4.999999999999985, analyst_upside=95.03546099290782, deviation_score=90.03546099290783, alignment='Directional_Aligned', both_bullish=False, both_bearish=False, analyst_count=5)",
+        "ComparisonResult(ticker='lxrx', method='startup', our_price=np.float64(0.6349997245450908), analyst_target=2.75, current_price=1.41, our_upside=np.float64(-54.964558542901365), analyst_upside=95.03546099290782, deviation_score=np.float64(150.00001953580917), alignment='Divergent', both_bullish=np.False_, both_bearish=False, analyst_count=5)"
+      ],
+      "summary": {
+        "startup": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 150.00001953580917
+        },
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 90.03546099290783
+        },
+        "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 41.00780097320879
+        }
+      }
+    }
+  },
+  "ampx": {
+    "ticker": "ampx",
+    "company_type": "startup_loss_making",
+    "financial_metrics": {
+      "market_cap": 1593466112,
+      "sector": "Industrials",
+      "industry": "Electrical Equipment & Parts",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Amprius Technologies, Inc.",
+      "enterprise_value": 1545741184,
+      "total_revenue": 44837000,
+      "net_income": -38736000,
+      "current_revenue": "$44,837,000.00",
+      "yearly_revenue_growth": 3.504,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 168.0809919235582,
+      "calculated_quarterly_growth": 33.525345622119815,
+      "free_cash_flow": -36559000.0,
+      "total_debt": 37733000,
+      "total_cash": 54189000,
+      "shares_outstanding": 125075837,
+      "current_price": 12.74,
+      "beta": 2.875,
+      "pe_ratio": null,
+      "pb_ratio": 20.783035,
+      "ps_ratio": 35.53909,
+      "peg_ratio": null,
+      "roe": -0.53616,
+      "roa": -0.19950001,
+      "debt_to_equity": 0.49225,
+      "current_ratio": 5.949,
+      "revenue_growth": 3.504,
+      "earnings_growth": null,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 13.205,
+      "fifty_two_week_low": 1.11
+    },
+    "quality_score": {
+      "quality_score": 23,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 2
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 12.739999771118164,
+        "predicted_price": 28.928045968166966,
+        "price_targets": {
+          "short_term": 20.834022869642563,
+          "medium_term": 28.928045968166966,
+          "support_level": 1.054500013589859
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 10.279500102996826,
+        "ma_50": 8.541800050735473,
+        "ma_200": 4.575300005674362,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 1.2706472910421416,
+        "high_52w": 13.204999923706055,
+        "low_52w": 1.1100000143051147,
+        "distance_from_high": -0.035213945874630934,
+        "distance_from_low": 10.477477123361744,
+        "volume_trend": "Average Daily Volume:5027896.424, Trend: Above Average",
+        "rsi_14": 74.24891160760977,
+        "analysis_type": "technical"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 12.74,
+        "predicted_price": 14.651,
+        "recommendation": "Buy",
+        "confidence": "Medium",
+        "ai_insights": {
+          "market_position": "Moderate",
+          "growth_prospects": "High",
+          "competitive_advantage": "Moderate",
+          "management_quality": "Average",
+          "industry_outlook": "Positive",
+          "key_strengths": [
+            "High revenue growth rate of 350.4%",
+            "Potential for innovation in the electrical equipment and parts industry"
+          ],
+          "key_risks": [
+            "Negative ROE of -53.6%, indicating potential operational issues",
+            "High market volatility due to the company's relatively small market capitalization"
+          ],
+          "ai_method": "LLM"
+        },
+        "news_sentiment": {
+          "overall_sentiment": "Neutral",
+          "sentiment_score": 0.0,
+          "news_count": 2,
+          "key_themes": [
+            "Earnings",
+            "Business Strategy"
+          ],
+          "sentiment_trend": "Stable",
+          "ai_method": "LLM"
+        },
+        "news_articles": [
+          {
+            "title": "ampx reports quarterly earnings",
+            "summary": "Company reported financial results for the quarter",
+            "publish_date": "2025-10-04",
+            "source": "Financial News",
+            "url": "https://finance.yahoo.com/quote/ampx/news"
+          },
+          {
+            "title": "ampx announces strategic initiative",
+            "summary": "Company announced new business strategy",
+            "publish_date": "2025-10-04",
+            "source": "Business Wire",
+            "url": "https://finance.yahoo.com/quote/ampx/news"
+          }
+        ],
+        "revenue_trends": {
+          "trend_assessment": "Strong Growth",
+          "growth_rate": 3.504,
+          "growth_consistency": "Consistent",
+          "future_outlook": "Very Positive",
+          "ai_method": "LLM"
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "news_sentiment": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [],
+        "analysis_type": "ai_insights"
+      },
+      "startup": {
+        "method": "Enhanced Startup Analysis",
+        "stage": "Growth Stage",
+        "cash_runway_years": 1.4822341967778112,
+        "predicted_price": 0.8490779558005275,
+        "price_1y": 1.1360818668756938,
+        "price_2y": 1.4374359735046185,
+        "quarterly_burn_rate": 9139750.0,
+        "revenue_growth_rates": [
+          "168.1%",
+          "110.2%",
+          "50.9%"
+        ],
+        "median_growth": "110.2%",
+        "revenue_volatility": "47.9%",
+        "growth_quality": "Hypergrowth (>100%)",
+        "risk_factors": [
+          "HIGH: Less than 2 years cash runway",
+          "MODERATE: Volatile revenue pattern"
+        ],
+        "risk_score": 30,
+        "recommendation": "Speculative Buy",
+        "revenue_multiple_breakdown": {
+          "base_multiple": 4.4799999999999995,
+          "risk_adjustment": 0.85,
+          "stage_adjustment": 1.0,
+          "final_multiple": 3.8079999999999994
+        },
+        "current_revenue": 23567000.0,
+        "projected_revenue_1yr": 32993799.999999996,
+        "projected_revenue_2yr": 42891940.0,
+        "implied_value_estimate": 89743135.99999999,
+        "confidence_level": "Low - High Risk",
+        "investment_type": "Venture Capital Style - Total Loss Possible",
+        "analysis_type": "startup"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='ampx', recommendation=<RecommendationType.BUY: 'Buy'>, confidence='High', target_price=np.float64(9.823554396493224), upside_potential=np.float64(-22.892036318843434), risk_level='Medium', bullish_signals=['TECHNICAL indicates Strong Buy', 'Technical: Strong Uptrend', 'AI_INSIGHTS indicates Buy'], bearish_signals=[], key_risks=['High volatility'], summary='Consensus: Buy | Confidence: High | Analyses: 3 | TECHNICAL: Strong Buy | AI_INSIGHTS: Buy | STARTUP: Speculative Buy')",
+    "analyst_comparison": {
+      "comparisons": [
+        "ComparisonResult(ticker='ampx', method='technical', our_price=np.float64(28.928045968166966), analyst_target=13.0, current_price=12.74, our_upside=np.float64(127.06472502485846), analyst_upside=2.0408163265306105, deviation_score=np.float64(125.02390869832784), alignment='Directional_Aligned', both_bullish=False, both_bearish=np.False_, analyst_count=6)",
+        "ComparisonResult(ticker='ampx', method='ai_insights', our_price=14.651, analyst_target=13.0, current_price=12.74, our_upside=14.999999999999996, analyst_upside=2.0408163265306105, deviation_score=12.959183673469386, alignment='Investment_Aligned', both_bullish=False, both_bearish=False, analyst_count=6)",
+        "ComparisonResult(ticker='ampx', method='startup', our_price=np.float64(0.8490779558005275), analyst_target=13.0, current_price=12.74, our_upside=np.float64(-93.33533786655786), analyst_upside=2.0408163265306105, deviation_score=np.float64(95.37615419308848), alignment='Divergent', both_bullish=np.False_, both_bearish=False, analyst_count=6)"
+      ],
+      "summary": {
+        "startup": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 95.37615419308848
+        },
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 12.959183673469386
+        },
+        "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 125.02390869832784
+        }
+      }
+    }
+  },
+  "eqt": {
+    "ticker": "eqt",
+    "company_type": "commodity",
+    "financial_metrics": {
+      "market_cap": 34966253568,
+      "sector": "Energy",
+      "industry": "Oil & Gas E&P",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "EQT Corporation",
+      "enterprise_value": 46231552000,
+      "total_revenue": 7103623168,
+      "net_income": 1143858048,
+      "current_revenue": "$7,103,623,168.00",
+      "yearly_revenue_growth": 1.115,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 3.0021802838747753,
+      "calculated_quarterly_growth": -24.021061953415145,
+      "free_cash_flow": 573264000.0,
+      "total_debt": 8315037184,
+      "total_cash": 555491968,
+      "shares_outstanding": 624057000,
+      "current_price": 56.03,
+      "beta": 0.499,
+      "pe_ratio": 29.489473,
+      "pb_ratio": 1.5661336,
+      "ps_ratio": 4.9223127,
+      "peg_ratio": null,
+      "roe": 0.06473,
+      "roa": 0.04022,
+      "debt_to_equity": 0.33130000000000004,
+      "current_ratio": 0.707,
+      "revenue_growth": 1.115,
+      "earnings_growth": 64.0,
+      "dividend_yield": 1.13,
+      "payout_ratio": 0.3316,
+      "fifty_two_week_high": 61.02,
+      "fifty_two_week_low": 35.45
+    },
+    "quality_score": {
+      "quality_score": 45,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 56.029998779296875,
+        "predicted_price": 66.8569660469765,
+        "price_targets": {
+          "short_term": 66.8569660469765,
+          "medium_term": 77.68393331465612,
+          "support_level": 33.2358463336705
+        },
+        "recommendation": "Buy",
+        "ma_20": 52.07049980163574,
+        "ma_50": 51.95191062927246,
+        "ma_200": 52.00425176620483,
+        "trend": "Uptrend",
+        "volatility_annual": 0.38647037314161753,
+        "high_52w": 60.83348029626408,
+        "low_52w": 34.98510140386369,
+        "distance_from_high": -0.0789611492483062,
+        "distance_from_low": 0.6015388417056018,
+        "volume_trend": "Average Daily Volume:8072433.616, Trend: Above Average",
+        "rsi_14": 69.73352547224191,
+        "analysis_type": "technical"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 56.03,
+        "predicted_price": 70.0375,
+        "recommendation": "Strong Buy",
+        "confidence": "Medium",
+        "ai_insights": {
+          "market_position": "Strong",
+          "growth_prospects": "High",
+          "competitive_advantage": "Strong",
+          "management_quality": "Excellent",
+          "industry_outlook": "Positive",
+          "key_strengths": [
+            "Strong revenue growth (111.5%) indicating a successful business strategy",
+            "Market capitalization of $34.97 billion, positioning the company as a significant player in the industry",
+            "6.5% Return on Equity (ROE) suggesting a relatively stable financial performance"
+          ],
+          "key_risks": [
+            "High debt levels or leverage, which could impact the company's financial stability and ability to invest in growth initiatives",
+            "Dependence on a single industry (Oil & Gas E&P) makes the company vulnerable to market fluctuations and regulatory changes",
+            "Environmental, social, and governance (ESG) concerns related to the oil and gas industry, which could impact the company's reputation and long-term sustainability"
+          ],
+          "ai_method": "LLM"
+        },
+        "news_sentiment": {
+          "overall_sentiment": "Neutral",
+          "sentiment_score": 0.0,
+          "news_count": 2,
+          "key_themes": [
+            "earnings",
+            "strategy"
+          ],
+          "sentiment_trend": "Stable",
+          "ai_method": "LLM"
+        },
+        "news_articles": [
+          {
+            "title": "eqt reports quarterly earnings",
+            "summary": "Company reported financial results for the quarter",
+            "publish_date": "2025-10-04",
+            "source": "Financial News",
+            "url": "https://finance.yahoo.com/quote/eqt/news"
+          },
+          {
+            "title": "eqt announces strategic initiative",
+            "summary": "Company announced new business strategy",
+            "publish_date": "2025-10-04",
+            "source": "Business Wire",
+            "url": "https://finance.yahoo.com/quote/eqt/news"
+          }
+        ],
+        "revenue_trends": {
+          "trend_assessment": "Strong Growth",
+          "growth_rate": 2.115,
+          "growth_consistency": "Consistent",
+          "future_outlook": "Very Positive",
+          "ai_method": "LLM"
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "news_sentiment": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [],
+        "analysis_type": "ai_insights"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 56.03,
+        "predicted_price": 62.8,
+        "target_high": 80.0,
+        "target_low": 46.0,
+        "upside_downside_pct": 12.082812778868455,
+        "recommendation": "Buy",
+        "recommendation_mean": 1.72,
+        "num_analysts": 25,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 27.758660154621623,
+        "current_price": 56.03,
+        "upside_downside_pct": -50.45750463212275,
+        "total_equity_value": 17322986180.112705,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "parameters_used": {
+          "max_cagr": "9.0%",
+          "terminal_growth": "1.0%",
+          "sector": "Energy",
+          "industry": "Oil & Gas E&P",
+          "quality_adjustment": "C",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 10.8,
+          "ps": 0.8,
+          "pb": 1.2,
+          "ev_ebitda": 5.4
+        },
+        "fair_values": {
+          "pe_fair_value": 19.795734874218223,
+          "ps_fair_value": 9.10637735719654
+        },
+        "predicted_price": 14.451056115707381,
+        "current_price": 56.03,
+        "upside_downside_pct": -74.20835960073643,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Energy",
+        "industry": "Oil & Gas E&P",
+        "parameters_used": {
+          "pe_multiple": "10.8x",
+          "ps_multiple": "0.8x",
+          "quality_adjustment": "C"
+        },
+        "analysis_type": "comparable"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='eqt', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(46.064046168843355), upside_potential=np.float64(-17.786815683701114), risk_level='Low', bullish_signals=['TECHNICAL indicates Buy', 'Technical: Uptrend', 'AI_INSIGHTS indicates Strong Buy', 'ANALYST_CONSENSUS indicates Buy'], bearish_signals=['DCF indicates Strong Sell', 'DCF: Overvalued', 'COMPARABLE indicates Strong Sell'], key_risks=[], summary='Consensus: Hold | Confidence: Low | Analyses: 5 | TECHNICAL: Buy | AI_INSIGHTS: Strong Buy | ANALYST_CONSENSUS: Buy | DCF: Strong Sell | COMPARABLE: Strong Sell')",
+    "analyst_comparison": {
+      "comparisons": [
+        "ComparisonResult(ticker='eqt', method='technical', our_price=np.float64(66.8569660469765), analyst_target=62.8, current_price=56.03, our_upside=np.float64(19.323516057427263), analyst_upside=12.082812778868455, deviation_score=np.float64(7.240703278558808), alignment='Investment_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=25)",
+        "ComparisonResult(ticker='eqt', method='ai_insights', our_price=70.0375, analyst_target=62.8, current_price=56.03, our_upside=24.999999999999986, analyst_upside=12.082812778868455, deviation_score=12.917187221131531, alignment='Investment_Aligned', both_bullish=True, both_bearish=False, analyst_count=25)",
+        "ComparisonResult(ticker='eqt', method='analyst_consensus', our_price=62.8, analyst_target=62.8, current_price=56.03, our_upside=12.082812778868455, analyst_upside=12.082812778868455, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=True, both_bearish=False, analyst_count=25)",
+        "ComparisonResult(ticker='eqt', method='dcf', our_price=np.float64(27.758660154621623), analyst_target=62.8, current_price=56.03, our_upside=np.float64(-50.45750463212275), analyst_upside=12.082812778868455, deviation_score=np.float64(62.54031741099121), alignment='Divergent', both_bullish=np.False_, both_bearish=False, analyst_count=25)",
+        "ComparisonResult(ticker='eqt', method='comparable', our_price=14.451056115707381, analyst_target=62.8, current_price=56.03, our_upside=-74.20835960073643, analyst_upside=12.082812778868455, deviation_score=86.29117237960489, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=25)"
+      ],
+      "summary": {
+        "dcf": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 62.54031741099121
+        },
+        "analyst_consensus": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 0.0
+        },
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 12.917187221131531
+        },
+        "comparable": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 86.29117237960489
+        },
+        "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 7.240703278558808
+        }
+      }
+    }
+  }
+}

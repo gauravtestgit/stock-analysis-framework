@@ -7,6 +7,8 @@ class AnalysisType(Enum):
     TECHNICAL = "technical"
     COMPARABLE = "comparable"
     STARTUP = "startup"
+    ANALYST_CONSENSUS = "analyst_consensus"
+    AI_INSIGHTS = "ai_insights"
     QUALITY = "quality"
 
 @dataclass

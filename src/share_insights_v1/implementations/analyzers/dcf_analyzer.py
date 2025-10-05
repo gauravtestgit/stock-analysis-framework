@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from ...interfaces.analyzer import IAnalyzer
 from ...models.company import CompanyType
 from ..calculators import dcf_yf
@@ -7,8 +7,8 @@ from ...config.config import FinanceConfig
 class DCFAnalyzer(IAnalyzer):
     """DCF valuation analyzer implementation using original dcf_yf logic"""
     
-    def __init__(self):
-        self.config = FinanceConfig()
+    def __init__(self, config : Optional[FinanceConfig] = None):
+        self.config = config if config is not None else FinanceConfig()
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform DCF analysis using original dcf_yf functions"""
@@ -52,6 +52,18 @@ class DCFAnalyzer(IAnalyzer):
                 share_price *= (1 - valuation_discount)
                 upside_downside = ((share_price - current_price) / current_price) * 100
             
+            # Generate recommendation based on upside/downside
+            if upside_downside > 25:
+                recommendation = "Strong Buy"
+            elif upside_downside > 10:
+                recommendation = "Buy"
+            elif upside_downside < -25:
+                recommendation = "Strong Sell"
+            elif upside_downside < -10:
+                recommendation = "Sell"
+            else:
+                recommendation = "Hold"
+            
             return {
                 'method': 'DCF Analysis',
                 'applicable': True,
@@ -61,6 +73,7 @@ class DCFAnalyzer(IAnalyzer):
                 'total_equity_value': equity_value,
                 'confidence': 'High' if company_type == CompanyType.MATURE_PROFITABLE else 'Medium',
                 'valuation': 'Undervalued' if upside_downside > 20 else 'Overvalued' if upside_downside < -20 else 'Fair Value',
+                'recommendation': recommendation,
                 'parameters_used': {
                     'max_cagr': f"{params['max_cagr']:.1%}",
                     'terminal_growth': f"{params['terminal_growth']:.1%}",

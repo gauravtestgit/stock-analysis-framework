@@ -13,3 +13,8 @@ class IDataProvider(ABC):
     def get_price_data(self, ticker: str) -> Dict[str, Any]:
         """Get price and technical data"""
         pass
+
+    @abstractmethod
+    def get_professional_analyst_data(self, ticker: str) -> Dict[str, Any]:
+        """Get price and technical data"""
+        pass

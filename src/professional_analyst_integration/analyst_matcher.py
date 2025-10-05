@@ -153,19 +153,19 @@ if __name__ == "__main__":
     matcher = AnalystMatcher()
     
     # Analyze the stock data
-    csv_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\stock_analysis.csv"
+    csv_path = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\src\\resources\\stock_analysis.csv"
     
     print("Finding analyst alignment matches...")
-    results = matcher.find_matching_analyses(csv_path, sample_size=5064)  # Test with 100 stocks
+    results = matcher.find_matching_analyses(csv_path, sample_size=100)  # Test with 100 stocks
     
     # Generate and display report
     report = matcher.generate_analyst_report(results)
     print("\n" + report)
-    report_file = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\analysis\\analyst_report.txt"
+    report_file = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\src\\resources\\analysis\\analyst_report.txt"
     # Save report to file
     with open(report_file, 'w') as f:
         f.write(report)        # Save detailed results
-    output_dir = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\financial_analyst\\resources\\analysis\\"
+    output_dir = "c:\\Users\\x_gau\\source\\repos\\agentic\\langchain\\tutorials\\finance-app\\src\\resources\\analysis\\"
     
     if not results['consensus_matches'].empty:
         results['consensus_matches'].to_csv(f"{output_dir}consensus_matches.csv", index=False)

@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from ...interfaces.analyzer import IAnalyzer
 from ...models.company import CompanyType
 from ...config.config import FinanceConfig
@@ -8,8 +8,8 @@ import numpy as np
 class StartupAnalyzer(IAnalyzer):
     """Startup analysis for loss-making companies"""
     
-    def __init__(self):
-        self.config = FinanceConfig()
+    def __init__(self, config = Optional[FinanceConfig]):
+        self.config = config if config is not None else FinanceConfig()
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform startup analysis"""
@@ -173,7 +173,7 @@ class StartupAnalyzer(IAnalyzer):
             total_debt = metrics['total_debt']
             total_cash = metrics['total_cash']
             net_debt = total_debt - total_cash
-            shares_outstanding = data.get('shares_outstanding', 0)
+            shares_outstanding = metrics.get('shares_outstanding', 0)
             
             current_price_est = 0
             forward_price_1yr = 0
@@ -187,21 +187,21 @@ class StartupAnalyzer(IAnalyzer):
             # Enhanced recommendation logic
             def get_startup_recommendation():
                 if risk_score > 70:
-                    return "AVOID - Critical risk factors"
+                    return "Strong Sell"
                 elif runway_years < 0.5:
-                    return "AVOID - Imminent bankruptcy risk"
+                    return "Strong Sell"
                 elif runway_years < 1 and median_growth < 0.15:
-                    return "AVOID - Insufficient runway with weak growth"
+                    return "Sell"
                 elif runway_years > 4 and median_growth > 0.40 and risk_score < 30:
-                    return "SPECULATIVE BUY - Strong fundamentals"
+                    return "Speculative Buy"
                 elif runway_years > 2 and median_growth > 0.25 and risk_score < 40:
-                    return "HOLD/WATCH - Adequate metrics, monitor closely"
+                    return "Hold"
                 elif median_growth > 0.75 and runway_years > 1:
-                    return "HIGH RISK/HIGH REWARD - Exceptional growth"
+                    return "Speculative Buy"
                 elif risk_score > 50:
-                    return "AVOID - High risk without adequate compensation"
+                    return "Sell"
                 else:
-                    return "MONITOR - Mixed signals, wait for clarity"
+                    return "Monitor"
 
             return {
                 'method': 'Enhanced Startup Analysis',

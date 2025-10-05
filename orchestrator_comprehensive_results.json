@@ -1,0 +1,994 @@
+{
+  "mature": {
+    "ticker": "AAPL",
+    "company_type": "mature_profitable",
+    "financial_metrics": {
+      "market_cap": 3815909359616,
+      "sector": "Technology",
+      "industry": "Consumer Electronics",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Apple Inc.",
+      "enterprise_value": 3837303717888,
+      "total_revenue": 408624988160,
+      "net_income": 99280003072,
+      "current_revenue": "$408,624,988,160.00",
+      "yearly_revenue_growth": 0.096,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 2.021994077514121,
+      "calculated_quarterly_growth": -1.3873887100326137,
+      "free_cash_flow": 108807000000.0,
+      "total_debt": 101698002944,
+      "total_cash": 55372001280,
+      "shares_outstanding": 14840390000,
+      "current_price": 257.13,
+      "beta": 1.094,
+      "pe_ratio": 39.018208,
+      "pb_ratio": 58.02979,
+      "ps_ratio": 9.338414,
+      "peg_ratio": null,
+      "roe": 1.49814,
+      "roa": 0.24545999,
+      "debt_to_equity": 1.54486,
+      "current_ratio": 0.868,
+      "revenue_growth": 0.096,
+      "earnings_growth": 0.121,
+      "dividend_yield": 0.41,
+      "payout_ratio": 0.1533,
+      "fifty_two_week_high": 260.1,
+      "fifty_two_week_low": 169.21
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 257.1300048828125,
+        "predicted_price": 340.6658461154375,
+        "price_targets": {
+          "short_term": 298.897925499125,
+          "medium_term": 340.6658461154375,
+          "support_level": 160.35699746574
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 244.84099960327148,
+        "ma_50": 231.78159240722655,
+        "ma_200": 221.740161819458,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.32487784251665447,
+        "high_52w": 259.1799258751944,
+        "low_52w": 168.79683943762106,
+        "distance_from_high": -0.007909258348075172,
+        "distance_from_low": 0.5233105414739415,
+        "volume_trend": "Average Daily Volume:53759773.876, Trend: Normal",
+        "rsi_14": 70.28904115563712,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 229.73898941660113,
+        "current_price": 257.13,
+        "upside_downside_pct": -10.652592300936828,
+        "total_equity_value": 3409416201148.2334,
+        "confidence": "Medium",
+        "valuation": "Fair Value",
+        "recommendation": "Sell",
+        "parameters_used": {
+          "max_cagr": "16.0%",
+          "terminal_growth": "3.0%",
+          "sector": "Technology",
+          "industry": "Consumer Electronics",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 20.0,
+          "ps": 6.0,
+          "pb": 3.5,
+          "ev_ebitda": 14.4
+        },
+        "fair_values": {
+          "pe_fair_value": 133.7970269945736,
+          "ps_fair_value": 165.20791764636914
+        },
+        "average_fair_value": 149.50247232047138,
+        "current_price": 257.13,
+        "upside_downside_pct": -41.85724251527578,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "parameters_used": {
+          "pe_multiple": "20.0x",
+          "ps_multiple": "6.0x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "growth": {
+    "ticker": "TSLA",
+    "company_type": "mature_profitable",
+    "financial_metrics": {
+      "market_cap": 1449765765120,
+      "sector": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Tesla, Inc.",
+      "enterprise_value": 1459074760704,
+      "total_revenue": 92719996928,
+      "net_income": 5879000064,
+      "current_revenue": "$92,719,996,928.00",
+      "yearly_revenue_growth": -0.118,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 0.9475783534663594,
+      "calculated_quarterly_growth": 16.348590638738038,
+      "free_cash_flow": 3581000000.0,
+      "total_debt": 13134000128,
+      "total_cash": 36781998080,
+      "shares_outstanding": 3325150886,
+      "current_price": 436.0,
+      "beta": 2.086,
+      "pe_ratio": 256.47058,
+      "pb_ratio": 18.181059,
+      "ps_ratio": 15.635956,
+      "peg_ratio": null,
+      "roe": 0.08177,
+      "roa": 0.0296,
+      "debt_to_equity": 0.16823,
+      "current_ratio": 2.037,
+      "revenue_growth": -0.118,
+      "earnings_growth": -0.175,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 488.54,
+      "fifty_two_week_low": 212.11
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 436.0,
+        "predicted_price": 746.2726010993086,
+        "price_targets": {
+          "short_term": 591.1363005496543,
+          "medium_term": 746.2726010993086,
+          "support_level": 201.50450057983397
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 410.36100006103516,
+        "ma_50": 361.17399963378904,
+        "ma_200": 335.22139976501467,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.7116344061910749,
+        "high_52w": 488.5400085449219,
+        "low_52w": 212.11000061035156,
+        "distance_from_high": -0.10754494540049682,
+        "distance_from_low": 1.0555372153382663,
+        "volume_trend": "Average Daily Volume:100340717.284, Trend: Normal",
+        "rsi_14": 62.148043713530434,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 26.48585628098673,
+        "current_price": 436.0,
+        "upside_downside_pct": -93.92526232087461,
+        "total_equity_value": 88069468479.1917,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "parameters_used": {
+          "max_cagr": "8.0%",
+          "terminal_growth": "2.5%",
+          "sector": "Consumer Cyclical",
+          "industry": "Auto Manufacturers",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 14.4,
+          "ps": 1.5,
+          "pb": 2.0,
+          "ev_ebitda": 9.600000000000001
+        },
+        "fair_values": {
+          "pe_fair_value": 25.45977726245052,
+          "ps_fair_value": 41.826671979780954
+        },
+        "average_fair_value": 33.643224621115735,
+        "current_price": 436.0,
+        "upside_downside_pct": -92.28366407772575,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Consumer Cyclical",
+        "industry": "Auto Manufacturers",
+        "parameters_used": {
+          "pe_multiple": "14.4x",
+          "ps_multiple": "1.5x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "financial": {
+    "ticker": "JPM",
+    "company_type": "financial",
+    "financial_metrics": {
+      "market_cap": 845686767616,
+      "sector": "Financial Services",
+      "industry": "Banks - Diversified",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "JPMorgan Chase & Co.",
+      "enterprise_value": 502373023744,
+      "total_revenue": 163748003840,
+      "net_income": 55154999296,
+      "current_revenue": "$163,748,003,840.00",
+      "yearly_revenue_growth": -0.106,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 9.349346894522174,
+      "calculated_quarterly_growth": -0.9817548039799678,
+      "free_cash_flow": -42012000000.0,
+      "total_debt": 1165543997440,
+      "total_cash": 1537592000512,
+      "shares_outstanding": 2749753854,
+      "current_price": 307.55,
+      "beta": 1.127,
+      "pe_ratio": 15.76371,
+      "pb_ratio": 2.5103662,
+      "ps_ratio": 5.164562,
+      "peg_ratio": null,
+      "roe": 0.16211,
+      "roa": 0.012999999,
+      "debt_to_equity": 0,
+      "current_ratio": null,
+      "revenue_growth": -0.106,
+      "earnings_growth": -0.144,
+      "dividend_yield": 1.93,
+      "payout_ratio": 0.2718,
+      "fifty_two_week_high": 318.01,
+      "fifty_two_week_low": 202.16
+    },
+    "quality_score": {
+      "quality_score": 55,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 307.54998779296875,
+        "predicted_price": 390.73973921696575,
+        "price_targets": {
+          "short_term": 349.14486350496725,
+          "medium_term": 390.73973921696575,
+          "support_level": 189.85956433225016
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 308.6745010375977,
+        "ma_50": 300.3980010986328,
+        "ma_200": 266.67989082336425,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.27049180531913164,
+        "high_52w": 318.010009765625,
+        "low_52w": 199.85217298131596,
+        "distance_from_high": -0.03289211550405391,
+        "distance_from_low": 0.5388873846356496,
+        "volume_trend": "Average Daily Volume:9351768.14, Trend: Normal",
+        "rsi_14": 50.94241696086206,
+        "analysis_type": "technical"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 10.8,
+          "ps": 2.5,
+          "pb": 1.2,
+          "ev_ebitda": 9.0
+        },
+        "fair_values": {
+          "pe_fair_value": 216.6281143784152,
+          "ps_fair_value": 148.87514713526065
+        },
+        "average_fair_value": 182.75163075683793,
+        "current_price": 307.55,
+        "upside_downside_pct": -40.57823743884314,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Financial Services",
+        "industry": "Banks - Diversified",
+        "parameters_used": {
+          "pe_multiple": "10.8x",
+          "ps_multiple": "2.5x",
+          "quality_adjustment": "C"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "reit": {
+    "ticker": "AMT",
+    "company_type": "reit",
+    "financial_metrics": {
+      "market_cap": 89515589632,
+      "sector": "Real Estate",
+      "industry": "REIT - Specialty",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "American Tower Corporation",
+      "enterprise_value": 139418894336,
+      "total_revenue": 10259600384,
+      "net_income": 2501299968,
+      "current_revenue": "$10,259,600,384.00",
+      "yearly_revenue_growth": 0.032,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 1.1485987095743193,
+      "calculated_quarterly_growth": 2.5011705946620886,
+      "free_cash_flow": 3700500000.0,
+      "total_debt": 45213200384,
+      "total_cash": 2076000000,
+      "shares_outstanding": 468251225,
+      "current_price": 191.17,
+      "beta": 0.866,
+      "pe_ratio": 35.73271,
+      "pb_ratio": 24.107187,
+      "ps_ratio": 8.725056,
+      "peg_ratio": null,
+      "roe": 0.24281,
+      "roa": 0.04538,
+      "debt_to_equity": 4.31469,
+      "current_ratio": 0.614,
+      "revenue_growth": 0.032,
+      "earnings_growth": -0.595,
+      "dividend_yield": 3.52,
+      "payout_ratio": 1.2411,
+      "fifty_two_week_high": 234.33,
+      "fifty_two_week_low": 172.51
+    },
+    "quality_score": {
+      "quality_score": 25,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 191.1699981689453,
+        "predicted_price": 202.09242668151856,
+        "price_targets": {
+          "short_term": 175.87350077204758,
+          "medium_term": 202.09242668151856
+        },
+        "recommendation": "Sell",
+        "ma_20": 192.68072814941405,
+        "ma_50": 201.24013610839845,
+        "ma_200": 202.09242668151856,
+        "trend": "Strong Downtrend",
+        "volatility_annual": 0.2667171896463857,
+        "high_52w": 232.28240175447885,
+        "low_52w": 168.28266405591347,
+        "distance_from_high": -0.1769931913696549,
+        "distance_from_low": 0.1360052994254198,
+        "volume_trend": "Average Daily Volume:2616565.328, Trend: Above Average",
+        "rsi_14": 39.898727279888924,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 185.0568438303115,
+        "current_price": 191.17,
+        "upside_downside_pct": -3.197759151377567,
+        "total_equity_value": 86653093818.17705,
+        "confidence": "Medium",
+        "valuation": "Fair Value",
+        "recommendation": "Hold",
+        "parameters_used": {
+          "max_cagr": "4.8%",
+          "terminal_growth": "2.2%",
+          "sector": "Real Estate",
+          "industry": "REIT - Specialty",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 16.0,
+          "ps": 3.0,
+          "pb": 1.8,
+          "ev_ebitda": 12.0
+        },
+        "fair_values": {
+          "pe_fair_value": 85.46864877502456,
+          "ps_fair_value": 65.73138415601582
+        },
+        "average_fair_value": 75.60001646552018,
+        "current_price": 191.17,
+        "upside_downside_pct": -60.45403752392102,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Real Estate",
+        "industry": "REIT - Specialty",
+        "parameters_used": {
+          "pe_multiple": "16.0x",
+          "ps_multiple": "3.0x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "commodity": {
+    "ticker": "XOM",
+    "company_type": "commodity",
+    "financial_metrics": {
+      "market_cap": 474456784896,
+      "sector": "Energy",
+      "industry": "Oil & Gas Integrated",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Exxon Mobil Corporation",
+      "enterprise_value": 509447045120,
+      "total_revenue": 329816014848,
+      "net_income": 31015000064,
+      "current_revenue": "$329,816,014,848.00",
+      "yearly_revenue_growth": -0.123,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 1.3594385369453565,
+      "calculated_quarterly_growth": -1.9504552295886897,
+      "free_cash_flow": 30716000000.0,
+      "total_debt": 38989000704,
+      "total_cash": 14352000000,
+      "shares_outstanding": 4263247021,
+      "current_price": 111.29,
+      "beta": 0.484,
+      "pe_ratio": 15.808239,
+      "pb_ratio": 1.8068025,
+      "ps_ratio": 1.4385499,
+      "peg_ratio": null,
+      "roe": 0.118310004,
+      "roa": 0.05277,
+      "debt_to_equity": 0.14442,
+      "current_ratio": 1.249,
+      "revenue_growth": -0.123,
+      "earnings_growth": -0.236,
+      "dividend_yield": 3.54,
+      "payout_ratio": 0.5568,
+      "fifty_two_week_high": 126.34,
+      "fifty_two_week_low": 97.8
+    },
+    "quality_score": {
+      "quality_score": 50,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 111.29000091552734,
+        "predicted_price": 137.43843544726238,
+        "price_targets": {
+          "short_term": 124.36421818139486,
+          "medium_term": 137.43843544726238
+        },
+        "recommendation": "Buy",
+        "ma_20": 112.95949974060059,
+        "ma_50": 110.69885055541992,
+        "ma_200": 107.90089530944825,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.23495762707004128,
+        "high_52w": 121.93130052616625,
+        "low_52w": 96.01402518639644,
+        "distance_from_high": -0.08727291158807336,
+        "distance_from_low": 0.15910150313430724,
+        "volume_trend": "Average Daily Volume:16146609.824, Trend: Normal",
+        "rsi_14": 45.82296629712958,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 172.76985135547594,
+        "current_price": 111.29,
+        "upside_downside_pct": 55.24292511050043,
+        "total_equity_value": 736560554109.8456,
+        "confidence": "Medium",
+        "valuation": "Undervalued",
+        "recommendation": "Strong Buy",
+        "parameters_used": {
+          "max_cagr": "7.2%",
+          "terminal_growth": "1.5%",
+          "sector": "Energy",
+          "industry": "Oil & Gas Integrated",
+          "quality_adjustment": "C",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 13.5,
+          "ps": 1.0,
+          "pb": 1.5,
+          "ev_ebitda": 7.2
+        },
+        "fair_values": {
+          "pe_fair_value": 98.21211363112333,
+          "ps_fair_value": 77.36263304082186
+        },
+        "average_fair_value": 87.7873733359726,
+        "current_price": 111.29,
+        "upside_downside_pct": -21.118363432498338,
+        "recommendation": "Sell",
+        "confidence": "Medium",
+        "sector": "Energy",
+        "industry": "Oil & Gas Integrated",
+        "parameters_used": {
+          "pe_multiple": "13.5x",
+          "ps_multiple": "1.0x",
+          "quality_adjustment": "C"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "cyclical": {
+    "ticker": "CAT",
+    "company_type": "cyclical",
+    "financial_metrics": {
+      "market_cap": 229821710336,
+      "sector": "Industrials",
+      "industry": "Farm & Heavy Construction Machinery",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Caterpillar Inc.",
+      "enterprise_value": 261576032256,
+      "total_revenue": 63139000320,
+      "net_income": 9436999680,
+      "current_revenue": "$63,139,000,320.00",
+      "yearly_revenue_growth": -0.007,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": -3.3566954965702354,
+      "calculated_quarterly_growth": 16.28184433995368,
+      "free_cash_flow": 8820000000.0,
+      "total_debt": 40747999232,
+      "total_cash": 4428000256,
+      "shares_outstanding": 468478923,
+      "current_price": 490.57,
+      "beta": 1.465,
+      "pe_ratio": 25.003567,
+      "pb_ratio": 12.315668,
+      "ps_ratio": 3.6399326,
+      "peg_ratio": null,
+      "roe": 0.52711,
+      "roa": 0.08555,
+      "debt_to_equity": 2.18336,
+      "current_ratio": 1.338,
+      "revenue_growth": -0.007,
+      "earnings_growth": -0.157,
+      "dividend_yield": 1.26,
+      "payout_ratio": 0.2872,
+      "fifty_two_week_high": 495.98,
+      "fifty_two_week_low": 267.3
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 490.57000732421875,
+        "predicted_price": 635.60822255507,
+        "price_targets": {
+          "short_term": 563.0891149396443,
+          "medium_term": 635.60822255507,
+          "support_level": 251.79578744622467
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 453.6655014038086,
+        "ma_50": 435.8876013183594,
+        "ma_200": 371.9309700012207,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.2956524309791226,
+        "high_52w": 495.9800109863281,
+        "low_52w": 265.04819731181544,
+        "distance_from_high": -0.01090770503301292,
+        "distance_from_low": 0.8508709446044208,
+        "volume_trend": "Average Daily Volume:2590460.324, Trend: Normal",
+        "rsi_14": 78.8390324533958,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 575.4797992397733,
+        "current_price": 490.57,
+        "upside_downside_pct": 17.30839620029218,
+        "total_equity_value": 269600156556.10522,
+        "confidence": "Medium",
+        "valuation": "Fair Value",
+        "recommendation": "Buy",
+        "parameters_used": {
+          "max_cagr": "6.4%",
+          "terminal_growth": "2.5%",
+          "sector": "Industrials",
+          "industry": "Farm & Heavy Construction Machinery",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 14.4,
+          "ps": 1.8,
+          "pb": 2.2,
+          "ev_ebitda": 9.600000000000001
+        },
+        "fair_values": {
+          "pe_fair_value": 290.07237832981446,
+          "ps_fair_value": 242.59405278730117
+        },
+        "average_fair_value": 266.3332155585578,
+        "current_price": 490.57,
+        "upside_downside_pct": -45.70943686761159,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Industrials",
+        "industry": "Farm & Heavy Construction Machinery",
+        "parameters_used": {
+          "pe_multiple": "14.4x",
+          "ps_multiple": "1.8x",
+          "quality_adjustment": "D"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "startup": {
+    "ticker": "RIVN",
+    "company_type": "startup_loss_making",
+    "financial_metrics": {
+      "market_cap": 16417761280,
+      "sector": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Rivian Automotive, Inc.",
+      "enterprise_value": 15129271296,
+      "total_revenue": 5151000064,
+      "net_income": -3505999872,
+      "current_revenue": "$5,151,000,064.00",
+      "yearly_revenue_growth": 0.125,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 12.088407758231845,
+      "calculated_quarterly_growth": 5.080645161290322,
+      "free_cash_flow": -2857000000.0,
+      "total_debt": 4897999872,
+      "total_cash": 7507999744,
+      "shares_outstanding": 1209521515,
+      "current_price": 13.53,
+      "beta": 1.829,
+      "pe_ratio": null,
+      "pb_ratio": 2.7070827,
+      "ps_ratio": 3.187296,
+      "peg_ratio": null,
+      "roe": -0.54261,
+      "roa": -0.14535,
+      "debt_to_equity": 0.80572,
+      "current_ratio": 3.439,
+      "revenue_growth": 0.125,
+      "earnings_growth": null,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 17.15,
+      "fifty_two_week_low": 9.5
+    },
+    "quality_score": {
+      "quality_score": 13,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 2
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 13.529999732971191,
+        "predicted_price": 21.971025213033162,
+        "price_targets": {
+          "short_term": 17.75051247300218,
+          "medium_term": 21.971025213033162,
+          "breakout_target": 18.00749959945679,
+          "support_level": 9.025
+        },
+        "recommendation": "Buy",
+        "ma_20": 14.526499938964843,
+        "ma_50": 13.494399948120117,
+        "ma_200": 13.243849992752075,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.6238747706322622,
+        "high_52w": 17.149999618530273,
+        "low_52w": 9.5,
+        "distance_from_high": -0.21107871522327823,
+        "distance_from_low": 0.42421049820749385,
+        "volume_trend": "Average Daily Volume:36702257.06, Trend: Above Average",
+        "rsi_14": 41.851728026740176,
+        "analysis_type": "technical"
+      },
+      "startup": {
+        "method": "Enhanced Startup Analysis",
+        "stage": "Late Stage",
+        "cash_runway_years": 2.627931306965348,
+        "predicted_price": 23.617048161396287,
+        "price_1y": 32.20071622454769,
+        "price_2y": 41.213567690856664,
+        "quarterly_burn_rate": 714250000.0,
+        "revenue_growth_rates": [
+          "12.1%",
+          "167.4%",
+          "2914.5%"
+        ],
+        "median_growth": "167.4%",
+        "revenue_volatility": "1333.1%",
+        "growth_quality": "Hypergrowth (>100%)",
+        "risk_factors": [
+          "MODERATE: Less than 3 years cash runway",
+          "HIGH: Highly volatile revenue pattern"
+        ],
+        "risk_score": 25,
+        "recommendation": "HOLD/WATCH - Adequate metrics, monitor closely",
+        "revenue_multiple_breakdown": {
+          "base_multiple": 5.120000000000001,
+          "risk_adjustment": 0.85,
+          "stage_adjustment": 1.2,
+          "final_multiple": 5.2224
+        },
+        "current_revenue": 4970000000.0,
+        "projected_revenue_1yr": 6958000000.0,
+        "projected_revenue_2yr": 9045400000.0,
+        "implied_value_estimate": 25955328000.0,
+        "confidence_level": "Low - High Risk",
+        "investment_type": "Venture Capital Style - Total Loss Possible",
+        "analysis_type": "startup"
+      }
+    }
+  },
+  "startup_alt": {
+    "ticker": "PLTR",
+    "company_type": "growth_profitable",
+    "financial_metrics": {
+      "market_cap": 443746680832,
+      "sector": "Technology",
+      "industry": "Software - Infrastructure",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Palantir Technologies Inc.",
+      "enterprise_value": 438080700416,
+      "total_revenue": 3440587008,
+      "net_income": 763292032,
+      "current_revenue": "$3,440,587,008.00",
+      "yearly_revenue_growth": 0.48,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 28.78613688375613,
+      "calculated_quarterly_growth": 13.559011376300411,
+      "free_cash_flow": 1141231000.0,
+      "total_debt": 237812000,
+      "total_cash": 6000421888,
+      "shares_outstanding": 2274261581,
+      "current_price": 187.05,
+      "beta": 2.595,
+      "pe_ratio": 623.5,
+      "pb_ratio": 74.82,
+      "ps_ratio": 128.97412,
+      "peg_ratio": null,
+      "roe": 0.15203,
+      "roa": 0.05669,
+      "debt_to_equity": 0.03947,
+      "current_ratio": 6.324,
+      "revenue_growth": 0.48,
+      "earnings_growth": 1.167,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 190.0,
+      "fifty_two_week_low": 37.37
+    },
+    "quality_score": {
+      "quality_score": 55,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 187.0500030517578,
+        "predicted_price": 320.7167577261885,
+        "price_targets": {
+          "short_term": 253.8833803889732,
+          "medium_term": 320.7167577261885,
+          "support_level": 35.501498985290525
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 173.7335006713867,
+        "ma_50": 168.57900024414062,
+        "ma_200": 121.07240013122559,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.7146043971859457,
+        "high_52w": 190.0,
+        "low_52w": 37.369998931884766,
+        "distance_from_high": -0.01552629972759046,
+        "distance_from_low": 4.005352111267077,
+        "volume_trend": "Average Daily Volume:84318456.384, Trend: Below Average",
+        "rsi_14": 67.83280008582294,
+        "analysis_type": "technical"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 5.788932587782036,
+        "current_price": 187.05,
+        "upside_downside_pct": -96.90514162641965,
+        "total_equity_value": 13165546979.391596,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "parameters_used": {
+          "max_cagr": "13.5%",
+          "terminal_growth": "2.5%",
+          "sector": "Technology",
+          "industry": "Software - Infrastructure",
+          "quality_adjustment": "C",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 19.8,
+          "ps": 5.0,
+          "pb": 3.0,
+          "ev_ebitda": 14.4
+        },
+        "fair_values": {
+          "pe_fair_value": 6.6453139603029685,
+          "ps_fair_value": 7.5641848693745315
+        },
+        "average_fair_value": 7.10474941483875,
+        "current_price": 187.05,
+        "upside_downside_pct": -96.2016843545369,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Technology",
+        "industry": "Software - Infrastructure",
+        "parameters_used": {
+          "pe_multiple": "19.8x",
+          "ps_multiple": "5.0x",
+          "quality_adjustment": "C"
+        },
+        "analysis_type": "comparable"
+      }
+    }
+  },
+  "etf": {
+    "ticker": "QQQ",
+    "company_type": "etf",
+    "financial_metrics": {
+      "market_cap": 238112456704,
+      "sector": "",
+      "industry": "",
+      "fund_family": "Invesco",
+      "category": "Large Growth",
+      "quote_type": "ETF",
+      "long_name": "Invesco QQQ Trust",
+      "enterprise_value": 0,
+      "total_revenue": 0,
+      "net_income": 0,
+      "current_revenue": "$0.00",
+      "yearly_revenue_growth": 0,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 0,
+      "calculated_quarterly_growth": 0,
+      "free_cash_flow": 0,
+      "total_debt": 0,
+      "total_cash": 0,
+      "shares_outstanding": 393100000,
+      "current_price": 0,
+      "beta": 1.0,
+      "pe_ratio": 34.881126,
+      "pb_ratio": 1.693052,
+      "ps_ratio": null,
+      "peg_ratio": null,
+      "roe": null,
+      "roa": null,
+      "debt_to_equity": 0,
+      "current_ratio": null,
+      "revenue_growth": null,
+      "earnings_growth": null,
+      "dividend_yield": 0.49,
+      "payout_ratio": null,
+      "fifty_two_week_high": 607.115,
+      "fifty_two_week_low": 402.39
+    },
+    "quality_score": {
+      "quality_score": 12,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 3
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 605.72998046875,
+        "predicted_price": 747.9067148260583,
+        "price_targets": {
+          "short_term": 676.8183476474042,
+          "medium_term": 747.9067148260583,
+          "support_level": 381.3995241935078
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 592.0508056640625,
+        "ma_50": 578.4642663574218,
+        "ma_200": 526.0946577453614,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.23471965882765697,
+        "high_52w": 607.114990234375,
+        "low_52w": 401.47318336158713,
+        "distance_from_high": -0.0022812972631269094,
+        "distance_from_low": 0.5087682205742714,
+        "volume_trend": "Average Daily Volume:41709379.644, Trend: Above Average",
+        "rsi_14": 71.85447490784398,
+        "analysis_type": "technical"
+      }
+    }
+  }
+}
