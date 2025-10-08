@@ -1,4 +1,6 @@
 from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 from ...interfaces.analyzer import IAnalyzer
 from ...interfaces.data_provider import IDataProvider
 from ...interfaces.classifier import ICompanyClassifier
@@ -25,6 +27,7 @@ class AnalysisOrchestrator:
     
     def analyze_stock(self, ticker: str) -> Dict[str, Any]:
         """Run comprehensive analysis for a stock"""
+        start_time = time.time()
         try:
             # Get financial data
             financial_metrics = self.data_provider.get_financial_metrics(ticker)
@@ -56,7 +59,11 @@ class AnalysisOrchestrator:
                 'quality_grade': quality_grade
             }
             
-            # Run applicable analyses
+            # Determine which analyses to run (only registered ones that are applicable)
+            applicable_analyses = self._get_applicable_analyses_for_type(company_type)
+            analyses_to_run = [analysis_type for analysis_type in applicable_analyses if analysis_type in self.analyzers]
+            
+            # Run registered analyses in parallel
             results = {
                 'ticker': ticker,
                 'company_type': company_type,
@@ -65,65 +72,25 @@ class AnalysisOrchestrator:
                 'analyses': {}
             }
             
-            # Always run technical analysis (applies to all types)
-            if AnalysisType.TECHNICAL in self.analyzers:
-                technical_result = self._run_analysis(
-                    AnalysisType.TECHNICAL, ticker, analysis_data
-                )
-                results['analyses']['technical'] = technical_result
-            
-            # Always run AI insights analysis (applies to all types)
-            if AnalysisType.AI_INSIGHTS in self.analyzers:
-                ai_result = self._run_analysis(
-                    AnalysisType.AI_INSIGHTS, ticker, analysis_data
-                )
-                results['analyses']['ai_insights'] = ai_result
-            
-            # Run analyst consensus for all company types
-            # if company_type != CompanyType.STARTUP_LOSS_MAKING.value and AnalysisType.ANALYST_CONSENSUS in self.analyzers:
-            if AnalysisType.ANALYST_CONSENSUS in self.analyzers:
-                analyst_result = self._run_analysis(
-                    AnalysisType.ANALYST_CONSENSUS, ticker, analysis_data
-                )
-                results['analyses']['analyst_consensus'] = analyst_result
-            
-            # Run type-specific analyses (company_type is a string from classifier)
-            if company_type == CompanyType.STARTUP_LOSS_MAKING.value:
-                if AnalysisType.STARTUP in self.analyzers:
-                    startup_result = self._run_analysis(
-                        AnalysisType.STARTUP, ticker, analysis_data
-                    )
-                    results['analyses']['startup'] = startup_result
-            
-            elif company_type in [
-                CompanyType.MATURE_PROFITABLE.value,
-                CompanyType.GROWTH_PROFITABLE.value,
-                CompanyType.TURNAROUND.value,
-                CompanyType.CYCLICAL.value,
-                CompanyType.COMMODITY.value,
-                CompanyType.REIT.value
-            ]:
-                # Run DCF analysis (excludes financial companies)
-                if AnalysisType.DCF in self.analyzers:
-                    dcf_result = self._run_analysis(
-                        AnalysisType.DCF, ticker, analysis_data
-                    )
-                    results['analyses']['dcf'] = dcf_result
+            # Execute analyses in parallel
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                # Submit only registered analyses
+                future_to_analysis = {
+                    executor.submit(self._run_analysis, analysis_type, ticker, analysis_data): analysis_type
+                    for analysis_type in analyses_to_run
+                }
                 
-                # Run comparable analysis
-                if AnalysisType.COMPARABLE in self.analyzers:
-                    comparable_result = self._run_analysis(
-                        AnalysisType.COMPARABLE, ticker, analysis_data
-                    )
-                    results['analyses']['comparable'] = comparable_result
-            
-            elif company_type == CompanyType.FINANCIAL.value:
-                # Financial companies: Only comparable analysis (DCF not applicable)
-                if AnalysisType.COMPARABLE in self.analyzers:
-                    comparable_result = self._run_analysis(
-                        AnalysisType.COMPARABLE, ticker, analysis_data
-                    )
-                    results['analyses']['comparable'] = comparable_result
+                # Collect results as they complete
+                for future in as_completed(future_to_analysis):
+                    analysis_type = future_to_analysis[future]
+                    try:
+                        result = future.result()
+                        results['analyses'][analysis_type.value] = result
+                    except Exception as e:
+                        results['analyses'][analysis_type.value] = {
+                            'error': f"{analysis_type.value} analysis failed: {str(e)}",
+                            'analysis_type': analysis_type.value
+                        }
             
             # Generate consolidated recommendation if we have analyses
             if results['analyses']:
@@ -143,10 +110,19 @@ class AnalysisOrchestrator:
                         'summary': self.comparison_service.generate_comparison_summary(analyst_comparisons)
                     }
             
+            # Add execution timing
+            execution_time = time.time() - start_time
+            results['execution_time_seconds'] = round(execution_time, 2)
+            results['analyses_count'] = len(results['analyses'])
+            
             return results
             
         except Exception as e:
-            return {'error': f"Analysis orchestration failed: {str(e)}"}
+            execution_time = time.time() - start_time
+            return {
+                'error': f"Analysis orchestration failed: {str(e)}",
+                'execution_time_seconds': round(execution_time, 2)
+            }
     
     def _run_analysis(self, analysis_type: AnalysisType, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Run a specific analysis and handle errors"""
@@ -169,22 +145,37 @@ class AnalysisOrchestrator:
                 'analysis_type': analysis_type.value
             }
     
-    def get_applicable_analyses(self, company_type: str) -> List[AnalysisType]:
+    def _get_applicable_analyses_for_type(self, company_type: str) -> List[AnalysisType]:
         """Get list of applicable analysis types for a company type"""
-        applicable = [AnalysisType.TECHNICAL]  # Always applicable
+        # Always applicable analyses
+        applicable = [
+            AnalysisType.TECHNICAL,
+            AnalysisType.AI_INSIGHTS,
+            AnalysisType.NEWS_SENTIMENT,
+            AnalysisType.BUSINESS_MODEL,
+            AnalysisType.COMPETITIVE_POSITION,
+            AnalysisType.MANAGEMENT_QUALITY,
+            AnalysisType.FINANCIAL_HEALTH,
+            AnalysisType.ANALYST_CONSENSUS
+        ]
         
-        # Add analyst consensus for most company types
-        if company_type != CompanyType.STARTUP_LOSS_MAKING.value:
-            applicable.append(AnalysisType.ANALYST_CONSENSUS)
-        
-        # Add AI insights for all company types
-        applicable.append(AnalysisType.AI_INSIGHTS)
-        
+        # Type-specific analyses
         if company_type == CompanyType.STARTUP_LOSS_MAKING.value:
             applicable.append(AnalysisType.STARTUP)
-        elif company_type != CompanyType.ETF.value and company_type != CompanyType.FINANCIAL.value:
+        elif company_type in [
+            CompanyType.MATURE_PROFITABLE.value,
+            CompanyType.GROWTH_PROFITABLE.value,
+            CompanyType.TURNAROUND.value,
+            CompanyType.CYCLICAL.value,
+            CompanyType.COMMODITY.value,
+            CompanyType.REIT.value
+        ]:
             applicable.extend([AnalysisType.DCF, AnalysisType.COMPARABLE])
-        elif company_type != CompanyType.ETF.value:
-            applicable.append(AnalysisType.COMPARABLE)  # Comparable only for financial companies
+        elif company_type == CompanyType.FINANCIAL.value:
+            applicable.append(AnalysisType.COMPARABLE)
         
         return applicable
+    
+    def get_applicable_analyses(self, company_type: str) -> List[AnalysisType]:
+        """Public method to get applicable analyses (for external use)"""
+        return self._get_applicable_analyses_for_type(company_type)

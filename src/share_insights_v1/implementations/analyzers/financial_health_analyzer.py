@@ -1,15 +1,48 @@
 from typing import Dict, Any, Optional
+from ...interfaces.analyzer import IAnalyzer
 from ...interfaces.sec_data_provider import SECDataProvider
 from ...models.financial_health import (
     FinancialHealthReport, CashFlowMetrics, DebtMetrics, 
     RevenueQuality, FinancialHealthGrade
 )
+from ...models.company import CompanyType
 
-class FinancialHealthAnalyzer:
+class FinancialHealthAnalyzer(IAnalyzer):
     """Analyzer for financial health from SEC filings"""
     
     def __init__(self, sec_provider: SECDataProvider):
         self.sec_provider = sec_provider
+    
+    def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze financial health using IAnalyzer interface"""
+        try:
+            health_report = self.analyze_financial_health(ticker)
+            
+            if not health_report:
+                return {'error': 'Could not analyze financial health'}
+            
+            # Convert to standardized format
+            return {
+                'method': 'Financial Health Analysis',
+                'applicable': True,
+                'overall_grade': health_report.overall_grade.value if health_report.overall_grade else 'N/A',
+                'filing_date': health_report.filing_date,
+                'cash_flow_score': self._score_cash_flow(health_report.cash_flow_metrics),
+                'debt_score': self._score_debt(health_report.debt_metrics),
+                'revenue_score': self._score_revenue(health_report.revenue_quality),
+                'key_risks': health_report.key_risks or [],
+                'strengths': health_report.strengths or [],
+                'confidence': 'High',
+                'recommendation': self._generate_recommendation(health_report.overall_grade)
+            }
+            
+        except Exception as e:
+            return {'error': str(e)}
+    
+    def is_applicable(self, company_type: str) -> bool:
+        """Financial health analysis applies to most company types"""
+        excluded_types = [CompanyType.ETF.value]
+        return company_type not in excluded_types
     
     def analyze_financial_health(self, ticker: str) -> Optional[FinancialHealthReport]:
         """Analyze financial health from SEC filings"""
@@ -270,3 +303,51 @@ class FinancialHealthAnalyzer:
                 return latest.get('filed')
         
         return None
+    
+    def _score_cash_flow(self, cash_flow: Optional[CashFlowMetrics]) -> str:
+        """Score cash flow metrics"""
+        if not cash_flow or not cash_flow.cash_conversion_ratio:
+            return 'Unknown'
+        
+        if cash_flow.cash_conversion_ratio > 1.2:
+            return 'Excellent'
+        elif cash_flow.cash_conversion_ratio > 0.8:
+            return 'Good'
+        else:
+            return 'Poor'
+    
+    def _score_debt(self, debt: Optional[DebtMetrics]) -> str:
+        """Score debt metrics"""
+        if not debt or not debt.debt_to_equity:
+            return 'Unknown'
+        
+        if debt.debt_to_equity < 0.3:
+            return 'Excellent'
+        elif debt.debt_to_equity < 0.6:
+            return 'Good'
+        else:
+            return 'Poor'
+    
+    def _score_revenue(self, revenue: Optional[RevenueQuality]) -> str:
+        """Score revenue quality"""
+        if not revenue or not revenue.revenue_growth_3yr:
+            return 'Unknown'
+        
+        if revenue.revenue_growth_3yr > 0.15:
+            return 'Excellent'
+        elif revenue.revenue_growth_3yr > 0.05:
+            return 'Good'
+        else:
+            return 'Poor'
+    
+    def _generate_recommendation(self, grade: Optional[FinancialHealthGrade]) -> str:
+        """Generate recommendation based on overall grade"""
+        if not grade:
+            return 'Hold'
+        
+        if grade in [FinancialHealthGrade.EXCELLENT, FinancialHealthGrade.VERY_GOOD]:
+            return 'Buy'
+        elif grade == FinancialHealthGrade.GOOD:
+            return 'Hold'
+        else:
+            return 'Sell'

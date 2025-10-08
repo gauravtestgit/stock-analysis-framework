@@ -8,7 +8,7 @@ import numpy as np
 class StartupAnalyzer(IAnalyzer):
     """Startup analysis for loss-making companies"""
     
-    def __init__(self, config = Optional[FinanceConfig]):
+    def __init__(self, config: Optional[FinanceConfig] = None):
         self.config = config if config is not None else FinanceConfig()
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -113,14 +113,28 @@ class StartupAnalyzer(IAnalyzer):
             # Enhanced revenue multiple calculation using config
             growth_multiple = self.config.get_startup_revenue_multiple(median_growth, sector)
             
-            # Apply risk adjustments to multiple
+            # Apply severe risk adjustments to multiple
             risk_adjustment = 1.0
-            if risk_score > 60:
-                risk_adjustment = 0.5  # Severe risk discount
-            elif risk_score > 40:
-                risk_adjustment = 0.7  # High risk discount
-            elif risk_score > 20:
-                risk_adjustment = 0.85  # Moderate risk discount
+            
+            # Critical cash runway discount
+            if runway_years < 0.5:
+                risk_adjustment *= 0.1  # 90% discount for <6 months runway
+            elif runway_years < 1:
+                risk_adjustment *= 0.3  # 70% discount for <1 year runway
+            elif runway_years < 2:
+                risk_adjustment *= 0.6  # 40% discount for <2 years runway
+            
+            # Declining revenue discount
+            if median_growth < -0.1:  # >10% decline
+                risk_adjustment *= 0.2  # Additional 80% discount
+            elif median_growth < 0:  # Any decline
+                risk_adjustment *= 0.5  # Additional 50% discount
+            
+            # Overall risk score discount
+            if risk_score > 70:
+                risk_adjustment *= 0.3  # Additional severe discount
+            elif risk_score > 50:
+                risk_adjustment *= 0.6  # Additional high discount
             
             adjusted_multiple = growth_multiple * risk_adjustment
             
@@ -169,7 +183,7 @@ class StartupAnalyzer(IAnalyzer):
             forward_ev_1yr = projected_revenue_1yr * final_multiple
             forward_ev_2yr = projected_revenue_2yr * final_multiple
             
-            # Convert to equity value
+            # Convert to equity value with debt handling
             total_debt = metrics['total_debt']
             total_cash = metrics['total_cash']
             net_debt = total_debt - total_cash
@@ -180,28 +194,41 @@ class StartupAnalyzer(IAnalyzer):
             forward_price_2yr = 0
             
             if shares_outstanding > 0:
-                current_price_est = max(0, (current_ev - net_debt) / shares_outstanding)
-                forward_price_1yr = max(0, (forward_ev_1yr - net_debt) / shares_outstanding)
-                forward_price_2yr = max(0, (forward_ev_2yr - net_debt) / shares_outstanding)
-            
-            # Enhanced recommendation logic
-            def get_startup_recommendation():
-                if risk_score > 70:
-                    return "Strong Sell"
-                elif runway_years < 0.5:
-                    return "Strong Sell"
-                elif runway_years < 1 and median_growth < 0.15:
-                    return "Sell"
-                elif runway_years > 4 and median_growth > 0.40 and risk_score < 30:
-                    return "Speculative Buy"
-                elif runway_years > 2 and median_growth > 0.25 and risk_score < 40:
-                    return "Hold"
-                elif median_growth > 0.75 and runway_years > 1:
-                    return "Speculative Buy"
-                elif risk_score > 50:
-                    return "Sell"
+                # For heavily leveraged companies, use asset-based approach
+                if net_debt > current_ev * 0.8:  # Debt > 80% of EV
+                    # Use revenue multiple approach with debt discount
+                    debt_discount = min(0.8, net_debt / current_ev)  # Cap at 80% discount
+                    current_price_est = max(0.1, (current_ev * (1 - debt_discount)) / shares_outstanding)
+                    forward_price_1yr = max(0.1, (forward_ev_1yr * (1 - debt_discount)) / shares_outstanding)
+                    forward_price_2yr = max(0.1, (forward_ev_2yr * (1 - debt_discount)) / shares_outstanding)
                 else:
-                    return "Monitor"
+                    # Standard EV - Net Debt approach
+                    current_price_est = max(0.1, (current_ev - net_debt) / shares_outstanding)
+                    forward_price_1yr = max(0.1, (forward_ev_1yr - net_debt) / shares_outstanding)
+                    forward_price_2yr = max(0.1, (forward_ev_2yr - net_debt) / shares_outstanding)
+            
+            # Enhanced recommendation logic aligned with valuation
+            def get_startup_recommendation():
+                current_price = metrics.get('current_price', 0)
+                upside = ((current_price_est - current_price) / current_price * 100) if current_price > 0 else 0
+                
+                # Critical risks = Strong Sell regardless of valuation
+                if runway_years < 0.5:
+                    return "Strong Sell"
+                elif risk_score > 70:
+                    return "Strong Sell"
+                elif runway_years < 1 and median_growth < 0:
+                    return "Strong Sell"
+                
+                # Align recommendation with calculated upside
+                elif upside > 100 and runway_years > 2 and median_growth > 0.2:
+                    return "Speculative Buy"
+                elif upside > 50 and runway_years > 1.5 and median_growth > 0.1:
+                    return "Hold"
+                elif upside > 0 and runway_years > 1:
+                    return "Hold"
+                else:
+                    return "Sell"
 
             return {
                 'method': 'Enhanced Startup Analysis',

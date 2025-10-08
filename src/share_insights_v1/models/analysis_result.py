@@ -9,6 +9,11 @@ class AnalysisType(Enum):
     STARTUP = "startup"
     ANALYST_CONSENSUS = "analyst_consensus"
     AI_INSIGHTS = "ai_insights"
+    NEWS_SENTIMENT = "news_sentiment"
+    BUSINESS_MODEL = "business_model"
+    COMPETITIVE_POSITION = "competitive_position"
+    MANAGEMENT_QUALITY = "management_quality"
+    FINANCIAL_HEALTH = "financial_health"
     QUALITY = "quality"
 
 @dataclass

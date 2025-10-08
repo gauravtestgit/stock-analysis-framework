@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from ..services.orchestration.analysis_orchestrator import AnalysisOrchestrator
 from ..implementations.analyzers.technical_analyzer import TechnicalAnalyzer
+from ..implementations.analyzers.startup_analyzer import StartupAnalyzer
 from ..implementations.calculators.quality_calculator import QualityScoreCalculator
 from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 from ..implementations.classifier import CompanyClassifier
@@ -9,8 +10,8 @@ import json
 
 def test_simple_orchestrator():
     """Simple test with just technical analysis"""
-    print("\n=== Simple Orchestrator Test (AAPL) ===")
-    
+    ticker = "aapl"
+    print(f"\n=== Simple Orchestrator Test ({ticker}) ===")
     # Setup dependencies
     data_provider = YahooFinanceProvider()
     classifier = CompanyClassifier()
@@ -20,10 +21,10 @@ def test_simple_orchestrator():
     orchestrator = AnalysisOrchestrator(data_provider, classifier, quality_calculator)
     
     # Register only technical analyzer
-    orchestrator.register_analyzer(AnalysisType.TECHNICAL, TechnicalAnalyzer())
+    orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer())
     
     # Run analysis
-    results = orchestrator.analyze_stock("AAPL")
+    results = orchestrator.analyze_stock(ticker=ticker)
     
     # Print key results
     if 'error' in results:
@@ -36,7 +37,7 @@ def test_simple_orchestrator():
     print(f"✅ Analyses: {list(results.get('analyses', {}).keys())}")
     
     # Check technical analysis results
-    technical = results.get('analyses', {}).get('technical', {})
+    technical = results.get('analyses', {}).get('startup', {})
     if technical and 'error' not in technical:
         print(f"✅ Technical Analysis: {technical.get('recommendation', 'N/A')}")
         print(f"✅ Current Price: ${technical.get('current_price', 0):.2f}")

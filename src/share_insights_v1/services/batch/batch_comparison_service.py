@@ -1,181 +1,227 @@
 import pandas as pd
-import csv
-from typing import Dict, Any, List, Tuple
-from enum import Enum
-
-class AlignmentCategory(Enum):
-    PRECISE_ALIGNED = "Precise_Aligned"
-    INVESTMENT_ALIGNED = "Investment_Aligned"
-    DIRECTIONAL_ALIGNED = "Directional_Aligned"
-    DIVERGENT = "Divergent"
-    NO_COMPARISON = "No_Comparison"
+import numpy as np
 
 class BatchComparisonService:
-    """Service to compare batch analysis results against professional analyst recommendations"""
+    """Multi-method analyst matcher using data directly from stock_analysis.csv"""
     
     def __init__(self):
-        self.recommendation_mapping = {
-            'Strong Buy': 5, 'Buy': 4, 'Hold': 3, 'Sell': 2, 'Strong Sell': 1,
-            'STRONG_BUY': 5, 'BUY': 4, 'HOLD': 3, 'SELL': 2, 'STRONG_SELL': 1
-        }
+        pass
     
-    def analyze_batch_csv(self, input_csv_path: str, output_csv_path: str):
-        """Analyze batch results and compare with professional analyst recommendations"""
+    def calculate_upside(self, target_price, current_price):
+        """Calculate upside percentage"""
+        if pd.isna(target_price) or pd.isna(current_price) or current_price <= 0:
+            return None
+        return ((target_price - current_price) / current_price) * 100
+    
+    def determine_alignment(self, our_upside, analyst_upside, threshold=20):
+        """Determine alignment between our analysis and analyst consensus"""
+        if pd.isna(our_upside) or pd.isna(analyst_upside):
+            return 'No_Data'
+        
+        deviation = abs(our_upside - analyst_upside)
+        
+        # Both suggest significant upside (investment threshold)
+        if our_upside >= threshold and analyst_upside >= threshold:
+            return 'Investment_Aligned'
+        
+        # Close agreement (within 10%)
+        if deviation <= 10:
+            return 'Precise_Aligned'
+        
+        # Moderate agreement (within 25%)
+        if deviation <= 25:
+            return 'Moderate_Aligned'
+        
+        return 'Divergent'
+    
+    def analyze_batch_csv(self, input_csv_path: str, output_csv_path: str = None, sample_size=None):
+        """Compare all 4 valuation methods against analyst consensus using CSV data"""
         
         df = pd.read_csv(input_csv_path)
-        results = []
+        if sample_size:
+            df = df.head(sample_size)
         
-        print(f"Analyzing {len(df)} stocks for convergence/divergence...")
+        # Clean price columns - handle both old and new column names
+        price_columns = ['Current_Price', 'DCF_Price', 'Technical_Price', 'Comparable_Price', 'Startup_Price', 'Professional_Price', 'Analyst_Price']
+        for col in price_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace('$', '').str.replace(',', ''), errors='coerce')
         
-        for _, row in df.iterrows():
-            if pd.notna(row['Error']) and row['Error'].strip():  # Skip rows with actual errors
+        results = {
+            'dcf_results': [],
+            'technical_results': [],
+            'comparable_results': [],
+            'startup_results': [],
+            'method_summary': {}
+        }
+        
+        print(f"Analyzing {len(df)} stocks across 4 valuation methods...")
+        
+        for idx, row in df.iterrows():
+            ticker = row['Ticker']
+            
+            # Skip if no analyst data - try both column names
+            analyst_target = row.get('Professional_Price') or row.get('Analyst_Price', 0)
+            if pd.isna(analyst_target) or analyst_target <= 0:
                 continue
-                
-            comparison_result = self._compare_stock_analysis(row)
-            results.append(comparison_result)
+            
+            current_price = row['Current_Price']
+            analyst_count = row.get('Analyst_Count', 0)
+            
+            if pd.isna(current_price) or current_price <= 0:
+                continue
+            
+            analyst_upside = self.calculate_upside(analyst_target, current_price)
+            
+            # Extract all 4 method prices
+            methods = {
+                'dcf': row.get('DCF_Price'),
+                'technical': row.get('Technical_Price'),
+                'comparable': row.get('Comparable_Price'),
+                'startup': row.get('Startup_Price')
+            }
+            
+            # Compare each method
+            for method, price in methods.items():
+                if pd.notna(price) and price > 0:
+                    our_upside = self.calculate_upside(price, current_price)
+                    alignment = self.determine_alignment(our_upside, analyst_upside)
+                    
+                    deviation_score = abs(our_upside - analyst_upside) if pd.notna(our_upside) and pd.notna(analyst_upside) else 999
+                    
+                    result = {
+                        'ticker': ticker,
+                        'method': method,
+                        'our_price': price,
+                        'analyst_target': analyst_target,
+                        'current_price': current_price,
+                        'our_upside': our_upside,
+                        'analyst_upside': analyst_upside,
+                        'deviation_score': deviation_score,
+                        'alignment': alignment,
+                        'both_bullish': our_upside >= 20 and analyst_upside >= 20,
+                        'both_bearish': our_upside <= -10 and analyst_upside <= -10,
+                        'analyst_count': analyst_count
+                    }
+                    
+                    results[f'{method}_results'].append(result)
         
-        self._save_comparison_results(results, output_csv_path)
-        self._print_summary(results)
+        # Calculate method summary statistics
+        for method in ['dcf', 'technical', 'comparable', 'startup']:
+            method_results = results[f'{method}_results']
+            if method_results:
+                aligned = len([r for r in method_results if r['alignment'] in ['Investment_Aligned', 'Precise_Aligned', 'Moderate_Aligned']])
+                bullish_convergent = len([r for r in method_results if r['both_bullish']])
+                valid_deviations = [r['deviation_score'] for r in method_results if r['deviation_score'] < 999]
+                avg_deviation = np.mean(valid_deviations) if valid_deviations else 0
+                
+                results['method_summary'][method] = {
+                    'total_comparisons': len(method_results),
+                    'aligned_count': aligned,
+                    'bullish_convergent': bullish_convergent,
+                    'alignment_rate': aligned / len(method_results) * 100 if method_results else 0,
+                    'avg_deviation': avg_deviation
+                }
+        
+        # Generate and print report
+        report = self.generate_multi_method_report(results)
+        print("\n" + report)
+        
+        # Save report if output path provided
+        if output_csv_path:
+            report_file = output_csv_path.replace('.csv', '_report.txt')
+            with open(report_file, 'w') as f:
+                f.write(report)
+            print(f"\nReport saved to: {report_file}")
+            
+            # Save method-specific files for deeper analysis
+            import os
+            output_dir = os.path.dirname(output_csv_path) + "/"
+            files_created = self.save_method_specific_files(results, output_dir)
+            if files_created:
+                print(f"Method-specific files saved: {len(files_created)} files")
         
         return results
     
-    def _compare_stock_analysis(self, row: pd.Series) -> Dict[str, Any]:
-        """Compare individual stock analysis with professional analyst recommendation"""
+    def generate_multi_method_report(self, results):
+        """Generate comprehensive multi-method comparison report"""
         
-        ticker = row['Ticker']
-        current_price = self._parse_price(row['Current_Price'])
-        analyst_price = self._parse_price(row['Analyst_Price'])
-        analyst_rec = row['Professional_Analyst_Recommendation']
-        final_rec = row['Final_Recommendation']
+        report = []
+        report.append("=== CSV MULTI-METHOD ANALYST ALIGNMENT REPORT ===")
+        report.append("")
         
-        # Get individual method prices
-        dcf_price = self._parse_price(row['DCF_Price'])
-        technical_price = self._parse_price(row['Technical_Price'])
-        comparable_price = self._parse_price(row['Comparable_Price'])
-        startup_price = self._parse_price(row['Startup_Price'])
+        # Method Performance Summary
+        report.append("METHOD PERFORMANCE SUMMARY:")
+        summary = results['method_summary']
         
-        # Calculate alignment for each method
-        dcf_alignment = self._calculate_alignment(current_price, dcf_price, analyst_price, analyst_rec)
-        technical_alignment = self._calculate_alignment(current_price, technical_price, analyst_price, analyst_rec)
-        comparable_alignment = self._calculate_alignment(current_price, comparable_price, analyst_price, analyst_rec)
-        startup_alignment = self._calculate_alignment(current_price, startup_price, analyst_price, analyst_rec)
-        final_alignment = self._calculate_recommendation_alignment(final_rec, analyst_rec)
+        method_performance = []
+        for method, stats in summary.items():
+            if stats['total_comparisons'] > 0:
+                method_performance.append((method, stats['alignment_rate'], stats))
         
-        return {
-            'Ticker': ticker,
-            'Current_Price': f"${current_price:.2f}",
-            'Analyst_Price': f"${analyst_price:.2f}" if analyst_price > 0 else "$0.00",
-            'Analyst_Recommendation': analyst_rec,
-            'Final_Recommendation': final_rec,
-            'DCF_Alignment': dcf_alignment.value,
-            'Technical_Alignment': technical_alignment.value,
-            'Comparable_Alignment': comparable_alignment.value,
-            'Startup_Alignment': startup_alignment.value,
-            'Final_Alignment': final_alignment.value,
-            'Company_Type': row['Company_Type'],
-            'Sector': row['Sector']
-        }
-    
-    def _parse_price(self, price_str: str) -> float:
-        """Parse price string to float"""
-        if pd.isna(price_str) or price_str == '' or price_str == '$0.00':
-            return 0.0
-        return float(price_str.replace('$', '').replace(',', ''))
-    
-    def _calculate_alignment(self, current_price: float, method_price: float, analyst_price: float, analyst_rec: str) -> AlignmentCategory:
-        """Calculate alignment between method prediction and analyst prediction"""
+        # Sort by alignment rate
+        method_performance.sort(key=lambda x: x[1], reverse=True)
         
-        if method_price == 0 or analyst_price == 0 or current_price == 0:
-            return AlignmentCategory.NO_COMPARISON
+        for method, rate, stats in method_performance:
+            report.append(f"{method.upper()} METHOD:")
+            report.append(f"  • Total comparisons: {stats['total_comparisons']}")
+            report.append(f"  • Alignment rate: {stats['alignment_rate']:.1f}%")
+            report.append(f"  • Bullish convergent: {stats['bullish_convergent']}")
+            report.append(f"  • Avg deviation: {stats['avg_deviation']:.1f}%")
+            report.append("")
         
-        # Calculate percentage differences
-        method_change = (method_price - current_price) / current_price
-        analyst_change = (analyst_price - current_price) / current_price
+        # Best performing method
+        if method_performance:
+            best_method, best_rate, _ = method_performance[0]
+            report.append(f"BEST PERFORMING METHOD: {best_method.upper()} ({best_rate:.1f}% alignment)")
+            report.append("")
         
-        # Precise alignment (within 5%)
-        if abs(method_change - analyst_change) <= 0.05:
-            return AlignmentCategory.PRECISE_ALIGNED
-        
-        # Investment alignment (same direction, within 15%)
-        if (method_change > 0 and analyst_change > 0) or (method_change < 0 and analyst_change < 0):
-            if abs(method_change - analyst_change) <= 0.15:
-                return AlignmentCategory.INVESTMENT_ALIGNED
-            else:
-                return AlignmentCategory.DIRECTIONAL_ALIGNED
-        
-        # Divergent (opposite directions)
-        return AlignmentCategory.DIVERGENT
-    
-    def _calculate_recommendation_alignment(self, final_rec: str, analyst_rec: str) -> AlignmentCategory:
-        """Calculate alignment between final recommendation and analyst recommendation"""
-        
-        # Handle NaN/missing values
-        if pd.isna(final_rec) or pd.isna(analyst_rec) or not str(final_rec).strip() or not str(analyst_rec).strip():
-            return AlignmentCategory.NO_COMPARISON
-        
-        final_rec_str = str(final_rec).strip()
-        analyst_rec_str = str(analyst_rec).strip()
-        
-        if analyst_rec_str == 'Hold':
-            return AlignmentCategory.NO_COMPARISON
-        
-        final_score = self.recommendation_mapping.get(final_rec_str.upper(), 3)
-        analyst_score = self.recommendation_mapping.get(analyst_rec_str.upper(), 3)
-        
-        # Precise alignment (exact match)
-        if final_score == analyst_score:
-            return AlignmentCategory.PRECISE_ALIGNED
-        
-        # Investment alignment (within 1 level)
-        if abs(final_score - analyst_score) == 1:
-            return AlignmentCategory.INVESTMENT_ALIGNED
-        
-        # Directional alignment (same side of neutral)
-        if (final_score > 3 and analyst_score > 3) or (final_score < 3 and analyst_score < 3):
-            return AlignmentCategory.DIRECTIONAL_ALIGNED
-        
-        # Divergent (opposite sides)
-        return AlignmentCategory.DIVERGENT
-    
-    def _save_comparison_results(self, results: List[Dict[str, Any]], output_path: str):
-        """Save comparison results to CSV"""
-        
-        if not results:
-            return
-        
-        fieldnames = [
-            'Ticker', 'Current_Price', 'Analyst_Price', 'Analyst_Recommendation', 'Final_Recommendation',
-            'DCF_Alignment', 'Technical_Alignment', 'Comparable_Alignment', 'Startup_Alignment', 'Final_Alignment',
-            'Company_Type', 'Sector'
-        ]
-        
-        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(results)
-    
-    def _print_summary(self, results: List[Dict[str, Any]]):
-        """Print summary statistics of alignment analysis"""
-        
-        if not results:
-            return
-        
-        total_stocks = len(results)
-        
-        # Count alignments for each method
-        methods = ['DCF_Alignment', 'Technical_Alignment', 'Comparable_Alignment', 'Startup_Alignment', 'Final_Alignment']
-        
-        print(f"\n=== Alignment Summary for {total_stocks} stocks ===")
-        
-        for method in methods:
-            method_name = method.replace('_Alignment', '')
-            alignment_counts = {}
+        # Top aligned stocks by method
+        for method in ['dcf', 'technical', 'comparable', 'startup']:
+            method_results = results[f'{method}_results']
+            aligned_stocks = [r for r in method_results if r['alignment'] in ['Investment_Aligned', 'Precise_Aligned']]
+            aligned_stocks.sort(key=lambda x: x['deviation_score'])  # Sort by best alignment
             
-            for result in results:
-                alignment = result[method]
-                alignment_counts[alignment] = alignment_counts.get(alignment, 0) + 1
-            
-            print(f"\n{method_name} Method:")
-            for alignment, count in alignment_counts.items():
-                percentage = (count / total_stocks) * 100
-                print(f"  {alignment}: {count} ({percentage:.1f}%)")
+            if aligned_stocks:
+                report.append(f"{method.upper()} TOP ALIGNED STOCKS ({len(aligned_stocks)} found):")
+                for stock in aligned_stocks[:5]:  # Top 5
+                    report.append(f"  • {stock['ticker']}: Our {stock['our_upside']:+.1f}% vs Analysts {stock['analyst_upside']:+.1f}% (Dev: {stock['deviation_score']:.1f}%)")
+                if len(aligned_stocks) > 5:
+                    report.append(f"  ... and {len(aligned_stocks) - 5} more")
+                report.append("")
+        
+        return "\n".join(report)
+    
+    def save_method_specific_files(self, results, output_dir):
+        """Save separate files for each method's results"""
+        
+        files_created = []
+        
+        for method in ['dcf', 'technical', 'comparable', 'startup']:
+            method_results = results[f'{method}_results']
+            if method_results:
+                # Create DataFrame
+                df = pd.DataFrame(method_results)
+                
+                # Separate by alignment type
+                aligned = df[df['alignment'].isin(['Investment_Aligned', 'Precise_Aligned', 'Moderate_Aligned'])]
+                divergent = df[df['alignment'] == 'Divergent']
+                bullish_convergent = df[df['both_bullish'] == True]
+                
+                # Save method-specific files
+                if not aligned.empty:
+                    aligned_file = f"{output_dir}{method}_aligned.csv"
+                    aligned.to_csv(aligned_file, index=False)
+                    files_created.append(aligned_file)
+                
+                if not divergent.empty:
+                    divergent_file = f"{output_dir}{method}_divergent.csv"
+                    divergent.to_csv(divergent_file, index=False)
+                    files_created.append(divergent_file)
+                
+                if not bullish_convergent.empty:
+                    bullish_file = f"{output_dir}{method}_bullish_convergent.csv"
+                    bullish_convergent.to_csv(bullish_file, index=False)
+                    files_created.append(bullish_file)
+        
+        return files_created

@@ -16,7 +16,7 @@ def test_ai_insights_analyzer():
     ai_analyzer = AIInsightsAnalyzer(data_provider)
     
     # Test with different tickers
-    test_tickers = ['AAPL', 'TSLA', 'MSFT']
+    test_tickers = ['AAPL', 'MSFT', 'TSLA']
     
     results = {}
     
@@ -53,11 +53,7 @@ def test_ai_insights_analyzer():
             ai_insights = result.get('ai_insights', {})
             print(f"Market Position: {ai_insights.get('market_position', 'N/A')}")
             print(f"Growth Prospects: {ai_insights.get('growth_prospects', 'N/A')}")
-            
-            # Print news sentiment
-            news_sentiment = result.get('news_sentiment', {})
-            print(f"News Sentiment: {news_sentiment.get('overall_sentiment', 'N/A')}")
-            print(f"Sentiment Score: {news_sentiment.get('sentiment_score', 0):.2f}")
+            print(f"Competitive Advantage: {ai_insights.get('competitive_advantage', 'N/A')}")
             
             # Print revenue trends
             revenue_trends = result.get('revenue_trends', {})

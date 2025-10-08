@@ -28,3 +28,11 @@ src/share_insights_v1/services/comparison/__pycache__/
 src/share_insights_v1/services/orchestration/__pycache__/
 src/share_insights_v1/services/comparison/__pycache__/
 src/share_insights_v1/services/recommendation/__pycache__/
+src/share_insights_v1/api/__pycache__/
+/__pycache__
+src/share_insights_v1/dashboard/__pycache__/
+src/share_insights_v1/implementations/analyzers/__pycache__/
+src/share_insights_v1/implementations/data_providers/__pycache__/
+src/share_insights_v1/implementations/llm_providers/__pycache__/
+src/share_insights_v1/models/__pycache__/
+src/share_insights_v1/tests/__pycache__/

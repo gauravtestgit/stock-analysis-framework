@@ -13,7 +13,8 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_comparable_analyzer",
+            "module": "src.share_insights_v1.tests.test_startup_analyzer",
+            // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "justMyCode": false

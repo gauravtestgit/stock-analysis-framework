@@ -4,30 +4,17 @@ from ...interfaces.data_provider import IDataProvider
 import json
 import os
 from datetime import datetime, timedelta
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+from ...implementations.llm_providers.llm_manager import LLMManager
 
 class AIInsightsAnalyzer(IAnalyzer):
-    """AI-powered analyzer for news sentiment, revenue trends, and market insights"""
+    """AI-powered analyzer for market insights and revenue trends"""
     
-    def __init__(self, data_provider: IDataProvider, api_key: Optional[str] = None):
+    def __init__(self, data_provider: IDataProvider):
         self.data_provider = data_provider
-        self.api_key = api_key or os.getenv('GROQ_API_KEY')
-        self.llm = None
-        
-        try:
-            if self.api_key:
-                self.llm = ChatGroq(
-                    groq_api_key=self.api_key,
-                    model_name="llama-3.1-8b-instant",
-                    temperature=0.1
-                )
-        except Exception as e:
-            print(f"Warning: Could not initialize LLM: {e}")
+        self.llm_manager = LLMManager()
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze using AI insights for news, trends, and market sentiment"""
+        """Analyze using AI insights for market analysis and revenue trends"""
         try:
             financial_metrics = data.get('financial_metrics', {})
             current_price = financial_metrics.get('current_price', 0)
@@ -35,22 +22,19 @@ class AIInsightsAnalyzer(IAnalyzer):
             # Get AI insights
             ai_insights = self._get_ai_insights(ticker, financial_metrics)
             
-            # Get news articles for analysis and user review
-            news_articles = self._get_recent_news(ticker)
-            
-            # Analyze news sentiment
-            news_sentiment = self._analyze_news_sentiment_with_articles(ticker, news_articles)
+            # Focus on AI-powered market insights and revenue analysis
+            # News sentiment is now handled by dedicated NewsSentimentAnalyzer
             
             # Analyze revenue trends
             revenue_trends = self._analyze_revenue_trends(financial_metrics)
             
             # Generate AI recommendation
             ai_recommendation = self._generate_ai_recommendation(
-                ai_insights, news_sentiment, revenue_trends
+                ai_insights, revenue_trends
             )
             
             # Calculate confidence based on data quality
-            confidence = self._calculate_confidence(news_sentiment, revenue_trends)
+            confidence = self._calculate_confidence(revenue_trends)
             
             return {
                 'method': 'AI Insights Analysis',
@@ -60,15 +44,13 @@ class AIInsightsAnalyzer(IAnalyzer):
                 'recommendation': ai_recommendation,
                 'confidence': confidence,
                 'ai_insights': ai_insights,
-                'news_sentiment': news_sentiment,
-                'news_articles': news_articles,
                 'revenue_trends': revenue_trends,
+                'market_analysis': self._get_market_analysis(ticker, financial_metrics),
                 'ai_methods_used': {
                     'insights': ai_insights.get('ai_method', 'Unknown'),
-                    'news_sentiment': news_sentiment.get('ai_method', 'Unknown'),
                     'revenue_trends': revenue_trends.get('ai_method', 'Unknown')
                 },
-                'risk_factors': self._identify_ai_risk_factors(ai_insights, news_sentiment),
+                'risk_factors': self._identify_ai_risk_factors(ai_insights),
                 'analysis_type': 'ai_insights'
             }
             
@@ -78,9 +60,6 @@ class AIInsightsAnalyzer(IAnalyzer):
     def _get_ai_insights(self, ticker: str, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Get AI-powered insights about the company"""
         
-        if not self.llm:
-            return self._get_fallback_insights(ticker, financial_metrics)
-        
         try:
             company_name = financial_metrics.get('long_name', ticker)
             sector = financial_metrics.get('sector', 'Unknown')
@@ -89,43 +68,38 @@ class AIInsightsAnalyzer(IAnalyzer):
             revenue_growth = financial_metrics.get('yearly_revenue_growth', 0)
             roe = financial_metrics.get('roe', 0) or 0
             
-            prompt = ChatPromptTemplate.from_template(
-                """Analyze {company_name} ({ticker}) and provide insights:
-                
-                Company Details:
-                - Sector: {sector}
-                - Industry: {industry}
-                - Market Cap: ${market_cap:,.0f}
-                - Revenue Growth: {revenue_growth:.1%}
-                - ROE: {roe:.1%}
-                
-                Provide analysis in JSON format:
-                {{
-                    "market_position": "Strong/Moderate/Weak",
-                    "growth_prospects": "High/Moderate/Low", 
-                    "competitive_advantage": "Strong/Moderate/Weak",
-                    "management_quality": "Excellent/Good/Average/Poor",
-                    "industry_outlook": "Very Positive/Positive/Neutral/Negative",
-                    "key_strengths": ["strength1", "strength2"],
-                    "key_risks": ["risk1", "risk2"]
-                }}"""
-            )
+            prompt = f"""Analyze {company_name} ({ticker}) and provide insights:
+
+Company Details:
+- Sector: {sector}
+- Industry: {industry}
+- Market Cap: ${market_cap:,.0f}
+- Revenue Growth: {revenue_growth:.1%}
+- ROE: {roe:.1%}
+
+Provide analysis in JSON format:
+{{
+    "market_position": "Strong/Moderate/Weak",
+    "growth_prospects": "High/Moderate/Low", 
+    "competitive_advantage": "Strong/Moderate/Weak",
+    "management_quality": "Excellent/Good/Average/Poor",
+    "industry_outlook": "Very Positive/Positive/Neutral/Negative",
+    "key_strengths": ["strength1", "strength2"],
+    "key_risks": ["risk1", "risk2"]
+}}"""
             
-            parser = JsonOutputParser()
-            chain = prompt | self.llm | parser
+            response = self.llm_manager.generate_response(prompt)
+            if not response or not response.strip():
+                raise Exception("Empty response from LLM")
             
-            insights = chain.invoke({
-                "company_name": company_name,
-                "ticker": ticker,
-                "sector": sector,
-                "industry": industry,
-                "market_cap": market_cap,
-                "revenue_growth": revenue_growth,
-                "roe": roe
-            })
-            
-            insights['ai_method'] = 'LLM'
-            return insights
+            # Extract JSON from response (handle markdown code blocks)
+            json_str = self._extract_json_from_response(response)
+            try:
+                insights = json.loads(json_str)
+                insights['ai_method'] = 'LLM'
+                return insights
+            except json.JSONDecodeError:
+                raise Exception("Invalid JSON response from LLM")
                 
         except Exception as e:
             print(f"AI insights API error: {e}")
@@ -133,94 +107,41 @@ class AIInsightsAnalyzer(IAnalyzer):
             fallback_insights['ai_method'] = 'Fallback'
             return fallback_insights
     
-    def _analyze_news_sentiment_with_articles(self, ticker: str, news_articles: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze news sentiment using provided articles"""
-        
-        if not self.llm or not news_articles:
-            return self._get_fallback_news_sentiment()
-        
-        try:
-            # Prepare news content for analysis
-            news_content = "\n".join([
-                f"Title: {article.get('title', '')}\nSummary: {article.get('summary', '')}\nDate: {article.get('publish_date', '')}"
-                for article in news_articles[:5]  # Limit to 5 articles
-            ])
-            
-            prompt = ChatPromptTemplate.from_template(
-                """You are a financial analyst. Analyze the sentiment of these news articles for {ticker}.
-                
-                News Articles:
-                {news_content}
-                
-                IMPORTANT: Respond ONLY with valid JSON. Do not include explanations, code, or markdown.
-                
-                Required JSON format:
-                {{
-                    "overall_sentiment": "Positive/Neutral/Negative",
-                    "sentiment_score": 0.0,
-                    "news_count": {news_count},
-                    "key_themes": ["theme1", "theme2", "theme3"],
-                    "sentiment_trend": "Improving/Stable/Deteriorating"
-                }}
-                
-                Sentiment score: -1.0 (very negative) to 1.0 (very positive)."""
-            )
-            
-            parser = JsonOutputParser()
-            chain = prompt | self.llm | parser
-            
-            sentiment = chain.invoke({
-                "ticker": ticker,
-                "news_content": news_content,
-                "news_count": len(news_articles)
-            })
-            
-            sentiment['ai_method'] = 'LLM'
-            return sentiment
-                
-        except Exception as e:
-            print(f"News sentiment API error: {e}")
-            fallback_sentiment = self._get_fallback_news_sentiment()
-            fallback_sentiment['ai_method'] = 'Fallback'
-            return fallback_sentiment
+
     
     def _analyze_revenue_trends(self, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze revenue trends using AI"""
-        
-        if not self.llm:
-            return self._get_fallback_revenue_trends(financial_metrics)
         
         try:
             revenue_growth = financial_metrics.get('revenue_growth', 0) or 0
             yearly_growth = financial_metrics.get('yearly_revenue_growth', 0) or 0
             total_revenue = financial_metrics.get('total_revenue', 0) or 0
             
-            prompt = ChatPromptTemplate.from_template(
-                """Analyze revenue trends for a company with these metrics:
-                - Current revenue growth: {revenue_growth:.1%}
-                - Yearly revenue growth: {yearly_growth:.1%}
-                - Total revenue: ${total_revenue:,.0f}
-                
-                Provide analysis in JSON format:
-                {{
-                    "trend_assessment": "Strong Growth/Moderate Growth/Stable/Declining",
-                    "growth_rate": {yearly_growth},
-                    "growth_consistency": "Consistent/Variable/Volatile",
-                    "future_outlook": "Very Positive/Positive/Neutral/Cautious/Negative"
-                }}"""
-            )
+            prompt = f"""Analyze revenue trends for a company with these metrics:
+- Current revenue growth: {revenue_growth:.1%}
+- Yearly revenue growth: {yearly_growth:.1%}
+- Total revenue: ${total_revenue:,.0f}
+
+Provide analysis in JSON format:
+{{
+    "trend_assessment": "Strong Growth/Moderate Growth/Stable/Declining",
+    "growth_rate": {yearly_growth},
+    "growth_consistency": "Consistent/Variable/Volatile",
+    "future_outlook": "Very Positive/Positive/Neutral/Cautious/Negative"
+}}"""
             
-            parser = JsonOutputParser()
-            chain = prompt | self.llm | parser
+            response = self.llm_manager.generate_response(prompt)
+            if not response or not response.strip():
+                raise Exception("Empty response from LLM")
             
-            trends = chain.invoke({
-                "revenue_growth": revenue_growth,
-                "yearly_growth": yearly_growth,
-                "total_revenue": total_revenue
-            })
-            
-            trends['ai_method'] = 'LLM'
-            return trends
+            # Extract JSON from response (handle markdown code blocks)
+            json_str = self._extract_json_from_response(response)
+            try:
+                trends = json.loads(json_str)
+                trends['ai_method'] = 'LLM'
+                return trends
+            except json.JSONDecodeError:
+                raise Exception("Invalid JSON response from LLM")
                 
         except Exception as e:
             print(f"Revenue trends API error: {e}")
@@ -228,56 +149,37 @@ class AIInsightsAnalyzer(IAnalyzer):
             fallback_trends['ai_method'] = 'Fallback'
             return fallback_trends
     
-    def _generate_ai_recommendation(self, ai_insights: Dict, news_sentiment: Dict, revenue_trends: Dict) -> str:
+    def _generate_ai_recommendation(self, ai_insights: Dict, revenue_trends: Dict) -> str:
         """Generate recommendation based on AI insights"""
         
-        if not self.llm:
-            return self._get_fallback_recommendation(ai_insights, news_sentiment, revenue_trends)
-        
         try:
-            prompt = ChatPromptTemplate.from_template(
-                """Generate an investment recommendation based on these AI insights:
-                
-                Company Analysis:
-                - Market Position: {market_position}
-                - Growth Prospects: {growth_prospects}
-                - Competitive Advantage: {competitive_advantage}
-                
-                Market Sentiment:
-                - Overall Sentiment: {overall_sentiment}
-                - Sentiment Trend: {sentiment_trend}
-                
-                Revenue Analysis:
-                - Trend Assessment: {trend_assessment}
-                - Future Outlook: {future_outlook}
-                
-                Provide recommendation as one of: Strong Buy, Buy, Hold, Sell, Strong Sell
-                
-                Respond with only the recommendation text."""
-            )
+            prompt = f"""Generate an investment recommendation based on these AI insights:
+
+Company Analysis:
+- Market Position: {ai_insights.get('market_position', 'Unknown')}
+- Growth Prospects: {ai_insights.get('growth_prospects', 'Unknown')}
+- Competitive Advantage: {ai_insights.get('competitive_advantage', 'Unknown')}
+
+Revenue Analysis:
+- Trend Assessment: {revenue_trends.get('trend_assessment', 'Unknown')}
+- Future Outlook: {revenue_trends.get('future_outlook', 'Unknown')}
+
+Provide recommendation as one of: Strong Buy, Buy, Hold, Sell, Strong Sell
+
+Respond with only the recommendation text."""
             
-            chain = prompt | self.llm
-            
-            recommendation = chain.invoke({
-                "market_position": ai_insights.get('market_position', 'Unknown'),
-                "growth_prospects": ai_insights.get('growth_prospects', 'Unknown'),
-                "competitive_advantage": ai_insights.get('competitive_advantage', 'Unknown'),
-                "overall_sentiment": news_sentiment.get('overall_sentiment', 'Unknown'),
-                "sentiment_trend": news_sentiment.get('sentiment_trend', 'Unknown'),
-                "trend_assessment": revenue_trends.get('trend_assessment', 'Unknown'),
-                "future_outlook": revenue_trends.get('future_outlook', 'Unknown')
-            }).content.strip()
+            recommendation = self.llm_manager.generate_response(prompt).strip()
             
             # Validate recommendation
             valid_recs = ['Strong Buy', 'Buy', 'Hold', 'Sell', 'Strong Sell']
             if recommendation in valid_recs:
                 return recommendation
             else:
-                return self._get_fallback_recommendation(ai_insights, news_sentiment, revenue_trends)
+                return self._get_fallback_recommendation(ai_insights, revenue_trends)
                 
         except Exception as e:
             print(f"AI recommendation API error: {e}")
-            return self._get_fallback_recommendation(ai_insights, news_sentiment, revenue_trends)
+            return self._get_fallback_recommendation(ai_insights, revenue_trends)
     
     def _calculate_ai_target_price(self, current_price: float, ai_insights: Dict) -> float:
         """Calculate AI-based target price"""
@@ -300,17 +202,10 @@ class AIInsightsAnalyzer(IAnalyzer):
         
         return current_price * adjustment_factor
     
-    def _calculate_confidence(self, news_sentiment: Dict, revenue_trends: Dict) -> str:
+    def _calculate_confidence(self, revenue_trends: Dict) -> str:
         """Calculate confidence level based on data quality"""
         
         confidence_score = 0
-        
-        # News data quality
-        news_count = news_sentiment.get('news_count', 0)
-        if news_count >= 10:
-            confidence_score += 1
-        elif news_count >= 5:
-            confidence_score += 0.5
         
         # Revenue trend consistency
         if revenue_trends.get('growth_consistency') == 'Consistent':
@@ -318,12 +213,40 @@ class AIInsightsAnalyzer(IAnalyzer):
         else:
             confidence_score += 0.5
         
-        if confidence_score >= 1.5:
+        # AI method quality
+        if revenue_trends.get('ai_method') == 'LLM':
+            confidence_score += 0.5
+        
+        if confidence_score >= 1.0:
             return 'High'
-        elif confidence_score >= 1.0:
+        elif confidence_score >= 0.75:
             return 'Medium'
         else:
             return 'Low'
+    
+    def _extract_json_from_response(self, response: str) -> str:
+        """Extract JSON from LLM response that may contain markdown code blocks"""
+        import re
+        
+        # First try to find JSON in markdown code blocks
+        json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
+        if json_match:
+            return json_match.group(1).strip()
+        
+        # Try to find JSON in regular code blocks
+        json_match = re.search(r'```\s*\n(.*?)\n```', response, re.DOTALL)
+        if json_match:
+            potential_json = json_match.group(1).strip()
+            if potential_json.startswith('{') and potential_json.endswith('}'):
+                return potential_json
+        
+        # Try to find JSON object in the text
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+        if json_match:
+            return json_match.group(0)
+        
+        # If no JSON found, return original response
+        return response
     
     def _assess_market_position(self, financial_metrics: Dict) -> str:
         """Assess market position based on financial metrics"""
@@ -363,15 +286,7 @@ class AIInsightsAnalyzer(IAnalyzer):
             'key_risks': ['Market volatility']
         }
     
-    def _get_fallback_news_sentiment(self) -> Dict[str, Any]:
-        """Fallback news sentiment when AI is not available"""
-        return {
-            'overall_sentiment': 'Neutral',
-            'sentiment_score': 0.0,
-            'news_count': 2,
-            'key_themes': ['market conditions', 'industry trends'],
-            'sentiment_trend': 'Stable'
-        }
+
     
     def _get_fallback_revenue_trends(self, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback revenue trends when AI is not available"""
@@ -393,7 +308,7 @@ class AIInsightsAnalyzer(IAnalyzer):
             'future_outlook': 'Positive' if yearly_growth > 0 else 'Cautious'
         }
     
-    def _get_fallback_recommendation(self, ai_insights: Dict, news_sentiment: Dict, revenue_trends: Dict) -> str:
+    def _get_fallback_recommendation(self, ai_insights: Dict, revenue_trends: Dict) -> str:
         """Fallback recommendation when AI is not available"""
         positive_factors = 0
         negative_factors = 0
@@ -406,6 +321,11 @@ class AIInsightsAnalyzer(IAnalyzer):
         if ai_insights.get('growth_prospects') == 'High':
             positive_factors += 1
         elif ai_insights.get('growth_prospects') == 'Low':
+            negative_factors += 1
+        
+        if revenue_trends.get('trend_assessment') in ['Strong Growth', 'Moderate Growth']:
+            positive_factors += 1
+        elif revenue_trends.get('trend_assessment') == 'Declining':
             negative_factors += 1
         
         net_score = positive_factors - negative_factors
@@ -421,35 +341,9 @@ class AIInsightsAnalyzer(IAnalyzer):
         else:
             return 'Hold'
     
-    def _get_recent_news(self, ticker: str) -> List[Dict[str, Any]]:
-        """Get recent news articles for the ticker"""
-        try:
-            # Try to get news from data provider if it has news capability
-            if hasattr(self.data_provider, 'get_news_data'):
-                return self.data_provider.get_news_data(ticker)
-            
-            # Fallback: mock news data structure
-            return [
-                {
-                    'title': f'{ticker} reports quarterly earnings',
-                    'summary': 'Company reported financial results for the quarter',
-                    'publish_date': datetime.now().strftime('%Y-%m-%d'),
-                    'source': 'Financial News',
-                    'url': f'https://finance.yahoo.com/quote/{ticker}/news'
-                },
-                {
-                    'title': f'{ticker} announces strategic initiative',
-                    'summary': 'Company announced new business strategy',
-                    'publish_date': datetime.now().strftime('%Y-%m-%d'),
-                    'source': 'Business Wire',
-                    'url': f'https://finance.yahoo.com/quote/{ticker}/news'
-                }
-            ]
-        except Exception as e:
-            print(f"Error getting news data: {e}")
-            return []
+
     
-    def _identify_ai_risk_factors(self, ai_insights: Dict, news_sentiment: Dict) -> list:
+    def _identify_ai_risk_factors(self, ai_insights: Dict) -> list:
         """Identify risk factors using AI insights"""
         
         risk_factors = []
@@ -460,13 +354,35 @@ class AIInsightsAnalyzer(IAnalyzer):
         if ai_insights.get('growth_prospects') == 'Low':
             risk_factors.append('Limited growth prospects')
         
-        if news_sentiment.get('overall_sentiment') == 'Negative':
-            risk_factors.append('Negative market sentiment')
+        if ai_insights.get('competitive_advantage') == 'Weak':
+            risk_factors.append('Weak competitive advantage')
         
-        if news_sentiment.get('sentiment_trend') == 'Deteriorating':
-            risk_factors.append('Deteriorating sentiment trend')
+        if ai_insights.get('industry_outlook') == 'Negative':
+            risk_factors.append('Negative industry outlook')
         
         return risk_factors
+    
+    def _get_market_analysis(self, ticker: str, financial_metrics: Dict) -> Dict[str, Any]:
+        """Get market analysis summary"""
+        return {
+            'market_cap_category': self._get_market_cap_category(financial_metrics.get('market_cap', 0)),
+            'sector': financial_metrics.get('sector', 'Unknown'),
+            'industry': financial_metrics.get('industry', 'Unknown'),
+            'beta': financial_metrics.get('beta', 1.0)
+        }
+    
+    def _get_market_cap_category(self, market_cap: float) -> str:
+        """Categorize market cap"""
+        if market_cap > 200_000_000_000:
+            return 'Mega Cap'
+        elif market_cap > 10_000_000_000:
+            return 'Large Cap'
+        elif market_cap > 2_000_000_000:
+            return 'Mid Cap'
+        elif market_cap > 300_000_000:
+            return 'Small Cap'
+        else:
+            return 'Micro Cap'
     
     def is_applicable(self, company_type: str) -> bool:
         """AI insights applicable to all company types"""

@@ -126,3 +126,54 @@ class SECEdgarProvider(SECDataProvider):
         except Exception as e:
             print(f"Error getting CIK for {ticker}: {e}")
             return None
+    
+    def get_management_data(self, ticker: str) -> Dict[str, Any]:
+        """Get management data from SEC filings (DEF 14A proxy statements)"""
+        try:
+            cik = self._get_cik(ticker)
+            if not cik:
+                return {'error': f'CIK not found for {ticker}'}
+            
+            # Get company filings
+            filings_url = f"{self.base_url}/submissions/CIK{cik:010d}.json"
+            response = requests.get(filings_url, headers=self.headers)
+            time.sleep(self.rate_limit_delay)
+            
+            if response.status_code != 200:
+                return {'error': f'Failed to fetch filings: {response.status_code}'}
+            
+            data = response.json()
+            filings = data.get('filings', {}).get('recent', {})
+            
+            # Find recent proxy statements (DEF 14A)
+            proxy_filings = []
+            for i, form in enumerate(filings.get('form', [])):
+                if form == 'DEF 14A' and len(proxy_filings) < 2:
+                    proxy_filings.append({
+                        'form': form,
+                        'filing_date': filings['filingDate'][i],
+                        'accession_number': filings['accessionNumber'][i],
+                        'primary_document': filings['primaryDocument'][i]
+                    })
+            
+            if not proxy_filings:
+                return {'error': 'No recent proxy statements found'}
+            
+            # Extract basic management info
+            management_metrics = {
+                'proxy_filings_found': len(proxy_filings),
+                'latest_proxy_date': proxy_filings[0]['filing_date'] if proxy_filings else None,
+                'executive_compensation_disclosed': True,  # Proxy statements always contain this
+                'board_composition_disclosed': True,
+                'insider_ownership_disclosed': True
+            }
+            
+            return {
+                'ticker': ticker,
+                'cik': cik,
+                'management_metrics': management_metrics,
+                'data_source': 'SEC EDGAR'
+            }
+            
+        except Exception as e:
+            return {'error': str(e)}

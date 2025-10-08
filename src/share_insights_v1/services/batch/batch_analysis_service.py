@@ -100,7 +100,7 @@ class BatchAnalysisService:
         comparable_price = analyses.get('comparable', {}).get('predicted_price', 0)
         startup_price = analyses.get('startup', {}).get('predicted_price', 0)
         analyst_price = analyses.get('analyst_consensus', {}).get('predicted_price', 0)
-        
+        analyst_count = analyses.get('analyst_consensus', {}).get('num_analysts', 0)
                 
         # dcf_rec = analyses.get('dcf', {}).get('recommendation', '')
         # technical_rec = analyses.get('technical', {}).get('recommendation', '')
@@ -124,6 +124,7 @@ class BatchAnalysisService:
             'Startup_Price': f"${startup_price:.2f}" if startup_price else "$0.00",
             'Analyst_Price': f"${analyst_price:.2f}" if analyst_price else "$0.00",
             'Professional_Analyst_Recommendation': analyst_rec,
+            'Analyst_Count': analyst_count or 0,
             'Final_Recommendation': final_recommendation,
             'Company_Type': analysis_result.get('company_type', ''),
             'Sector': financial_metrics.get('sector', ''),
@@ -143,6 +144,7 @@ class BatchAnalysisService:
             'Startup_Price': "$0.00",
             'Analyst_Price': "$0.00",
             'Professional_Analyst_Recommendation': 'Error',
+            'Analyst_Count': 0,
             'Final_Recommendation': 'Error',
             'Company_Type': '',
             'Sector': '',
@@ -155,7 +157,8 @@ class BatchAnalysisService:
         """Initialize CSV file with headers"""
         fieldnames = [
             'Ticker', 'Current_Price', 'DCF_Price', 'Technical_Price', 'Comparable_Price',
-            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation', 'Final_Recommendation',
+            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation', 
+            'Analyst_Count','Final_Recommendation',
             'Company_Type', 'Sector', 'Industry', 'Quality_Grade', 'Error'
         ]
         
@@ -167,7 +170,7 @@ class BatchAnalysisService:
         """Append single row to CSV file"""
         fieldnames = [
             'Ticker', 'Current_Price', 'DCF_Price', 'Technical_Price', 'Comparable_Price',
-            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation', 'Final_Recommendation',
+            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation','Analyst_Count', 'Final_Recommendation',
             'Company_Type', 'Sector', 'Industry', 'Quality_Grade', 'Error'
         ]
         

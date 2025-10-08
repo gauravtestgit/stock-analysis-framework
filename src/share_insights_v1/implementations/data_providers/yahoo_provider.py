@@ -158,3 +158,47 @@ class YahooFinanceProvider(IDataProvider):
             data = {}
         
         return data
+    
+    def get_management_data(self, ticker: str) -> Dict[str, Any]:
+        """Get management data from Yahoo Finance"""
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            
+            # Extract available management-related data
+            management_data = {
+                'company_officers': info.get('companyOfficers', []),
+                'governance_epoch_date': info.get('governanceEpochDate'),
+                'compensation_risk': info.get('compensationRisk'),
+                'shareholder_rights_risk': info.get('shareHolderRightsRisk'),
+                'board_risk': info.get('boardRisk'),
+                'audit_risk': info.get('auditRisk'),
+                'overall_risk': info.get('overallRisk'),
+                'held_percent_insiders': info.get('heldPercentInsiders'),
+                'held_percent_institutions': info.get('heldPercentInstitutions'),
+                'float_shares': info.get('floatShares'),
+                'shares_outstanding': info.get('sharesOutstanding'),
+                'implied_shares_outstanding': info.get('impliedSharesOutstanding')
+            }
+            
+            # Process company officers data
+            officers_summary = []
+            for officer in management_data.get('company_officers', [])[:5]:  # Top 5 officers
+                officers_summary.append({
+                    'name': officer.get('name', 'N/A'),
+                    'title': officer.get('title', 'N/A'),
+                    'age': officer.get('age'),
+                    'total_pay': officer.get('totalPay'),
+                    'exercised_value': officer.get('exercisedValue'),
+                    'unexercised_value': officer.get('unexercisedValue')
+                })
+            
+            return {
+                'ticker': ticker,
+                'management_data': management_data,
+                'officers_summary': officers_summary,
+                'data_source': 'Yahoo Finance'
+            }
+            
+        except Exception as e:
+            return {'error': str(e)}

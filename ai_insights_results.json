@@ -2,10 +2,10 @@
   "AAPL": {
     "method": "AI Insights Analysis",
     "applicable": true,
-    "current_price": 258.075,
-    "predicted_price": 322.59375,
+    "current_price": 256.48,
+    "predicted_price": 320.6,
     "recommendation": "Strong Buy",
-    "confidence": "Medium",
+    "confidence": "High",
     "ai_insights": {
       "market_position": "Strong",
       "growth_prospects": "High",
@@ -18,38 +18,11 @@
         "Innovative products and services, such as the iPhone and Apple Watch"
       ],
       "key_risks": [
-        "Dependence on a few key products, such as the iPhone",
-        "Competition from other technology companies, such as Samsung and Huawei"
+        "Dependence on a single product line (iPhone)",
+        "Increasing competition from other technology companies, such as Samsung and Huawei"
       ],
       "ai_method": "LLM"
     },
-    "news_sentiment": {
-      "overall_sentiment": "Neutral",
-      "sentiment_score": 0.0,
-      "news_count": 2,
-      "key_themes": [
-        "earnings",
-        "business strategy"
-      ],
-      "sentiment_trend": "Stable",
-      "ai_method": "LLM"
-    },
-    "news_articles": [
-      {
-        "title": "AAPL reports quarterly earnings",
-        "summary": "Company reported financial results for the quarter",
-        "publish_date": "2025-10-04",
-        "source": "Financial News",
-        "url": "https://finance.yahoo.com/quote/AAPL/news"
-      },
-      {
-        "title": "AAPL announces strategic initiative",
-        "summary": "Company announced new business strategy",
-        "publish_date": "2025-10-04",
-        "source": "Business Wire",
-        "url": "https://finance.yahoo.com/quote/AAPL/news"
-      }
-    ],
     "revenue_trends": {
       "trend_assessment": "Strong Growth",
       "growth_rate": 0.096,
@@ -57,74 +30,14 @@
       "future_outlook": "Very Positive",
       "ai_method": "LLM"
     },
-    "ai_methods_used": {
-      "insights": "LLM",
-      "news_sentiment": "LLM",
-      "revenue_trends": "LLM"
-    },
-    "risk_factors": [],
-    "analysis_type": "ai_insights"
-  },
-  "TSLA": {
-    "method": "AI Insights Analysis",
-    "applicable": true,
-    "current_price": 427.975,
-    "predicted_price": 534.96875,
-    "recommendation": "Strong Buy",
-    "confidence": "Medium",
-    "ai_insights": {
-      "market_position": "Strong",
-      "growth_prospects": "High",
-      "competitive_advantage": "Strong",
-      "management_quality": "Excellent",
-      "industry_outlook": "Very Positive",
-      "key_strengths": [
-        "Leading electric vehicle (EV) manufacturer with a strong brand presence",
-        "Diversified product portfolio, including luxury and mass-market vehicles"
-      ],
-      "key_risks": [
-        "High debt levels and reliance on debt financing",
-        "Competition from established automakers and new EV entrants"
-      ],
-      "ai_method": "LLM"
-    },
-    "news_sentiment": {
-      "overall_sentiment": "Neutral",
-      "sentiment_score": 0.0,
-      "news_count": 2,
-      "key_themes": [
-        "earnings",
-        "business strategy"
-      ],
-      "sentiment_trend": "Stable",
-      "ai_method": "LLM"
-    },
-    "news_articles": [
-      {
-        "title": "TSLA reports quarterly earnings",
-        "summary": "Company reported financial results for the quarter",
-        "publish_date": "2025-10-04",
-        "source": "Financial News",
-        "url": "https://finance.yahoo.com/quote/TSLA/news"
-      },
-      {
-        "title": "TSLA announces strategic initiative",
-        "summary": "Company announced new business strategy",
-        "publish_date": "2025-10-04",
-        "source": "Business Wire",
-        "url": "https://finance.yahoo.com/quote/TSLA/news"
-      }
-    ],
-    "revenue_trends": {
-      "trend_assessment": "Declining",
-      "growth_rate": -0.118,
-      "growth_consistency": "Consistent",
-      "future_outlook": "Negative",
-      "ai_method": "LLM"
+    "market_analysis": {
+      "market_cap_category": "Mega Cap",
+      "sector": "Technology",
+      "industry": "Consumer Electronics",
+      "beta": 1.094
     },
     "ai_methods_used": {
       "insights": "LLM",
-      "news_sentiment": "LLM",
       "revenue_trends": "LLM"
     },
     "risk_factors": [],
@@ -133,10 +46,10 @@
   "MSFT": {
     "method": "AI Insights Analysis",
     "applicable": true,
-    "current_price": 517.67,
-    "predicted_price": 647.0875,
+    "current_price": 523.98,
+    "predicted_price": 654.975,
     "recommendation": "Strong Buy",
-    "confidence": "Medium",
+    "confidence": "High",
     "ai_insights": {
       "market_position": "Strong",
       "growth_prospects": "High",
@@ -146,42 +59,14 @@
       "key_strengths": [
         "Diversified product portfolio with Azure, Office, and Gaming segments",
         "Strong brand recognition and customer loyalty",
-        "Continuous innovation and investment in emerging technologies like AI and Cloud"
+        "Continuous innovation with AI, Cloud, and Cybersecurity solutions"
       ],
       "key_risks": [
-        "Dependence on a few large customers, including government contracts",
-        "Competition from cloud providers like Amazon Web Services (AWS) and Google Cloud Platform (GCP)",
-        "Regulatory risks associated with data privacy and security"
+        "Dependence on cloud computing and subscription-based revenue models",
+        "Competition from other tech giants like Amazon, Google, and Alphabet"
       ],
       "ai_method": "LLM"
     },
-    "news_sentiment": {
-      "overall_sentiment": "Neutral",
-      "sentiment_score": 0.0,
-      "news_count": 2,
-      "key_themes": [
-        "earnings",
-        "business strategy"
-      ],
-      "sentiment_trend": "Stable",
-      "ai_method": "LLM"
-    },
-    "news_articles": [
-      {
-        "title": "MSFT reports quarterly earnings",
-        "summary": "Company reported financial results for the quarter",
-        "publish_date": "2025-10-04",
-        "source": "Financial News",
-        "url": "https://finance.yahoo.com/quote/MSFT/news"
-      },
-      {
-        "title": "MSFT announces strategic initiative",
-        "summary": "Company announced new business strategy",
-        "publish_date": "2025-10-04",
-        "source": "Business Wire",
-        "url": "https://finance.yahoo.com/quote/MSFT/news"
-      }
-    ],
     "revenue_trends": {
       "trend_assessment": "Strong Growth",
       "growth_rate": 0.181,
@@ -189,9 +74,59 @@
       "future_outlook": "Very Positive",
       "ai_method": "LLM"
     },
+    "market_analysis": {
+      "market_cap_category": "Mega Cap",
+      "sector": "Technology",
+      "industry": "Software - Infrastructure",
+      "beta": 1.023
+    },
     "ai_methods_used": {
       "insights": "LLM",
-      "news_sentiment": "LLM",
+      "revenue_trends": "LLM"
+    },
+    "risk_factors": [],
+    "analysis_type": "ai_insights"
+  },
+  "TSLA": {
+    "method": "AI Insights Analysis",
+    "applicable": true,
+    "current_price": 433.09,
+    "predicted_price": 541.3625,
+    "recommendation": "Buy",
+    "confidence": "High",
+    "ai_insights": {
+      "market_position": "Strong",
+      "growth_prospects": "High",
+      "competitive_advantage": "Strong",
+      "management_quality": "Excellent",
+      "industry_outlook": "Very Positive",
+      "key_strengths": [
+        "Dominant market position in the electric vehicle (EV) segment",
+        "Strong brand recognition and loyalty",
+        "Continuous innovation in autonomous driving and energy storage"
+      ],
+      "key_risks": [
+        "High competition from established automakers and new entrants in the EV market",
+        "Dependence on lithium and other critical materials for battery production",
+        "Potential regulatory risks and changes in government incentives for EV adoption"
+      ],
+      "ai_method": "LLM"
+    },
+    "revenue_trends": {
+      "trend_assessment": "Declining",
+      "growth_rate": -0.118,
+      "growth_consistency": "Consistent",
+      "future_outlook": "Negative",
+      "ai_method": "LLM"
+    },
+    "market_analysis": {
+      "market_cap_category": "Mega Cap",
+      "sector": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
+      "beta": 2.086
+    },
+    "ai_methods_used": {
+      "insights": "LLM",
       "revenue_trends": "LLM"
     },
     "risk_factors": [],

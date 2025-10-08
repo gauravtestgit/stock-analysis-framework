@@ -18,7 +18,7 @@ def test_sec_financial_health():
     analyzer = FinancialHealthAnalyzer(sec_provider)
     
     # Test stocks
-    test_tickers = ["lxrx", "eqt", "ko"]
+    test_tickers = ["AAPL", "MSFT", "TSLA"]
     
     for ticker in test_tickers:
         print(f"\n{'='*50}")
@@ -26,11 +26,33 @@ def test_sec_financial_health():
         print(f"{'='*50}")
         
         try:
-            # Get financial health report
+            # Test IAnalyzer interface
+            print("\n--- Testing IAnalyzer Interface ---")
+            analysis_data = {'company_type': 'mature_profitable'}
+            result = analyzer.analyze(ticker, analysis_data)
+            
+            if 'error' not in result:
+                print(f"✓ IAnalyzer interface works for {ticker}")
+                print(f"Method: {result.get('method', 'N/A')}")
+                print(f"Overall Grade: {result.get('overall_grade', 'N/A')}")
+                print(f"Recommendation: {result.get('recommendation', 'N/A')}")
+                print(f"Cash Flow Score: {result.get('cash_flow_score', 'N/A')}")
+                print(f"Debt Score: {result.get('debt_score', 'N/A')}")
+                
+                if result.get('strengths'):
+                    print(f"Strengths: {', '.join(result['strengths'])}")
+                if result.get('key_risks'):
+                    print(f"Risks: {', '.join(result['key_risks'])}")
+            else:
+                print(f"✗ IAnalyzer interface error: {result['error']}")
+            
+            print("\n--- Testing Original Interface ---")
+            
+            # Test original detailed interface
             report = analyzer.analyze_financial_health(ticker)
             
             if report:
-                print(f"✓ Successfully analyzed {ticker}")
+                print(f"✓ Original interface works for {ticker}")
                 print(f"Filing Date: {report.filing_date}")
                 print(f"Overall Grade: {report.overall_grade.value if report.overall_grade else 'N/A'}")
                 
@@ -59,20 +81,9 @@ def test_sec_financial_health():
                 # Revenue quality
                 if report.revenue_quality and report.revenue_quality.revenue_growth_3yr:
                     print(f"\nRevenue Growth (3yr): {report.revenue_quality.revenue_growth_3yr:.1%}")
-                
-                # Strengths and risks
-                if report.strengths:
-                    print(f"\nStrengths:")
-                    for strength in report.strengths:
-                        print(f"  + {strength}")
-                
-                if report.key_risks:
-                    print(f"\nRisks:")
-                    for risk in report.key_risks:
-                        print(f"  - {risk}")
             
             else:
-                print(f"✗ Could not analyze {ticker}")
+                print(f"✗ Original interface failed for {ticker}")
                 
         except Exception as e:
             print(f"✗ Error analyzing {ticker}: {e}")
