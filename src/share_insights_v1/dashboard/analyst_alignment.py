@@ -41,6 +41,9 @@ def show_analyst_alignment():
     # Method performance overview
     st.subheader("📊 Method Performance Summary")
     
+    # Try to load report file for accurate alignment rates
+    report_stats = load_report_stats(base_dir)
+    
     # Calculate method statistics from file types
     method_stats = []
     for method in ['dcf', 'technical', 'comparable', 'startup']:
@@ -49,15 +52,21 @@ def show_analyst_alignment():
             aligned_count = len(method_data[method_data['file_type'] == 'aligned'])
             divergent_count = len(method_data[method_data['file_type'] == 'divergent'])
             bullish_count = len(method_data[method_data['file_type'] == 'bullish_convergent'])
-            total = aligned_count + divergent_count + bullish_count
+            total_in_files = aligned_count + divergent_count + bullish_count
+            
+            # Calculate alignment rate correctly: aligned / (aligned + divergent)
+            # Bullish convergent are also aligned, so include them
+            total_valid_comparisons = aligned_count + divergent_count
+            alignment_rate = (aligned_count/total_valid_comparisons)*100 if total_valid_comparisons > 0 else 0
+            total_comparisons = total_valid_comparisons
             
             method_stats.append({
                 'Method': method.upper(),
                 'Aligned': aligned_count,
                 'Divergent': divergent_count,
                 'Bullish Convergent': bullish_count,
-                'Total': total,
-                'Alignment Rate': (aligned_count/total)*100 if total > 0 else 0
+                'Total': total_comparisons,
+                'Alignment Rate': alignment_rate
             })
     
     if method_stats:
@@ -111,37 +120,35 @@ def show_analyst_alignment():
             max_upside = conv_df['analyst_upside'].max() if 'analyst_upside' in conv_df.columns else 0
             st.metric("Max Analyst Upside", f"{max_upside:.0f}%")
         
-        # All bullish convergent stocks with watchlist checkboxes
-        st.write("**All Bullish Convergent Stocks:**")
+        # Filters for bullish convergent stocks
+        st.write("**Filter Bullish Convergent Stocks:**")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            ticker_search = st.text_input("🔍 Search Ticker:", key="conv_ticker_search")
+        with col2:
+            methods_search = st.text_input("🔍 Search Methods:", key="conv_methods_search", help="e.g. 'DCF,TECHNICAL' or 'STARTUP'")
+        with col3:
+            min_methods_conv = st.selectbox("Min Methods:", [1, 2, 3, 4], key="conv_min_methods")
+        with col4:
+            min_upside_conv = st.slider("Min Upside (%):", 0, 200, 0, key="conv_min_upside")
+        
+        # Apply filters
+        filtered_conv = conv_df.copy()
+        if ticker_search:
+            filtered_conv = filtered_conv[filtered_conv['ticker'].str.contains(ticker_search, case=False, na=False)]
+        if methods_search:
+            filtered_conv = filtered_conv[filtered_conv['methods_list'].str.contains(methods_search, case=False, na=False)]
+        filtered_conv = filtered_conv[
+            (filtered_conv['methods_count'] >= min_methods_conv) &
+            (filtered_conv['analyst_upside'] >= min_upside_conv)
+        ]
+        
+        st.write(f"**Showing {len(filtered_conv)} of {len(conv_df)} stocks:**")
         display_cols = ['ticker', 'methods_count', 'methods_list', 'analyst_upside', 'analyst_count']
-        available_cols = [col for col in display_cols if col in conv_df.columns]
+        available_cols = [col for col in display_cols if col in filtered_conv.columns]
         
-        from watchlist_component import get_watchlist
-        watchlist = get_watchlist()
-        conv_df_display = conv_df[available_cols].copy()
-        conv_df_display['In Watchlist'] = conv_df_display['ticker'].isin(watchlist)
-        
-        edited_conv = st.data_editor(
-            conv_df_display,
-            column_config={"In Watchlist": st.column_config.CheckboxColumn("📋 Watchlist")},
-            use_container_width=True,
-            key="conv_watchlist_editor"
-        )
-        
-        # Update watchlist based on changes
-        from watchlist_component import init_watchlist
-        init_watchlist()
-        
-        # Check for changes by comparing with original data
-        if not edited_conv.equals(conv_df_display):
-            for idx, row in edited_conv.iterrows():
-                ticker = row['ticker']
-                in_watchlist = row['In Watchlist']
-                if in_watchlist and ticker not in st.session_state.watchlist:
-                    st.session_state.watchlist.append(ticker)
-                elif not in_watchlist and ticker in st.session_state.watchlist:
-                    st.session_state.watchlist.remove(ticker)
-            st.rerun()
+        # Display table with sorting/filtering capabilities
+        st.dataframe(filtered_conv[available_cols], use_container_width=True)
     else:
         st.info("No bullish convergent consolidated data found. Run bullish convergence analysis first.")
     
@@ -157,75 +164,67 @@ def show_analyst_alignment():
     method_data = df[(df['method'] == method_filter) & (df['file_type'] == file_type_filter)]
     aligned_stocks = method_data.head(20)
     
-    if not aligned_stocks.empty:
-        # Display top aligned stocks with watchlist checkboxes
+    if not method_data.empty:
+        # Filters for method-specific data
+        col1, col2 = st.columns(2)
+        with col1:
+            ticker_search_method = st.text_input("🔍 Search Ticker:", key=f"{method_filter}_{file_type_filter}_search")
+        with col2:
+            min_upside_method = st.slider("Min Our Upside (%):", -100, 200, -100, key=f"{method_filter}_{file_type_filter}_upside")
+        
+        # Apply filters
+        filtered_method = method_data.copy()
+        if ticker_search_method:
+            filtered_method = filtered_method[filtered_method['ticker'].str.contains(ticker_search_method, case=False, na=False)]
+        filtered_method = filtered_method[filtered_method['our_upside'] >= min_upside_method]
+        
+        aligned_stocks = filtered_method.head(20)
+        st.write(f"**Showing top 20 of {len(filtered_method)} filtered stocks:**")
+        
+        # Display table with sorting/filtering capabilities
         display_cols = ['ticker', 'our_upside', 'analyst_upside', 'deviation_score', 'alignment', 'analyst_count']
+        st.dataframe(aligned_stocks[display_cols], use_container_width=True)
         
-        from watchlist_component import get_watchlist
-        watchlist = get_watchlist()
-        aligned_display = aligned_stocks[display_cols].copy()
-        aligned_display['In Watchlist'] = aligned_display['ticker'].isin(watchlist)
-        
-        edited_aligned = st.data_editor(
-            aligned_display,
-            column_config={"In Watchlist": st.column_config.CheckboxColumn("📋 Watchlist")},
-            use_container_width=True,
-            key="aligned_watchlist_editor"
-        )
-        
-        # Update watchlist based on changes
-        from watchlist_component import init_watchlist
-        init_watchlist()
-        
-        # Check for changes by comparing with original data
-        if not edited_aligned.equals(aligned_display):
-            for idx, row in edited_aligned.iterrows():
-                ticker = row['ticker']
-                in_watchlist = row['In Watchlist']
-                if in_watchlist and ticker not in st.session_state.watchlist:
-                    st.session_state.watchlist.append(ticker)
-                elif not in_watchlist and ticker in st.session_state.watchlist:
-                    st.session_state.watchlist.remove(ticker)
-            st.rerun()
-        
-        # Scatter plot of alignment
+        # Scatter plot of alignment (use filtered data)
         fig_scatter = px.scatter(
-            method_data,
+            filtered_method,
             x='analyst_upside',
             y='our_upside',
             color='alignment',
             size='analyst_count',
             hover_data=['ticker'],
-            title=f"{method_filter.upper()} Method: Our Upside vs Analyst Upside",
+            title=f"{method_filter.upper()} Method: Our Upside vs Analyst Upside (Filtered)",
             labels={'analyst_upside': 'Analyst Upside (%)', 'our_upside': 'Our Upside (%)'}
         )
         # Add diagonal line for perfect alignment
-        fig_scatter.add_shape(
-            type="line",
-            x0=method_data['analyst_upside'].min(),
-            y0=method_data['analyst_upside'].min(),
-            x1=method_data['analyst_upside'].max(),
-            y1=method_data['analyst_upside'].max(),
-            line=dict(color="red", width=2, dash="dash")
-        )
+        if not filtered_method.empty:
+            fig_scatter.add_shape(
+                type="line",
+                x0=filtered_method['analyst_upside'].min(),
+                y0=filtered_method['analyst_upside'].min(),
+                x1=filtered_method['analyst_upside'].max(),
+                y1=filtered_method['analyst_upside'].max(),
+                line=dict(color="red", width=2, dash="dash")
+            )
         st.plotly_chart(fig_scatter, use_container_width=True)
     else:
-        st.info(f"No aligned stocks found for {method_filter.upper()} method")
+        st.info(f"No stocks found for {method_filter.upper()} method with current filters")
     
 
     
     # Filters and detailed view
     st.subheader("🔍 Detailed Analysis")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
+        ticker_search_detailed = st.text_input("🔍 Search Ticker:", key="detailed_ticker_search")
+    with col2:
         alignment_filter = st.multiselect(
             "Filter by Alignment:",
             df['alignment'].unique(),
             default=df['alignment'].unique()
         )
-    
-    with col2:
+    with col3:
         min_analysts = st.slider("Minimum Analyst Count:", 1, int(df['analyst_count'].max()), 1)
     
     # Apply filters
@@ -234,38 +233,15 @@ def show_analyst_alignment():
         (df['analyst_count'] >= min_analysts)
     ]
     
+    if ticker_search_detailed:
+        filtered_df = filtered_df[filtered_df['ticker'].str.contains(ticker_search_detailed, case=False, na=False)]
+    
     st.write(f"Showing {len(filtered_df)} stocks matching filters")
     
-    # Full data table with watchlist checkboxes
+    # Full data table with sorting/filtering capabilities
     display_cols = ['ticker', 'method', 'our_upside', 'analyst_upside', 'deviation_score', 
                    'alignment', 'both_bullish', 'analyst_count']
-    
-    from watchlist_component import get_watchlist
-    watchlist = get_watchlist()
-    filtered_display = filtered_df[display_cols].copy()
-    filtered_display['In Watchlist'] = filtered_display['ticker'].isin(watchlist)
-    
-    edited_filtered = st.data_editor(
-        filtered_display,
-        column_config={"In Watchlist": st.column_config.CheckboxColumn("📋 Watchlist")},
-        use_container_width=True,
-        key="filtered_watchlist_editor"
-    )
-    
-    # Update watchlist based on changes
-    from watchlist_component import init_watchlist
-    init_watchlist()
-    
-    # Check for changes by comparing with original data
-    if not edited_filtered.equals(filtered_display):
-        for idx, row in edited_filtered.iterrows():
-            ticker = row['ticker']
-            in_watchlist = row['In Watchlist']
-            if in_watchlist and ticker not in st.session_state.watchlist:
-                st.session_state.watchlist.append(ticker)
-            elif not in_watchlist and ticker in st.session_state.watchlist:
-                st.session_state.watchlist.remove(ticker)
-        st.rerun()
+    st.dataframe(filtered_df[display_cols], use_container_width=True)
 
 @st.cache_data
 def load_alignment_data(base_dir):
@@ -299,6 +275,47 @@ def load_alignment_data(base_dir):
     combined_df = pd.concat(all_data, ignore_index=True)
     
     return combined_df, files_found
+
+@st.cache_data
+def load_report_stats(base_dir):
+    """Load alignment statistics from report file"""
+    import glob
+    
+    # Find report file
+    report_pattern = f"{base_dir.rstrip('/')}/*_report.txt"
+    report_files = glob.glob(report_pattern)
+    
+    if not report_files:
+        return None
+    
+    # Use most recent report
+    report_file = max(report_files, key=os.path.getctime)
+    
+    try:
+        with open(report_file, 'r') as f:
+            content = f.read()
+        
+        # Parse method statistics
+        stats = {}
+        lines = content.split('\n')
+        
+        current_method = None
+        for line in lines:
+            line = line.strip()
+            if line.endswith('METHOD:'):
+                method_name = line.replace(' METHOD:', '').lower()
+                current_method = method_name
+                stats[current_method] = {}
+            elif current_method and 'Total comparisons:' in line:
+                stats[current_method]['total_comparisons'] = int(line.split(':')[1].strip())
+            elif current_method and 'Alignment rate:' in line:
+                rate_str = line.split(':')[1].strip().replace('%', '')
+                stats[current_method]['alignment_rate'] = float(rate_str)
+        
+        return stats
+    except Exception as e:
+        st.warning(f"Could not parse report file: {e}")
+        return None
 
 @st.cache_data
 def load_bullish_convergent_data(base_dir):

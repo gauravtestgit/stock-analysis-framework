@@ -14,7 +14,7 @@ def test_batch_analysis():
     batch_service = BatchAnalysisService()
     
     # Define paths
-    filename = "nasdaq"
+    filename = "asx"
     input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"  # Assuming this exists in the root directory
     output_csv_dir = "./src/share_insights_v1/resources/stock_analyses/"
     date = datetime.now().strftime("%Y%m%d%H%M%S")

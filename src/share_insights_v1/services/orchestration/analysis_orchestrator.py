@@ -156,7 +156,8 @@ class AnalysisOrchestrator:
             AnalysisType.COMPETITIVE_POSITION,
             AnalysisType.MANAGEMENT_QUALITY,
             AnalysisType.FINANCIAL_HEALTH,
-            AnalysisType.ANALYST_CONSENSUS
+            AnalysisType.ANALYST_CONSENSUS,
+            AnalysisType.REVENUE_STREAM
         ]
         
         # Type-specific analyses

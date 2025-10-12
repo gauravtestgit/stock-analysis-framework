@@ -6,11 +6,37 @@ import time
 from datetime import datetime
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sys
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Add project root to path for absolute imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
 
 def show_detailed_analysis():
     """Show detailed analysis page with AI insights and news sentiment"""
     
     st.title("🔍 Detailed Stock Analysis")
+    
+    # Chat interface at the top
+    show_chat_interface()
+    
+    # Display persisted analysis results if available
+    if 'analysis_data' in st.session_state and 'analysis_ticker' in st.session_state:
+        st.markdown("---")
+        st.subheader(f"📊 Previous Analysis Results for {st.session_state.analysis_ticker}")
+        display_detailed_results(st.session_state.analysis_ticker, st.session_state.analysis_data)
+    
+    # Display persisted batch results if available
+    if 'batch_results' in st.session_state and 'batch_timing' in st.session_state:
+        st.markdown("---")
+        st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
+        display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
+    
     st.markdown("---")
     
     from watchlist_component import get_watchlist
@@ -103,6 +129,17 @@ def analyze_single_stock(ticker, selected_analyzers=None):
                 }
                 
                 st.success(f"Analysis completed in {total_request_time:.2f}s!")
+                
+                # Store analysis data for chat context and persistence
+                st.session_state.current_analysis = {
+                    'ticker': ticker,
+                    'company_type': data.get('company_type', 'Unknown'),
+                    'final_recommendation': data.get('final_recommendation', {}),
+                    'analyses': data.get('analyses', {})
+                }
+                st.session_state.analysis_data = data
+                st.session_state.analysis_ticker = ticker
+                
                 display_detailed_results(ticker, data)
             else:
                 st.error(f"Failed to analyze {ticker}: {response.text}")
@@ -144,8 +181,8 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
     # Track batch timing
     batch_start = time.time()
     
-    # Parallel execution with rate limiting handled in LLM layer
-    max_workers = min(len(watchlist), 5)  # Restored to 5 workers
+    # Parallel execution with balanced workers for performance and cost
+    max_workers = min(len(watchlist), 4)  # Balanced for performance and cost
     status_text.text(f"Starting parallel analysis of {len(watchlist)} stocks with {max_workers} workers...")
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -180,6 +217,11 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
         'avg_time_per_stock': round(total_batch_time / len(watchlist), 2) if watchlist else 0,
         'parallel_workers': max_workers
     }
+    
+    # Store batch results in session state
+    st.session_state.batch_results = results
+    st.session_state.batch_timing = batch_timing
+    st.session_state.batch_watchlist = watchlist
     
     display_batch_results(results, batch_timing)
 
@@ -356,23 +398,57 @@ def display_detailed_results(ticker, data):
         with col3:
             st.metric("Recommendation", tech_data.get('recommendation', 'N/A'))
         
-        # Price targets
-        price_targets = tech_data.get('price_targets', {})
-        if price_targets:
-            st.write("**Price Targets:**")
-            for target, price in price_targets.items():
-                st.write(f"• {target}: ${price:.2f}")
+        # Signal scoring system
+        signals = tech_data.get('technical_signals', {})
+        if signals:
+            st.write("**Signal Analysis:**")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Net Signal:** {signals.get('net_signal', 0)}")
+                st.write(f"**Recommendation:** {signals.get('recommendation', 'N/A')}")
+            with col2:
+                st.write(f"**Bullish Signals:** {signals.get('bullish_signals', 0)}")
+                st.write(f"**Bearish Signals:** {signals.get('bearish_signals', 0)}")
         
-        # Key technical metrics
-        col1, col2 = st.columns(2)
+        # Enhanced indicators
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.write(f"**RSI (14):** {tech_data.get('rsi_14', 'N/A')}")
-            st.write(f"**52W High:** ${tech_data.get('high_52w', 0):.2f}")
-            st.write(f"**52W Low:** ${tech_data.get('low_52w', 0):.2f}")
+            st.write("**Moving Averages:**")
+            ma_20 = tech_data.get('ma_20') or 0
+            ma_50 = tech_data.get('ma_50') or 0
+            ma_200 = tech_data.get('ma_200') or 0
+            st.write(f"• MA 20: ${ma_20:.2f}" if ma_20 else "• MA 20: N/A")
+            st.write(f"• MA 50: ${ma_50:.2f}" if ma_50 else "• MA 50: N/A")
+            st.write(f"• MA 200: ${ma_200:.2f}" if ma_200 else "• MA 200: N/A")
+            
         with col2:
-            st.write(f"**MA 20:** ${tech_data.get('ma_20', 0):.2f}")
-            st.write(f"**MA 50:** ${tech_data.get('ma_50', 0):.2f}")
-            st.write(f"**Volatility:** {tech_data.get('volatility_annual', 0):.2f}")
+            st.write("**Momentum Indicators:**")
+            st.write(f"• RSI (14): {tech_data.get('rsi_14', 'N/A')}")
+            macd_line = tech_data.get('macd_line')
+            macd_signal = tech_data.get('macd_signal')
+            if macd_line is not None and macd_signal is not None:
+                st.write(f"• MACD: {macd_line:.3f}")
+                st.write(f"• MACD Signal: {macd_signal:.3f}")
+            stoch_k = tech_data.get('stoch_k')
+            if stoch_k is not None:
+                st.write(f"• Stochastic %K: {stoch_k:.1f}")
+                
+        with col3:
+            st.write("**Volatility & Range:**")
+            bb_upper = tech_data.get('bb_upper')
+            bb_lower = tech_data.get('bb_lower')
+            if bb_upper is not None and bb_lower is not None:
+                st.write(f"• BB Upper: ${bb_upper:.2f}")
+                st.write(f"• BB Lower: ${bb_lower:.2f}")
+            st.write(f"• 52W High: ${tech_data.get('high_52w', 0):.2f}")
+            st.write(f"• 52W Low: ${tech_data.get('low_52w', 0):.2f}")
+        
+        # Signal details
+        signal_details = signals.get('signal_details', []) if signals else []
+        if signal_details:
+            st.write("**Signal Details:**")
+            for detail in signal_details:
+                st.write(f"• {detail}")
     
     # Business Model Analysis
     if 'business_model' in analyses:
@@ -628,6 +704,91 @@ def display_batch_results(results, batch_timing=None):
                 display_detailed_results(ticker, data)
             else:
                 st.error(f"Analysis failed: {data['error']}")
+
+def show_chat_interface():
+    """Show chat interface for LLM queries"""
+    st.subheader("🤖 AI Chat Assistant")
+    
+    # Initialize LLM manager and register additional providers
+    if 'llm_manager' not in st.session_state:
+        from src.share_insights_v1.implementations.llm_providers.openai_provider import OpenAIProvider
+        from src.share_insights_v1.implementations.llm_providers.xai_provider import XAIProvider
+        
+        st.session_state.llm_manager = LLMManager()
+        
+        # Register additional providers
+        st.session_state.llm_manager.register_provider(OpenAIProvider())
+        st.session_state.llm_manager.register_provider(XAIProvider())
+    
+    llm_manager = st.session_state.llm_manager
+    available_providers = llm_manager.get_available_providers()
+    
+    # Debug: Show provider status
+    with st.expander("🔍 Provider Debug Info"):
+        st.write(f"Available providers: {available_providers}")
+        st.write(f"Total providers initialized: {len(llm_manager.providers)}")
+        for provider in llm_manager.providers:
+            st.write(f"- {provider.get_provider_name()}: Available = {provider.is_available()}")
+    
+    if not available_providers:
+        st.error("No LLM providers available")
+        return
+    
+    # Provider selection and chat input
+    col1, col2 = st.columns([1, 3])
+    
+    with col1:
+        selected_provider = st.selectbox(
+            "Select AI Provider:",
+            available_providers,
+            key="chat_provider"
+        )
+    
+    with col2:
+        user_query = st.text_input(
+            "Ask about the stock analysis:",
+            placeholder="e.g., What are the key risks for this company?",
+            key="chat_input"
+        )
+    
+    # Chat button and response
+    if st.button("Ask AI", key="chat_button") and user_query:
+        with st.spinner(f"Getting response from {selected_provider}..."):
+            try:
+                # Get current analysis context if available
+                context = ""
+                if 'current_analysis' in st.session_state:
+                    analysis_data = st.session_state.current_analysis
+                    ticker = analysis_data.get('ticker', 'Unknown')
+                    company_type = analysis_data.get('company_type', 'Unknown')
+                    final_rec = analysis_data.get('final_recommendation', {})
+                    
+                    context = f"""
+                    Context: Stock analysis for {ticker}
+                    Company Type: {company_type}
+                    Recommendation: {final_rec.get('recommendation', 'N/A')}
+                    Target Price: ${final_rec.get('target_price', 0):.2f}
+                    
+                    User Question: {user_query}
+                    
+                    Please provide a concise, helpful response based on the analysis context.
+                    """
+                else:
+                    context = f"User Question: {user_query}\n\nPlease provide a helpful response about stock analysis."
+                
+                # Generate response
+                response = llm_manager.generate_response_with_provider(
+                    context, selected_provider
+                )
+                
+                # Display response
+                st.success(f"**{selected_provider} Response:**")
+                st.write(response)
+                
+            except Exception as e:
+                st.error(f"Error getting response from {selected_provider}: {str(e)}")
+    
+    st.markdown("---")
 
 if __name__ == "__main__":
     show_detailed_analysis()

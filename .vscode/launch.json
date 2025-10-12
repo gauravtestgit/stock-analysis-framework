@@ -13,7 +13,7 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_startup_analyzer",
+            "module": "src.share_insights_v1.tests.test_ai_insights_openai",
             // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

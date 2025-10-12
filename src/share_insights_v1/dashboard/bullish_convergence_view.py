@@ -94,20 +94,29 @@ def show_bullish_convergence():
     st.subheader("🏆 Top Performers")
     
     # Filter options
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
+        ticker_search_top = st.text_input("🔍 Search Ticker:", key="top_ticker_search")
         min_methods = st.selectbox("Minimum Methods:", [1, 2, 3, 4], index=1)
     with col2:
+        methods_search_top = st.text_input("🔍 Search Methods:", key="top_methods_search", help="e.g. 'DCF,TECHNICAL' or 'STARTUP'")
         min_upside = st.slider("Min Analyst Upside (%):", 0, 200, 50)
-    with col3:
-        min_analysts = st.slider("Min Analyst Count:", 1, int(df['analyst_count'].max()), 1)
+    
+    min_analysts = st.slider("Min Analyst Count:", 1, int(df['analyst_count'].max()), 1)
     
     # Apply filters
     filtered_df = df[
         (df['methods_count'] >= min_methods) &
         (df['analyst_upside'] >= min_upside) &
         (df['analyst_count'] >= min_analysts)
-    ].sort_values(['methods_count', 'analyst_upside'], ascending=[False, False])
+    ]
+    
+    if ticker_search_top:
+        filtered_df = filtered_df[filtered_df['ticker'].str.contains(ticker_search_top, case=False, na=False)]
+    if methods_search_top:
+        filtered_df = filtered_df[filtered_df['methods_list'].str.contains(methods_search_top, case=False, na=False)]
+    
+    filtered_df = filtered_df.sort_values(['methods_count', 'analyst_upside'], ascending=[False, False])
     
     st.write(f"Showing {len(filtered_df)} stocks matching filters")
     
@@ -142,14 +151,14 @@ def show_bullish_convergence():
                     st.session_state.watchlist.remove(ticker)
             st.rerun()
         
-        # Scatter plot
+        # Scatter plot (use filtered data)
         fig_scatter = px.scatter(
             filtered_df,
             x='methods_count',
             y='analyst_upside',
             size='analyst_count',
             hover_data=['ticker', 'methods_list'],
-            title="Methods Count vs Analyst Upside",
+            title="Methods Count vs Analyst Upside (Filtered)",
             labels={'methods_count': 'Number of Methods', 'analyst_upside': 'Analyst Upside (%)'}
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
@@ -214,9 +223,38 @@ def show_bullish_convergence():
     # Full data table with watchlist checkboxes
     st.subheader("📊 All Data")
     
+    # Additional filters for all data
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        ticker_search_all = st.text_input("🔍 Search All Data:", key="all_ticker_search")
+    with col2:
+        methods_search_all = st.text_input("🔍 Search Methods:", key="all_methods_search", help="e.g. 'DCF,TECHNICAL'")
+    with col3:
+        methods_filter = st.multiselect(
+            "Filter by Methods:",
+            ['DCF', 'TECHNICAL', 'COMPARABLE', 'STARTUP'],
+            default=['DCF', 'TECHNICAL', 'COMPARABLE', 'STARTUP']
+        )
+    
+    # Apply additional filters
+    all_filtered_df = filtered_df.copy()
+    if ticker_search_all:
+        all_filtered_df = all_filtered_df[all_filtered_df['ticker'].str.contains(ticker_search_all, case=False, na=False)]
+    if methods_search_all:
+        all_filtered_df = all_filtered_df[all_filtered_df['methods_list'].str.contains(methods_search_all, case=False, na=False)]
+    
+    # Filter by methods (check if any of the selected methods have values)
+    if methods_filter:
+        method_mask = False
+        for method in methods_filter:
+            method_mask |= (all_filtered_df[method] != '')
+        all_filtered_df = all_filtered_df[method_mask]
+    
+    st.write(f"Showing {len(all_filtered_df)} of {len(df)} total stocks")
+    
     from watchlist_component import get_watchlist
     watchlist = get_watchlist()
-    all_data_display = filtered_df.copy()
+    all_data_display = all_filtered_df.copy()
     all_data_display['In Watchlist'] = all_data_display['ticker'].isin(watchlist)
     
     edited_all = st.data_editor(

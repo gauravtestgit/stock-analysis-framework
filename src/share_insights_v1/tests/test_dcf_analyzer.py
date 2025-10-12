@@ -7,7 +7,7 @@ from ..implementations.calculators.quality_calculator import QualityScoreCalcula
 from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 from ..implementations.classifier import CompanyClassifier
 def test_dcf() :
-    symbol = "aapl"
+    symbol = "jks"
     stock = yf.Ticker(symbol)
     yp = YahooFinanceProvider()
     
@@ -36,4 +36,5 @@ def test_dcf() :
     
     print(json.dumps(dcf_analysis, indent=2, default=str))
 if __name__ == "__main__":
+    os.environ['DEBUG'] = 'true'
     test_dcf()

@@ -91,19 +91,64 @@ class TechnicalAnalyzer(IAnalyzer):
                     price_targets['support_level'] = low_52w * 0.95  # 5% below support
 
             
-            #Calculate RSI
+            # Calculate technical indicators
             df = hist.copy()
-            df['rsi'] = pd_ta.rsi(df['Close'],length=14)
+            
+            # RSI
+            df['rsi'] = pd_ta.rsi(df['Close'], length=14)
             rsi_14 = df['rsi'].iloc[-1] if not df['rsi'].isna().iloc[-1] else None
-
-            # Calculate range position and recommendation
+            
+            # MACD
+            macd_data = pd_ta.macd(df['Close'])
+            macd_line = macd_data['MACD_12_26_9'].iloc[-1] if 'MACD_12_26_9' in macd_data.columns else None
+            macd_signal = macd_data['MACDs_12_26_9'].iloc[-1] if 'MACDs_12_26_9' in macd_data.columns else None
+            macd_histogram = macd_data['MACDh_12_26_9'].iloc[-1] if 'MACDh_12_26_9' in macd_data.columns else None
+            
+            # Bollinger Bands - Manual calculation
+            if len(df) >= 20:
+                sma_20 = df['Close'].rolling(window=20).mean().iloc[-1]
+                std_20 = df['Close'].rolling(window=20).std().iloc[-1]
+                bb_upper = sma_20 + (std_20 * 2)
+                bb_lower = sma_20 - (std_20 * 2)
+                bb_middle = sma_20
+            else:
+                bb_upper = None
+                bb_lower = None
+                bb_middle = None
+            
+            # Stochastic
+            stoch_data = pd_ta.stoch(df['High'], df['Low'], df['Close'])
+            stoch_k = stoch_data['STOCHk_14_3_3'].iloc[-1] if 'STOCHk_14_3_3' in stoch_data.columns else None
+            stoch_d = stoch_data['STOCHd_14_3_3'].iloc[-1] if 'STOCHd_14_3_3' in stoch_data.columns else None
+            
+            # Calculate range position and enhanced recommendation
             range_pos = ((current_price - low_52w) / (high_52w - low_52w)) * 100 if high_52w != low_52w else 50
-            recommendation = self._get_technical_recommendation(range_pos, ma_trend)
+            
+            # Enhanced technical signals
+            technical_signals = self._analyze_technical_signals({
+                'current_price': current_price,
+                'ma_20': ma_20, 'ma_50': ma_50, 'ma_200': ma_200,
+                'rsi': rsi_14,
+                'macd_line': macd_line, 'macd_signal': macd_signal, 'macd_histogram': macd_histogram,
+                'bb_upper': bb_upper, 'bb_lower': bb_lower, 'bb_middle': bb_middle,
+                'stoch_k': stoch_k, 'stoch_d': stoch_d,
+                'range_pos': range_pos,
+                'ma_trend': ma_trend
+            })
+            
+            recommendation = technical_signals['recommendation']
+            
+            # Adjust predicted price based on enhanced signals recommendation
+            if recommendation in ['Strong Sell', 'Sell']:
+                predicted_price = current_price * (1 - volatility * 0.3)  # Bearish target
+            elif recommendation in ['Strong Buy', 'Buy']:
+                predicted_price = current_price * (1 + volatility * 0.8)  # Bullish target
+            # Keep existing predicted_price for Hold
                 
             return {
                 'method': 'Technical Analysis',
                 'current_price': current_price,
-                'predicted_price' : predicted_price,
+                'predicted_price': predicted_price,
                 'price_targets' : price_targets,
                 'recommendation': recommendation,
                 'ma_20': ma_20,
@@ -116,50 +161,117 @@ class TechnicalAnalyzer(IAnalyzer):
                 'distance_from_high': (current_price - high_52w) / high_52w,
                 'distance_from_low': (current_price - low_52w) / low_52w,
                 'volume_trend': f"Average Daily Volume:{avg_volume}, Trend: " + ('Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal'),
-                'rsi_14' : rsi_14
+                'rsi_14': rsi_14,
+                'macd_line': macd_line,
+                'macd_signal': macd_signal,
+                'macd_histogram': macd_histogram,
+                'bb_upper': bb_upper,
+                'bb_lower': bb_lower,
+                'stoch_k': stoch_k,
+                'stoch_d': stoch_d,
+                'technical_signals': technical_signals
             }
             
         except Exception as e:
             return {'error': str(e)}
     
-    def _get_technical_recommendation(self, range_pos: float, trend: str) -> str:
-        """Generate technical recommendation based on actual ma_trend values"""
-        # Strong bullish trends
-        if trend == "Strong Uptrend" and range_pos > 70:
-            return "Strong Buy"
-        elif trend == "Strong Uptrend" and range_pos > 40:
-            return "Buy"
+    def _analyze_technical_signals(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
+        """Enhanced technical analysis with multiple indicators"""
+        signals = {'bullish': 0, 'bearish': 0, 'signals': []}
         
-        # Regular uptrends
-        elif trend in ["Uptrend", "Short-term Uptrend", "Near-term Uptrend"] and range_pos > 60:
-            return "Buy"
-        elif trend in ["Uptrend", "Short-term Uptrend", "Near-term Uptrend"] and range_pos > 30:
-            return "Hold"
+        # Moving Average Signals
+        if indicators['ma_trend'] == "Strong Uptrend":
+            signals['bullish'] += 3
+            signals['signals'].append("Strong MA uptrend")
+        elif indicators['ma_trend'] in ["Uptrend", "Short-term Uptrend"]:
+            signals['bullish'] += 2
+            signals['signals'].append("MA uptrend")
+        elif indicators['ma_trend'] == "Strong Downtrend":
+            signals['bearish'] += 3
+            signals['signals'].append("Strong MA downtrend")
+        elif indicators['ma_trend'] in ["Downtrend", "Short-term Downtrend"]:
+            signals['bearish'] += 2
+            signals['signals'].append("MA downtrend")
         
-        # Strong bearish trends
-        elif trend == "Strong Downtrend" and range_pos < 30:
-            return "Strong Sell"
-        elif trend == "Strong Downtrend" and range_pos < 60:
-            return "Sell"
+        # RSI Signals
+        if indicators['rsi'] is not None:
+            if indicators['rsi'] < 30:
+                signals['bullish'] += 2
+                signals['signals'].append(f"RSI oversold ({indicators['rsi']:.1f})")
+            elif indicators['rsi'] > 70:
+                signals['bearish'] += 2
+                signals['signals'].append(f"RSI overbought ({indicators['rsi']:.1f})")
+            elif 30 <= indicators['rsi'] <= 50:
+                signals['bullish'] += 1
+                signals['signals'].append("RSI bullish zone")
+            elif 50 <= indicators['rsi'] <= 70:
+                signals['bearish'] += 1
+                signals['signals'].append("RSI bearish zone")
         
-        # Regular downtrends
-        elif trend in ["Downtrend", "Short-term Downtrend", "Near-term Downtrend"] and range_pos < 40:
-            return "Sell"
-        elif trend in ["Downtrend", "Short-term Downtrend", "Near-term Downtrend"] and range_pos < 70:
-            return "Hold"
-        
-        # Sideways or insufficient data
-        elif trend in ["Sideways", "Insufficient Moving Averages Data"]:
-            if range_pos > 80:
-                return "Sell"  # Near resistance
-            elif range_pos < 20:
-                return "Buy"   # Near support
+        # MACD Signals
+        if indicators['macd_line'] is not None and indicators['macd_signal'] is not None:
+            if indicators['macd_line'] > indicators['macd_signal']:
+                signals['bullish'] += 2
+                signals['signals'].append("MACD bullish crossover")
             else:
-                return "Hold"
+                signals['bearish'] += 2
+                signals['signals'].append("MACD bearish crossover")
+            
+            if indicators['macd_histogram'] is not None:
+                if indicators['macd_histogram'] > 0:
+                    signals['bullish'] += 1
+                    signals['signals'].append("MACD histogram positive")
+                else:
+                    signals['bearish'] += 1
+                    signals['signals'].append("MACD histogram negative")
         
-        # Default case
+        # Bollinger Bands Signals
+        if all(x is not None for x in [indicators['bb_upper'], indicators['bb_lower'], indicators['current_price']]):
+            if indicators['current_price'] <= indicators['bb_lower']:
+                signals['bullish'] += 2
+                signals['signals'].append("Price at lower Bollinger Band")
+            elif indicators['current_price'] >= indicators['bb_upper']:
+                signals['bearish'] += 2
+                signals['signals'].append("Price at upper Bollinger Band")
+        
+        # Stochastic Signals
+        if indicators['stoch_k'] is not None and indicators['stoch_d'] is not None:
+            if indicators['stoch_k'] < 20 and indicators['stoch_d'] < 20:
+                signals['bullish'] += 1
+                signals['signals'].append("Stochastic oversold")
+            elif indicators['stoch_k'] > 80 and indicators['stoch_d'] > 80:
+                signals['bearish'] += 1
+                signals['signals'].append("Stochastic overbought")
+        
+        # Range Position Signals
+        if indicators['range_pos'] < 20:
+            signals['bullish'] += 1
+            signals['signals'].append("Near 52-week low")
+        elif indicators['range_pos'] > 80:
+            signals['bearish'] += 1
+            signals['signals'].append("Near 52-week high")
+        
+        # Generate recommendation based on signal strength
+        net_signal = signals['bullish'] - signals['bearish']
+        
+        if net_signal >= 4:
+            recommendation = "Strong Buy"
+        elif net_signal >= 2:
+            recommendation = "Buy"
+        elif net_signal <= -4:
+            recommendation = "Strong Sell"
+        elif net_signal <= -2:
+            recommendation = "Sell"
         else:
-            return "Hold"
+            recommendation = "Hold"
+        
+        return {
+            'recommendation': recommendation,
+            'bullish_signals': signals['bullish'],
+            'bearish_signals': signals['bearish'],
+            'net_signal': net_signal,
+            'signal_details': signals['signals']
+        }
     
     def is_applicable(self, company_type: str) -> bool:
         """Technical analysis applies to all company types"""

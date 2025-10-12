@@ -17,19 +17,21 @@ def run_dashboard():
     print("🔍 Make sure the API server is running at: http://localhost:8000")
     print("=" * 60)
     
-    # Change to dashboard directory
-    dashboard_dir = os.path.join("src", "share_insights_v1", "dashboard")
+    # Set up environment to support relative imports
+    env = os.environ.copy()
+    env['PYTHONPATH'] = os.getcwd()
     
-    # Run streamlit
+    # Run streamlit with file path
+    dashboard_file = os.path.join("src", "share_insights_v1", "dashboard", "main_dashboard.py")
     cmd = [
         sys.executable, "-m", "streamlit", "run", 
-        "main_dashboard.py",
+        dashboard_file,
         "--server.port", "8501",
         "--server.address", "0.0.0.0"
     ]
     
     try:
-        subprocess.run(cmd, cwd=dashboard_dir, check=True)
+        subprocess.run(cmd, env=env, check=True)
     except KeyboardInterrupt:
         print("\n👋 Dashboard stopped by user")
     except Exception as e:

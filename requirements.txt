@@ -32,6 +32,7 @@ arxiv
 wikipedia
 groq
 langchain-groq
+langchain-openai
 # beautifulsoup4
 # langchain-ollama
 # langchain-huggingface
