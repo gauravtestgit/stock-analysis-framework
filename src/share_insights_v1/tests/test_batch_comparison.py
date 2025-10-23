@@ -13,7 +13,7 @@ def test_batch_comparison():
     comparison_service = BatchComparisonService()
     
     # Define paths
-    input_csv = "./src/share_insights_v1/resources/stock_analyses/asx_20251010091426_analysis.csv"
+    input_csv = "./src/share_insights_v1/resources/stock_analyses/asx_20251023055207_analysis.csv"
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
     print("🚀 Testing Batch Comparison Service...")

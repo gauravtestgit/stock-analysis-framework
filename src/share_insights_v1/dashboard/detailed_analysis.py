@@ -378,7 +378,7 @@ def display_detailed_results(ticker, data):
             st.metric("Recommendation", dcf_data.get('recommendation', 'N/A'))
         
         # DCF parameters
-        params = dcf_data.get('parameters_used', {})
+        params = dcf_data.get('dcf_calculations', {})
         if params:
             st.write("**Key Parameters:**")
             for key, value in params.items():
@@ -573,7 +573,7 @@ def display_detailed_results(ticker, data):
             comp_price = comp_data.get('predicted_price', 0) or 0
             st.metric("Fair Value", f"${comp_price:.2f}" if comp_price else "N/A")
         with col2:
-            pe_multiple = comp_data.get('pe_multiple', 0) or 0
+            pe_multiple = comp_data.get('target_multiples', 0).get('pe',0) or 0
             st.metric("P/E Multiple", f"{pe_multiple:.1f}x" if pe_multiple else "N/A")
         with col3:
             st.metric("Recommendation", comp_data.get('recommendation', 'N/A'))
@@ -697,13 +697,29 @@ def display_batch_results(results, batch_timing=None):
             st.subheader("📊 Quick Summary")
             st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
     
-    # Results by stock
-    for ticker, data in results.items():
-        with st.expander(f"{ticker} - {'✅ Success' if 'error' not in data else '❌ Failed'}"):
-            if 'error' not in data:
-                display_detailed_results(ticker, data)
-            else:
-                st.error(f"Analysis failed: {data['error']}")
+    # Scrollable detailed results
+    st.subheader("📋 Detailed Analysis Results")
+    
+    # Generate text summary for all stocks
+    detailed_text = generate_batch_text_summary(results)
+    
+    # Display in scrollable text area
+    st.text_area(
+        "Analysis Results (Scrollable)",
+        value=detailed_text,
+        height=400,
+        help="Scroll through detailed analysis results for all stocks"
+    )
+    
+    # Optional: Keep expandable sections for individual deep dive
+    with st.expander("🔍 Individual Stock Deep Dive (Expandable Sections)"):
+        with st.container(height=400):
+            for ticker, data in results.items():
+                with st.expander(f"{ticker} - {'✅ Success' if 'error' not in data else '❌ Failed'}"):
+                    if 'error' not in data:
+                        display_detailed_results(ticker, data)
+                    else:
+                        st.error(f"Analysis failed: {data['error']}")
 
 def show_chat_interface():
     """Show chat interface for LLM queries"""
@@ -789,6 +805,73 @@ def show_chat_interface():
                 st.error(f"Error getting response from {selected_provider}: {str(e)}")
     
     st.markdown("---")
+
+def generate_batch_text_summary(results):
+    """Generate text summary of batch analysis results for scrollable display"""
+    text_lines = []
+    text_lines.append("=" * 80)
+    text_lines.append("BATCH ANALYSIS RESULTS SUMMARY")
+    text_lines.append("=" * 80)
+    text_lines.append("")
+    
+    for ticker, data in results.items():
+        if 'error' in data:
+            text_lines.append(f"❌ {ticker}: FAILED - {data['error']}")
+            text_lines.append("-" * 40)
+            continue
+        
+        # Header
+        text_lines.append(f"✅ {ticker} - ANALYSIS COMPLETE")
+        text_lines.append("-" * 40)
+        
+        # Basic info
+        company_type = data.get('company_type', 'N/A')
+        final_rec = data.get('final_recommendation', {})
+        recommendation = final_rec.get('recommendation', 'N/A')
+        target_price = final_rec.get('target_price', 0) or 0
+        
+        text_lines.append(f"Company Type: {company_type}")
+        text_lines.append(f"Final Recommendation: {recommendation}")
+        text_lines.append(f"Target Price: ${target_price:.2f}" if target_price else "Target Price: N/A")
+        
+        # Individual analyzer results
+        analyses = data.get('analyses', {})
+        if analyses:
+            text_lines.append("\nAnalyzer Results:")
+            for analyzer, result in analyses.items():
+                if result and not result.get('error'):
+                    rec = result.get('recommendation', 'N/A')
+                    price = result.get('predicted_price', 0) or 0
+                    confidence = result.get('confidence', 'N/A')
+                    text_lines.append(f"  • {analyzer.upper()}: {rec} | ${price:.2f} | {confidence}")
+        
+        # Key insights for specific analyzers
+        if 'ai_insights' in analyses and analyses['ai_insights']:
+            ai_data = analyses['ai_insights']
+            ai_insights = ai_data.get('ai_insights', {})
+            if ai_insights:
+                text_lines.append("\nAI Insights:")
+                text_lines.append(f"  Market Position: {ai_insights.get('market_position', 'N/A')}")
+                text_lines.append(f"  Growth Prospects: {ai_insights.get('growth_prospects', 'N/A')}")
+                text_lines.append(f"  Competitive Advantage: {ai_insights.get('competitive_advantage', 'N/A')}")
+        
+        if 'news_sentiment' in analyses and analyses['news_sentiment']:
+            news_data = analyses['news_sentiment']
+            sentiment_score = news_data.get('overall_sentiment_score', 0)
+            news_count = news_data.get('news_count', 0)
+            text_lines.append(f"\nNews Sentiment: {sentiment_score:.2f} ({news_count} articles)")
+        
+        if 'technical' in analyses and analyses['technical']:
+            tech_data = analyses['technical']
+            trend = tech_data.get('trend', 'N/A')
+            rsi = tech_data.get('rsi_14', 'N/A')
+            text_lines.append(f"\nTechnical: Trend={trend}, RSI={rsi}")
+        
+        text_lines.append("")
+        text_lines.append("=" * 80)
+        text_lines.append("")
+    
+    return "\n".join(text_lines)
 
 if __name__ == "__main__":
     show_detailed_analysis()

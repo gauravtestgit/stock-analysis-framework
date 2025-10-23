@@ -1,3 +1,4 @@
+from typing import Dict
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -268,7 +269,7 @@ def get_adjusted_debt(ticker : yf.ticker.Ticker, enterprise_value):
     total_debt = ticker.info.get('totalDebt', 0) or 0
     total_cash = ticker.info.get('totalCash', 0) or 0
 
-def get_share_price(ticker_symbol, config : FinanceConfig=None):
+def get_share_price(ticker_symbol, config : FinanceConfig=None) -> Dict:
     global calculation_default_params
     if config is not None:
         calculation_default_params = config
@@ -355,7 +356,29 @@ def get_share_price(ticker_symbol, config : FinanceConfig=None):
     share_price = equity_value / ticker.info.get('sharesOutstanding', 0)
     debug_print(f'Share Price: ${share_price:.2f}')
     debug_print(f'Ticker, DCF Share Price, Last Close Price\n{ticker_symbol}, ${share_price:.2f}, ${ticker.info["previousClose"]:.2f}')
-    return share_price, equity_value
+    dcf_calculations = {
+        'wacc': wacc,
+        'cost_equity': cost_equity,
+        'ev_ebitda_multiple': ticker.info.get('enterpriseToEbitda', calculation_default_params.default_ev_ebitda_multiple),
+        'fcf_cagr': fcf_cagr,
+        'ebitda_cagr': ebitda_cagr,
+        'fcf_future': fcf_future,
+        'ebitda_future': ebitda_future,
+        'terminal_value_pg': terminal_value_pg,
+        'terminal_value_ebitda_multiple': terminal_value_ebitda_multiple,
+        'average_terminal_value': average_terminal_value,
+        'projected_free_cash_flows': projected_free_cash_flows,
+        'present_value_free_cash_flows': present_value_free_cash_flows,
+        'pv_fcf': pv_fcf,
+        'pv_terminal_value': pv_terminal_value,
+        'enterprise_value': enterprise_value,
+        'adjusted_debt': adjusted_debt,
+        'equity_value': equity_value,
+        'share_price': share_price,
+        'ticker_symbol': ticker_symbol,
+        'last_close_price': ticker.info["previousClose"]
+    }
+    return dcf_calculations
 
 # def debug_print(*args, **kwargs):
 #     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'

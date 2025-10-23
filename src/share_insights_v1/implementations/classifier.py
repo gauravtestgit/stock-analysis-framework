@@ -33,8 +33,8 @@ class CompanyClassifier(ICompanyClassifier):
                 ticker in ['QQQ', 'SPY', 'IWM', 'VTI', 'VOO', 'SLV', 'GLD', 'TLT', 'EFA', 'EEM'],
                 # ETF naming patterns
                 any(pattern in ticker for pattern in ['SPDR', 'iShares', 'Vanguard']),
-                # Check if total revenue is 0 (typical for ETFs)
-                metrics.get('total_revenue') == 0 or None
+                # Only consider zero revenue as ETF indicator if other ETF signs are present
+                (quote_type == 'ETF' and metrics.get('total_revenue', 0) == 0)
             ]
 
             if any(etf_indicators):

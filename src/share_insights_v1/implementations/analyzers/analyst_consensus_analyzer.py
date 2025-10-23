@@ -20,6 +20,17 @@ class AnalystConsensusAnalyzer(IAnalyzer):
             
             current_price = data.get('current_price', 0)
             
+            # Get current price from price data if not available in financial metrics
+            if not current_price:
+                financial_metrics = data.get('financial_metrics', {})
+                current_price = financial_metrics.get('current_price', 0)
+                
+                if not current_price:
+                    price_data = data.get('price_data', {})
+                    price_history = price_data.get('price_history')
+                    if price_history is not None and not price_history.empty:
+                        current_price = price_history['Close'].iloc[-1]
+            
             # Extract key metrics
             target_mean = analyst_data.get('target_price')
             target_high = analyst_data.get('target_high')

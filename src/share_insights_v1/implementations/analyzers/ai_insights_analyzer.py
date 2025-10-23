@@ -19,6 +19,13 @@ class AIInsightsAnalyzer(IAnalyzer):
             financial_metrics = data.get('financial_metrics', {})
             current_price = financial_metrics.get('current_price', 0)
             
+            # Get current price from price data if not available in financial metrics
+            if not current_price:
+                price_data = data.get('price_data', {})
+                price_history = price_data.get('price_history')
+                if price_history is not None and not price_history.empty:
+                    current_price = price_history['Close'].iloc[-1]
+            
             # Get AI insights
             ai_insights = self._get_ai_insights(ticker, financial_metrics)
             
@@ -28,9 +35,12 @@ class AIInsightsAnalyzer(IAnalyzer):
             # Analyze revenue trends
             revenue_trends = self._analyze_revenue_trends(financial_metrics)
             
-            # Generate AI recommendation
+            # Calculate target price first
+            target_price = self._calculate_ai_target_price(current_price, ai_insights)
+            
+            # Generate AI recommendation based on target price and insights
             ai_recommendation = self._generate_ai_recommendation(
-                ai_insights, revenue_trends
+                ai_insights, revenue_trends, current_price, target_price
             )
             
             # Calculate confidence based on data quality
@@ -149,37 +159,54 @@ Provide analysis in JSON format:
             fallback_trends['ai_method'] = 'Fallback'
             return fallback_trends
     
-    def _generate_ai_recommendation(self, ai_insights: Dict, revenue_trends: Dict) -> str:
-        """Generate recommendation based on AI insights"""
+    def _generate_ai_recommendation(self, ai_insights: Dict, revenue_trends: Dict, current_price: float, target_price: float) -> str:
+        """Generate recommendation based on target price and AI insights"""
         
-        try:
-            prompt = f"""Generate an investment recommendation based on these AI insights:
-
-Company Analysis:
-- Market Position: {ai_insights.get('market_position', 'Unknown')}
-- Growth Prospects: {ai_insights.get('growth_prospects', 'Unknown')}
-- Competitive Advantage: {ai_insights.get('competitive_advantage', 'Unknown')}
-
-Revenue Analysis:
-- Trend Assessment: {revenue_trends.get('trend_assessment', 'Unknown')}
-- Future Outlook: {revenue_trends.get('future_outlook', 'Unknown')}
-
-Provide recommendation as one of: Strong Buy, Buy, Hold, Sell, Strong Sell
-
-Respond with only the recommendation text."""
+        # Primary logic: base recommendation on price target vs current price
+        if current_price > 0 and target_price > 0:
+            upside_pct = ((target_price - current_price) / current_price) * 100
             
-            recommendation = self.llm_manager.generate_response(prompt).strip()
-            
-            # Validate recommendation
-            valid_recs = ['Strong Buy', 'Buy', 'Hold', 'Sell', 'Strong Sell']
-            if recommendation in valid_recs:
-                return recommendation
+            # Base recommendation on upside/downside
+            if upside_pct > 15:
+                base_recommendation = 'Strong Buy'
+            elif upside_pct > 5:
+                base_recommendation = 'Buy'
+            elif upside_pct < -15:
+                base_recommendation = 'Strong Sell'
+            elif upside_pct < -5:
+                base_recommendation = 'Sell'
             else:
-                return self._get_fallback_recommendation(ai_insights, revenue_trends)
-                
-        except Exception as e:
-            print(f"AI recommendation API error: {e}")
-            return self._get_fallback_recommendation(ai_insights, revenue_trends)
+                base_recommendation = 'Hold'
+            
+            # Adjust based on qualitative factors (but don't contradict price logic)
+            risk_factors = 0
+            positive_factors = 0
+            
+            # Count negative factors
+            if ai_insights.get('competitive_advantage') == 'Weak':
+                risk_factors += 1
+            if revenue_trends.get('future_outlook') == 'Negative':
+                risk_factors += 1
+            if ai_insights.get('industry_outlook') == 'Negative':
+                risk_factors += 1
+            
+            # Count positive factors
+            if ai_insights.get('market_position') == 'Strong':
+                positive_factors += 1
+            if ai_insights.get('growth_prospects') == 'High':
+                positive_factors += 1
+            
+            # Only downgrade recommendation if significant risks and marginal upside
+            if risk_factors >= 2 and upside_pct < 10:
+                if base_recommendation == 'Strong Buy':
+                    return 'Buy'
+                elif base_recommendation == 'Buy':
+                    return 'Hold'
+            
+            return base_recommendation
+        
+        # Fallback to qualitative assessment if no price data
+        return self._get_fallback_recommendation(ai_insights, revenue_trends)
     
     def _calculate_ai_target_price(self, current_price: float, ai_insights: Dict) -> float:
         """Calculate AI-based target price"""
@@ -309,32 +336,32 @@ Respond with only the recommendation text."""
         }
     
     def _get_fallback_recommendation(self, ai_insights: Dict, revenue_trends: Dict) -> str:
-        """Fallback recommendation when AI is not available"""
+        """Fallback recommendation when price-based logic can't be used"""
         positive_factors = 0
         negative_factors = 0
         
         if ai_insights.get('market_position') == 'Strong':
-            positive_factors += 1
+            positive_factors += 2
         elif ai_insights.get('market_position') == 'Weak':
             negative_factors += 1
         
         if ai_insights.get('growth_prospects') == 'High':
-            positive_factors += 1
+            positive_factors += 2
         elif ai_insights.get('growth_prospects') == 'Low':
             negative_factors += 1
         
         if revenue_trends.get('trend_assessment') in ['Strong Growth', 'Moderate Growth']:
             positive_factors += 1
         elif revenue_trends.get('trend_assessment') == 'Declining':
-            negative_factors += 1
+            negative_factors += 2
         
         net_score = positive_factors - negative_factors
         
-        if net_score >= 2:
+        if net_score >= 3:
             return 'Strong Buy'
         elif net_score >= 1:
             return 'Buy'
-        elif net_score <= -2:
+        elif net_score <= -3:
             return 'Strong Sell'
         elif net_score <= -1:
             return 'Sell'

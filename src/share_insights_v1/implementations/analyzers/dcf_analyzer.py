@@ -35,7 +35,10 @@ class DCFAnalyzer(IAnalyzer):
             tmp_config.default_terminal_growth = params.get('terminal_growth', tmp_config.default_terminal_growth)
             
             # Use original DCF calculation
-            share_price, equity_value = dcf_yf.get_share_price(ticker_symbol=ticker, config=tmp_config)
+            dcf_calcuations = dcf_yf.get_share_price(ticker_symbol=ticker, config=tmp_config)
+            share_price = dcf_calcuations.get('share_price', 0)
+            equity_value = dcf_calcuations.get('equity_value', 0)
+
             current_price = metrics.get('current_price', 0)
             
             if current_price > 0:
@@ -74,6 +77,7 @@ class DCFAnalyzer(IAnalyzer):
                 'confidence': 'High' if company_type == CompanyType.MATURE_PROFITABLE else 'Medium',
                 'valuation': 'Undervalued' if upside_downside > 20 else 'Overvalued' if upside_downside < -20 else 'Fair Value',
                 'recommendation': recommendation,
+                'dcf_calculations': dcf_calcuations,
                 'parameters_used': {
                     'max_cagr': f"{params['max_cagr']:.1%}",
                     'terminal_growth': f"{params['terminal_growth']:.1%}",

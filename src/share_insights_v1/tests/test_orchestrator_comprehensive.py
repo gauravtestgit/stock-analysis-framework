@@ -18,6 +18,8 @@ from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 from ..implementations.classifier import CompanyClassifier
 from ..models.analysis_result import AnalysisType
 
+import traceback
+
 def setup_comprehensive_orchestrator():
     """Setup orchestrator with ALL analyzers including new qualitative ones"""
     data_provider = YahooFinanceProvider()
@@ -72,17 +74,18 @@ def test_comprehensive_analysis(ticker: str):
             print(f"✅ {analysis_name}: {recommendation} ({confidence} confidence)")
     
     # Print final recommendation if available
-    final_rec = results.get('final_recommendation', {})
+    final_rec = results.get('final_recommendation')
     if final_rec:
-        print(f"\n🎯 FINAL RECOMMENDATION: {final_rec.get('recommendation', 'N/A')}")
-        print(f"   Consensus Score: {final_rec.get('consensus_score', 0):.2f}")
-        print(f"   Target Price: ${final_rec.get('target_price', 0):.2f}")
+        print(f"\n🎯 FINAL RECOMMENDATION: {final_rec.recommendation.value if hasattr(final_rec.recommendation, 'value') else final_rec.recommendation}")
+        print(f"   Confidence: {final_rec.confidence}")
+        print(f"   Target Price: ${final_rec.target_price:.2f}")
+        print(f"   Summary: {final_rec.summary}")
     
     return results
 
 def test_all_comprehensive():
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['AAPL', 'TSLA', 'JPM', 'RIVN']
+    test_tickers = ['qqq', 'ivw', 'aapl', 'chrs']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")
@@ -93,6 +96,7 @@ def test_all_comprehensive():
             result = test_comprehensive_analysis(ticker)
             all_results[ticker] = result
         except Exception as e:
+            print(traceback.format_exc())
             print(f"❌ {ticker} failed: {str(e)}")
             all_results[ticker] = {'error': str(e)}
     

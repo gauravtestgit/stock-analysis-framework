@@ -1,0 +1,1549 @@
+{
+  "qqq": {
+    "ticker": "qqq",
+    "company_type": "etf",
+    "financial_metrics": {
+      "market_cap": 240081895424,
+      "sector": "",
+      "industry": "",
+      "fund_family": "Invesco",
+      "category": "Large Growth",
+      "quote_type": "ETF",
+      "long_name": "Invesco QQQ Trust",
+      "enterprise_value": 0,
+      "total_revenue": 0,
+      "net_income": 0,
+      "current_revenue": "$0.00",
+      "yearly_revenue_growth": 0,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 0,
+      "calculated_quarterly_growth": 0,
+      "free_cash_flow": 0,
+      "total_debt": 0,
+      "total_cash": 0,
+      "shares_outstanding": 393100000,
+      "current_price": 0,
+      "beta": 1.0,
+      "pe_ratio": 34.437126,
+      "pb_ratio": 1.7070553,
+      "ps_ratio": null,
+      "peg_ratio": null,
+      "roe": null,
+      "roa": null,
+      "debt_to_equity": 0,
+      "current_ratio": null,
+      "revenue_growth": null,
+      "earnings_growth": null,
+      "dividend_yield": 0.47,
+      "payout_ratio": null,
+      "fifty_two_week_high": 613.18,
+      "fifty_two_week_low": 402.39
+    },
+    "quality_score": {
+      "quality_score": 12,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 3
+    },
+    "analyses": {
+      "management_quality": {
+        "applicable": false,
+        "reason": "management_quality not applicable to etf"
+      },
+      "competitive_position": {
+        "applicable": false,
+        "reason": "competitive_position not applicable to etf"
+      },
+      "business_model": {
+        "applicable": false,
+        "reason": "business_model not applicable to etf"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 610.739990234375,
+        "predicted_price": 0,
+        "target_high": 0,
+        "target_low": 0,
+        "upside_downside_pct": null,
+        "recommendation": "Hold",
+        "recommendation_mean": null,
+        "num_analysts": 0,
+        "confidence": "Low",
+        "analysis_type": "analyst_consensus"
+      },
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 610.739990234375,
+        "predicted_price": 567.3082285635496,
+        "price_targets": {
+          "short_term": 683.1262596857507,
+          "medium_term": 755.5125291371264,
+          "support_level": 381.3995241935078
+        },
+        "recommendation": "Sell",
+        "ma_20": 603.8194946289062,
+        "ma_50": 589.6602331542969,
+        "ma_200": 532.434281463623,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.2370444726358824,
+        "high_52w": 613.1799926757812,
+        "low_52w": 401.47318336158713,
+        "distance_from_high": -0.003979259712565998,
+        "distance_from_low": 0.5212472851127183,
+        "volume_trend": "Average Daily Volume:43500075.127490036, Trend: Above Average",
+        "rsi_14": 58.896494702283135,
+        "macd_line": 5.031642989817669,
+        "macd_signal": 5.260638329239637,
+        "macd_histogram": -0.22899533942196726,
+        "bb_upper": 615.5327584567899,
+        "bb_lower": 592.1062308010225,
+        "stoch_k": 83.51983663255308,
+        "stoch_d": 83.5382452613941,
+        "technical_signals": {
+          "recommendation": "Sell",
+          "bullish_signals": 3,
+          "bearish_signals": 6,
+          "net_signal": -3,
+          "signal_details": [
+            "Strong MA uptrend",
+            "RSI bearish zone",
+            "MACD bearish crossover",
+            "MACD histogram negative",
+            "Stochastic overbought",
+            "Near 52-week high"
+          ]
+        },
+        "analysis_type": "technical"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 610.739990234375,
+        "predicted_price": 671.8139892578125,
+        "recommendation": "Sell",
+        "confidence": "High",
+        "ai_insights": {
+          "market_position": "Strong",
+          "growth_prospects": "Moderate",
+          "competitive_advantage": "Weak",
+          "management_quality": "Average",
+          "industry_outlook": "Neutral",
+          "key_strengths": [
+            "Large market capitalization provides stability",
+            "Diversified portfolio of NASDAQ-100 stocks"
+          ],
+          "key_risks": [
+            "High market volatility due to tech-heavy portfolio",
+            "Dependence on the performance of individual stocks within the NASDAQ-100 index"
+          ],
+          "ai_method": "LLM"
+        },
+        "revenue_trends": {
+          "trend_assessment": "Declining",
+          "growth_rate": 0,
+          "growth_consistency": "Variable",
+          "future_outlook": "Negative",
+          "ai_method": "LLM"
+        },
+        "market_analysis": {
+          "market_cap_category": "Mega Cap",
+          "sector": "",
+          "industry": "",
+          "beta": 1.0
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [
+          "Weak competitive advantage"
+        ],
+        "analysis_type": "ai_insights"
+      },
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
+        "applicable": true,
+        "overall_sentiment_score": -0.15,
+        "sentiment_rating": "Neutral",
+        "news_count": 10,
+        "recent_news": [
+          {
+            "title": "Exchange-Traded Funds, US Equities Higher After Midday",
+            "summary": "Broad Market Indicators Broad-market exchange-traded funds IWM and IVV were higher. Actively trad",
+            "date": "2025-10-23",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-us-equities-171341929.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Exchange-Traded Funds, Equity Futures Lower Pre-Bell Thursday Amid Oil Surge, Trade Tensions",
+            "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was down 0.1% and the actively tr",
+            "date": "2025-10-23",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-equity-futures-120717799.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Exchange-Traded Funds Fall as US Equities Decline After Midday",
+            "summary": "Broad Market Indicators Broad-market exchange-traded funds IWM and IVV pointed lower. Actively tr",
+            "date": "2025-10-22",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-fall-us-170340516.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Exchange-Traded Funds Mixed, Equity Futures Lower Pre-Bell Wednesday Amid Continuing Earnings Releases",
+            "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was up 0.03%, while the actively",
+            "date": "2025-10-22",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-mixed-equity-125000930.html",
+            "sentiment": "neutral",
+            "sentiment_score": -0.5
+          },
+          {
+            "title": "3 Unstoppable Growth ETFs That Could Turn $10,000 Into More Than $12 million With Practically Zero Effort",
+            "summary": "Turning an initial $10,000 investment into $12 million is actually easier than it sounds.",
+            "date": "2025-10-22",
+            "source": "Motley Fool",
+            "url": "https://www.fool.com/investing/2025/10/21/3-unstoppable-growth-etfs-that-could-turn-10000-in/",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Exchange-Traded Funds, US Equities Mixed After Midday",
+            "summary": "Broad Market Indicators Broad-market exchange-traded fund IWM fell, while IVV edged higher. Activ",
+            "date": "2025-10-21",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-us-equities-171916406.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Exchange-Traded Funds Higher, Equity Futures Mixed Pre-Bell Tuesday as Rate-Cut Bets Offset by Earnings Watch",
+            "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was up 0.04% and the actively tra",
+            "date": "2025-10-21",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-higher-equity-123244582.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Daily ETF Flows: SPY Tops the List",
+            "summary": "<p>$1.8B flowed into the S&P 500 ETF on Friday, Oct. 17.</p>",
+            "date": "2025-10-20",
+            "source": "etf.com",
+            "url": "http://www.etf.com/sections/daily-etf-flows/daily-etf-flows-spy-tops-list?utm_source=yahoo-finance&utm_medium=rss&utm_campaign=yahoo-finance-rss",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Exchange-Traded Funds, US Equities Advance After Midday",
+            "summary": "Broad Market Indicators Broad-market exchange-traded funds IWM and IVV edged higher. Actively tra",
+            "date": "2025-10-20",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-us-equities-171910747.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Exchange-Traded Funds, Equity Futures Higher Pre-Bell Monday as Earnings Take Center Stage",
+            "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was up 0.3% and the actively trad",
+            "date": "2025-10-20",
+            "source": "MT Newswires",
+            "url": "https://finance.yahoo.com/news/exchange-traded-funds-equity-futures-123103271.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          }
+        ],
+        "key_developments": [],
+        "sentiment_drivers": [
+          "Positive coverage in 1 recent news items"
+        ],
+        "risk_factors": [
+          "Negative sentiment in 3 recent news items"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of -0.15 suggests a slightly negative market outlook, with more articles indicating a decline in exchange-traded funds and US equities than a rise.",
+          "Market reactions include a decline in exchange-traded funds and equity futures, with some articles attributing this to oil surges and trade tensions.",
+          "Despite the negative sentiment, there are still articles highlighting growth potential, such as the '3 Unstoppable Growth ETFs' article with a sentiment score of 1.00, indicating a positive outlook for certain ETFs."
+        ],
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "analysis_type": "news_sentiment"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='qqq', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(619.5611089106811), upside_potential=np.float64(1.4443329104617781), risk_level='Medium', bullish_signals=['Technical: Strong Uptrend'], bearish_signals=['TECHNICAL indicates Sell', 'AI_INSIGHTS indicates Sell'], key_risks=['Low confidence in analyst_consensus analysis'], summary='Consensus: Hold | Confidence: Low | Analyses: 4 | ANALYST_CONSENSUS: Hold | TECHNICAL: Sell | AI_INSIGHTS: Sell | NEWS_SENTIMENT: Hold')",
+    "execution_time_seconds": 15.82,
+    "analyses_count": 7
+  },
+  "ivw": {
+    "ticker": "ivw",
+    "company_type": "etf",
+    "financial_metrics": {
+      "market_cap": 15900060672,
+      "sector": "",
+      "industry": "",
+      "fund_family": "iShares",
+      "category": "Large Growth",
+      "quote_type": "ETF",
+      "long_name": "iShares S&P 500 Growth ETF",
+      "enterprise_value": 0,
+      "total_revenue": 0,
+      "net_income": 0,
+      "current_revenue": "$0.00",
+      "yearly_revenue_growth": 0,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 0,
+      "calculated_quarterly_growth": 0,
+      "free_cash_flow": 0,
+      "total_debt": 0,
+      "total_cash": 0,
+      "shares_outstanding": 130800000,
+      "current_price": 0,
+      "beta": 1.0,
+      "pe_ratio": 35.14691,
+      "pb_ratio": 1.6442149,
+      "ps_ratio": null,
+      "peg_ratio": null,
+      "roe": null,
+      "roa": null,
+      "debt_to_equity": 0,
+      "current_ratio": null,
+      "revenue_growth": null,
+      "earnings_growth": null,
+      "dividend_yield": 0.41,
+      "payout_ratio": null,
+      "fifty_two_week_high": 122.66,
+      "fifty_two_week_low": 79.31
+    },
+    "quality_score": {
+      "quality_score": 12,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 3
+    },
+    "analyses": {
+      "management_quality": {
+        "applicable": false,
+        "reason": "management_quality not applicable to etf"
+      },
+      "business_model": {
+        "applicable": false,
+        "reason": "business_model not applicable to etf"
+      },
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 121.56009674072266,
+        "predicted_price": 113.0405162042197,
+        "price_targets": {
+          "short_term": 135.75939763489424,
+          "medium_term": 149.95869852906586,
+          "support_level": 75.17346352712035
+        },
+        "recommendation": "Sell",
+        "ma_20": 120.75200576782227,
+        "ma_50": 118.46860946655273,
+        "ma_200": 106.26758754730224,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.23361779522860196,
+        "high_52w": 122.66000366210938,
+        "low_52w": 79.1299616074951,
+        "distance_from_high": -0.008967119587054834,
+        "distance_from_low": 0.5362082107873615,
+        "volume_trend": "Average Daily Volume:2149129.689243028, Trend: Normal",
+        "rsi_14": 56.77890356321289,
+        "macd_line": 0.6276254370310994,
+        "macd_signal": 0.7522804081139282,
+        "macd_histogram": -0.12465497108282875,
+        "bb_upper": 122.57157513189543,
+        "bb_lower": 118.93243640374911,
+        "stoch_k": 64.58402517244178,
+        "stoch_d": 63.69067521037111,
+        "technical_signals": {
+          "recommendation": "Sell",
+          "bullish_signals": 3,
+          "bearish_signals": 5,
+          "net_signal": -2,
+          "signal_details": [
+            "Strong MA uptrend",
+            "RSI bearish zone",
+            "MACD bearish crossover",
+            "MACD histogram negative",
+            "Near 52-week high"
+          ]
+        },
+        "analysis_type": "technical"
+      },
+      "competitive_position": {
+        "applicable": false,
+        "reason": "competitive_position not applicable to etf"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 121.56009674072266,
+        "predicted_price": 0,
+        "target_high": 0,
+        "target_low": 0,
+        "upside_downside_pct": null,
+        "recommendation": "Hold",
+        "recommendation_mean": null,
+        "num_analysts": 0,
+        "confidence": "Low",
+        "analysis_type": "analyst_consensus"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 121.56009674072266,
+        "predicted_price": 97.24807739257812,
+        "recommendation": "Strong Sell",
+        "confidence": "High",
+        "ai_insights": {
+          "market_position": "Weak",
+          "growth_prospects": "Low",
+          "competitive_advantage": "Weak",
+          "management_quality": "Average",
+          "industry_outlook": "Neutral",
+          "key_strengths": [
+            "Diversified portfolio of growth-oriented stocks",
+            "Low expense ratio"
+          ],
+          "key_risks": [
+            "Market volatility and potential losses",
+            "Concentration risk due to tracking the S&P 500 Growth Index"
+          ],
+          "ai_method": "LLM"
+        },
+        "revenue_trends": {
+          "trend_assessment": "Declining",
+          "growth_rate": 0,
+          "growth_consistency": "Variable",
+          "future_outlook": "Negative",
+          "ai_method": "LLM"
+        },
+        "market_analysis": {
+          "market_cap_category": "Large Cap",
+          "sector": "",
+          "industry": "",
+          "beta": 1.0
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [
+          "Weak market position",
+          "Limited growth prospects",
+          "Weak competitive advantage"
+        ],
+        "analysis_type": "ai_insights"
+      },
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
+        "applicable": true,
+        "overall_sentiment_score": 0.15,
+        "sentiment_rating": "Neutral",
+        "news_count": 10,
+        "recent_news": [
+          {
+            "title": "Should iShares S&P 500 Growth ETF (IVW) Be on Your Investing Radar?",
+            "summary": "Style Box ETF report for IVW",
+            "date": "2025-10-17",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/ishares-p-500-growth-etf-102002858.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Buy, Hold and Build Wealth: ETFs for Long-Term Investors",
+            "summary": "Market volatility is rising but buy-and-hold ETFs like SPY, VOO and VTI offer investors diversification and long-term resilience.",
+            "date": "2025-10-02",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/buy-hold-build-wealth-etfs-140500550.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.5
+          },
+          {
+            "title": "Growth & Large-Cap ETFs Worth Considering to Power Your Portfolio",
+            "summary": "U.S. Q2 GDP grows at fastest pace in two years, fueled by consumer spending and business investment, boosting ETF opportunities.",
+            "date": "2025-10-01",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/growth-large-cap-etfs-worth-140000091.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Is Turning to Growth ETFs a Smart Move Now?",
+            "summary": "Rate cut bets, record highs and strong earnings power growth ETFs like VUG, IWF, IVW, SPYG and IUSG into the spotlight.",
+            "date": "2025-09-05",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/turning-growth-etfs-smart-move-154900664.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "The Market Looks Shaky. Put Options Can Protect You, Goldman Says.",
+            "summary": "The stock market keeps climbing, seemingly impervious to a fragile U.S. economy, so investors may want to hedge their portfolios against a selloff.  President Donald Trump\u2019s attacks on the Federal Reserve and unpredictable trade policies are additional risks.  The indicator, often described as the market\u2019s fear gauge, has fallen to 14.7 from its peak at more than 52 on April 8, when worry over Trump\u2019s so-called Liberation Day tariffs was hammering the stock market.",
+            "date": "2025-08-14",
+            "source": "Barrons.com",
+            "url": "https://www.barrons.com/articles/markets-options-hedge-goldman-c4991f56?siteid=yhoof2&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": -0.5
+          },
+          {
+            "title": "Less-Than-Expected Inflation in July: Growth ETFs to Gain?",
+            "summary": "CPI rose less than expected, boosting hopes for Fed rate cuts and sparking interest in top growth-focused ETFs like VUG and RPG.",
+            "date": "2025-08-13",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/less-expected-inflation-july-growth-100000846.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Three Rate Cuts Expected in 2025? ETFs in Focus",
+            "summary": "Fed officials signal possible rate cuts this year, boosting the appeal of growth-focused ETFs amid slowing labor market trends. Tap ETFs like VUG, RPG and VOOG.",
+            "date": "2025-08-11",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/three-rate-cuts-expected-2025-100000775.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Fed to Cut Rates Ahead? Growth ETFs to Play",
+            "summary": "Weak hiring and rising jobless rates have San Francisco Fed President Mary Daly eyeing Fed rate cuts. If the Fed cuts rates soon, growth ETFs like RPG and IVW could benefit.",
+            "date": "2025-08-07",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/fed-cut-rates-ahead-growth-102500795.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Monster AI Earnings & Economic Resilience to Power Up Growth ETFs",
+            "summary": "Meta and Microsoft surge on earnings, lifting ETFs like QQQ, VOO, and VUG as AI momentum and U.S. growth drive market gains.",
+            "date": "2025-08-01",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/monster-ai-earnings-economic-resilience-103000286.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Do Large-Cap and Growth ETFs Hold the Winning Hand?",
+            "summary": "With AI-driven momentum and Fed cut hopes fueling gains, growth and large-cap ETFs like VUG and VOO are drawing investor focus.",
+            "date": "2025-07-10",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/large-cap-growth-etfs-hold-205700647.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.5
+          }
+        ],
+        "key_developments": [
+          "Strong earnings performance driving positive sentiment"
+        ],
+        "sentiment_drivers": [
+          "Positive coverage in 6 recent news items"
+        ],
+        "risk_factors": [
+          "Negative sentiment in 4 recent news items"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of 0.15 suggests a slightly positive tone, despite the presence of negative articles with high sentiment scores (-1.00 and -0.50).",
+          "Market reactions and developments indicate a cautious approach, with some articles advising on protective measures (put options) and others highlighting the importance of long-term investing.",
+          "The future outlook appears uncertain, with some articles suggesting growth ETFs as a viable option, while others express concerns about the market's current state and the potential risks associated with growth ETFs."
+        ],
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "analysis_type": "news_sentiment"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='ivw', recommendation=<RecommendationType.SELL: 'Sell'>, confidence='Medium', target_price=np.float64(105.14429679839891), upside_potential=np.float64(-13.504266928429029), risk_level='Medium', bullish_signals=['Technical: Strong Uptrend'], bearish_signals=['TECHNICAL indicates Sell', 'AI_INSIGHTS indicates Strong Sell'], key_risks=['Low confidence in analyst_consensus analysis'], summary='Consensus: Sell | Confidence: Medium | Analyses: 4 | TECHNICAL: Sell | ANALYST_CONSENSUS: Hold | AI_INSIGHTS: Strong Sell | NEWS_SENTIMENT: Hold')",
+    "execution_time_seconds": 14.98,
+    "analyses_count": 7
+  },
+  "aapl": {
+    "ticker": "aapl",
+    "company_type": "mature_profitable",
+    "financial_metrics": {
+      "market_cap": 3857462329344,
+      "sector": "Technology",
+      "industry": "Consumer Electronics",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Apple Inc.",
+      "enterprise_value": 3881824681984,
+      "total_revenue": 408624988160,
+      "net_income": 99280003072,
+      "current_revenue": "$408,624,988,160.00",
+      "yearly_revenue_growth": 0.096,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 2.021994077514121,
+      "calculated_quarterly_growth": -1.3873887100326137,
+      "free_cash_flow": 108807000000.0,
+      "total_debt": 101698002944,
+      "total_cash": 55372001280,
+      "shares_outstanding": 14840390000,
+      "current_price": 259.93,
+      "beta": 1.094,
+      "pe_ratio": 39.443092,
+      "pb_ratio": 58.661697,
+      "ps_ratio": 9.440104,
+      "peg_ratio": null,
+      "roe": 1.49814,
+      "roa": 0.24545999,
+      "debt_to_equity": 1.54486,
+      "current_ratio": 0.868,
+      "revenue_growth": 0.096,
+      "earnings_growth": 0.121,
+      "dividend_yield": 0.4,
+      "payout_ratio": 0.1533,
+      "fifty_two_week_high": 265.29,
+      "fifty_two_week_low": 169.21
+    },
+    "quality_score": {
+      "quality_score": 30,
+      "grade": "D",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 259.92999267578125,
+        "predicted_price": 327.87734265694456,
+        "price_targets": {
+          "short_term": 302.3970864140083,
+          "medium_term": 344.86418015223535,
+          "support_level": 160.35699746574
+        },
+        "recommendation": "Strong Buy",
+        "ma_20": 254.67799911499023,
+        "ma_50": 243.54799896240235,
+        "ma_200": 222.04965339660646,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.32675793432732153,
+        "high_52w": 265.2900085449219,
+        "low_52w": 168.79683943762106,
+        "distance_from_high": -0.020204363890444096,
+        "distance_from_low": 0.5398984574698656,
+        "volume_trend": "Average Daily Volume:54065907.16334661, Trend: Normal",
+        "rsi_14": 61.46161905549601,
+        "macd_line": 4.1015229543030784,
+        "macd_signal": 4.040157945062491,
+        "macd_histogram": 0.0613650092405873,
+        "bb_upper": 264.66738648416975,
+        "bb_lower": 244.6886117458107,
+        "stoch_k": 76.95314571743515,
+        "stoch_d": 78.71707155444363,
+        "technical_signals": {
+          "recommendation": "Strong Buy",
+          "bullish_signals": 6,
+          "bearish_signals": 2,
+          "net_signal": 4,
+          "signal_details": [
+            "Strong MA uptrend",
+            "RSI bearish zone",
+            "MACD bullish crossover",
+            "MACD histogram positive",
+            "Near 52-week high"
+          ]
+        },
+        "analysis_type": "technical"
+      },
+      "competitive_position": {
+        "method": "Competitive Position Analysis",
+        "applicable": true,
+        "overall_position_score": 9.9,
+        "competitive_strength": "Dominant",
+        "market_share_estimate": 0.15,
+        "position_trend": "Stable",
+        "key_differentiators": [
+          "Scale Economics",
+          "Technology Leadership",
+          "Superior Profitability"
+        ],
+        "competitive_advantages": [
+          "Scale Economics",
+          "Technology Leadership",
+          "Financial Performance"
+        ],
+        "competitive_threats": [],
+        "strategic_risks": [
+          "High Leverage Risk"
+        ],
+        "confidence": "Medium",
+        "recommendation": "Strong Buy",
+        "analysis_type": "competitive_position"
+      },
+      "management_quality": {
+        "method": "Management Quality Analysis",
+        "applicable": true,
+        "overall_quality_score": 8.0,
+        "management_quality": "Excellent",
+        "governance_risk": "Low",
+        "executive_count": 5,
+        "insider_ownership": 0.0197,
+        "strengths": [
+          "Low overall governance risk profile",
+          "Strong financial performance under current management"
+        ],
+        "concerns": [
+          "Very low insider ownership may indicate lack of alignment"
+        ],
+        "key_insights": [
+          "Leadership team of 5 key executives identified",
+          "Average executive compensation: $7,896,489"
+        ],
+        "confidence": "Medium",
+        "recommendation": "Strong Buy",
+        "analysis_type": "management_quality"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 259.93,
+        "predicted_price": 252.34805,
+        "target_high": 315.0,
+        "target_low": 175.0,
+        "upside_downside_pct": -2.916919939983844,
+        "recommendation": "Buy",
+        "recommendation_mean": 2.04167,
+        "num_analysts": 41,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 229.41514610266478,
+        "current_price": 259.93,
+        "upside_downside_pct": -11.739642941305439,
+        "total_equity_value": 3404610240070.5254,
+        "confidence": "Medium",
+        "valuation": "Fair Value",
+        "recommendation": "Sell",
+        "dcf_calculations": {
+          "wacc": 0.05930713170390513,
+          "cost_equity": 0.08380418018800001,
+          "ev_ebitda_multiple": 27.395,
+          "fcf_cagr": 0.07325570318245478,
+          "ebitda_cagr": 0.030272871764797538,
+          "fcf_future": 154943321268.82855,
+          "ebitda_future": 156315900858.6901,
+          "terminal_value_pg": 5445487552970.872,
+          "terminal_value_ebitda_multiple": 2250948972365.137,
+          "average_terminal_value": 3848218262668.005,
+          "projected_free_cash_flows": [
+            116777733296.17336,
+            125332368264.8377,
+            134513679033.60077,
+            144367573178.8662,
+            154943321268.82855
+          ],
+          "present_value_free_cash_flows": [
+            110239731047.91177,
+            111691327777.77095,
+            113162038606.02377,
+            114652115220.17397,
+            116161812621.85493
+          ],
+          "pv_fcf": 565907025273.7355,
+          "pv_terminal_value": 2885029216460.79,
+          "enterprise_value": 3450936241734.5254,
+          "adjusted_debt": 46326001664,
+          "equity_value": 3404610240070.5254,
+          "share_price": 229.41514610266478,
+          "ticker_symbol": "aapl",
+          "last_close_price": 258.45
+        },
+        "parameters_used": {
+          "max_cagr": "16.0%",
+          "terminal_growth": "3.0%",
+          "sector": "Technology",
+          "industry": "Consumer Electronics",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "business_model": {
+        "method": "Business Model Analysis",
+        "applicable": true,
+        "business_model_type": "Platform",
+        "primary_revenue_stream": "Mixed",
+        "revenue_quality": "Good",
+        "recurring_percentage": 0.5,
+        "scalability_score": 8.5,
+        "growth_consistency": null,
+        "strengths": [],
+        "risks": [],
+        "competitive_moat": "Strong - Network effects and ecosystem lock-in",
+        "confidence": "Medium",
+        "recommendation": "Buy",
+        "analysis_type": "business_model"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 20.0,
+          "ps": 6.0,
+          "pb": 3.5,
+          "ev_ebitda": 14.4
+        },
+        "fair_values": {
+          "pe_fair_value": 133.7970269945736,
+          "ps_fair_value": 165.20791764636914
+        },
+        "predicted_price": 149.50247232047138,
+        "current_price": 259.93,
+        "upside_downside_pct": -42.48356391317994,
+        "recommendation": "Strong Sell",
+        "confidence": "Medium",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "parameters_used": {
+          "pe_multiple": "20.0x",
+          "ps_multiple": "6.0x",
+          "quality_adjustment": "D"
+        },
+        "peer_tickers": [
+          "AAPL",
+          "MSFT",
+          "GOOGL",
+          "META"
+        ],
+        "peer_averages": {
+          "pe_ratio": 32.8717125,
+          "ps_ratio": 10.461594,
+          "pb_ratio": 21.982553,
+          "ev_ebitda": 23.25725,
+          "roe": 0.64642999,
+          "profit_margin": 0.3288800025
+        },
+        "current_multiples": {
+          "pe_ratio": 39.443092,
+          "ps_ratio": 9.440104,
+          "pb_ratio": 58.661697,
+          "ev_ebitda": 27.395,
+          "roe": 1.49814,
+          "profit_margin": 0.24295999
+        },
+        "relative_position": {
+          "pe_ratio": "Premium",
+          "ps_ratio": "Inline",
+          "pb_ratio": "Premium",
+          "ev_ebitda": "Premium",
+          "roe": "Superior",
+          "profit_margin": "Below"
+        },
+        "peer_insights": [
+          "Trading at premium to peer group",
+          "Underperforming peers on profitability"
+        ],
+        "analysis_type": "comparable"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 259.93,
+        "predicted_price": 285.92300000000006,
+        "recommendation": "Strong Buy",
+        "confidence": "High",
+        "ai_insights": {
+          "market_position": "Strong",
+          "growth_prospects": "Moderate",
+          "competitive_advantage": "Strong",
+          "management_quality": "Excellent",
+          "industry_outlook": "Very Positive",
+          "key_strengths": [
+            "Diversified product portfolio with a strong presence in the consumer electronics market",
+            "Brand loyalty and customer retention",
+            "Strong financial performance with high revenue growth and return on equity (ROE)"
+          ],
+          "key_risks": [
+            "Dependence on a few key products, such as iPhones, which can be vulnerable to market fluctuations",
+            "Increasing competition from other technology companies, such as Samsung and Huawei",
+            "Regulatory risks related to data privacy and security"
+          ],
+          "ai_method": "LLM"
+        },
+        "revenue_trends": {
+          "trend_assessment": "Strong Growth",
+          "growth_rate": 0.096,
+          "growth_consistency": "Consistent",
+          "future_outlook": "Very Positive",
+          "ai_method": "LLM"
+        },
+        "market_analysis": {
+          "market_cap_category": "Mega Cap",
+          "sector": "Technology",
+          "industry": "Consumer Electronics",
+          "beta": 1.094
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [],
+        "analysis_type": "ai_insights"
+      },
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
+        "applicable": true,
+        "overall_sentiment_score": -0.75,
+        "sentiment_rating": "Very Negative",
+        "news_count": 10,
+        "recent_news": [
+          {
+            "title": "What is quantum computing, and why are Big Tech and Washington interested in it?",
+            "summary": "Quantum computing is gaining steam among Big Tech companies and drawing increased interest from Washington. Here's what the technology is and what it means for the future.",
+            "date": "2025-10-23",
+            "source": "Yahoo Finance",
+            "url": "https://finance.yahoo.com/news/what-is-quantum-computing-and-why-are-big-tech-and-washington-interested-in-it-153254260.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "AI hype is real, but a Nobel-winning economist warns profits aren't guaranteed",
+            "summary": "Investors are betting big on AI \u2014 but Richard Thaler says don't count on easy profits.",
+            "date": "2025-10-22",
+            "source": "Yahoo Finance",
+            "url": "https://finance.yahoo.com/news/ai-hype-is-real-but-a-nobel-winning-economist-warns-profits-arent-guaranteed-192514082.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Introducing Build Mode: TechCrunch\u2019s new podcast for founders",
+            "summary": "Build Mode is our new podcast that will be a survival guide for early-stage founders navigating the messy, high-stakes chaos of building a company from scratch, hosted by Startup Battlefield Editor Isabelle Johannessen.",
+            "date": "2025-10-23",
+            "source": "TechCrunch",
+            "url": "https://finance.yahoo.com/news/introducing-build-mode-techcrunch-podcast-181839863.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Boca Raton sees growth with new companies as office campus draws even more tenants",
+            "summary": "Activity is increasing at the Boca Raton Innovation Campus, breathing additional life into the former IBM campus as more tenants move into the 1.7 million-square-foot office park. Three new tenants and two tenant renewals recently were secured at BRiC, according to CP Group, the commercial real estate and management firm behind the redevelopment. This adds approximately 266,000 square feet of ...",
+            "date": "2025-10-23",
+            "source": "South Florida Sun Sentinel",
+            "url": "https://www.sun-sentinel.com/2025/10/23/boca-raton-sees-growth-with-new-companies-as-office-campus-draws-even-more-tenants/",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "The Market Loves Junk Stocks. How to Avoid Getting Taken Out With the Trash.",
+            "summary": "It\u2019s a stock market only a sanitation worker could love.  Of late, investors scrounging for stocks have preferred junk\u2014smaller companies with poor fundamentals and exorbitant valuations\u2014over quality companies with healthy sales and earnings growth, solid balance sheets, and more attractive prices.  Goldman Sachs pointed out in a recent report that a basket of heavily shorted stocks, often considered the trashiest of the trash, had surged 24% in just the past month.",
+            "date": "2025-10-23",
+            "source": "Barrons.com",
+            "url": "https://www.barrons.com/articles/stock-market-junk-quality-buy-sell-4970cae8?siteid=yhoof2&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Tech, Media & Telecom Roundup: Market Talk",
+            "summary": "Find insight on IMB, T-Mobile and more in the latest Market Talks covering technology, media and telecom.",
+            "date": "2025-10-23",
+            "source": "The Wall Street Journal",
+            "url": "https://www.wsj.com/articles/tech-media-telecom-roundup-market-talk-7adecefa?siteid=yhoof2&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Apple loses UK lawsuit over App Store commission charges",
+            "summary": "Investing.com -- Apple has lost a lawsuit in London that accused the tech giant of abusing its dominant market position by charging app developers a 30% commission through its App Store.",
+            "date": "2025-10-23",
+            "source": "Investing.com",
+            "url": "https://finance.yahoo.com/news/apple-loses-uk-lawsuit-over-161253257.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "T-Mobile Stock Falls Amid Views Wireless Competition Will Intensify",
+            "summary": "T-Mobile reported Q3 earnings and revenue that edged by consensus estimates. The wireless services provider added more high-spending phone subscribers than expected.",
+            "date": "2025-10-23",
+            "source": "Investor's Business Daily",
+            "url": "https://www.investors.com/news/technology/tmobile-stock-tmus-stock-tmobile-earnings-q32025/?src=A00220&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "What is the car finance scandal? FCA, Lloyds and Barclays reveal new details",
+            "summary": "Payouts relating to the car financing scandal are expected to be \u00a3700 on average per agreement, the FCA said.",
+            "date": "2025-10-23",
+            "source": "Yahoo Finance UK",
+            "url": "https://uk.finance.yahoo.com/news/car-finance-claimants-compensation-what-to-know-160837788.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Warren Buffett\u2019s Secret Weapon for 2026",
+            "summary": "As Warren Buffett prepares to hand over leadership of Berkshire Hathaway (NYSE:BRK-A)(NYSE:BRK-B) to Greg Abel by year\u2019s end, his strategy remains focused on resilience amid market uncertainty. Even in his final months at the helm, Buffett has continued trimming major stakes in Apple (NASDAQ:AAPL) and Bank of America (NYSE:BAC), reducing exposure to high-valuation sectors. At ... Warren Buffett\u2019s Secret Weapon for 2026",
+            "date": "2025-10-23",
+            "source": "24/7 Wall St.",
+            "url": "https://247wallst.com/investing/2025/10/23/warren-buffetts-secret-weapon-for-2026/",
+            "sentiment": "neutral",
+            "sentiment_score": -0.5
+          }
+        ],
+        "key_developments": [
+          "Earnings concerns impacting market sentiment"
+        ],
+        "sentiment_drivers": [
+          "Positive coverage in 1 recent news items"
+        ],
+        "risk_factors": [
+          "Negative sentiment in 9 recent news items",
+          "Overall negative news sentiment may impact stock performance"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of -0.75 suggests a slightly negative tone, despite the presence of a positive article about Boca Raton's growth.",
+          "The majority of articles focus on negative aspects of emerging technologies (quantum computing and AI) and market trends (junk stocks), indicating a prevailing sense of caution and skepticism.",
+          "The negative sentiment is likely driven by warnings from experts, such as the Nobel-winning economist, about the potential risks and uncertainties associated with these emerging technologies and market trends."
+        ],
+        "confidence": "Medium",
+        "recommendation": "Sell",
+        "analysis_type": "news_sentiment"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='aapl', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(242.41134488830212), upside_potential=np.float64(-6.739756196327323), risk_level='Low', bullish_signals=['TECHNICAL indicates Strong Buy', 'Technical: Strong Uptrend', 'COMPETITIVE_POSITION indicates Strong Buy', 'MANAGEMENT_QUALITY indicates Strong Buy', 'ANALYST_CONSENSUS indicates Buy', 'BUSINESS_MODEL indicates Buy', 'AI_INSIGHTS indicates Strong Buy'], bearish_signals=['DCF indicates Sell', 'COMPARABLE indicates Strong Sell', 'NEWS_SENTIMENT indicates Sell'], key_risks=[], summary='Consensus: Hold | Confidence: Low | Analyses: 9 | TECHNICAL: Strong Buy | COMPETITIVE_POSITION: Strong Buy | MANAGEMENT_QUALITY: Strong Buy | ANALYST_CONSENSUS: Buy | DCF: Sell | BUSINESS_MODEL: Buy | COMPARABLE: Strong Sell | AI_INSIGHTS: Strong Buy | NEWS_SENTIMENT: Sell')",
+    "analyst_comparison": {
+      "comparisons": [
+        "ComparisonResult(ticker='aapl', method='technical', our_price=np.float64(327.87734265694456), analyst_target=252.34805, current_price=259.93, our_upside=np.float64(26.140631191838015), analyst_upside=-2.916919939983844, deviation_score=np.float64(29.05755113182186), alignment='Divergent', both_bullish=False, both_bearish=np.False_, analyst_count=41)",
+        "ComparisonResult(ticker='aapl', method='analyst_consensus', our_price=252.34805, analyst_target=252.34805, current_price=259.93, our_upside=-2.916919939983844, analyst_upside=-2.916919939983844, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=False, both_bearish=False, analyst_count=41)",
+        "ComparisonResult(ticker='aapl', method='dcf', our_price=np.float64(229.41514610266478), analyst_target=252.34805, current_price=259.93, our_upside=np.float64(-11.739642941305439), analyst_upside=-2.916919939983844, deviation_score=np.float64(8.822723001321595), alignment='Investment_Aligned', both_bullish=np.False_, both_bearish=False, analyst_count=41)",
+        "ComparisonResult(ticker='aapl', method='comparable', our_price=149.50247232047138, analyst_target=252.34805, current_price=259.93, our_upside=-42.48356391317994, analyst_upside=-2.916919939983844, deviation_score=39.5666439731961, alignment='Directional_Aligned', both_bullish=False, both_bearish=False, analyst_count=41)",
+        "ComparisonResult(ticker='aapl', method='ai_insights', our_price=285.92300000000006, analyst_target=252.34805, current_price=259.93, our_upside=10.00000000000002, analyst_upside=-2.916919939983844, deviation_score=12.916919939983863, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=41)"
+      ],
+      "summary": {
+        "analyst_consensus": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 0.0
+        },
+        "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 29.05755113182186
+        },
+        "comparable": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 39.5666439731961
+        },
+        "dcf": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 8.822723001321595
+        },
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 12.916919939983863
+        }
+      }
+    },
+    "execution_time_seconds": 16.07,
+    "analyses_count": 9
+  },
+  "chrs": {
+    "ticker": "chrs",
+    "company_type": "turnaround",
+    "financial_metrics": {
+      "market_cap": 194680672,
+      "sector": "Healthcare",
+      "industry": "Biotechnology",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Coherus Oncology, Inc.",
+      "enterprise_value": -1346178,
+      "total_revenue": 272208992,
+      "net_income": 59134000,
+      "current_revenue": "$272,208,992.00",
+      "yearly_revenue_growth": -0.004,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 3.776958840633795,
+      "calculated_quarterly_growth": 34.938807737860245,
+      "free_cash_flow": -20440000.0,
+      "total_debt": 41029000,
+      "total_cash": 237636992,
+      "shares_outstanding": 116227275,
+      "current_price": 1.675,
+      "beta": 0.978,
+      "pe_ratio": 3.1603775,
+      "pb_ratio": 1.6246362,
+      "ps_ratio": 0.71518826,
+      "peg_ratio": null,
+      "roe": 3.31107,
+      "roa": -0.09925,
+      "debt_to_equity": 0.34240000000000004,
+      "current_ratio": 1.442,
+      "revenue_growth": -0.004,
+      "earnings_growth": null,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 2.43,
+      "fifty_two_week_low": 0.66
+    },
+    "quality_score": {
+      "quality_score": 40,
+      "grade": "C",
+      "data_quality": "High",
+      "missing_penalty": 0
+    },
+    "analyses": {
+      "competitive_position": {
+        "method": "Competitive Position Analysis",
+        "applicable": true,
+        "overall_position_score": 3.5999999999999996,
+        "competitive_strength": "Weak",
+        "market_share_estimate": 0.01,
+        "position_trend": "Weakening",
+        "key_differentiators": [
+          "Regulatory Barriers",
+          "Superior Profitability"
+        ],
+        "competitive_advantages": [
+          "Financial Performance",
+          "Regulatory Barriers"
+        ],
+        "competitive_threats": [
+          "Execution Risk",
+          "Capital Requirements"
+        ],
+        "strategic_risks": [
+          "Execution Risk"
+        ],
+        "confidence": "Medium",
+        "recommendation": "Sell",
+        "analysis_type": "competitive_position"
+      },
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 1.6749999523162842,
+        "predicted_price": 3.2782385894745634,
+        "price_targets": {
+          "short_term": 2.4766192708954238,
+          "medium_term": 3.2782385894745634,
+          "breakout_target": 2.5515000700950625,
+          "support_level": 0.6270000249147415
+        },
+        "recommendation": "Hold",
+        "ma_20": 1.69375,
+        "ma_50": 1.4458999991416932,
+        "ma_200": 1.0906149974465371,
+        "trend": "Strong Uptrend",
+        "volatility_annual": 0.957157422566628,
+        "high_52w": 2.430000066757202,
+        "low_52w": 0.6600000262260437,
+        "distance_from_high": -0.31069962703682313,
+        "distance_from_low": 1.537878614784498,
+        "volume_trend": "Average Daily Volume:2407574.545816733, Trend: Below Average",
+        "rsi_14": 53.64245783252212,
+        "macd_line": 0.07520479342273023,
+        "macd_signal": 0.09712266307397516,
+        "macd_histogram": -0.021917869651244926,
+        "bb_upper": 1.834457810889468,
+        "bb_lower": 1.5530421891105322,
+        "stoch_k": 31.613101990550128,
+        "stoch_d": 43.507694777303136,
+        "technical_signals": {
+          "recommendation": "Hold",
+          "bullish_signals": 3,
+          "bearish_signals": 4,
+          "net_signal": -1,
+          "signal_details": [
+            "Strong MA uptrend",
+            "RSI bearish zone",
+            "MACD bearish crossover",
+            "MACD histogram negative"
+          ]
+        },
+        "analysis_type": "technical"
+      },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 1.675,
+        "predicted_price": 5.66667,
+        "target_high": 7.0,
+        "target_low": 4.0,
+        "upside_downside_pct": 238.30865671641791,
+        "recommendation": "Hold",
+        "recommendation_mean": null,
+        "num_analysts": 3,
+        "confidence": "Low",
+        "analysis_type": "analyst_consensus"
+      },
+      "management_quality": {
+        "method": "Management Quality Analysis",
+        "applicable": true,
+        "overall_quality_score": 4.5,
+        "management_quality": "Average",
+        "governance_risk": "Very High",
+        "executive_count": 5,
+        "insider_ownership": 0.06391,
+        "strengths": [
+          "Optimal insider ownership alignment",
+          "Strong financial performance under current management"
+        ],
+        "concerns": [
+          "High governance risk requires attention"
+        ],
+        "key_insights": [
+          "Leadership team of 5 key executives identified",
+          "Average executive compensation: $1,320,658"
+        ],
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "analysis_type": "management_quality"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": -0.4417924257130932,
+        "current_price": 1.675,
+        "upside_downside_pct": -126.37566720675184,
+        "total_equity_value": -51348329.756272756,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "dcf_calculations": {
+          "wacc": 0.07001410902562574,
+          "cost_equity": 0.079109659956,
+          "ev_ebitda_multiple": 0.016,
+          "fcf_cagr": 0.1623567127287205,
+          "ebitda_cagr": 0.1405230241892385,
+          "fcf_future": -8429007.764214851,
+          "ebitda_future": 117606103.51005392,
+          "terminal_value_pg": 0,
+          "terminal_value_ebitda_multiple": 1881697.6561608627,
+          "average_terminal_value": 940848.8280804313,
+          "projected_free_cash_flows": [
+            -17121428.791824955,
+            -14341649.895965388,
+            -12013186.763750251,
+            -10062765.251391586,
+            -8429007.764214851
+          ],
+          "present_value_free_cash_flows": [
+            -16001124.32855305,
+            -12526222.102632696,
+            -9805950.940865703,
+            -7676430.53642289,
+            -6009369.834285902
+          ],
+          "pv_fcf": -52019097.74276024,
+          "pv_terminal_value": 670767.9864874866,
+          "enterprise_value": -51348329.756272756,
+          "adjusted_debt": 0,
+          "equity_value": -51348329.756272756,
+          "share_price": -0.4417924257130932,
+          "ticker_symbol": "chrs",
+          "last_close_price": 1.68
+        },
+        "parameters_used": {
+          "max_cagr": "27.0%",
+          "terminal_growth": "3.5%",
+          "sector": "Healthcare",
+          "industry": "Biotechnology",
+          "quality_adjustment": "C",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
+      },
+      "business_model": {
+        "method": "Business Model Analysis",
+        "applicable": true,
+        "business_model_type": "Manufacturing",
+        "primary_revenue_stream": "Product Sales",
+        "revenue_quality": "Poor",
+        "recurring_percentage": 0.3,
+        "scalability_score": 4.0,
+        "growth_consistency": null,
+        "strengths": [],
+        "risks": [],
+        "competitive_moat": "Weak to Moderate - Scale and brand advantages",
+        "confidence": "Medium",
+        "recommendation": "Sell",
+        "analysis_type": "business_model"
+      },
+      "comparable": {
+        "method": "Comparable Analysis",
+        "applicable": true,
+        "target_multiples": {
+          "pe": 40.5,
+          "ps": 12.0,
+          "pb": 4.0,
+          "ev_ebitda": 22.5
+        },
+        "fair_values": {
+          "pe_fair_value": 20.60555063344641,
+          "ps_fair_value": 28.10448669643163
+        },
+        "predicted_price": 24.355018664939017,
+        "current_price": 1.675,
+        "upside_downside_pct": 1354.030965070986,
+        "recommendation": "Strong Buy",
+        "confidence": "Medium",
+        "sector": "Healthcare",
+        "industry": "Biotechnology",
+        "parameters_used": {
+          "pe_multiple": "40.5x",
+          "ps_multiple": "12.0x",
+          "quality_adjustment": "C"
+        },
+        "peer_tickers": [
+          "GILD",
+          "AMGN",
+          "BIIB",
+          "REGN"
+        ],
+        "peer_averages": {
+          "pe_ratio": 19.1132475,
+          "ps_ratio": 4.031700275,
+          "pb_ratio": 8.003745425,
+          "ev_ebitda": 11.388,
+          "roe": 0.39252250099999997,
+          "profit_margin": 0.21874500000000002
+        },
+        "current_multiples": {
+          "pe_ratio": 3.1603775,
+          "ps_ratio": 0.71518826,
+          "pb_ratio": 1.6246362,
+          "ev_ebitda": 0.016,
+          "roe": 3.31107,
+          "profit_margin": 0.66033995
+        },
+        "relative_position": {
+          "pe_ratio": "Discount",
+          "ps_ratio": "Discount",
+          "pb_ratio": "Discount",
+          "ev_ebitda": "Discount",
+          "roe": "Superior",
+          "profit_margin": "Superior"
+        },
+        "peer_insights": [
+          "Trading at discount to peer group",
+          "Superior profitability vs peers"
+        ],
+        "analysis_type": "comparable"
+      },
+      "ai_insights": {
+        "method": "AI Insights Analysis",
+        "applicable": true,
+        "current_price": 1.675,
+        "predicted_price": 1.675,
+        "recommendation": "Sell",
+        "confidence": "High",
+        "ai_insights": {
+          "market_position": "Moderate",
+          "growth_prospects": "Moderate",
+          "competitive_advantage": "Moderate",
+          "management_quality": "Good",
+          "industry_outlook": "Neutral",
+          "key_strengths": [
+            "Strong revenue growth in the past, despite recent decline",
+            "High return on equity (ROE) of 331.1%",
+            "Presence in the biotechnology industry with potential for future growth"
+          ],
+          "key_risks": [
+            "Negative revenue growth of -0.4% in the recent period",
+            "Market volatility in the biotechnology sector",
+            "Dependence on a few key products and potential loss of market share"
+          ],
+          "ai_method": "LLM"
+        },
+        "revenue_trends": {
+          "trend_assessment": "Declining",
+          "growth_rate": -0.004,
+          "growth_consistency": "Consistent",
+          "future_outlook": "Negative",
+          "ai_method": "LLM"
+        },
+        "market_analysis": {
+          "market_cap_category": "Micro Cap",
+          "sector": "Healthcare",
+          "industry": "Biotechnology",
+          "beta": 0.978
+        },
+        "ai_methods_used": {
+          "insights": "LLM",
+          "revenue_trends": "LLM"
+        },
+        "risk_factors": [],
+        "analysis_type": "ai_insights"
+      },
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
+        "applicable": true,
+        "overall_sentiment_score": 0.272,
+        "sentiment_rating": "Positive",
+        "news_count": 10,
+        "recent_news": [
+          {
+            "title": "3 Promising Penny Stocks With Market Caps At Least $100M",
+            "summary": "Major stock indexes in the United States have recently reached new highs, with the S&P 500 and Nasdaq Composite posting their third consecutive week of gains. In this thriving market landscape, investors often look beyond established giants to uncover hidden gems that might offer unique growth opportunities. Penny stocks, though sometimes seen as a relic of past market eras, continue to represent potential for significant returns when they come from smaller or newer companies with strong...",
+            "date": "2025-09-22",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/3-promising-penny-stocks-market-120516309.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.8
+          },
+          {
+            "title": "August 2025's Top Penny Stocks To Watch",
+            "summary": "The U.S. market has recently experienced a surge, with major indices like the Dow Jones reaching record highs following Federal Reserve Chair Jerome Powell's indication of potential interest rate cuts. In this context, the allure of penny stocks remains significant, offering investors access to smaller or newer companies that might not be on everyone's radar but could present unique opportunities for growth. Despite their historical connotations, penny stocks can still hold value when they...",
+            "date": "2025-08-22",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/august-2025s-top-penny-stocks-180844002.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.8
+          },
+          {
+            "title": "Need To Know: Analysts Are Much More Bullish On Coherus Oncology, Inc. (NASDAQ:CHRS) Revenues",
+            "summary": "NasdaqGM:CHRS 1 Year Share Price vs Fair Value Explore Coherus Oncology's Fair Values from the Community and select...",
+            "date": "2025-08-10",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/know-analysts-much-more-bullish-140328513.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Coherus Oncology Inc (CHRS) Q2 2025 Earnings Call Highlights: Strong Revenue Growth and ...",
+            "summary": "Coherus Oncology Inc (CHRS) reports a 36% revenue increase and outlines strategic initiatives to bolster its oncology pipeline and market presence.",
+            "date": "2025-08-08",
+            "source": "GuruFocus.com",
+            "url": "https://finance.yahoo.com/news/coherus-oncology-inc-chrs-q2-074025855.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.8
+          },
+          {
+            "title": "Coherus Oncology (CHRS) Reports Q2 Loss, Beats Revenue Estimates",
+            "summary": "Coherus Oncology (CHRS) delivered earnings and revenue surprises of -9.68% and +1.32%, respectively, for the quarter ended June 2025. Do the numbers hold clues to what lies ahead for the stock?",
+            "date": "2025-08-07",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/coherus-oncology-chrs-reports-q2-222502966.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.32
+          },
+          {
+            "title": "Coherus Oncology: Q2 Earnings Snapshot",
+            "summary": "REDWOOD CITY, Calif. AP) \u2014 Coherus Oncology, Inc. CHRS) on Thursday reported net income of $297.8 million in its second quarter.",
+            "date": "2025-08-07",
+            "source": "Associated Press Finance",
+            "url": "https://finance.yahoo.com/news/coherus-oncology-q2-earnings-snapshot-213032068.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          },
+          {
+            "title": "Coherus Oncology, Inc. (NASDAQ:CHRS) is largely controlled by institutional shareholders who own 54% of the company",
+            "summary": "NasdaqGM:CHRS 1 Year Share Price vs Fair Value Explore Coherus Oncology's Fair Values from the Community and select...",
+            "date": "2025-08-06",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/coherus-oncology-inc-nasdaq-chrs-113203531.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Strength Seen in Krystal Biotech (KRYS): Can Its 4.2% Jump Turn into More Strength?",
+            "summary": "Krystal Biotech (KRYS) was a big mover last session on higher-than-average trading volume. The latest trend in earnings estimate revisions might not help the stock continue moving higher in the near term.",
+            "date": "2025-06-25",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/strength-seen-krystal-biotech-krys-135500976.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Coherus BioSciences, Inc. (CHRS): A Bull Case Theory",
+            "summary": "We came across a bullish thesis on Coherus BioSciences, Inc. (CHRS) on Steve Wagner\u2019s Substack. In this article, we will summarize the bulls\u2019 thesis on CHRS. Coherus BioSciences, Inc. (CHRS)\u2019s share was trading at $0.77 as of 30th May. CHRS\u2019s trailing P/E was 1.77 according to Yahoo Finance. Coherus BioSciences (CHRS), long overlooked by Wall Street, is [\u2026]",
+            "date": "2025-06-06",
+            "source": "Insider Monkey",
+            "url": "https://finance.yahoo.com/news/coherus-biosciences-inc-chrs-bull-202910880.html",
+            "sentiment": "neutral",
+            "sentiment_score": 1.0
+          },
+          {
+            "title": "Coherus BioSciences First Quarter 2025 Earnings: Misses Expectations",
+            "summary": "Coherus BioSciences ( NASDAQ:CHRS ) First Quarter 2025 Results Key Financial Results Revenue: US$7.60m (down 90% from...",
+            "date": "2025-05-14",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/coherus-biosciences-first-quarter-2025-111046315.html",
+            "sentiment": "neutral",
+            "sentiment_score": -1.0
+          }
+        ],
+        "key_developments": [],
+        "sentiment_drivers": [
+          "Positive coverage in 6 recent news items"
+        ],
+        "risk_factors": [
+          "Negative sentiment in 2 recent news items"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of 0.27 suggests a generally negative tone in the news articles, despite some positive mentions of specific stocks like Coherus Oncology, Inc. (CHRS) and penny stocks with market caps at least $100M.",
+          "Market reactions and developments seem to be mixed, with some analysts being bullish on Coherus Oncology, Inc. (CHRS) revenues, while others report a Q2 loss that beats revenue estimates, indicating a complex market situation.",
+          "The future outlook appears uncertain, with a need to balance positive developments in specific stocks with the overall negative sentiment, suggesting that investors should approach the market with caution and carefully consider various factors before making investment decisions."
+        ],
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "analysis_type": "news_sentiment"
+      }
+    },
+    "final_recommendation": "Recommendation(ticker='chrs', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(9.37420936187865), upside_potential=np.float64(459.65430619358915), risk_level='Medium', bullish_signals=['Technical: Strong Uptrend', 'COMPARABLE indicates Strong Buy'], bearish_signals=['COMPETITIVE_POSITION indicates Sell', 'DCF indicates Strong Sell', 'DCF: Overvalued', 'BUSINESS_MODEL indicates Sell', 'AI_INSIGHTS indicates Sell'], key_risks=['High volatility', 'Low confidence in analyst_consensus analysis'], summary='Consensus: Hold | Confidence: Low | Analyses: 9 | COMPETITIVE_POSITION: Sell | TECHNICAL: Hold | ANALYST_CONSENSUS: Hold | MANAGEMENT_QUALITY: Hold | DCF: Strong Sell | BUSINESS_MODEL: Sell | COMPARABLE: Strong Buy | AI_INSIGHTS: Sell | NEWS_SENTIMENT: Hold')",
+    "analyst_comparison": {
+      "comparisons": [
+        "ComparisonResult(ticker='chrs', method='technical', our_price=np.float64(3.2782385894745634), analyst_target=5.66667, current_price=1.675, our_upside=np.float64(95.71573668504855), analyst_upside=238.30865671641791, deviation_score=np.float64(142.59292003136937), alignment='Directional_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=3)",
+        "ComparisonResult(ticker='chrs', method='analyst_consensus', our_price=5.66667, analyst_target=5.66667, current_price=1.675, our_upside=238.30865671641791, analyst_upside=238.30865671641791, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=True, both_bearish=False, analyst_count=3)",
+        "ComparisonResult(ticker='chrs', method='comparable', our_price=24.355018664939017, analyst_target=5.66667, current_price=1.675, our_upside=1354.030965070986, analyst_upside=238.30865671641791, deviation_score=1115.722308354568, alignment='Directional_Aligned', both_bullish=True, both_bearish=False, analyst_count=3)",
+        "ComparisonResult(ticker='chrs', method='ai_insights', our_price=1.675, analyst_target=5.66667, current_price=1.675, our_upside=0.0, analyst_upside=238.30865671641791, deviation_score=238.30865671641791, alignment='Directional_Aligned', both_bullish=False, both_bearish=False, analyst_count=3)"
+      ],
+      "summary": {
+        "analyst_consensus": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 0.0
+        },
+        "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 142.59292003136937
+        },
+        "comparable": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 1,
+          "alignment_rate": 100.0,
+          "avg_deviation": 1115.722308354568
+        },
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 1,
+          "bullish_convergent": 0,
+          "alignment_rate": 100.0,
+          "avg_deviation": 238.30865671641791
+        }
+      }
+    },
+    "execution_time_seconds": 15.22,
+    "analyses_count": 9
+  }
+}

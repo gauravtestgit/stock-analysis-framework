@@ -59,9 +59,8 @@ class NewsSentimentAnalyzer(IAnalyzer):
             return {'error': str(e)}
     
     def is_applicable(self, company_type: str) -> bool:
-        """News sentiment analysis applies to most company types"""
-        excluded_types = [CompanyType.ETF.value]
-        return company_type not in excluded_types
+        """News sentiment analysis applies to all company types including ETFs"""
+        return True
     
     def _get_recent_news(self, ticker: str, company_info: Dict[str, Any]) -> Optional[List[Dict]]:
         """Get recent news using yfinance"""

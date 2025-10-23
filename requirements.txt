@@ -33,6 +33,8 @@ wikipedia
 groq
 langchain-groq
 langchain-openai
+psycopg2-binary
+sqlalchemy
 # beautifulsoup4
 # langchain-ollama
 # langchain-huggingface

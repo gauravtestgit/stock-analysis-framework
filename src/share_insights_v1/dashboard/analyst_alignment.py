@@ -253,10 +253,26 @@ def load_alignment_data(base_dir):
     
     files_found = []
     
+    # Convert relative path to absolute path relative to dashboard location
+    if not os.path.isabs(base_dir):
+        # Get the directory where this dashboard file is located
+        dashboard_dir = os.path.dirname(os.path.abspath(__file__))
+        # Resolve relative path from dashboard directory
+        base_dir = os.path.abspath(os.path.join(dashboard_dir, base_dir))
+    
+    # Debug: Show what directory we're looking in
+    st.write(f"**Debug:** Looking for files in: {base_dir}")
+    st.write(f"**Debug:** Directory exists: {os.path.exists(base_dir)}")
+    
     for method in methods:
         for file_type in file_types:
             pattern = f"{base_dir.rstrip('/')}/{method}_{file_type}.csv"
             files = glob.glob(pattern)
+            
+            # Debug: Show what we're looking for
+            expected_file = f"{base_dir.rstrip('/')}/{method}_{file_type}.csv"
+            file_exists = os.path.exists(expected_file)
+            st.write(f"**Debug:** Looking for {method}_{file_type}.csv - Exists: {file_exists}")
             
             if files:
                 latest_file = max(files, key=os.path.getctime)
@@ -280,6 +296,11 @@ def load_alignment_data(base_dir):
 def load_report_stats(base_dir):
     """Load alignment statistics from report file"""
     import glob
+    
+    # Convert relative path to absolute path relative to dashboard location
+    if not os.path.isabs(base_dir):
+        dashboard_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.abspath(os.path.join(dashboard_dir, base_dir))
     
     # Find report file
     report_pattern = f"{base_dir.rstrip('/')}/*_report.txt"
@@ -320,6 +341,11 @@ def load_report_stats(base_dir):
 @st.cache_data
 def load_bullish_convergent_data(base_dir):
     """Load bullish convergent consolidated data"""
+    # Convert relative path to absolute path relative to dashboard location
+    if not os.path.isabs(base_dir):
+        dashboard_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.abspath(os.path.join(dashboard_dir, base_dir))
+    
     file_path = f"{base_dir.rstrip('/')}/bullish_convergent_consolidated.csv"
     
     if not os.path.exists(file_path):

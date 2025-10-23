@@ -119,7 +119,7 @@ class RecommendationService(IRecommendationEngine):
             return "Low"
     
     def _get_consensus_target_price(self, price_targets: Dict[str, float]) -> Optional[float]:
-        """Calculate weighted consensus target price"""
+        """Calculate weighted consensus target price (excluding zero/null prices)"""
         if not price_targets:
             return None
         
@@ -127,9 +127,11 @@ class RecommendationService(IRecommendationEngine):
         total_weight = 0.0
         
         for analysis_type, target_price in price_targets.items():
-            weight = self.recommendation_weights.get(analysis_type, 0.1)
-            weighted_sum += target_price * weight
-            total_weight += weight
+            # Exclude zero, null, or invalid prices from consensus
+            if target_price and target_price > 0:
+                weight = self.recommendation_weights.get(analysis_type, 0.1)
+                weighted_sum += target_price * weight
+                total_weight += weight
         
         return weighted_sum / total_weight if total_weight > 0 else None
     
