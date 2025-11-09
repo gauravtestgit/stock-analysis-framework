@@ -11,10 +11,10 @@ def test_batch_analysis():
     """Test batch analysis service with sample CSV"""
     
     # Initialize batch service
-    batch_service = BatchAnalysisService()
+    batch_service = BatchAnalysisService(save_to_db=True)
     
     # Define paths
-    filename = "nasdaq"
+    filename = "small"
     input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"  # Assuming this exists in the root directory
     output_csv_dir = "./src/share_insights_v1/resources/stock_analyses/"
     date = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -23,14 +23,21 @@ def test_batch_analysis():
     
     # Process first 10 stocks as test
     print("Starting batch analysis...")
-    results = batch_service.process_csv(
+    batch_service.process_csv(
         input_csv_path=input_csv,
         output_csv_path=output_csv,
         # max_stocks=10  # Limit for testing
     )
     
-    print(f"Processed {len(results)} stocks")
     print(f"Results saved to {output_csv}")
+    
+    # Count processed stocks from output CSV
+    import pandas as pd
+    if os.path.exists(output_csv):
+        df = pd.read_csv(output_csv)
+        print(f"Processed {len(df)} stocks")
+    else:
+        print("No output file found")
 
 if __name__ == "__main__":
     test_batch_analysis()

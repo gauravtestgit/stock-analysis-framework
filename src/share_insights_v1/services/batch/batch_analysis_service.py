@@ -1,9 +1,11 @@
 import pandas as pd
 import csv
+import logging
 from typing import Dict, Any, List
 from ..orchestration.analysis_orchestrator import AnalysisOrchestrator
+from ..storage.analysis_storage_service import AnalysisStorageService
 from ...implementations.data_providers.yahoo_provider import YahooFinanceProvider
-from ...implementations.classifier import CompanyClassifier
+from...implementations.classifier import CompanyClassifier
 from ...implementations.calculators.quality_calculator import QualityScoreCalculator
 from ...implementations.analyzers.dcf_analyzer import DCFAnalyzer
 from ...implementations.analyzers.technical_analyzer import TechnicalAnalyzer
@@ -18,11 +20,14 @@ from datetime import datetime
 class BatchAnalysisService:
     """Service to run batch analysis on multiple stocks from CSV"""
     
-    def __init__(self):
+    def __init__(self, save_to_db: bool = False):
         self.data_provider = YahooFinanceProvider()
         self.classifier = CompanyClassifier()
         self.quality_calculator = QualityScoreCalculator()
         self.config = FinanceConfig()
+        self.save_to_db = save_to_db
+        self.storage_service = AnalysisStorageService() if save_to_db else None
+        self.failure_log_path = None
         
         self.orchestrator = AnalysisOrchestrator(
             self.data_provider, self.classifier, self.quality_calculator
@@ -53,6 +58,9 @@ class BatchAnalysisService:
         # Initialize CSV file with headers
         self._initialize_csv(output_csv_path)
         
+        # Initialize failure log
+        self._initialize_failure_log(output_csv_path)
+        
         time_start = datetime.now()
         count = 0
         
@@ -76,16 +84,26 @@ class BatchAnalysisService:
                 
                 if 'error' not in analysis_result:
                     csv_row = self._extract_csv_data(ticker, analysis_result)
+                    # Store in database if enabled
+                    if self.save_to_db and self.storage_service:
+                        try:
+                            self.storage_service.store_comprehensive_analysis(ticker, analysis_result)
+                        except Exception as db_error:
+                            self._log_failure(ticker, "DB_STORAGE_ERROR", str(db_error))
                 else:
                     csv_row = self._create_error_row(ticker, analysis_result['error'])
+                    self._log_failure(ticker, "ANALYSIS_ERROR", analysis_result['error'])
                     
             except Exception as e:
-                csv_row = self._create_error_row('error',str(e))
+                csv_row = self._create_error_row(ticker, str(e))
+                self._log_failure(ticker, "EXCEPTION", str(e))
             
             # Write immediately to CSV
             self._append_to_csv(csv_row, output_csv_path)
         
         print(f"\nResults saved to {output_csv_path}")
+        if self.failure_log_path:
+            print(f"Failure log saved to {self.failure_log_path}")
     
     def _extract_csv_data(self, ticker: str, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract relevant data for CSV output"""
@@ -177,3 +195,27 @@ class BatchAnalysisService:
         with open(output_path, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow(row)
+    
+    def _initialize_failure_log(self, output_csv_path: str):
+        """Initialize failure log file"""
+        base_name = output_csv_path.replace('.csv', '')
+        self.failure_log_path = f"{base_name}_failures.txt"
+        
+        with open(self.failure_log_path, 'w', encoding='utf-8') as f:
+            f.write(f"BATCH ANALYSIS FAILURE LOG\n")
+            f.write(f"Started: {datetime.now()}\n")
+            f.write(f"Output CSV: {output_csv_path}\n")
+            f.write(f"Database Storage: {'Enabled' if self.save_to_db else 'Disabled'}\n")
+            f.write("=" * 80 + "\n\n")
+    
+    def _log_failure(self, ticker: str, error_type: str, error_message: str):
+        """Log failure to text file"""
+        if not self.failure_log_path:
+            return
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        with open(self.failure_log_path, 'a', encoding='utf-8') as f:
+            f.write(f"[{timestamp}] {ticker} - {error_type}\n")
+            f.write(f"Error: {error_message}\n")
+            f.write("-" * 40 + "\n\n")

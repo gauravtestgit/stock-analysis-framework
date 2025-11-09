@@ -1,6 +1,7 @@
 import asyncio
 from typing import Dict, Any, List, Optional
 from ..services.orchestration.analysis_orchestrator import AnalysisOrchestrator
+from ..services.storage.analysis_storage_service import AnalysisStorageService
 from ..implementations.analyzers.dcf_analyzer import DCFAnalyzer
 from ..implementations.analyzers.technical_analyzer import TechnicalAnalyzer
 from ..implementations.analyzers.startup_analyzer import StartupAnalyzer
@@ -22,10 +23,12 @@ from .models import AnalyzerInfo
 class AnalysisService:
     """Service layer for stock analysis API"""
     
-    def __init__(self):
+    def __init__(self, save_to_db: bool = True):
         self.data_provider = YahooFinanceProvider()
         self.classifier = CompanyClassifier()
         self.quality_calculator = QualityScoreCalculator()
+        self.save_to_db = save_to_db
+        self.storage_service = AnalysisStorageService() if save_to_db else None
         self.orchestrator = self._setup_orchestrator()
     
     def _setup_orchestrator(self) -> AnalysisOrchestrator:
@@ -88,6 +91,10 @@ class AnalysisService:
                     'risk_level': getattr(final_rec, 'risk_level', 'Medium'),
                     'key_risks': getattr(final_rec, 'key_risks', [])
                 }
+        
+        # Store in database if enabled
+        if 'error' not in result and self.save_to_db and self.storage_service:
+            self.storage_service.store_comprehensive_analysis(ticker, result)
         
         return result
     

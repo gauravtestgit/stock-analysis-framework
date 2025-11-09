@@ -11,6 +11,7 @@ import json
 
 from .batch_models import JobStatus, BatchJobResponse, BatchResultsResponse
 from .service import AnalysisService
+from ..services.storage.analysis_storage_service import AnalysisStorageService
 
 class BatchJob:
     """Represents a batch analysis job"""
@@ -37,6 +38,7 @@ class BatchAnalysisService:
     
     def __init__(self):
         self.analysis_service = AnalysisService()
+        self.storage_service = AnalysisStorageService()
         self.jobs: Dict[str, BatchJob] = {}
         self.executor = ThreadPoolExecutor(max_workers=3)  # Limit concurrent analyses
     
@@ -126,6 +128,8 @@ class BatchAnalysisService:
                 job.completed_tickers += 1
                 # Write to CSV immediately
                 self._write_csv_row(job, ticker, result)
+                # Store in database
+                self.storage_service.store_comprehensive_analysis(ticker, result)
                 
         except Exception as e:
             print(f"💥 Exception for {ticker}: {str(e)}")

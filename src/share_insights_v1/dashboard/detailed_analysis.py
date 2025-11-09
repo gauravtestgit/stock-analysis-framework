@@ -717,7 +717,8 @@ def display_batch_results(results, batch_timing=None):
             for ticker, data in results.items():
                 with st.expander(f"{ticker} - {'✅ Success' if 'error' not in data else '❌ Failed'}"):
                     if 'error' not in data:
-                        display_detailed_results(ticker, data)
+                        with st.container(height=400):
+                            display_detailed_results(ticker, data)
                     else:
                         st.error(f"Analysis failed: {data['error']}")
 

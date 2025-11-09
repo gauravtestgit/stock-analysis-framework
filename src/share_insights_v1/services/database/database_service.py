@@ -165,13 +165,21 @@ class DatabaseService:
         analyses = analysis_results.get('analyses', {})
         for analysis_type, analysis_data in analyses.items():
             if analysis_data and not analysis_data.get('error'):
+                predicted_price = analysis_data.get('predicted_price', 0) or 0
+                # Handle infinity values
+                if predicted_price == float('inf') or predicted_price == float('-inf'):
+                    predicted_price = 0
+                
+                # Clean raw_data of infinity values
+                clean_raw_data = self._clean_infinity_values(analysis_data)
+                
                 analysis_record = AnalysisHistory(
                     ticker=ticker,
                     analysis_type=analysis_type,
                     recommendation=analysis_data.get('recommendation', 'N/A'),
-                    target_price=analysis_data.get('predicted_price', 0) or 0,
+                    target_price=float(predicted_price),
                     confidence=analysis_data.get('confidence', 'N/A'),
-                    raw_data=analysis_data,
+                    raw_data=clean_raw_data,
                     scenario_context_id=scenario_context_id
                 )
                 db.add(analysis_record)
@@ -179,14 +187,32 @@ class DatabaseService:
         
         # Save consolidated final recommendation
         if final_rec:
+            # Handle both object and dict formats
+            if hasattr(final_rec, 'recommendation'):
+                rec_value = final_rec.recommendation.value if hasattr(final_rec.recommendation, 'value') else str(final_rec.recommendation)
+                target_price = getattr(final_rec, 'target_price', 0)
+                confidence = getattr(final_rec, 'confidence', 'N/A')
+            else:
+                rec_value = final_rec.get('recommendation', 'N/A')
+                target_price = final_rec.get('target_price', 0)
+                confidence = final_rec.get('confidence', 'N/A')
+            
+            # Handle infinity values
+            if target_price == float('inf') or target_price == float('-inf'):
+                target_price = 0
+            
             final_analysis = AnalysisHistory(
                 ticker=ticker,
                 analysis_type='final_recommendation',
-                recommendation=final_rec.get('recommendation', 'N/A'),
-                target_price=final_rec.get('target_price', 0) or 0,
-                confidence=final_rec.get('confidence', 'N/A'),
+                recommendation=rec_value,
+                target_price=float(target_price) if target_price else 0,
+                confidence=str(confidence),
                 raw_data={
-                    'final_recommendation': final_rec,
+                    'final_recommendation': {
+                        'recommendation': rec_value,
+                        'target_price': float(target_price) if target_price else 0,
+                        'confidence': str(confidence)
+                    },
                     'company_type': analysis_results.get('company_type'),
                     'analyses_count': analysis_results.get('analyses_count', 0),
                     'execution_time_seconds': analysis_results.get('execution_time_seconds', 0)
@@ -284,3 +310,18 @@ class DatabaseService:
             'total_analyses': len(analyses),
             'by_type': by_type
         }
+    
+    def _clean_infinity_values(self, data):
+        """Recursively clean infinity values from data structure"""
+        import math
+        
+        if isinstance(data, dict):
+            return {k: self._clean_infinity_values(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._clean_infinity_values(item) for item in data]
+        elif isinstance(data, float):
+            if math.isinf(data) or math.isnan(data):
+                return 0
+            return data
+        else:
+            return data

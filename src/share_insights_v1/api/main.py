@@ -29,8 +29,8 @@ app.add_middleware(
 )
 
 # Initialize services
-analysis_service = AnalysisService()
-batch_service = BatchAnalysisService()
+analysis_service = AnalysisService(save_to_db=True)  # Default: save to database
+batch_service = BatchAnalysisService()  # Uses flag in constructor
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():

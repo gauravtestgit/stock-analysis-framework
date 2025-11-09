@@ -1,0 +1,28 @@
+{
+  "company_types": {
+    "REIT": {
+      "sectors": ["Real Estate"],
+      "industries": ["REIT", "Real Estate Investment Trust", "Real Estate Development"]
+    },
+    "FINANCIAL": {
+      "sectors": ["Financial Services", "Financial"],
+      "industries": ["Banks", "Insurance", "Investment Banking", "Asset Management", "Credit Services"]
+    },
+    "COMMODITY": {
+      "sectors": ["Energy", "Materials", "Basic Materials"],
+      "industries": ["Mining", "Oil & Gas Exploration", "Oil & Gas Production", "Metals & Mining", "Steel", "Aluminum", "Copper"]
+    },
+    "CYCLICAL": {
+      "sectors": ["Energy", "Materials", "Basic Materials", "Industrials", "Consumer Cyclical"],
+      "industries": ["Semiconductors", "Auto Manufacturers", "Steel", "Aerospace & Defense", "Construction", "Heavy Machinery"]
+    }
+  },
+  "thresholds": {
+    "startup_market_cap": 5000000000,
+    "mature_market_cap": 50000000000,
+    "growth_revenue_threshold": 0.15,
+    "cyclical_growth_cap": 0.25
+  },
+  "etf_tickers": ["QQQ", "SPY", "IWM", "VTI", "VOO", "SLV", "GLD", "TLT", "EFA", "EEM"],
+  "etf_patterns": ["SPDR", "iShares", "Vanguard"]
+}
