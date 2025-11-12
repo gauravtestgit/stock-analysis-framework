@@ -16,60 +16,46 @@ class DCFEngine:
         self.wacc_calc = WACCCalculator(config)
         self.fcf_projector = FCFProjector()
     
-    def calculate_dcf(self, ticker_symbol: str, sector: str = "", industry: str = "", 
-                     company_type=None, quality_grade: str = "C") -> Dict:
-        """Main DCF calculation with company type adjustments"""
+    def calculate_dcf(self, ticker_symbol: str) -> Dict:
+        """Main DCF calculation using config parameters (already adjusted by analyzer)"""
         import yfinance as yf
         from ....models.company import CompanyType
         
         ticker = yf.Ticker(ticker_symbol)
         
-        # Get adjusted parameters based on company type
-        if company_type is None:
-            company_type = CompanyType.MATURE_PROFITABLE
+        # Get company type from config (passed by analyzer)
+        company_type = getattr(self.config, 'company_type', None)
         
-        params = self.config.get_adjusted_parameters(
-            sector=sector,
-            industry=industry, 
-            company_type=company_type,
-            quality_grade=quality_grade
-        )
-        
-        # Create adjusted config
-        adjusted_config = FinanceConfig()
-        adjusted_config.max_cagr_threshold = params.get('max_cagr', self.config.max_cagr_threshold)
-        adjusted_config.default_terminal_growth = params.get('terminal_growth', self.config.default_terminal_growth)
-        adjusted_config.default_ev_ebitda_multiple = params.get('ev_ebitda_multiple', self.config.default_ev_ebitda_multiple)
-        
-        # Update components with adjusted config
-        self.growth_calc.config = adjusted_config
-        self.terminal_calc.config = adjusted_config
+        # Use the config as-is (already adjusted by DCF analyzer)
+        # Update components with config
+        self.growth_calc.config = self.config
+        self.terminal_calc.config = self.config
         
         try:
             # 1. Calculate WACC
             wacc_data = self.wacc_calc.calculate_wacc(ticker)
             wacc = wacc_data['wacc']
             
-            # 2. Calculate growth rates with adjusted config
-            fcf_cagr = self.growth_calc.calculate_fcf_cagr(ticker, sector, industry)
-            ebitda_cagr = self.growth_calc.calculate_ebitda_cagr(ticker, sector, industry)
+            # 2. Calculate growth rates
+            fcf_cagr = self.growth_calc.calculate_fcf_cagr(ticker)
+            ebitda_cagr = self.growth_calc.calculate_ebitda_cagr(ticker)
             
             debug_print(f'FCF CAGR: {fcf_cagr}')
             debug_print(f'EBITDA CAGR: {ebitda_cagr}')
             
             # 3. Project future cash flows
-            projected_fcf = self.fcf_projector.project_cash_flows(ticker, fcf_cagr, adjusted_config.years)
-            fcf_future = self.fcf_projector.project_future_metric(ticker, 'FCF', fcf_cagr, adjusted_config.years)
-            ebitda_future = self.fcf_projector.project_future_metric(ticker, 'EBITDA', ebitda_cagr, adjusted_config.years)
+            projected_fcf = self.fcf_projector.project_cash_flows(ticker, fcf_cagr, self.config.years)
+            fcf_future = self.fcf_projector.project_future_metric(ticker, 'FCF', fcf_cagr, self.config.years)
+            ebitda_future = self.fcf_projector.project_future_metric(ticker, 'EBITDA', ebitda_cagr, self.config.years)
             
             # 4. Calculate present values
             pv_fcf_list = self.fcf_projector.calculate_present_values(projected_fcf, wacc)
             pv_fcf = sum(pv_fcf_list)
             debug_print(f'PV FCF: ${pv_fcf:,.0f}')
             
-            # 5. Calculate terminal value with sector adjustments
+            # 5. Calculate terminal value
             terminal_data = self.terminal_calc.calculate_terminal_value(
-                fcf_future, ebitda_future, wacc, ticker, sector
+                fcf_future, ebitda_future, wacc, ticker
             )
             
             # 6. Apply terminal value caps
@@ -79,22 +65,27 @@ class DCFEngine:
             
             final_terminal_value = terminal_caps['adjusted_terminal_value']
             pv_terminal_value = self.fcf_projector.calculate_pv_terminal_value(
-                final_terminal_value, wacc, adjusted_config.years
+                final_terminal_value, wacc, self.config.years
             )
             
             # 7. Calculate enterprise and equity values
             enterprise_value = pv_fcf + pv_terminal_value
             equity_data = self._calculate_equity_value(ticker, enterprise_value)
             
-            # 8. Determine confidence based on adjustments
-            confidence = self._calculate_confidence(terminal_caps, sector, industry)
+            # 8. Apply risk adjustments for extreme cases
+            risk_adjusted_equity = self._apply_risk_adjustments(
+                equity_data, terminal_caps, company_type, pv_fcf
+            )
             
-            # 9. Compile results
+            # 9. Determine confidence based on adjustments
+            confidence = self._calculate_confidence(terminal_caps)
+            
+            # 10. Compile results
             return self._compile_results(
                 ticker_symbol, ticker, wacc_data, fcf_cagr, ebitda_cagr,
                 fcf_future, ebitda_future, terminal_data, terminal_caps,
                 projected_fcf, pv_fcf_list, pv_fcf, pv_terminal_value,
-                enterprise_value, equity_data, confidence
+                enterprise_value, risk_adjusted_equity, confidence
             )
             
         except Exception as e:
@@ -130,24 +121,52 @@ class DCFEngine:
             'share_price': share_price
         }
     
-    def _calculate_confidence(self, terminal_caps: Dict, sector: str, industry: str) -> str:
-        """Calculate confidence based on various factors"""
-        confidence_factors = []
+    def _apply_risk_adjustments(self, equity_data: Dict, terminal_caps: Dict, 
+                               company_type, pv_fcf: float) -> Dict:
+        """Apply risk adjustments for extreme valuation cases"""
+        from ....models.company import CompanyType
         
+        original_share_price = equity_data['share_price']
+        adjusted_share_price = original_share_price
+        risk_discount = 0.0
+        
+        # Apply extreme case discount for turnaround companies with impossible terminal dominance
+        # Handle both string and enum company_type values
+        is_turnaround = (company_type == CompanyType.TURNAROUND or 
+                        company_type == CompanyType.TURNAROUND.value or
+                        str(company_type).lower() == 'turnaround')
+        
+        if (is_turnaround and 
+            pv_fcf < 0 and 
+            terminal_caps['original_ratio'] > 1.0):
+            
+            # Calculate logical discount based on terminal dominance severity
+            base_discount = 0.40  # Base discount for negative FCF turnaround
+            
+            # Additional penalty for mathematical impossibility
+            excess_dominance = max(0, terminal_caps['original_ratio'] - 1.0)
+            dominance_penalty = min(0.40, excess_dominance * 2.0)
+            
+            risk_discount = min(0.80, base_discount + dominance_penalty)
+            adjusted_share_price = original_share_price * (1 - risk_discount)
+            
+            debug_print(f"Risk adjustment applied: {risk_discount:.0%} discount")
+            debug_print(f"Original price: ${original_share_price:.2f} -> Adjusted: ${adjusted_share_price:.2f}")
+        
+        # Return updated equity data
+        return {
+            **equity_data,
+            'share_price': adjusted_share_price,
+            'original_share_price': original_share_price,
+            'risk_discount': risk_discount
+        }
+    
+    def _calculate_confidence(self, terminal_caps: Dict) -> str:
+        """Calculate confidence based on terminal value dominance"""
         # Terminal value dominance
         if terminal_caps['original_ratio'] > 0.90:
-            confidence_factors.append("High terminal dependence")
-        elif terminal_caps['original_ratio'] > 0.80:
-            confidence_factors.append("Moderate terminal dependence")
-        
-        # Cyclical sector
-        if sector in ["Semiconductors", "Auto Manufacturers", "Steel"]:
-            confidence_factors.append("Cyclical sector volatility")
-        
-        # Determine overall confidence
-        if len(confidence_factors) >= 2:
             return "Low"
-        elif len(confidence_factors) == 1:
+        elif terminal_caps['original_ratio'] > 0.80:
             return "Medium"
         else:
             return "High"

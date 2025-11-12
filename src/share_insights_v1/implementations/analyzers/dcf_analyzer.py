@@ -1,8 +1,9 @@
 from typing import Dict, Any, Optional
 from ...interfaces.analyzer import IAnalyzer
 from ...models.company import CompanyType
-from ..calculators import dcf_yf
+from ..calculators import dcf_yf_new as dcf_yf
 from ...config.config import FinanceConfig
+from ...utils.debug_printer import debug_print
 
 class DCFAnalyzer(IAnalyzer):
     """DCF valuation analyzer implementation using original dcf_yf logic"""
@@ -34,6 +35,9 @@ class DCFAnalyzer(IAnalyzer):
             tmp_config.max_cagr_threshold = params.get('max_cagr', tmp_config.max_cagr_threshold)
             tmp_config.default_terminal_growth = params.get('terminal_growth', tmp_config.default_terminal_growth)
             
+            # Pass company type for risk adjustments
+            tmp_config.company_type = company_type
+            
             # Use original DCF calculation
             dcf_calcuations = dcf_yf.get_share_price(ticker_symbol=ticker, config=tmp_config)
             share_price = dcf_calcuations.get('share_price', 0)
@@ -50,6 +54,8 @@ class DCFAnalyzer(IAnalyzer):
             valuation_discount = self.config.company_type_adjustments.get(
                 company_type, {}
             ).get('valuation_discount', 0.0)
+            
+
             
             if valuation_discount > 0:
                 share_price *= (1 - valuation_discount)

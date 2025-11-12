@@ -13,16 +13,16 @@ class GrowthCalculator:
         self.cyclical_sectors = ["Semiconductors", "Auto Manufacturers", "Steel", "Mining", "Oil & Gas"]
         self.cyclical_industries = ["Semiconductors", "Auto Manufacturers", "Steel", "Aluminum", "Copper"]
     
-    def calculate_fcf_cagr(self, ticker, sector: str = "", industry: str = "") -> float:
-        """Calculate FCF CAGR using original logic"""
+    def calculate_fcf_cagr(self, ticker) -> float:
+        """Calculate FCF CAGR using config parameters"""
         try:
             return self._get_raw_fcf_cagr(ticker)
         except Exception as e:
             debug_print(f"FCF CAGR calculation error: {e}")
             return self.config.default_cagr
     
-    def calculate_ebitda_cagr(self, ticker, sector: str = "", industry: str = "") -> float:
-        """Calculate EBITDA CAGR using original logic"""
+    def calculate_ebitda_cagr(self, ticker) -> float:
+        """Calculate EBITDA CAGR using config parameters"""
         try:
             return self._get_raw_ebitda_cagr(ticker)
         except Exception as e:

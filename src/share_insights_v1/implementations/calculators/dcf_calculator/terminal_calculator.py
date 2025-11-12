@@ -11,15 +11,15 @@ class TerminalCalculator:
         self.max_terminal_ratio = 1.0  # No terminal ratio cap (original behavior)
     
     def calculate_terminal_value(self, fcf_future: float, ebitda_future: float, 
-                               wacc: float, ticker, sector: str = "") -> Dict:
-        """Calculate terminal value using hybrid approach with caps"""
+                               wacc: float, ticker) -> Dict:
+        """Calculate terminal value using hybrid approach"""
         
         # Calculate both methods
         perpetuity_value = self._perpetuity_growth_method(fcf_future, wacc)
         multiple_value = self._ebitda_multiple_method(ticker, ebitda_future)
         
-        # Get average with sector adjustments
-        average_value = self._get_weighted_average(perpetuity_value, multiple_value, sector)
+        # Get average
+        average_value = self._get_weighted_average(perpetuity_value, multiple_value)
         
         return {
             'terminal_value_pg': perpetuity_value,
@@ -30,16 +30,28 @@ class TerminalCalculator:
     def apply_terminal_caps(self, terminal_value: float, pv_fcf: float) -> Dict:
         """Apply terminal value dominance caps"""
         total_value = terminal_value + pv_fcf
-        terminal_ratio = terminal_value / total_value if total_value > 0 else 0
         
+        # Handle edge cases for terminal ratio calculation
+        if total_value <= 0:
+            # If total value is negative or zero, terminal dominance is not meaningful
+            debug_print(f"Warning: Total value is {total_value:,.0f}, skipping terminal caps")
+            return {
+                'adjusted_terminal_value': terminal_value,
+                'adjustment_factor': 1.0,
+                'confidence_impact': 'Low',  # Low confidence due to negative total value
+                'original_ratio': 1.0 if terminal_value > 0 else 0.0
+            }
+        
+        terminal_ratio = terminal_value / total_value
         debug_print(f"Terminal value ratio: {terminal_ratio:.1%}")
         
-        if terminal_ratio > self.max_terminal_ratio:
+        # Only apply caps if we have a reasonable max_terminal_ratio (< 1.0)
+        if terminal_ratio > self.max_terminal_ratio and self.max_terminal_ratio < 1.0:
             debug_print(f"Terminal value dominance detected ({terminal_ratio:.1%}), applying caps")
             
             # Reduce terminal value to acceptable ratio
             max_terminal = pv_fcf * (self.max_terminal_ratio / (1 - self.max_terminal_ratio))
-            adjustment_factor = max_terminal / terminal_value
+            adjustment_factor = max_terminal / terminal_value if terminal_value != 0 else 1.0
             
             return {
                 'adjusted_terminal_value': max_terminal,
@@ -89,7 +101,7 @@ class TerminalCalculator:
         
         return terminal_enterprise_value
     
-    def _get_weighted_average(self, perpetuity_value: float, multiple_value: float, sector: str) -> float:
+    def _get_weighted_average(self, perpetuity_value: float, multiple_value: float) -> float:
         """Get simple average (original DCF logic)"""
         # Handle None values
         if perpetuity_value is None or perpetuity_value <= 0:

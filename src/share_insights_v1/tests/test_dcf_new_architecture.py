@@ -11,7 +11,7 @@ from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 def test_new_dcf_architecture():
     """Test new DCF architecture with proper company classification"""
     
-    ticker = "cat"
+    ticker = "chrs"
     yp = YahooFinanceProvider()
     
     # Get comprehensive data like DCF analyzer does
@@ -53,9 +53,27 @@ def test_new_dcf_architecture():
         print(f"Quality Grade: {quality_grade}")
         print()
         
-        # Use new architecture with proper parameters
+        # Get adjusted parameters and create config like DCF analyzer does
         config = FinanceConfig()
-        result = get_share_price(ticker, config, sector, industry, company_type, quality_grade)
+        params = config.get_adjusted_parameters(
+            sector=sector,
+            industry=industry,
+            company_type=company_type,
+            quality_grade=quality_grade
+        )
+        
+        # Create temporary config with adjusted parameters
+        tmp_config = FinanceConfig()
+        tmp_config.use_default_ebitda_multiple = True
+        tmp_config.default_ev_ebitda_multiple = params.get('ev_ebitda_multiple', tmp_config.default_ev_ebitda_multiple)
+        tmp_config.max_cagr_threshold = params.get('max_cagr', tmp_config.max_cagr_threshold)
+        tmp_config.default_terminal_growth = params.get('terminal_growth', tmp_config.default_terminal_growth)
+        
+        # Pass company type for risk adjustments (like DCF analyzer does)
+        tmp_config.company_type = company_type
+        
+        # Use new architecture with clean interface
+        result = get_share_price(ticker, tmp_config)
         
         print("✅ New DCF Architecture Results:")
         print(f"Share Price: ${result['share_price']:.2f}")
@@ -91,7 +109,7 @@ def test_new_dcf_architecture():
 def test_comparison_with_stable_company():
     """Test with a stable company for comparison"""
     
-    ticker = "AAPL"
+    ticker = "tsla"
     yp = YahooFinanceProvider()
     
     # Get comprehensive data
@@ -119,8 +137,25 @@ def test_comparison_with_stable_company():
         print(f"Quality Grade: {quality_grade}")
         print()
         
+        # Get adjusted parameters like DCF analyzer
         config = FinanceConfig()
-        result = get_share_price(ticker, config, sector, industry, company_type, quality_grade)
+        params = config.get_adjusted_parameters(
+            sector=sector,
+            industry=industry,
+            company_type=company_type,
+            quality_grade=quality_grade
+        )
+        
+        tmp_config = FinanceConfig()
+        tmp_config.use_default_ebitda_multiple = True
+        tmp_config.default_ev_ebitda_multiple = params.get('ev_ebitda_multiple', tmp_config.default_ev_ebitda_multiple)
+        tmp_config.max_cagr_threshold = params.get('max_cagr', tmp_config.max_cagr_threshold)
+        tmp_config.default_terminal_growth = params.get('terminal_growth', tmp_config.default_terminal_growth)
+        
+        # Pass company type for risk adjustments
+        tmp_config.company_type = company_type
+        
+        result = get_share_price(ticker, tmp_config)
         
         print("✅ Stable Company Results:")
         print(f"Share Price: ${result['share_price']:.2f}")

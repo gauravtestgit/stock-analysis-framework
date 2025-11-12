@@ -7,7 +7,7 @@ from ..implementations.calculators.quality_calculator import QualityScoreCalcula
 from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 from ..implementations.classifier import CompanyClassifier
 def test_dcf() :
-    symbol = "googl"
+    symbol = "chrs"
     stock = yf.Ticker(symbol)
     yp = YahooFinanceProvider()
     

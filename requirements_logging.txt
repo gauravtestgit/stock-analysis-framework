@@ -1,0 +1,5 @@
+# Logging Dependencies
+boto3>=1.26.0
+botocore>=1.29.0
+watchtower>=3.0.0  # Alternative CloudWatch handler
+python-json-logger>=2.0.0  # Alternative structured logging
