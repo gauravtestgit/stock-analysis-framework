@@ -48,6 +48,14 @@ def show_detailed_analysis():
         # Stock input
         ticker = st.text_input("Enter Stock Ticker:", value="AAPL").upper()
         
+        # News sentiment options
+        st.subheader("News Sentiment Options")
+        col1, col2 = st.columns(2)
+        with col1:
+            enable_web_scraping = st.checkbox("Enable Web Scraping", value=True, help="Fetch full article content for better accuracy (slower)")
+        with col2:
+            enable_llm_sentiment = st.checkbox("Enable LLM Sentiment", value=True, help="Use AI for sentiment analysis (slower but more accurate)")
+        
         # Analyzer selection
         st.subheader("Select Analyzers")
         available_analyzers = [
@@ -65,6 +73,11 @@ def show_detailed_analysis():
         
         if st.button("Analyze Stock") and ticker:
             if selected_analyzers:
+                # Store news sentiment options in session state
+                st.session_state.news_options = {
+                    'enable_web_scraping': enable_web_scraping,
+                    'enable_llm_sentiment': enable_llm_sentiment
+                }
                 analyze_single_stock(ticker, selected_analyzers)
             else:
                 st.error("Please select at least one analyzer")
@@ -77,6 +90,14 @@ def show_detailed_analysis():
             return
         
         st.write(f"**Watchlist ({len(watchlist)} stocks):** {', '.join(watchlist)}")
+        
+        # News sentiment options for batch
+        st.subheader("News Sentiment Options")
+        col1, col2 = st.columns(2)
+        with col1:
+            batch_web_scraping = st.checkbox("Enable Web Scraping (Batch)", value=False, help="Fetch full article content (much slower for batch)")
+        with col2:
+            batch_llm_sentiment = st.checkbox("Enable LLM Sentiment (Batch)", value=False, help="Use AI for sentiment analysis (slower for batch)")
         
         # Analyzer selection for batch
         st.subheader("Select Analyzers for Batch")
@@ -95,6 +116,11 @@ def show_detailed_analysis():
         
         if st.button("Analyze All Watchlist Stocks"):
             if batch_analyzers:
+                # Store batch news sentiment options
+                st.session_state.batch_news_options = {
+                    'enable_web_scraping': batch_web_scraping,
+                    'enable_llm_sentiment': batch_llm_sentiment
+                }
                 analyze_watchlist_batch(watchlist, batch_analyzers)
             else:
                 st.error("Please select at least one analyzer")
@@ -226,16 +252,51 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
     display_batch_results(results, batch_timing)
 
 def get_current_price(ticker):
-    """Get current stock price using yfinance"""
+    """Get current stock price using yfinance with debugging"""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
-        return info.get('currentPrice') or info.get('regularMarketPrice') or info.get('previousClose')
-    except:
+        
+        # Debug: Check what's in info
+        price_fields = ['currentPrice', 'regularMarketPrice', 'previousClose', 'ask', 'bid']
+        available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
+        
+        # Try multiple price sources
+        current_price = (info.get('currentPrice') or 
+                        info.get('regularMarketPrice') or 
+                        info.get('previousClose') or
+                        info.get('ask') or
+                        info.get('bid'))
+        
+        if not current_price:
+            # Try getting price from history as fallback
+            try:
+                hist = stock.history(period='1d')
+                if not hist.empty:
+                    current_price = hist['Close'].iloc[-1]
+            except:
+                pass
+        
+        return current_price
+    except Exception as e:
+        # Debug: Print the actual error
+        print(f"Error getting price for {ticker}: {e}")
         return None
 
 def display_detailed_results(ticker, data):
     """Display comprehensive analysis results"""
+    # Add CSS for smaller metric font size
+    st.markdown("""
+    <style>
+    [data-testid="stMetricLabel"] {
+        font-size: 0.8rem;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 0.8rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Get current price from yfinance
     current_price = get_current_price(ticker)
     
@@ -711,16 +772,9 @@ def display_batch_results(results, batch_timing=None):
         help="Scroll through detailed analysis results for all stocks"
     )
     
-    # Optional: Keep expandable sections for individual deep dive
-    with st.expander("🔍 Individual Stock Deep Dive (Expandable Sections)"):
-        with st.container(height=400):
-            for ticker, data in results.items():
-                with st.expander(f"{ticker} - {'✅ Success' if 'error' not in data else '❌ Failed'}"):
-                    if 'error' not in data:
-                        with st.container(height=400):
-                            display_detailed_results(ticker, data)
-                    else:
-                        st.error(f"Analysis failed: {data['error']}")
+    # Horizontal scrollable stock analysis cards
+    with st.expander("🔍 Individual Stock Deep Dive (Horizontal Scroll)"):
+        display_horizontal_stock_cards(results)
 
 def show_chat_interface():
     """Show chat interface for LLM queries"""
@@ -806,6 +860,417 @@ def show_chat_interface():
                 st.error(f"Error getting response from {selected_provider}: {str(e)}")
     
     st.markdown("---")
+
+def display_horizontal_stock_cards(results):
+    """Display stock analysis in horizontal scrollable rows"""
+    
+    for ticker, data in results.items():
+        if 'error' in data:
+            st.error(f"❌ {ticker}: {data['error']}")
+            continue
+            
+        # Get data for the row
+        financial_metrics = data.get('financial_metrics') or {}
+        print(f"results data in detailed analysis\n ${results}")
+        current_price = financial_metrics.get('current_price') or data.get('current_price')
+        final_rec = data.get('final_recommendation', {})
+        timing = data.get('dashboard_timing', {})
+        analysis_time = timing.get('orchestrator_time', data.get('execution_time_seconds', 0))
+        analyses = data.get('analyses', {})
+        
+        # Create horizontal scrollable container for this stock
+        st.markdown(f"**📊 {ticker} - {final_rec.get('recommendation', 'N/A')}**")
+        
+        # Create all cards in one row with horizontal scroll
+        all_cards = []
+        
+        # Stock Symbol and Basic Info Card (first card)
+        company_type = data.get('company_type', 'N/A')
+        stock_card = f"""
+        <div style="min-width: 220px; max-height: 300px; overflow-y: auto; padding: 15px; border: 2px solid #007acc; border-radius: 8px; margin-right: 10px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <h4 style="margin: 0 0 10px 0; color: #007acc; font-weight: bold;">{ticker}</h4>
+            <p style="color: #28a745; font-weight: bold;"><strong>Overall:</strong> {final_rec.get('recommendation', 'N/A')}</p>
+            <p><strong>Price:</strong> {f'${current_price:.2f}' if current_price else 'N/A'}</p>
+            <p><strong>Industry</strong> {financial_metrics.get('industry', 'N/A')}</p>
+            <p><strong>Type:</strong> {company_type}</p>
+            <p><strong>P/E:</strong> {financial_metrics.get('pe_ratio', 'N/A')}</p>
+            <p><strong>P/S:</strong> {financial_metrics.get('ps_ratio', 'N/A')}</p>
+            <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
+            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}%</p>            
+            <p><strong>Time:</strong> {analysis_time}s</p>
+        </div>
+        """
+        all_cards.append(stock_card)
+        
+        # DCF Card with modal
+        if 'dcf' in analyses:
+            dcf_data = analyses['dcf']
+            params = dcf_data.get('parameters_used', {})
+            dcf_calcs = dcf_data.get('dcf_calculations', {})
+            params_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in params.items()]) if params else "<p>No parameters available</p>"
+            calcs_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in dcf_calcs.items()]) if dcf_calcs else "<p>No calculations available</p>"
+            
+            dcf_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>💰 DCF</h5>
+                <p><strong>Rec:</strong> {dcf_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Fair Value:</strong> ${dcf_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Upside:</strong> {dcf_data.get('upside_downside_pct', 0):.1f}%</p>
+                <button onclick="showModal('dcf_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="dcf_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('dcf_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>💰 {ticker} DCF Analysis Details</h3>
+                        <h4>Parameters:</h4>
+                        {params_html}
+                        <h4>Calculations:</h4>
+                        {calcs_html}
+                        <p><strong>Confidence:</strong> {dcf_data.get('confidence', 'N/A')}</p>
+                        <p><strong>Method:</strong> {dcf_data.get('method', 'N/A')}</p>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(dcf_card)
+            
+
+        
+        # Technical Card with modal
+        if 'technical' in analyses:
+            tech_data = analyses['technical']
+            indicators = ['rsi_14', 'ma_20', 'ma_50', 'ma_200', 'macd_line', 'macd_signal']
+            indicators_html = ''.join([f"<p>• {indicator.upper()}: {tech_data.get(indicator, 'N/A')}</p>" for indicator in indicators if tech_data.get(indicator) is not None])
+            
+            tech_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📈 Technical</h5>
+                <p><strong>Rec:</strong> {tech_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Target:</strong> ${tech_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
+                <button onclick="showModal('tech_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="tech_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 90%; overflow-y: auto;">
+                        <span onclick="closeModal('tech_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>📈 {ticker} Technical Analysis Details</h3>
+                        
+                        <div style="display: flex; gap: 20px;">
+                            <div style="flex: 1;">
+                                <h4>Technical Indicators:</h4>
+                                {indicators_html}
+                            </div>
+                            <div style="flex: 1;">
+                                <h4>Price Chart:</h4>
+                                <div id="tradingview_chart_{ticker}" style="height: 400px; width: 100%;"></div>
+                                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                                <script type="text/javascript">
+                                new TradingView.widget({{
+                                    "width": "100%",
+                                    "height": 400,
+                                    "symbol": "{ticker}",
+                                    "interval": "D",
+                                    "timezone": "Etc/UTC",
+                                    "theme": "light",
+                                    "style": "1",
+                                    "locale": "en",
+                                    "toolbar_bg": "#f1f3f6",
+                                    "enable_publishing": false,
+                                    "hide_top_toolbar": true,
+                                    "hide_legend": true,
+                                    "save_image": false,
+                                    "container_id": "tradingview_chart_{ticker}"
+                                }});
+                                </script>
+                            </div>                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(tech_card)
+            
+
+        
+        # Comparable Card with modal
+        if 'comparable' in analyses:
+            comp_data = analyses['comparable']
+            multiples = comp_data.get('target_multiples', {})
+            peers = comp_data.get('peer_tickers', [])
+            peer_avg = comp_data.get('peer_averages', {})
+            current_mult = comp_data.get('current_multiples', {})
+            
+            multiples_html = ''.join([f"<p>• {k.upper()}: {v:.1f}x</p>" for k, v in multiples.items()]) if multiples else "<p>No multiples available</p>"
+            peers_html = ', '.join(peers[:5]) if peers else "No peers listed"
+            # Handle None values in comparison
+            comparison_items = []
+            if peer_avg and current_mult:
+                for k in peer_avg.keys():
+                    if k in current_mult:
+                        current_val = current_mult.get(k, 0)
+                        peer_val = peer_avg.get(k, 0)
+                        current_str = f"{current_val:.1f}" if current_val is not None else "N/A"
+                        peer_str = f"{peer_val:.1f}" if peer_val is not None else "N/A"
+                        comparison_items.append(f"<p>• {k.upper()}: Current {current_str} vs Peer Avg {peer_str}</p>")
+            comparison_html = ''.join(comparison_items) if comparison_items else "<p>No comparison data</p>"
+            
+            comp_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📊 Comparable</h5>
+                <p><strong>Rec:</strong> {comp_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Fair Value:</strong> ${comp_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>P/E:</strong> {multiples.get('pe', 'N/A')}x</p>
+                <button onclick="showModal('comp_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="comp_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('comp_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>📊 {ticker} Comparable Analysis Details</h3>
+                        <h4>Target Multiples:</h4>
+                        {multiples_html}
+                        <h4>Peer Companies:</h4>
+                        <p>{peers_html}</p>
+                        <h4>Valuation Comparison:</h4>
+                        {comparison_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(comp_card)
+        
+        # AI Insights Card with modal
+        if 'ai_insights' in analyses:
+            ai_data = analyses['ai_insights']
+            ai_insights = ai_data.get('ai_insights', {})
+            strengths = ai_insights.get('key_strengths', [])
+            risks = ai_insights.get('key_risks', [])
+            strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
+            risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+            
+            ai_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>🤖 AI Insights</h5>
+                <p><strong>Rec:</strong> {ai_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Target:</strong> ${ai_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Position:</strong> {ai_insights.get('market_position', 'N/A')}</p>
+                <button onclick="showModal('ai_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="ai_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('ai_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>🤖 {ticker} AI Insights Details</h3>
+                        <p><strong>Growth Prospects:</strong> {ai_insights.get('growth_prospects', 'N/A')}</p>
+                        <p><strong>Competitive Advantage:</strong> {ai_insights.get('competitive_advantage', 'N/A')}</p>
+                        <h4>Key Strengths:</h4>
+                        {strengths_html}
+                        <h4>Key Risks:</h4>
+                        {risks_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(ai_card)
+            
+
+        
+        # Business Model Card with modal
+        if 'business_model' in analyses:
+            bm_data = analyses['business_model']
+            strengths = bm_data.get('strengths', [])
+            risks = bm_data.get('risks', [])
+            strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
+            risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+            
+            bm_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>🏢 Business Model</h5>
+                <p><strong>Rec:</strong> {bm_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Type:</strong> {bm_data.get('business_model_type', 'N/A')}</p>
+                <p><strong>Quality:</strong> {bm_data.get('revenue_quality', 'N/A')}</p>
+                <button onclick="showModal('bm_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="bm_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('bm_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>🏢 {ticker} Business Model Details</h3>
+                        <p><strong>Primary Revenue Stream:</strong> {bm_data.get('primary_revenue_stream', 'N/A')}</p>
+                        <p><strong>Competitive Moat:</strong> {bm_data.get('competitive_moat', 'N/A')}</p>
+                        <p><strong>Scalability Score:</strong> {bm_data.get('scalability_score', 'N/A')}</p>
+                        <p><strong>Recurring Revenue:</strong> {bm_data.get('recurring_percentage', 0)*100:.1f}%</p>
+                        <h4>Strengths:</h4>
+                        {strengths_html}
+                        <h4>Risks:</h4>
+                        {risks_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(bm_card)
+        
+        # Financial Health Card with modal
+        if 'financial_health' in analyses:
+            fh_data = analyses['financial_health']
+            strengths = fh_data.get('strengths', [])
+            risks = fh_data.get('key_risks', [])
+            strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
+            risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+            
+            fh_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>💊 Financial Health</h5>
+                <p><strong>Grade:</strong> {fh_data.get('overall_grade', 'N/A')}</p>
+                <p><strong>Cash Flow:</strong> {fh_data.get('cash_flow_score', 'N/A')}</p>
+                <p><strong>Debt:</strong> {fh_data.get('debt_score', 'N/A')}</p>
+                <button onclick="showModal('fh_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="fh_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('fh_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>💊 {ticker} Financial Health Details</h3>
+                        <p><strong>Filing Date:</strong> {fh_data.get('filing_date', 'N/A')}</p>
+                        <p><strong>Revenue Score:</strong> {fh_data.get('revenue_score', 'N/A')}</p>
+                        <p><strong>Overall Grade:</strong> {fh_data.get('overall_grade', 'N/A')}</p>
+                        <h4>Strengths:</h4>
+                        {strengths_html}
+                        <h4>Key Risks:</h4>
+                        {risks_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(fh_card)
+        
+        # Analyst Consensus Card with modal
+        if 'analyst_consensus' in analyses:
+            analyst_data = analyses['analyst_consensus']
+            
+            # Handle None values for formatting
+            rec_mean = analyst_data.get('recommendation_mean')
+            rec_mean_str = f"{rec_mean:.1f}" if rec_mean is not None else "N/A"
+            
+            upside_pct = analyst_data.get('upside_downside_pct')
+            upside_str = f"{upside_pct:.1f}" if upside_pct is not None else "N/A"
+            
+            analyst_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>👥 Analyst</h5>
+                <p><strong>Rec:</strong> {analyst_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Target:</strong> ${analyst_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Count:</strong> {analyst_data.get('num_analysts', 0)}</p>
+                <button onclick="showModal('analyst_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="analyst_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('analyst_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>👥 {ticker} Analyst Consensus Details</h3>
+                        <p><strong>Consensus Target:</strong> ${analyst_data.get('predicted_price', 0):.2f}</p>
+                        <p><strong>High Target:</strong> ${analyst_data.get('target_high', 0):.2f}</p>
+                        <p><strong>Low Target:</strong> ${analyst_data.get('target_low', 0):.2f}</p>
+                        <p><strong>Number of Analysts:</strong> {analyst_data.get('num_analysts', 0)}</p>
+                        <p><strong>Recommendation Mean:</strong> {rec_mean_str}</p>
+                        <p><strong>Upside to Target:</strong> {upside_str}%</p>
+                        <p><strong>Confidence:</strong> {analyst_data.get('confidence', 'N/A')}</p>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(analyst_card)
+        
+        # News Sentiment Card with modal
+        if 'news_sentiment' in analyses:
+            news_data = analyses['news_sentiment']
+            recent_news = news_data.get('recent_news', [])
+            news_html = ''.join([
+                f"""<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #007acc;">
+                <h5>{article.get('title', 'No title')}</h5>
+                <p><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Date:</strong> {article.get('date', 'N/A')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f}</p>
+                <p><strong>Summary:</strong> {article.get('summary', 'No summary')[:200]}...</p>
+                {'<p><a href="' + article['url'] + '" target="_blank">Read Article</a></p>' if article.get('url') else ''}
+                </div>"""
+                for article in recent_news[:5]
+            ]) if recent_news else "<p>No recent news available</p>"
+            
+            news_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📰 News</h5>
+                <p><strong>Rec:</strong> {news_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Score:</strong> {news_data.get('overall_sentiment_score', 0):.2f}</p>
+                <p><strong>Count:</strong> {news_data.get('news_count', 0)}</p>
+                <button onclick="showModal('news_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="news_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('news_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>📰 {ticker} News Sentiment Details</h3>
+                        <p><strong>Overall Sentiment:</strong> {news_data.get('sentiment_rating', 'N/A')} ({news_data.get('overall_sentiment_score', 0):.2f})</p>
+                        <h4>Recent Articles:</h4>
+                        {news_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(news_card)
+        
+        # Startup Card with modal
+        if 'startup' in analyses:
+            startup_data = analyses['startup']
+            risk_factors = startup_data.get('risk_factors', [])
+            risk_html = ''.join([f"<p>• {risk}</p>" for risk in risk_factors]) if risk_factors else "<p>No risk factors listed</p>"
+            
+            startup_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>🚀 Startup</h5>
+                <p><strong>Rec:</strong> {startup_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Fair Value:</strong> ${startup_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Stage:</strong> {startup_data.get('stage', 'N/A')}</p>
+                <button onclick="showModal('startup_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="startup_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <span onclick="closeModal('startup_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+                        <h3>🚀 {ticker} Startup Valuation Details</h3>
+                        <p><strong>Cash Runway:</strong> {startup_data.get('cash_runway_years', 0):.1f} years</p>
+                        <p><strong>Quarterly Burn:</strong> ${startup_data.get('quarterly_burn_rate', 0):,.0f}</p>
+                        <p><strong>Growth Quality:</strong> {startup_data.get('growth_quality', 'N/A')}</p>
+                        <p><strong>Risk Score:</strong> {startup_data.get('risk_score', 0)}/100</p>
+                        <p><strong>Investment Type:</strong> {startup_data.get('investment_type', 'N/A')}</p>
+                        <p><strong>Confidence Level:</strong> {startup_data.get('confidence_level', 'N/A')}</p>
+                        <h4>Risk Factors:</h4>
+                        {risk_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(startup_card)
+
+        
+        # Combine all cards with modal JavaScript
+        cards_html = ''.join(all_cards)
+        scrollable_row = f"""
+        <div style="display: flex; overflow-x: auto; overflow-y: visible; padding: 10px 0; gap: 10px; height: 320px;">
+            {cards_html}
+        </div>
+        <script>
+        function showModal(modalId) {{
+            document.getElementById(modalId).style.display = 'block';
+        }}
+        function closeModal(modalId) {{
+            document.getElementById(modalId).style.display = 'none';
+        }}
+        window.onclick = function(event) {{
+            if (event.target.classList.contains('modal')) {{
+                event.target.style.display = 'none';
+            }}
+        }}
+        </script>
+        """
+        
+        # Calculate dynamic height based on number of cards
+        card_count = len(all_cards)
+        dynamic_height = max(200, min(400, card_count * 50 + 100))
+        st.components.v1.html(scrollable_row, height=dynamic_height)
+        
+        st.markdown("---")
 
 def generate_batch_text_summary(results):
     """Generate text summary of batch analysis results for scrollable display"""

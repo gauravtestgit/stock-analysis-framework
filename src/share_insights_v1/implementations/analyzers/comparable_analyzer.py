@@ -73,6 +73,13 @@ class ComparableAnalyzer(IAnalyzer):
             valid_values = [v for v in fair_values.values() if v > 0]
             avg_fair_value = sum(valid_values) / len(valid_values) if valid_values else 0
             
+            # Reality check for distressed companies
+            if company_type == CompanyType.TURNAROUND and quality_grade in ['D', 'F']:
+                # Cap fair value at 3x current price for severely distressed companies
+                max_reasonable_value = current_price * 3
+                if avg_fair_value > max_reasonable_value:
+                    avg_fair_value = max_reasonable_value
+            
             # Calculate upside/downside
             upside_downside = 0
             if current_price > 0 and avg_fair_value > 0:

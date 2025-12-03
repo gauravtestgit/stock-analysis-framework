@@ -12,14 +12,22 @@ def show_watchlist_sidebar():
     st.sidebar.header("📋 Stock Watchlist")
     
     # Add stock input
-    new_stock = st.sidebar.text_input("Add Stock:", placeholder="Enter ticker (e.g., AAPL)")
+    new_stock = st.sidebar.text_input("Add Stock(s):", placeholder="Enter tickers separated by spaces (e.g., AAPL MSFT GOOGL)")
     
     col1, col2 = st.sidebar.columns(2)
     with col1:
         if st.button("Add", key="add_stock"):
-            if new_stock and new_stock.upper() not in st.session_state.watchlist:
-                st.session_state.watchlist.append(new_stock.upper())
-                st.sidebar.success(f"Added {new_stock.upper()}")
+            if new_stock:
+                tickers = [ticker.strip().upper() for ticker in new_stock.split() if ticker.strip()]
+                added_count = 0
+                for ticker in tickers:
+                    if ticker not in st.session_state.watchlist:
+                        st.session_state.watchlist.append(ticker)
+                        added_count += 1
+                if added_count > 0:
+                    st.sidebar.success(f"Added {added_count} stock(s)")
+                else:
+                    st.sidebar.info("All stocks already in watchlist")
     
     with col2:
         if st.button("Clear All", key="clear_watchlist"):

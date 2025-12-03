@@ -2,6 +2,7 @@ import yfinance as yf
 from typing import Dict, Any
 from ...interfaces.data_provider import IDataProvider
 from ...models.financial_metrics import FinancialMetrics
+from ...utils.rate_limit_tracker import rate_tracker
 
 class YahooFinanceProvider(IDataProvider):
     """Yahoo Finance data provider implementation"""
@@ -60,6 +61,7 @@ class YahooFinanceProvider(IDataProvider):
     def get_financial_metrics(self, ticker: str) -> Dict[str, Any]:
         """Get financial metrics from Yahoo Finance"""
         try:
+            rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             revenue_data = self.get_revenue_trend(stock)
             info = stock.info
@@ -110,26 +112,30 @@ class YahooFinanceProvider(IDataProvider):
                 'fifty_two_week_low': info.get('fiftyTwoWeekLow')
             }
         except Exception as e:
+            rate_tracker.check_rate_limit_error(str(e), ticker)
             return {'error': str(e)}
     
     def get_price_data(self, ticker: str) -> Dict[str, Any]:
         """Get price and technical data"""
         try:
+            rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             hist = stock.history(period="1y")
-            
+            print(f'price data for ${stock}: ${hist}')
             return {
                 'price_history': hist,
                 'current_price': hist['Close'].iloc[-1] if not hist.empty else None,
                 'volume': hist['Volume'].iloc[-1] if not hist.empty else None
             }
         except Exception as e:
+            rate_tracker.check_rate_limit_error(str(e), ticker)
             return {'error': str(e)}
     
     def get_professional_analyst_data(self, ticker: str) -> Dict:
         """Fetch analyst data from multiple sources"""
         data = {}
         try:
+            rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             info = stock.info
             
@@ -154,6 +160,7 @@ class YahooFinanceProvider(IDataProvider):
             data['analyst_count'] = info.get('numberOfAnalystOpinions', 0)       
             
         except Exception as e:
+            rate_tracker.check_rate_limit_error(str(e), ticker)
             print(f"Error fetching data for {ticker}: {e}")
             data = {}
         
@@ -162,6 +169,7 @@ class YahooFinanceProvider(IDataProvider):
     def get_management_data(self, ticker: str) -> Dict[str, Any]:
         """Get management data from Yahoo Finance"""
         try:
+            rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             info = stock.info
             
@@ -201,4 +209,5 @@ class YahooFinanceProvider(IDataProvider):
             }
             
         except Exception as e:
+            rate_tracker.check_rate_limit_error(str(e), ticker)
             return {'error': str(e)}

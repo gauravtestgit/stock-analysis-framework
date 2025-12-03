@@ -181,7 +181,8 @@ class FinanceConfig:
             'cagr_multiplier': 1.5,
             'terminal_growth_adjustment': 0.0,
             'risk_premium': 0.025,
-            'valuation_discount': 0.20
+            'valuation_discount': 0.20,
+            'multiple_discount': 0.3  # 70% discount on all multiples
         },
         CompanyType.STARTUP_LOSS_MAKING: {
             'revenue_multiple_base': 2.0,  # More conservative base
@@ -295,6 +296,16 @@ class FinanceConfig:
             params['max_cagr'] *= quality_mult
             params['ev_ebitda_multiple'] *= quality_mult
             params['pe_multiple'] *= quality_mult
+            params['ps_multiple'] *= quality_mult
+            params['pb_multiple'] *= quality_mult
+        
+        # Apply turnaround multiple discount
+        if 'multiple_discount' in type_adjustments:
+            discount = type_adjustments['multiple_discount']
+            params['ev_ebitda_multiple'] *= discount
+            params['pe_multiple'] *= discount
+            params['ps_multiple'] *= discount
+            params['pb_multiple'] *= discount
         
         # Apply caps and floors
         params['max_cagr'] = min(params['max_cagr'], 0.30)  # Never exceed 30%

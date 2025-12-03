@@ -61,6 +61,7 @@ async def analyze_stock(ticker: str, request: AnalysisRequest = None):
             ticker=actual_ticker,
             company_type=result.get('company_type', 'unknown'),
             analyses=result.get('analyses', {}),
+            financial_metrics=result.get('financial_metrics'),
             final_recommendation=result.get('final_recommendation'),
             status="completed"
         )

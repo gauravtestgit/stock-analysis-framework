@@ -14,9 +14,11 @@ from ...implementations.llm_providers.llm_manager import LLMManager
 class NewsSentimentAnalyzer(IAnalyzer):
     """Enhanced news sentiment analyzer with recent developments tracking"""
     
-    def __init__(self, data_provider: IDataProvider):
+    def __init__(self, data_provider: IDataProvider, debug_mode: bool = False, enable_web_scraping: bool = False):
         self.data_provider = data_provider
         self.llm_manager = LLMManager()
+        self.debug_mode = debug_mode
+        self.enable_web_scraping = enable_web_scraping
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze news sentiment and recent developments"""
@@ -79,7 +81,8 @@ class NewsSentimentAnalyzer(IAnalyzer):
 
             
             processed_news = []
-            for news_item in news_data[:10]:  # Limit to 10 most recent
+            # Limit to 5 most recent for faster processing
+            for news_item in news_data[:5]:
                 # Extract content from nested structure
                 content = news_item.get('content', {})
                 
@@ -103,9 +106,16 @@ class NewsSentimentAnalyzer(IAnalyzer):
                 click_url = content.get('clickThroughUrl', {})
                 url = canonical_url.get('url', '') or click_url.get('url', '')
                 
+                # Try to get full article content only if web scraping is enabled
+                full_content = None
+                if self.enable_web_scraping and url:
+                    full_content = self._fetch_article_content(url)
+                    if self.debug_mode and full_content and 'keep an eye on' in content.get('title', '').lower():
+                        print(f"DEBUG: Scraped {len(full_content)} chars for '{content.get('title', '')[:50]}...'")
+                
                 processed_news.append({
                     'title': content.get('title', 'No title'),
-                    'summary': content.get('summary', content.get('description', 'No summary')),
+                    'summary': full_content or content.get('summary', content.get('description', 'No summary')),
                     'date': news_date,
                     'source': source,
                     'url': url,
@@ -121,6 +131,92 @@ class NewsSentimentAnalyzer(IAnalyzer):
             traceback.print_exc()
             return None
     
+    def _fetch_article_content(self, url: str) -> Optional[str]:
+        """Fetch full article content from URL"""
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Remove script and style elements
+                for script in soup(["script", "style"]):
+                    script.decompose()
+                
+                # Try common article selectors
+                article_selectors = [
+                    'article', '.article-body', '.story-body', '.post-content',
+                    '.entry-content', '.content', 'main', '.article-content'
+                ]
+                
+                for selector in article_selectors:
+                    article = soup.select_one(selector)
+                    if article:
+                        text = article.get_text(strip=True)
+                        if len(text) > 200:  # Ensure we got substantial content
+                            if self.debug_mode:
+                                print(f"DEBUG: Found article content via selector '{selector}', length: {len(text)}")
+                            return self._extract_ticker_relevant_content(text, ticker) if ticker else text[:3000]
+                
+                # Fallback: get all paragraph text
+                paragraphs = soup.find_all('p')
+                if paragraphs:
+                    text = ' '.join([p.get_text(strip=True) for p in paragraphs])
+                    if text:
+                        return self._extract_ticker_relevant_content(text, ticker) if ticker else text[:3000]
+                    return None
+                    
+        except Exception as e:
+            if self.debug_mode and ('keep an eye on' in url or 'research further' in url):
+                print(f"Error fetching article content from {url}: {e}")
+        
+        return None
+    
+    def _extract_ticker_relevant_content(self, text: str, ticker: str) -> str:
+        """Extract content around ticker mentions, prioritizing ticker-relevant sections"""
+        if not ticker:
+            return text[:3000]
+        
+        ticker_lower = ticker.lower()
+        text_lower = text.lower()
+        
+        # Find all ticker mentions
+        ticker_positions = []
+        start = 0
+        while True:
+            pos = text_lower.find(ticker_lower, start)
+            if pos == -1:
+                break
+            ticker_positions.append(pos)
+            start = pos + 1
+        
+        if not ticker_positions:
+            # No ticker mentions found, return first 3000 chars
+            return text[:3000]
+        
+        # Get content around first ticker mention (1500 chars before and after)
+        first_mention = ticker_positions[0]
+        start_pos = max(0, first_mention - 1500)
+        end_pos = min(len(text), first_mention + 1500)
+        
+        relevant_content = text[start_pos:end_pos]
+        
+        # If we have multiple mentions, try to include more context
+        if len(ticker_positions) > 1 and len(relevant_content) < 2500:
+            # Extend to include second mention if space allows
+            second_mention = ticker_positions[1]
+            extended_end = min(len(text), second_mention + 500)
+            if extended_end - start_pos <= 3000:
+                relevant_content = text[start_pos:extended_end]
+        
+        return relevant_content[:3000]  # Ensure we don't exceed limit
+    
     def _analyze_news_sentiment(self, ticker: str, news_data: List[Dict]) -> NewsSentimentReport:
         """Analyze sentiment from news data"""
         
@@ -130,7 +226,7 @@ class NewsSentimentAnalyzer(IAnalyzer):
         
         for news in news_data:
             # Analyze sentiment using AI (or rule-based for demo)
-            sentiment_result = self._analyze_text_sentiment(news['title'], news['summary'])
+            sentiment_result = self._analyze_text_sentiment(news['title'], news['summary'], ticker)
             
             category = self._categorize_news(news)
             
@@ -172,11 +268,35 @@ class NewsSentimentAnalyzer(IAnalyzer):
             risk_factors=risk_factors
         )
     
-    def _analyze_text_sentiment(self, title: str, summary: str) -> Dict[str, float]:
-        """Analyze sentiment of text using LangChain + Groq"""
+    def _analyze_text_sentiment(self, title: str, summary: str, ticker: str = None) -> Dict[str, float]:
+        """Analyze stock-specific sentiment from text using fast rule-based approach with optional LLM"""
         
-        try:
-            prompt = f"""Analyze the sentiment of this financial news and respond with ONLY valid JSON:
+        # Use LLM analysis by default when web scraping is enabled
+        if self.enable_web_scraping:
+            try:
+                if ticker:
+                    prompt = f"""TASK: Score sentiment for {ticker}.
+
+Title: {title}
+Summary: {summary}
+
+IMPORTANT: This article appeared in {ticker}'s news feed, meaning it relates to {ticker}.
+
+If title contains "keep an eye on" or "research further" → {ticker} is likely the recommended stock → Score +0.7
+If title contains "attractive" or "undervalued" → {ticker} is likely positive → Score +0.6  
+If {ticker} explicitly mentioned positively → Score +0.4
+If neutral about {ticker} → Score 0.0
+If warns against {ticker} → Score -0.5
+
+Note: Summary may be truncated, but title indicates {ticker} relevance.
+
+Return JSON:
+{{
+    "sentiment_score": 0.0,
+    "confidence": 0.8
+}}"""
+                else:
+                    prompt = f"""Analyze the sentiment of this financial news and respond with ONLY valid JSON:
 
 Title: {title}
 Summary: {summary}
@@ -188,29 +308,52 @@ CRITICAL: Return ONLY the JSON object below, no explanations or additional text:
 }}
 
 Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
-            
-            response = self.llm_manager.generate_response(prompt)
-            
-            # Extract JSON from response
-            json_str = self._extract_json_from_response(response)
-            result = json.loads(json_str)
-            
-            return {
-                'score': result.get('sentiment_score', 0.0),
-                'confidence': result.get('confidence', 0.5)
-            }
-            
-        except Exception as e:
-            print(f"LLM sentiment analysis error: {e}")
-            return self._get_fallback_sentiment(title, summary)
-    
-    def _get_fallback_sentiment(self, title: str, summary: str) -> Dict[str, float]:
-        """Fallback rule-based sentiment analysis"""
+                
+                response = self.llm_manager.generate_response(prompt)
+                json_str = self._extract_json_from_response(response)
+                result = json.loads(json_str)
+                
+                score = result.get('sentiment_score', 0.0)
+                if self.debug_mode and ('keep an eye on' in title.lower() or 'research further' in title.lower()):
+                    print(f"DEBUG: '{title[:50]}...' → Score: {score}")
+                    print(f"  Summary length: {len(summary)} chars")
+                    print(f"  Contains '{ticker}': {'Yes' if ticker.lower() in summary.lower() else 'No'}")
+                
+                return {
+                    'score': score,
+                    'confidence': result.get('confidence', 0.5)
+                }
+                
+            except Exception as e:
+                if self.debug_mode:
+                    print(f"LLM sentiment analysis error for '{title[:30]}...': {e}")
+                return self._get_fallback_sentiment(title, summary, ticker)
         
-        positive_words = ['strong', 'growth', 'exceeded', 'innovative', 'expansion', 'improved', 'success']
-        negative_words = ['decline', 'loss', 'weak', 'concern', 'risk', 'challenge', 'disappointing']
+        # Fallback to rule-based when web scraping disabled
+        return self._get_fallback_sentiment(title, summary, ticker)
+
+    
+    def _get_fallback_sentiment(self, title: str, summary: str, ticker: str = None) -> Dict[str, float]:
+        """Fallback rule-based sentiment analysis with ticker-specific focus"""
         
         text = f"{title} {summary}".lower()
+        
+        if ticker:
+            # Extract sentences mentioning the ticker
+            import re
+            sentences = re.split(r'[.!?]', text)
+            ticker_sentences = [s for s in sentences if ticker.lower() in s]
+            
+            if ticker_sentences:
+                text = ' '.join(ticker_sentences)
+            else:
+                # If no ticker mentions found but article is in ticker's feed,
+                # assume neutral relevance and analyze full text with reduced confidence
+                full_text = f"{title} {summary}".lower()
+                return self._analyze_full_text_sentiment(full_text, reduced_confidence=True)
+        
+        positive_words = ['strong', 'growth', 'exceeded', 'innovative', 'expansion', 'improved', 'success', 'positive', 'attractive', 'undervalued', 'buy', 'keep an eye on', 'eye on', 'research further', 'promising', 'opportunity']
+        negative_words = ['decline', 'loss', 'weak', 'concern', 'risk', 'challenge', 'disappointing', 'cautious', 'avoid', 'sell']
         
         positive_count = sum(1 for word in positive_words if word in text)
         negative_count = sum(1 for word in negative_words if word in text)
@@ -223,6 +366,26 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
             score = 0.0
         
         confidence = min(0.9, 0.5 + abs(positive_count - negative_count) * 0.1)
+        
+        return {'score': score, 'confidence': confidence}
+    
+    def _analyze_full_text_sentiment(self, text: str, reduced_confidence: bool = False) -> Dict[str, float]:
+        """Analyze full text sentiment when no specific ticker mentions found"""
+        
+        positive_words = ['strong', 'growth', 'exceeded', 'innovative', 'expansion', 'improved', 'success', 'positive', 'attractive', 'undervalued', 'buy', 'research further']
+        negative_words = ['decline', 'loss', 'weak', 'concern', 'risk', 'challenge', 'disappointing', 'cautious', 'avoid', 'sell', 'brush off']
+        
+        positive_count = sum(1 for word in positive_words if word in text)
+        negative_count = sum(1 for word in negative_words if word in text)
+        
+        if positive_count > negative_count:
+            score = min(0.4, 0.1 + (positive_count - negative_count) * 0.05)  # Reduced impact
+        elif negative_count > positive_count:
+            score = max(-0.4, -0.1 - (negative_count - positive_count) * 0.05)  # Reduced impact
+        else:
+            score = 0.0
+        
+        confidence = 0.2 if reduced_confidence else min(0.6, 0.3 + abs(positive_count - negative_count) * 0.05)
         
         return {'score': score, 'confidence': confidence}
     

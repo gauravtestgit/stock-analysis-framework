@@ -10,6 +10,7 @@ class AnalysisResponse(BaseModel):
     ticker: str
     company_type: str
     analyses: Dict[str, Any]
+    financial_metrics: Optional[Dict[str, Any]] = None
     final_recommendation: Optional[Dict[str, Any]] = None
     status: str = "completed"
 

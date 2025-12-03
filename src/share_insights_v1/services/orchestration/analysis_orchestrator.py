@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 import time
 from ...interfaces.analyzer import IAnalyzer
 from ...interfaces.data_provider import IDataProvider
@@ -13,13 +13,14 @@ from ..comparison.analyst_comparison_service import AnalystComparisonService
 class AnalysisOrchestrator:
     """Orchestrates multiple analyzers based on company type"""
     
-    def __init__(self, data_provider: IDataProvider, classifier: ICompanyClassifier, quality_calculator: ICalculator):
+    def __init__(self, data_provider: IDataProvider, classifier: ICompanyClassifier, quality_calculator: ICalculator, debug_mode: bool = False):
         self.data_provider = data_provider
         self.classifier = classifier
         self.quality_calculator = quality_calculator
         self.recommendation_service = RecommendationService()
         self.comparison_service = AnalystComparisonService(data_provider)
         self.analyzers: Dict[AnalysisType, IAnalyzer] = {}
+        self.debug_mode = debug_mode
     
     def register_analyzer(self, analysis_type: AnalysisType, analyzer: IAnalyzer):
         """Register an analyzer for a specific analysis type"""
@@ -80,17 +81,43 @@ class AnalysisOrchestrator:
                     for analysis_type in analyses_to_run
                 }
                 
-                # Collect results as they complete
-                for future in as_completed(future_to_analysis):
-                    analysis_type = future_to_analysis[future]
-                    try:
-                        result = future.result()
-                        results['analyses'][analysis_type.value] = result
-                    except Exception as e:
-                        results['analyses'][analysis_type.value] = {
-                            'error': f"{analysis_type.value} analysis failed: {str(e)}",
-                            'analysis_type': analysis_type.value
-                        }
+                # Collect results as they complete (with timeout)
+                try:
+                    for future in as_completed(future_to_analysis, timeout=60):  # Increased overall timeout
+                        analysis_type = future_to_analysis[future]
+                        try:
+                            result = future.result(timeout=30)  # Increased per-analyzer timeout
+                            if result and not result.get('error'):
+                                results['analyses'][analysis_type.value] = result
+                                print(f"✅ {analysis_type.value} completed successfully for {ticker}")
+                            else:
+                                results['analyses'][analysis_type.value] = result
+                                print(f"⚠️ {analysis_type.value} completed with issues for {ticker}: {result.get('error', 'Unknown issue')}")
+                        except TimeoutError:
+                            print(f"⏰ TIMEOUT: {analysis_type.value} timed out after 30s for {ticker}")
+                            results['analyses'][analysis_type.value] = {
+                                'error': f"{analysis_type.value} analysis timed out",
+                                'analysis_type': analysis_type.value,
+                                'applicable': False
+                            }
+                        except Exception as e:
+                            print(f"❌ ERROR: {analysis_type.value} analysis failed for {ticker}: {str(e)}")
+                            results['analyses'][analysis_type.value] = {
+                                'error': f"{analysis_type.value} analysis failed: {str(e)}",
+                                'analysis_type': analysis_type.value,
+                                'applicable': False
+                            }
+                except TimeoutError:
+                    print(f"⏰ TIMEOUT: Overall analysis timed out after 60s for {ticker}")
+                    # Handle any remaining futures that didn't complete
+                    for future, analysis_type in future_to_analysis.items():
+                        if not future.done():
+                            print(f"⏰ TIMEOUT: {analysis_type.value} did not complete for {ticker}")
+                            results['analyses'][analysis_type.value] = {
+                                'error': f"{analysis_type.value} analysis timed out",
+                                'analysis_type': analysis_type.value,
+                                'applicable': False
+                            }
             
             # Generate consolidated recommendation if we have analyses
             if results['analyses']:
@@ -132,14 +159,26 @@ class AnalysisOrchestrator:
             # Check if analyzer is applicable
             company_type = data.get('company_type', CompanyType.MATURE_PROFITABLE.value)
             if hasattr(analyzer, 'is_applicable') and not analyzer.is_applicable(company_type):
+                print(f"INFO: {analysis_type.value} not applicable to {company_type} for {ticker}")
                 return {'applicable': False, 'reason': f'{analysis_type.value} not applicable to {company_type}'}
             
             # Run analysis
+            print(f"🔄 Starting {analysis_type.value} for {ticker}")
             result = analyzer.analyze(ticker, data)
+            
+            # Check if result is valid
+            if not result or ('error' in result and result.get('applicable', True)):
+                print(f"⚠️ WARNING: {analysis_type.value} returned invalid result for {ticker}: {result}")
+            else:
+                print(f"✅ {analysis_type.value} analysis completed for {ticker}")
+            
             result['analysis_type'] = analysis_type.value
             return result
             
         except Exception as e:
+            print(f"ERROR in _run_analysis: {analysis_type.value} failed for {ticker}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return {
                 'error': f"{analysis_type.value} analysis failed: {str(e)}",
                 'analysis_type': analysis_type.value

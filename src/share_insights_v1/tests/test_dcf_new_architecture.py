@@ -11,7 +11,7 @@ from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 def test_new_dcf_architecture():
     """Test new DCF architecture with proper company classification"""
     
-    ticker = "chrs"
+    ticker = "chym"
     yp = YahooFinanceProvider()
     
     # Get comprehensive data like DCF analyzer does

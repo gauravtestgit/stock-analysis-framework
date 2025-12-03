@@ -23,11 +23,12 @@ from .models import AnalyzerInfo
 class AnalysisService:
     """Service layer for stock analysis API"""
     
-    def __init__(self, save_to_db: bool = True):
+    def __init__(self, save_to_db: bool = True, debug_mode: bool = False):
         self.data_provider = YahooFinanceProvider()
         self.classifier = CompanyClassifier()
         self.quality_calculator = QualityScoreCalculator()
         self.save_to_db = save_to_db
+        self.debug_mode = debug_mode
         self.storage_service = AnalysisStorageService() if save_to_db else None
         self.orchestrator = self._setup_orchestrator()
     
@@ -36,7 +37,8 @@ class AnalysisService:
         orchestrator = AnalysisOrchestrator(
             self.data_provider, 
             self.classifier, 
-            self.quality_calculator
+            self.quality_calculator,
+            self.debug_mode
         )
         
         # Register quantitative analyzers
@@ -47,7 +49,7 @@ class AnalysisService:
         
         # Register qualitative analyzers
         orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider))
-        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider))
+        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, self.debug_mode, enable_web_scraping=True))
         orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
@@ -103,7 +105,8 @@ class AnalysisService:
         orchestrator = AnalysisOrchestrator(
             self.data_provider, 
             self.classifier, 
-            self.quality_calculator
+            self.quality_calculator,
+            self.debug_mode
         )
         
         # Analyzer mapping
@@ -113,7 +116,7 @@ class AnalysisService:
             'comparable': (AnalysisType.COMPARABLE, ComparableAnalyzer()),
             'startup': (AnalysisType.STARTUP, StartupAnalyzer()),
             'ai_insights': (AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider)),
-            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider)),
+            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, self.debug_mode, enable_web_scraping=True)),
             'business_model': (AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider)),
             'competitive_position': (AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider)),
             'management_quality': (AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider)),
