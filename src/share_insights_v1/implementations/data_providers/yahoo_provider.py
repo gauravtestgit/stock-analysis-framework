@@ -73,6 +73,11 @@ class YahooFinanceProvider(IDataProvider):
                 if len(fcf_data) > 0:
                     fcf = fcf_data.iloc[0]
 
+            # Debug: Print available price fields for ETFs
+            price_fields = ['currentPrice', 'regularMarketPrice', 'navPrice', 'previousClose', 'ask', 'bid', 'open']
+            available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
+            print(f"Yahoo Provider - Available price fields for {ticker}: {available_prices}")
+            
             return {
                 'market_cap': info.get('marketCap', 0),
                 'sector': info.get('sector', ''),
@@ -81,6 +86,7 @@ class YahooFinanceProvider(IDataProvider):
                 'category': info.get('category', ''),
                 'quote_type': info.get('quoteType', ''),
                 'long_name': info.get('longName', ''),
+                'business_summary': info.get('longBusinessSummary', ''),
                 'enterprise_value': info.get('enterpriseValue', 0),
                 'total_revenue': info.get('totalRevenue', 0),
                 'net_income': info.get('netIncomeToCommon', 0),
@@ -94,7 +100,7 @@ class YahooFinanceProvider(IDataProvider):
                 'total_debt': info.get('totalDebt', 0) or 0,
                 'total_cash': info.get('totalCash', 0) or 0,
                 'shares_outstanding': info.get('sharesOutstanding', 0),
-                'current_price': info.get('currentPrice', 0),
+                'current_price': info.get('currentPrice') or info.get('regularMarketPrice') or info.get('navPrice') or info.get('previousClose') or info.get('ask') or info.get('bid') or 0,
                 'beta': info.get('beta', 1.0),
                 'pe_ratio': info.get('trailingPE'),
                 'pb_ratio': info.get('priceToBook'),
@@ -121,11 +127,25 @@ class YahooFinanceProvider(IDataProvider):
             rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             hist = stock.history(period="1y")
-            print(f'price data for ${stock}: ${hist}')
+            
+            # Get last 30 days for chart
+            from datetime import datetime, timedelta
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)
+            chart_hist = stock.history(start=start_date, end=end_date)
+            
+            chart_data = {}
+            if not chart_hist.empty:
+                chart_data = {
+                    'prices': chart_hist['Close'].tolist(),
+                    'dates': [date.strftime('%m/%d') for date in chart_hist.index]
+                }
+            
             return {
                 'price_history': hist,
                 'current_price': hist['Close'].iloc[-1] if not hist.empty else None,
-                'volume': hist['Volume'].iloc[-1] if not hist.empty else None
+                'volume': hist['Volume'].iloc[-1] if not hist.empty else None,
+                'chart_data': chart_data
             }
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)

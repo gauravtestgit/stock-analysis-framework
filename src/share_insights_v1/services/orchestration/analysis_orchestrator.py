@@ -213,6 +213,10 @@ class AnalysisOrchestrator:
             applicable.extend([AnalysisType.DCF, AnalysisType.COMPARABLE])
         elif company_type == CompanyType.FINANCIAL.value:
             applicable.append(AnalysisType.COMPARABLE)
+        elif company_type == CompanyType.ETF.value:
+            # ETFs get technical analysis and analyst consensus for price targets
+            # No DCF/Comparable as ETFs don't have traditional financials
+            pass  # Already have technical, analyst_consensus in always applicable
         
         return applicable
     

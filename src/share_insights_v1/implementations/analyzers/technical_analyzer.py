@@ -145,6 +145,8 @@ class TechnicalAnalyzer(IAnalyzer):
                 predicted_price = current_price * (1 + volatility * 0.8)  # Bullish target
             # Keep existing predicted_price for Hold
                 
+            chart_data = price_data.get('chart_data', {})
+            
             return {
                 'method': 'Technical Analysis',
                 'current_price': current_price,
@@ -169,7 +171,8 @@ class TechnicalAnalyzer(IAnalyzer):
                 'bb_lower': bb_lower,
                 'stoch_k': stoch_k,
                 'stoch_d': stoch_d,
-                'technical_signals': technical_signals
+                'technical_signals': technical_signals,
+                'chart_data': chart_data
             }
             
         except Exception as e:

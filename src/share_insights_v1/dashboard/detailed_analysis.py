@@ -257,16 +257,19 @@ def get_current_price(ticker):
         stock = yf.Ticker(ticker)
         info = stock.info
         
-        # Debug: Check what's in info
-        price_fields = ['currentPrice', 'regularMarketPrice', 'previousClose', 'ask', 'bid']
+        # Debug: Check what's in info for ETFs
+        price_fields = ['currentPrice', 'regularMarketPrice', 'previousClose', 'ask', 'bid', 'navPrice', 'open']
         available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
+        print(f"Available price fields for {ticker}: {available_prices}")
         
-        # Try multiple price sources
+        # Try multiple price sources (including ETF-specific fields)
         current_price = (info.get('currentPrice') or 
                         info.get('regularMarketPrice') or 
+                        info.get('navPrice') or  # ETF Net Asset Value
                         info.get('previousClose') or
                         info.get('ask') or
-                        info.get('bid'))
+                        info.get('bid') or
+                        info.get('open'))
         
         if not current_price:
             # Try getting price from history as fallback
@@ -274,9 +277,11 @@ def get_current_price(ticker):
                 hist = stock.history(period='1d')
                 if not hist.empty:
                     current_price = hist['Close'].iloc[-1]
+                    print(f"Using historical price for {ticker}: {current_price}")
             except:
                 pass
         
+        print(f"Final price for {ticker}: {current_price}")
         return current_price
     except Exception as e:
         # Debug: Print the actual error
@@ -329,6 +334,8 @@ def display_detailed_results(ticker, data):
             st.caption(f"{analyses_count} analyses, {avg_time:.2f}s avg")
     
     analyses = data.get('analyses', {})
+    
+
 
     
     # AI Insights Section
@@ -869,6 +876,10 @@ def display_horizontal_stock_cards(results):
             st.error(f"❌ {ticker}: {data['error']}")
             continue
             
+        # Create sanitized ticker for ALL JavaScript usage
+        sanitized_ticker = ticker.replace('.', '_')
+        print(f"DEBUG: Processing {ticker} -> sanitized to {sanitized_ticker}")
+            
         # Get data for the row
         financial_metrics = data.get('financial_metrics') or {}
         print(f"results data in detailed analysis\n ${results}")
@@ -880,27 +891,265 @@ def display_horizontal_stock_cards(results):
         
         # Create horizontal scrollable container for this stock
         st.markdown(f"**📊 {ticker} - {final_rec.get('recommendation', 'N/A')}**")
+            # Business Summary Section
+        financial_metrics = data.get('financial_metrics', {})
+        business_summary = financial_metrics.get('business_summary', '')
+        if business_summary:
+            st.subheader("📋 Business Summary")
+            st.write(business_summary)
+            st.markdown("---")
         
         # Create all cards in one row with horizontal scroll
         all_cards = []
         
         # Stock Symbol and Basic Info Card (first card)
         company_type = data.get('company_type', 'N/A')
+        target_price = final_rec.get('target_price', 0) or 0
+        upside_pct = None
+        if current_price and target_price and current_price > 0 and target_price > 0:
+            upside_pct = ((target_price - current_price) / current_price) * 100
         stock_card = f"""
         <div style="min-width: 220px; max-height: 300px; overflow-y: auto; padding: 15px; border: 2px solid #007acc; border-radius: 8px; margin-right: 10px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
             <h4 style="margin: 0 0 10px 0; color: #007acc; font-weight: bold;">{ticker}</h4>
             <p style="color: #28a745; font-weight: bold;"><strong>Overall:</strong> {final_rec.get('recommendation', 'N/A')}</p>
             <p><strong>Price:</strong> {f'${current_price:.2f}' if current_price else 'N/A'}</p>
-            <p><strong>Industry</strong> {financial_metrics.get('industry', 'N/A')}</p>
+            <p><strong>Target:</strong> {f'${target_price:.2f}' if target_price else 'N/A'}</p>
+            <p><strong>Upside:</strong> {f'{upside_pct:.1f}%' if upside_pct is not None else 'N/A'}</p>
+            <p><strong>Industry:</strong> {financial_metrics.get('industry', 'N/A')}</p>
             <p><strong>Type:</strong> {company_type}</p>
             <p><strong>P/E:</strong> {financial_metrics.get('pe_ratio', 'N/A')}</p>
             <p><strong>P/S:</strong> {financial_metrics.get('ps_ratio', 'N/A')}</p>
             <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
-            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}%</p>            
+            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}%</p>
+            <p><strong>Debt Ratio:</strong> {financial_metrics.get('debt_to_equity', 'N/A')}</p>            
             <p><strong>Time:</strong> {analysis_time}s</p>
         </div>
         """
         all_cards.append(stock_card)
+        
+        # Financial Statements Card (second card)
+        try:
+            import yfinance as yf
+            stock = yf.Ticker(ticker)
+            
+            # Get financial data
+            income_stmt = stock.financials
+            cashflow = stock.cashflow
+            
+            # Extract key metrics for last 4-5 years
+            revenue_data = []
+            gross_income_data = []
+            net_income_data = []
+            operating_cf_data = []
+            free_cf_data = []
+            years = []
+            
+            if not income_stmt.empty and not cashflow.empty:
+                # Get last 4 years of data
+                for col in income_stmt.columns[:4]:
+                    year = str(col.year)
+                    years.append(year)
+                    
+                    # Revenue (Total Revenue)
+                    revenue = income_stmt.loc['Total Revenue', col] if 'Total Revenue' in income_stmt.index else 0
+                    revenue_data.append(revenue if revenue else 0)  # Keep raw values
+                    
+                    # Gross Income (Gross Profit)
+                    gross_income = income_stmt.loc['Gross Profit', col] if 'Gross Profit' in income_stmt.index else 0
+                    gross_income_data.append(gross_income if gross_income else 0)  # Keep raw values
+                    
+                    # Net Income
+                    net_income = income_stmt.loc['Net Income', col] if 'Net Income' in income_stmt.index else 0
+                    net_income_data.append(net_income if net_income else 0)  # Keep raw values
+                    
+                    # Operating Cash Flow
+                    op_cf = cashflow.loc['Operating Cash Flow', col] if 'Operating Cash Flow' in cashflow.index else 0
+                    operating_cf_data.append(op_cf if op_cf else 0)  # Keep raw values
+                    
+                    # Free Cash Flow
+                    free_cf = cashflow.loc['Free Cash Flow', col] if 'Free Cash Flow' in cashflow.index else 0
+                    free_cf_data.append(free_cf if free_cf else 0)  # Keep raw values
+            
+            # Reverse data to show oldest to newest
+            years.reverse()
+            revenue_data.reverse()
+            gross_income_data.reverse()
+            net_income_data.reverse()
+            operating_cf_data.reverse()
+            free_cf_data.reverse()
+            
+            # Create bar chart data for modal
+            chart_data = {
+                'years': years,
+                'revenue': revenue_data,
+                'gross_income': gross_income_data,
+                'net_income': net_income_data,
+                'operating_cf': operating_cf_data,
+                'free_cf': free_cf_data
+            }
+            
+            # Determine scale and format data
+            max_revenue = max([abs(x) for x in revenue_data]) if revenue_data else 0
+            scale_billions = max_revenue >= 1e9
+            scale_factor = 1e9 if scale_billions else 1e6
+            scale_label = "B" if scale_billions else "M"
+            
+            # Format data for display
+            def format_value(val, scale_factor):
+                if val == 0:
+                    return "0"
+                scaled = val / scale_factor
+                return f"{scaled:.1f}" if abs(scaled) < 10 else f"{scaled:.0f}"
+            
+            # Create simple bar chart HTML
+            max_val = max(max([abs(x) for x in revenue_data]) if revenue_data else [0], 
+                         max([abs(x) for x in gross_income_data]) if gross_income_data else [0],
+                         max([abs(x) for x in net_income_data]) if net_income_data else [0],
+                         max([abs(x) for x in operating_cf_data]) if operating_cf_data else [0],
+                         max([abs(x) for x in free_cf_data]) if free_cf_data else [0])
+            
+            revenue_bars = ''.join([f'<div style="display: inline-block; width: 60px; margin: 2px; text-align: center;"><div style="height: {int(abs(rev)/max_val*100) if max_val > 0 else 0}px; background: #007acc; margin-bottom: 5px;"></div><small>{year}<br>${format_value(rev, scale_factor)}{scale_label}</small></div>' for year, rev in zip(years, revenue_data)])
+            
+            # Combined income bars showing both Gross and Net Income with negative axis
+            income_bars = ''.join([
+                f'<div style="display: inline-block; width: 80px; margin: 2px; text-align: center;">'
+                f'<div style="position: relative; height: 120px; display: flex; justify-content: center; align-items: center; gap: 2px;">'
+                f'<div style="position: absolute; bottom: 50%; width: 100%; height: 1px; background: #ccc; opacity: 0.5;"></div>'
+                f'<div style="width: 18px; height: {int(abs(gross)/max_val*50) if max_val > 0 else 0}px; background: #ffc107; border-radius: 2px; align-self: flex-end; margin-bottom: 60px;" title="Gross: ${format_value(gross, scale_factor)}{scale_label}"></div>'
+                f'<div style="width: 18px; height: {int(abs(net)/max_val*50) if max_val > 0 else 0}px; background: {"#28a745" if net >= 0 else "#dc3545"}; border-radius: 2px; {"align-self: flex-end; margin-bottom: 60px;" if net >= 0 else "align-self: flex-start; margin-top: 60px;"}" title="Net: ${format_value(net, scale_factor)}{scale_label}"></div>'
+                f'</div>'
+                f'<small>{year}<br>G:${format_value(gross, scale_factor)}{scale_label}<br>N:${format_value(net, scale_factor)}{scale_label}</small>'
+                f'</div>'
+                for year, gross, net in zip(years, gross_income_data, net_income_data)
+            ])
+            
+            # Combined cash flow bars showing both Operating and Free Cash Flow with negative axis
+            cf_bars = ''.join([
+                f'<div style="display: inline-block; width: 80px; margin: 2px; text-align: center;">'
+                f'<div style="position: relative; height: 200px; display: flex; justify-content: center; align-items: center; gap: 4px;">'
+                f'<div style="position: absolute; bottom: 35%; width: 100%; height: 1px; background: #666; opacity: 0.7;"></div>'
+                f'<div style="width: 25px; height: {int(abs(op_cf)/max_val*90) if max_val > 0 else 0}px; background: {"#17a2b8" if op_cf >= 0 else "#ffc107"}; border-radius: 2px; {"align-self: flex-end; margin-bottom: 70px;" if op_cf >= 0 else "align-self: flex-start; margin-top: 70px;"}" title="Operating CF: ${format_value(op_cf, scale_factor)}{scale_label}"></div>'
+                f'<div style="width: 25px; height: {int(abs(free_cf)/max_val*90) if max_val > 0 else 0}px; background: {"#28a745" if free_cf >= 0 else "#dc3545"}; border-radius: 2px; {"align-self: flex-end; margin-bottom: 70px;" if free_cf >= 0 else "align-self: flex-start; margin-top: 70px;"}" title="Free CF: ${format_value(free_cf, scale_factor)}{scale_label}"></div>'
+                f'</div>'
+                f'<small>{year}<br>Op:${format_value(op_cf, scale_factor)}{scale_label}<br>Free:${format_value(free_cf, scale_factor)}{scale_label}</small>'
+                f'</div>'
+                for year, op_cf, free_cf in zip(years, operating_cf_data, free_cf_data)
+            ])
+            
+            # Latest year metrics for card preview (now last in reversed array)
+            latest_revenue = revenue_data[-1] if revenue_data else 0
+            latest_gross_income = gross_income_data[-1] if gross_income_data else 0
+            latest_net_income = net_income_data[-1] if net_income_data else 0
+            latest_op_cf = operating_cf_data[-1] if operating_cf_data else 0
+            latest_free_cf = free_cf_data[-1] if free_cf_data else 0
+            
+            # Format latest values for card display
+            latest_revenue_display = format_value(latest_revenue, scale_factor)
+            latest_gross_display = format_value(latest_gross_income, scale_factor)
+            latest_net_display = format_value(latest_net_income, scale_factor)
+            latest_op_cf_display = format_value(latest_op_cf, scale_factor)
+            latest_free_cf_display = format_value(latest_free_cf, scale_factor)
+            
+            # Calculate metrics outside f-string (compare latest to previous year)
+            revenue_growth = f"{((revenue_data[-1] - revenue_data[-2]) / revenue_data[-2] * 100):.1f}%" if len(revenue_data) > 1 and revenue_data[-2] != 0 else 'N/A'
+            gross_margin = f"{(latest_gross_income / latest_revenue * 100):.1f}%" if latest_revenue != 0 else 'N/A'
+            net_margin = f"{(latest_net_income / latest_revenue * 100):.1f}%" if latest_revenue != 0 else 'N/A'
+            capex_ratio = f"{((latest_op_cf - latest_free_cf) / latest_op_cf * 100):.1f}%" if latest_op_cf != 0 else 'N/A'
+            
+            financial_card = f"""
+            <div style="min-width: 200px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📊 Financials</h5>
+                <p><strong>Revenue:</strong> ${latest_revenue_display}{scale_label}</p>
+                <p><strong>Gross Income:</strong> ${latest_gross_display}{scale_label}</p>
+                <p><strong>Net Income:</strong> ${latest_net_display}{scale_label}</p>
+                <p><strong>Op Cash Flow:</strong> ${latest_op_cf_display}{scale_label}</p>
+                <p><strong>Free Cash Flow:</strong> ${latest_free_cf_display}{scale_label}</p>
+                <p><strong>Years:</strong> {len(years)} years</p>
+                <button onclick="showModal('financials_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="financials_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="financials_{sanitized_ticker}_content" style="background-color: white; margin: 3% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 85%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">📊 {ticker} Financial Statements</h3>
+                            <div>
+                                <button id="financials_{sanitized_ticker}_maximize" onclick="maximizeModal('financials_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="financials_{sanitized_ticker}_restore" onclick="restoreModal('financials_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('financials_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <h4>📈 Revenue Trend ({"Billions" if scale_billions else "Millions"} $)</h4>
+                                <div style="display: flex; align-items: end; height: 150px; border-bottom: 1px solid #ccc; padding: 10px;">
+                                    {revenue_bars}
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>💰 Income Trend ({"Billions" if scale_billions else "Millions"} $)</h4>
+                                <div style="display: flex; align-items: center; height: 150px; border-bottom: 1px solid #ccc; padding: 10px; position: relative;">
+                                    {income_bars}
+                                </div>
+                                <div style="margin-top: 5px; font-size: 12px; text-align: center;">
+                                    <span style="color: #ffc107;">■</span> Gross Income &nbsp;
+                                    <span style="color: #28a745;">■</span> Net Income (Profit) &nbsp;
+                                    <span style="color: #dc3545;">■</span> Net Income (Loss)
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>💧 Cash Flow Trend ({"Billions" if scale_billions else "Millions"} $)</h4>
+                                <div style="display: flex; align-items: center; height: 220px; border-bottom: 1px solid #ccc; padding: 10px; position: relative;">
+                                    {cf_bars}
+                                </div>
+                                <div style="margin-top: 5px; font-size: 12px; text-align: center;">
+                                    <span style="color: #17a2b8;">■</span> Operating CF (Positive) &nbsp;
+                                    <span style="color: #ffc107;">■</span> Operating CF (Negative) &nbsp;
+                                    <span style="color: #28a745;">■</span> Free CF (Positive) &nbsp;
+                                    <span style="color: #dc3545;">■</span> Free CF (Negative)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4>📋 Key Financial Metrics Summary</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Revenue:</strong> ${latest_revenue_display}{scale_label}<br>
+                                    <strong>Revenue Growth:</strong> {revenue_growth}
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Gross Income:</strong> ${latest_gross_display}{scale_label}<br>
+                                    <strong>Gross Margin:</strong> {gross_margin}
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Net Income:</strong> ${latest_net_display}{scale_label}<br>
+                                    <strong>Net Margin:</strong> {net_margin}
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Operating CF:</strong> ${latest_op_cf_display}{scale_label}<br>
+                                    <strong>Free CF:</strong> ${latest_free_cf_display}{scale_label}<br>
+                                    <strong>CapEx Ratio:</strong> {capex_ratio}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(financial_card)
+            
+        except Exception as e:
+            # Fallback card if financial data unavailable
+            financial_card = f"""
+            <div style="min-width: 200px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📊 Financials</h5>
+                <p style="color: #dc3545;">Financial data unavailable</p>
+                <p><small>Error: {str(e)[:50]}...</small></p>
+            </div>
+            """
+            all_cards.append(financial_card)
         
         # DCF Card with modal
         if 'dcf' in analyses:
@@ -914,14 +1163,20 @@ def display_horizontal_stock_cards(results):
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>💰 DCF</h5>
                 <p><strong>Rec:</strong> {dcf_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Fair Value:</strong> ${dcf_data.get('predicted_price', 0):.2f}</p>
-                <p><strong>Upside:</strong> {dcf_data.get('upside_downside_pct', 0):.1f}%</p>
-                <button onclick="showModal('dcf_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <p><strong>Fair Value:</strong> ${dcf_data.get('predicted_price', 0) or 0:.2f}</p>
+                <p><strong>Upside:</strong> {(dcf_data.get('upside_downside_pct', 0) or 0):.1f}%</p>
+                <button onclick="showModal('dcf_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="dcf_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('dcf_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>💰 {ticker} DCF Analysis Details</h3>
+                <div id="dcf_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="dcf_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">💰 {ticker} DCF Analysis Details</h3>
+                            <div>
+                                <button id="dcf_{sanitized_ticker}_maximize" onclick="maximizeModal('dcf_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="dcf_{sanitized_ticker}_restore" onclick="restoreModal('dcf_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('dcf_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <h4>Parameters:</h4>
                         {params_html}
                         <h4>Calculations:</h4>
@@ -946,14 +1201,20 @@ def display_horizontal_stock_cards(results):
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>📈 Technical</h5>
                 <p><strong>Rec:</strong> {tech_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Target:</strong> ${tech_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Target:</strong> ${tech_data.get('predicted_price', 0) or 0:.2f}</p>
                 <p><strong>Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
-                <button onclick="showModal('tech_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="tech_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 90%; overflow-y: auto;">
-                        <span onclick="closeModal('tech_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>📈 {ticker} Technical Analysis Details</h3>
+                <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="tech_{sanitized_ticker}_content" style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">📈 {ticker} Technical Analysis Details</h3>
+                            <div>
+                                <button id="tech_{sanitized_ticker}_maximize" onclick="maximizeModal('tech_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="tech_{sanitized_ticker}_restore" onclick="restoreModal('tech_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('tech_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         
                         <div style="display: flex; gap: 20px;">
                             <div style="flex: 1;">
@@ -961,27 +1222,53 @@ def display_horizontal_stock_cards(results):
                                 {indicators_html}
                             </div>
                             <div style="flex: 1;">
-                                <h4>Price Chart:</h4>
-                                <div id="tradingview_chart_{ticker}" style="height: 400px; width: 100%;"></div>
-                                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                                <script type="text/javascript">
-                                new TradingView.widget({{
-                                    "width": "100%",
-                                    "height": 400,
-                                    "symbol": "{ticker}",
-                                    "interval": "D",
-                                    "timezone": "Etc/UTC",
-                                    "theme": "light",
-                                    "style": "1",
-                                    "locale": "en",
-                                    "toolbar_bg": "#f1f3f6",
-                                    "enable_publishing": false,
-                                    "hide_top_toolbar": true,
-                                    "hide_legend": true,
-                                    "save_image": false,
-                                    "container_id": "tradingview_chart_{ticker}"
-                                }});
+                                <h4>Price Chart (Last 30 Days):</h4>
+                                <div id="price_chart_{sanitized_ticker}" style="height: 400px; width: 100%; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                                    <div style="text-align: center; margin-top: 180px; color: #666;">📈 Loading price chart...</div>
+                                </div>
+                                <script>
+                                console.log('DEBUG: Creating chart for {sanitized_ticker}');
+                                window.chartData_{sanitized_ticker} = {tech_data.get('chart_data', {})};
+                                setTimeout(() => {{
+                                    const chartDiv = document.getElementById('price_chart_{sanitized_ticker}');
+                                    const chartData = window.chartData_{sanitized_ticker};
+                                    
+                                    if (!chartData || !chartData.prices || chartData.prices.length === 0) {{
+                                        chartDiv.innerHTML = '<div style="text-align: center; margin-top: 180px; color: #666;">Chart data not available</div>';
+                                        return;
+                                    }}
+                                    
+                                    const prices = chartData.prices;
+                                    const dates = chartData.dates || [];
+                                    const maxPrice = Math.max(...prices);
+                                    const minPrice = Math.min(...prices);
+                                    const priceRange = maxPrice - minPrice || 1;
+                                    
+                                    let chartHtml = '<div style="position: relative; height: 350px; padding: 20px;">';
+                                    chartHtml += '<svg width="100%" height="300" style="position: absolute; top: 20px;">';
+                                    
+                                    let pathData = '';
+                                    prices.forEach((price, i) => {{
+                                        const x = (i / (prices.length - 1)) * 90 + 5;
+                                        const y = ((maxPrice - price) / priceRange) * 80 + 10;
+                                        pathData += i === 0 ? `M${{x}} ${{y}}` : ` L${{x}} ${{y}}`;
+                                    }});
+                                    
+                                    chartHtml += `<path d="${{pathData}}" stroke="#007acc" stroke-width="2" fill="none"/>`;
+                                    chartHtml += '</svg>';
+                                    chartHtml += `<div style="position: absolute; top: 20px; left: 5px; font-size: 12px; color: #666;">$${{maxPrice.toFixed(2)}}</div>`;
+                                    chartHtml += `<div style="position: absolute; bottom: 50px; left: 5px; font-size: 12px; color: #666;">$${{minPrice.toFixed(2)}}</div>`;
+                                    
+                                    if (dates.length > 0) {{
+                                        chartHtml += `<div style="position: absolute; bottom: 20px; left: 20px; font-size: 11px; color: #666;">${{dates[0]}}</div>`;
+                                        chartHtml += `<div style="position: absolute; bottom: 20px; right: 20px; font-size: 11px; color: #666;">${{dates[dates.length-1]}}</div>`;
+                                    }}
+                                    
+                                    chartHtml += '</div>';
+                                    chartDiv.innerHTML = chartHtml;
+                                }}, 100);
                                 </script>
+
                             </div>                            
                         </div>
                     </div>
@@ -1018,14 +1305,20 @@ def display_horizontal_stock_cards(results):
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>📊 Comparable</h5>
                 <p><strong>Rec:</strong> {comp_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Fair Value:</strong> ${comp_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Fair Value:</strong> ${comp_data.get('predicted_price', 0) or 0:.2f}</p>
                 <p><strong>P/E:</strong> {multiples.get('pe', 'N/A')}x</p>
-                <button onclick="showModal('comp_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('comp_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="comp_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('comp_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>📊 {ticker} Comparable Analysis Details</h3>
+                <div id="comp_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="comp_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">📊 {ticker} Comparable Analysis Details</h3>
+                            <div>
+                                <button id="comp_{sanitized_ticker}_maximize" onclick="maximizeModal('comp_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="comp_{sanitized_ticker}_restore" onclick="restoreModal('comp_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('comp_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <h4>Target Multiples:</h4>
                         {multiples_html}
                         <h4>Peer Companies:</h4>
@@ -1037,6 +1330,44 @@ def display_horizontal_stock_cards(results):
             </div>
             """
             all_cards.append(comp_card)
+        
+        # Startup Card with modal (moved before AI Insights)
+        if 'startup' in analyses:
+            startup_data = analyses['startup']
+            risk_factors = startup_data.get('risk_factors', [])
+            risk_html = ''.join([f"<p>• {risk}</p>" for risk in risk_factors]) if risk_factors else "<p>No risk factors listed</p>"
+            
+            startup_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>🚀 Startup</h5>
+                <p><strong>Rec:</strong> {startup_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Fair Value:</strong> ${startup_data.get('predicted_price', 0) or 0:.2f}</p>
+                <p><strong>Stage:</strong> {startup_data.get('stage', 'N/A')}</p>
+                <button onclick="showModal('startup_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="startup_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="startup_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">🚀 {ticker} Startup Valuation Details</h3>
+                            <div>
+                                <button id="startup_{sanitized_ticker}_maximize" onclick="maximizeModal('startup_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="startup_{sanitized_ticker}_restore" onclick="restoreModal('startup_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('startup_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
+                        <p><strong>Cash Runway:</strong> {startup_data.get('cash_runway_years', 0):.1f} years</p>
+                        <p><strong>Quarterly Burn:</strong> ${startup_data.get('quarterly_burn_rate', 0):,.0f}</p>
+                        <p><strong>Growth Quality:</strong> {startup_data.get('growth_quality', 'N/A')}</p>
+                        <p><strong>Risk Score:</strong> {startup_data.get('risk_score', 0)}/100</p>
+                        <p><strong>Investment Type:</strong> {startup_data.get('investment_type', 'N/A')}</p>
+                        <p><strong>Confidence Level:</strong> {startup_data.get('confidence_level', 'N/A')}</p>
+                        <h4>Risk Factors:</h4>
+                        {risk_html}
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(startup_card)
         
         # AI Insights Card with modal
         if 'ai_insights' in analyses:
@@ -1051,14 +1382,20 @@ def display_horizontal_stock_cards(results):
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>🤖 AI Insights</h5>
                 <p><strong>Rec:</strong> {ai_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Target:</strong> ${ai_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Target:</strong> ${ai_data.get('predicted_price', 0) or 0:.2f}</p>
                 <p><strong>Position:</strong> {ai_insights.get('market_position', 'N/A')}</p>
-                <button onclick="showModal('ai_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="ai_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('ai_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>🤖 {ticker} AI Insights Details</h3>
+                <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="ai_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">🤖 {ticker} AI Insights Details</h3>
+                            <div>
+                                <button id="ai_{sanitized_ticker}_maximize" onclick="maximizeModal('ai_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="ai_{sanitized_ticker}_restore" onclick="restoreModal('ai_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('ai_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <p><strong>Growth Prospects:</strong> {ai_insights.get('growth_prospects', 'N/A')}</p>
                         <p><strong>Competitive Advantage:</strong> {ai_insights.get('competitive_advantage', 'N/A')}</p>
                         <h4>Key Strengths:</h4>
@@ -1087,12 +1424,18 @@ def display_horizontal_stock_cards(results):
                 <p><strong>Rec:</strong> {bm_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Type:</strong> {bm_data.get('business_model_type', 'N/A')}</p>
                 <p><strong>Quality:</strong> {bm_data.get('revenue_quality', 'N/A')}</p>
-                <button onclick="showModal('bm_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('bm_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="bm_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('bm_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>🏢 {ticker} Business Model Details</h3>
+                <div id="bm_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="bm_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">🏢 {ticker} Business Model Details</h3>
+                            <div>
+                                <button id="bm_{sanitized_ticker}_maximize" onclick="maximizeModal('bm_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="bm_{sanitized_ticker}_restore" onclick="restoreModal('bm_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('bm_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <p><strong>Primary Revenue Stream:</strong> {bm_data.get('primary_revenue_stream', 'N/A')}</p>
                         <p><strong>Competitive Moat:</strong> {bm_data.get('competitive_moat', 'N/A')}</p>
                         <p><strong>Scalability Score:</strong> {bm_data.get('scalability_score', 'N/A')}</p>
@@ -1121,12 +1464,18 @@ def display_horizontal_stock_cards(results):
                 <p><strong>Grade:</strong> {fh_data.get('overall_grade', 'N/A')}</p>
                 <p><strong>Cash Flow:</strong> {fh_data.get('cash_flow_score', 'N/A')}</p>
                 <p><strong>Debt:</strong> {fh_data.get('debt_score', 'N/A')}</p>
-                <button onclick="showModal('fh_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('fh_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="fh_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('fh_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>💊 {ticker} Financial Health Details</h3>
+                <div id="fh_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="fh_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">💊 {ticker} Financial Health Details</h3>
+                            <div>
+                                <button id="fh_{sanitized_ticker}_maximize" onclick="maximizeModal('fh_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="fh_{sanitized_ticker}_restore" onclick="restoreModal('fh_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('fh_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <p><strong>Filing Date:</strong> {fh_data.get('filing_date', 'N/A')}</p>
                         <p><strong>Revenue Score:</strong> {fh_data.get('revenue_score', 'N/A')}</p>
                         <p><strong>Overall Grade:</strong> {fh_data.get('overall_grade', 'N/A')}</p>
@@ -1151,21 +1500,32 @@ def display_horizontal_stock_cards(results):
             upside_pct = analyst_data.get('upside_downside_pct')
             upside_str = f"{upside_pct:.1f}" if upside_pct is not None else "N/A"
             
+            # Handle None values for analyst data
+            predicted_price = analyst_data.get('predicted_price', 0) or 0
+            target_high = analyst_data.get('target_high', 0) or 0
+            target_low = analyst_data.get('target_low', 0) or 0
+            
             analyst_card = f"""
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>👥 Analyst</h5>
                 <p><strong>Rec:</strong> {analyst_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Target:</strong> ${analyst_data.get('predicted_price', 0):.2f}</p>
+                <p><strong>Target:</strong> ${predicted_price or 0:.2f}</p>
                 <p><strong>Count:</strong> {analyst_data.get('num_analysts', 0)}</p>
-                <button onclick="showModal('analyst_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('analyst_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="analyst_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('analyst_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>👥 {ticker} Analyst Consensus Details</h3>
-                        <p><strong>Consensus Target:</strong> ${analyst_data.get('predicted_price', 0):.2f}</p>
-                        <p><strong>High Target:</strong> ${analyst_data.get('target_high', 0):.2f}</p>
-                        <p><strong>Low Target:</strong> ${analyst_data.get('target_low', 0):.2f}</p>
+                <div id="analyst_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="analyst_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
+                            <div>
+                                <button id="analyst_{sanitized_ticker}_maximize" onclick="maximizeModal('analyst_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="analyst_{sanitized_ticker}_restore" onclick="restoreModal('analyst_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
+                        <p><strong>Consensus Target:</strong> ${predicted_price:.2f}</p>
+                        <p><strong>High Target:</strong> ${target_high:.2f}</p>
+                        <p><strong>Low Target:</strong> ${target_low:.2f}</p>
                         <p><strong>Number of Analysts:</strong> {analyst_data.get('num_analysts', 0)}</p>
                         <p><strong>Recommendation Mean:</strong> {rec_mean_str}</p>
                         <p><strong>Upside to Target:</strong> {upside_str}%</p>
@@ -1194,14 +1554,20 @@ def display_horizontal_stock_cards(results):
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>📰 News</h5>
                 <p><strong>Rec:</strong> {news_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Score:</strong> {news_data.get('overall_sentiment_score', 0):.2f}</p>
+                <p><strong>Score:</strong> {news_data.get('overall_sentiment_score', 0) or 0:.2f}</p>
                 <p><strong>Count:</strong> {news_data.get('news_count', 0)}</p>
-                <button onclick="showModal('news_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                <button onclick="showModal('news_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
-                <div id="news_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('news_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>📰 {ticker} News Sentiment Details</h3>
+                <div id="news_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="news_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">📰 {ticker} News Sentiment Details</h3>
+                            <div>
+                                <button id="news_{sanitized_ticker}_maximize" onclick="maximizeModal('news_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="news_{sanitized_ticker}_restore" onclick="restoreModal('news_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('news_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
                         <p><strong>Overall Sentiment:</strong> {news_data.get('sentiment_rating', 'N/A')} ({news_data.get('overall_sentiment_score', 0):.2f})</p>
                         <h4>Recent Articles:</h4>
                         {news_html}
@@ -1210,38 +1576,6 @@ def display_horizontal_stock_cards(results):
             </div>
             """
             all_cards.append(news_card)
-        
-        # Startup Card with modal
-        if 'startup' in analyses:
-            startup_data = analyses['startup']
-            risk_factors = startup_data.get('risk_factors', [])
-            risk_html = ''.join([f"<p>• {risk}</p>" for risk in risk_factors]) if risk_factors else "<p>No risk factors listed</p>"
-            
-            startup_card = f"""
-            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
-                <h5>🚀 Startup</h5>
-                <p><strong>Rec:</strong> {startup_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Fair Value:</strong> ${startup_data.get('predicted_price', 0):.2f}</p>
-                <p><strong>Stage:</strong> {startup_data.get('stage', 'N/A')}</p>
-                <button onclick="showModal('startup_{ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
-                
-                <div id="startup_{ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <span onclick="closeModal('startup_{ticker}')" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-                        <h3>🚀 {ticker} Startup Valuation Details</h3>
-                        <p><strong>Cash Runway:</strong> {startup_data.get('cash_runway_years', 0):.1f} years</p>
-                        <p><strong>Quarterly Burn:</strong> ${startup_data.get('quarterly_burn_rate', 0):,.0f}</p>
-                        <p><strong>Growth Quality:</strong> {startup_data.get('growth_quality', 'N/A')}</p>
-                        <p><strong>Risk Score:</strong> {startup_data.get('risk_score', 0)}/100</p>
-                        <p><strong>Investment Type:</strong> {startup_data.get('investment_type', 'N/A')}</p>
-                        <p><strong>Confidence Level:</strong> {startup_data.get('confidence_level', 'N/A')}</p>
-                        <h4>Risk Factors:</h4>
-                        {risk_html}
-                    </div>
-                </div>
-            </div>
-            """
-            all_cards.append(startup_card)
 
         
         # Combine all cards with modal JavaScript
@@ -1256,6 +1590,42 @@ def display_horizontal_stock_cards(results):
         }}
         function closeModal(modalId) {{
             document.getElementById(modalId).style.display = 'none';
+        }}
+        function maximizeModal(modalId) {{
+            const content = document.getElementById(modalId + '_content');
+            const maximizeBtn = document.getElementById(modalId + '_maximize');
+            const restoreBtn = document.getElementById(modalId + '_restore');
+            
+            content.style.width = '95%';
+            content.style.height = '95%';
+            content.style.maxWidth = 'none';
+            content.style.maxHeight = 'none';
+            content.style.margin = '2.5% auto';
+            
+            maximizeBtn.style.display = 'none';
+            restoreBtn.style.display = 'inline-block';
+        }}
+        function restoreModal(modalId) {{
+            const content = document.getElementById(modalId + '_content');
+            const maximizeBtn = document.getElementById(modalId + '_maximize');
+            const restoreBtn = document.getElementById(modalId + '_restore');
+            
+            // Restore original size based on modal type
+            if (modalId.startsWith('tech_') || modalId.startsWith('financials_')) {{
+                content.style.width = '90%';
+                content.style.maxWidth = modalId.startsWith('financials_') ? '900px' : '800px';
+                content.style.margin = '3% auto';
+                content.style.maxHeight = '85%';
+            }} else {{
+                content.style.width = '80%';
+                content.style.maxWidth = '600px';
+                content.style.margin = '5% auto';
+                content.style.maxHeight = '80%';
+            }}
+            content.style.height = 'auto';
+            
+            maximizeBtn.style.display = 'inline-block';
+            restoreBtn.style.display = 'none';
         }}
         window.onclick = function(event) {{
             if (event.target.classList.contains('modal')) {{
@@ -1295,6 +1665,7 @@ def generate_batch_text_summary(results):
         final_rec = data.get('final_recommendation', {})
         recommendation = final_rec.get('recommendation', 'N/A')
         target_price = final_rec.get('target_price', 0) or 0
+        
         
         text_lines.append(f"Company Type: {company_type}")
         text_lines.append(f"Final Recommendation: {recommendation}")
