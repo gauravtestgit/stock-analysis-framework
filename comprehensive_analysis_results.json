@@ -1,46 +1,47 @@
 {
-  "zkh": {
-    "ticker": "zkh",
+  "dcgo": {
+    "ticker": "dcgo",
     "company_type": "turnaround",
     "financial_metrics": {
-      "market_cap": 530645696,
-      "sector": "Consumer Cyclical",
-      "industry": "Internet Retail",
+      "market_cap": 89450336,
+      "sector": "Healthcare",
+      "industry": "Medical Care Facilities",
       "fund_family": "",
       "category": "",
       "quote_type": "EQUITY",
-      "long_name": "ZKH Group Limited",
-      "enterprise_value": 17208201216,
-      "total_revenue": 8800722944,
-      "net_income": -173640992,
-      "current_revenue": "$8,800,722,944.00",
-      "yearly_revenue_growth": 0.021,
+      "long_name": "DocGo Inc.",
+      "business_summary": "DocGo Inc. provides mobile health and medical transportation services in the United States and the United Kingdom. The company offers transportation services include emergency response services; and non-emergency transport services comprise ambulance and wheelchair transportation services. It also provides mobile health services through its platform that are performed at home, offices, and other locations; event services, including on-site healthcare support at sporting events and concerts; and total care management solutions comprising healthcare services and ancillary services, such as shelter. DocGo Inc. was incorporated in 2015 and is headquartered in New York, New York.",
+      "enterprise_value": 36226060,
+      "total_revenue": 368093376,
+      "net_income": -51591756,
+      "current_revenue": "$368,093,376.00",
+      "yearly_revenue_growth": -0.489,
       "quarterly_revenue_growth": 0,
-      "calculated_annual_growth": 0.46029348109629725,
-      "calculated_quarterly_growth": 7.457169044856547,
-      "free_cash_flow": 146035000.0,
-      "total_debt": 497068992,
-      "total_cash": 1822816000,
-      "shares_outstanding": 132494267,
-      "current_price": 3.27,
-      "beta": 1.0,
+      "calculated_annual_growth": -1.2387715360677665,
+      "calculated_quarterly_growth": -11.947613919745102,
+      "free_cash_flow": 64500821.0,
+      "total_debt": 29463976,
+      "total_cash": 73355640,
+      "shares_outstanding": 97813372,
+      "current_price": 0.9145,
+      "beta": 0.929,
       "pe_ratio": null,
-      "pb_ratio": 0.17906035,
-      "ps_ratio": 0.060295694,
+      "pb_ratio": 0.33062184,
+      "ps_ratio": 0.24300991,
       "peg_ratio": null,
-      "roe": -0.05752,
-      "roa": -0.02073,
-      "debt_to_equity": 0.16808,
-      "current_ratio": 1.847,
-      "revenue_growth": 0.021,
+      "roe": -0.21065001,
+      "roa": -0.09465,
+      "debt_to_equity": 0.11304,
+      "current_ratio": 2.585,
+      "revenue_growth": -0.489,
       "earnings_growth": null,
       "dividend_yield": null,
       "payout_ratio": 0.0,
-      "fifty_two_week_high": 4.03,
-      "fifty_two_week_low": 2.5
+      "fifty_two_week_high": 5.675,
+      "fifty_two_week_low": 0.866
     },
     "quality_score": {
-      "quality_score": 26,
+      "quality_score": 29,
       "grade": "D",
       "data_quality": "High",
       "missing_penalty": 3
@@ -49,18 +50,12 @@
       "competitive_position": {
         "method": "Competitive Position Analysis",
         "applicable": true,
-        "overall_position_score": 3.9000000000000004,
+        "overall_position_score": 3.0,
         "competitive_strength": "Weak",
         "market_share_estimate": 0.01,
-        "position_trend": "Stable",
-        "key_differentiators": [
-          "Network Effects"
-        ],
-        "competitive_advantages": [
-          "Recovery Momentum",
-          "Brand Recognition",
-          "Network Effects"
-        ],
+        "position_trend": "Weakening",
+        "key_differentiators": [],
+        "competitive_advantages": [],
         "competitive_threats": [
           "Execution Risk"
         ],
@@ -75,36 +70,50 @@
         "method": "Comparable Analysis",
         "applicable": true,
         "target_multiples": {
-          "pe": 14.4,
-          "ps": 1.2000000000000002,
-          "pb": 1.6,
-          "ev_ebitda": 9.600000000000001
+          "pe": 17.6,
+          "ps": 3.2,
+          "pb": 2.2399999999999998,
+          "ev_ebitda": 12.0
         },
         "fair_values": {
-          "ps_fair_value": 79.70810942936876
+          "ps_fair_value": 12.042308521988181
         },
-        "predicted_price": 79.70810942936876,
-        "current_price": 3.27,
-        "upside_downside_pct": 2337.5568632834484,
+        "predicted_price": 12.042308521988181,
+        "current_price": 0.9145,
+        "upside_downside_pct": 1216.818865170933,
         "recommendation": "Strong Buy",
         "confidence": "Medium",
-        "sector": "Consumer Cyclical",
-        "industry": "Internet Retail",
+        "sector": "Healthcare",
+        "industry": "Medical Care Facilities",
         "parameters_used": {
-          "pe_multiple": "14.4x",
-          "ps_multiple": "1.2x",
+          "pe_multiple": "17.6x",
+          "ps_multiple": "3.2x",
           "quality_adjustment": "D"
         },
         "analysis_type": "comparable"
       },
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
+        "applicable": true,
+        "current_price": 0.9145,
+        "predicted_price": 2.7501428,
+        "target_high": 4.0006533,
+        "target_low": 1.0000273,
+        "upside_downside_pct": 200.7263860032805,
+        "recommendation": "Hold",
+        "recommendation_mean": null,
+        "num_analysts": 6,
+        "confidence": "Medium",
+        "analysis_type": "analyst_consensus"
+      },
       "management_quality": {
         "method": "Management Quality Analysis",
         "applicable": true,
-        "overall_quality_score": 5.0,
+        "overall_quality_score": 5.5,
         "management_quality": "Average",
         "governance_risk": "Medium",
         "executive_count": 5,
-        "insider_ownership": 0.17713,
+        "insider_ownership": 0.0731,
         "strengths": [
           "Optimal insider ownership alignment"
         ],
@@ -112,148 +121,196 @@
           "Weak financial performance may reflect management issues"
         ],
         "key_insights": [
-          "Leadership team of 5 key executives identified"
+          "Leadership team of 5 key executives identified",
+          "Average executive compensation: $1,039,470"
         ],
         "confidence": "Medium",
         "recommendation": "Hold",
         "analysis_type": "management_quality"
       },
-      "analyst_consensus": {
-        "method": "Professional Analyst Consensus",
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
         "applicable": true,
-        "current_price": 3.27,
-        "predicted_price": 3.9924617,
-        "target_high": 4.2742243,
-        "target_low": 3.701463,
-        "upside_downside_pct": 22.093629969418956,
-        "recommendation": "Strong Buy",
-        "recommendation_mean": 1.0,
-        "num_analysts": 3,
-        "confidence": "Low",
-        "analysis_type": "analyst_consensus"
-      },
-      "technical": {
-        "method": "Technical Analysis",
-        "current_price": 3.2699999809265137,
-        "predicted_price": 4.332693716530874,
-        "price_targets": {
-          "short_term": 3.934183565679238,
-          "medium_term": 4.5983671504319625,
-          "support_level": 2.375
-        },
-        "recommendation": "Buy",
-        "ma_20": 3.032499980926514,
-        "ma_50": 2.965799994468689,
-        "ma_200": 3.078674998283386,
-        "trend": "Uptrend",
-        "volatility_annual": 0.4062284945729796,
-        "high_52w": 4.03000020980835,
-        "low_52w": 2.5,
-        "distance_from_high": -0.1885856549168712,
-        "distance_from_low": 0.3079999923706055,
-        "volume_trend": "Average Daily Volume:77493.6, Trend: Above Average",
-        "rsi_14": 64.42412571071407,
-        "macd_line": 0.055570842444470525,
-        "macd_signal": 0.034212507162906525,
-        "macd_histogram": 0.021358335281564,
-        "bb_upper": 3.2316428645837765,
-        "bb_lower": 2.8333570972692512,
-        "stoch_k": 78.48988898169765,
-        "stoch_d": 60.606599273303814,
-        "technical_signals": {
-          "recommendation": "Buy",
-          "bullish_signals": 5,
-          "bearish_signals": 3,
-          "net_signal": 2,
-          "signal_details": [
-            "MA uptrend",
-            "RSI bearish zone",
-            "MACD bullish crossover",
-            "MACD histogram positive",
-            "Price at upper Bollinger Band"
-          ]
-        },
-        "analysis_type": "technical"
+        "overall_sentiment_score": 0.0,
+        "sentiment_rating": "Neutral",
+        "news_count": 5,
+        "recent_news": [
+          {
+            "title": "Freightos Leads The Pack With Two Other Promising Penny Stocks",
+            "summary": "As the U.S. stock market navigates a period of uncertainty with the Federal Reserve's interest rate decision looming, investors are keenly focused on potential opportunities within various sectors. Penny stocks, though often considered relics of past trading days, remain relevant as they highlight smaller or less-established companies that can offer substantial value. By identifying those with strong financials and growth potential, investors can uncover hidden gems in this niche segment of...",
+            "date": "2025-12-08",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/freightos-leads-pack-two-other-180505375.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.2
+          },
+          {
+            "title": "DocGo Inc (DCGO) Q3 2025 Earnings Call Highlights: Navigating Revenue Declines and Strategic ...",
+            "summary": "Despite a significant drop in total revenue, DocGo Inc (DCGO) focuses on strategic acquisitions and robust medical transportation growth to drive future performance.",
+            "date": "2025-11-11",
+            "source": "GuruFocus.com",
+            "url": "https://finance.yahoo.com/news/docgo-inc-dcgo-q3-2025-050630264.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "DocGo Inc. (DCGO) Reports Q3 Loss, Beats Revenue Estimates",
+            "summary": "Motion Acquisition (DCGO) delivered earnings and revenue surprises of -22.22% and +0.59%, respectively, for the quarter ended September 2025. Do the numbers hold clues to what lies ahead for the stock?",
+            "date": "2025-11-10",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/docgo-inc-dcgo-reports-q3-224002251.html",
+            "sentiment": "neutral",
+            "sentiment_score": -0.4
+          },
+          {
+            "title": "GoodRx Holdings, Inc. (GDRX) Misses Q3 Earnings Estimates",
+            "summary": "GoodRx (GDRX) delivered earnings and revenue surprises of -11.11% and +1.34%, respectively, for the quarter ended September 2025. Do the numbers hold clues to what lies ahead for the stock?",
+            "date": "2025-11-04",
+            "source": "Zacks",
+            "url": "https://finance.yahoo.com/news/goodrx-holdings-inc-gdrx-misses-233502062.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Promising Penny Stocks To Watch In October 2025",
+            "summary": "As the U.S. stock market navigates through a period of earnings reports and fluctuating commodity prices, investors continue to explore various avenues for potential growth. Penny stocks, often associated with smaller or newer companies, remain a relevant area of interest due to their potential for significant returns at lower price points. In this article, we examine three penny stocks that exhibit strong financial foundations and promising prospects in today's market landscape.",
+            "date": "2025-10-22",
+            "source": "Simply Wall St.",
+            "url": "https://finance.yahoo.com/news/promising-penny-stocks-watch-october-180541991.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.2
+          }
+        ],
+        "key_developments": [],
+        "sentiment_drivers": [],
+        "risk_factors": [
+          "Negative sentiment in 1 recent news items"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of 0.00 suggests a neutral tone in the news articles, with no clear positive or negative bias.",
+          "The articles focus on specific companies' earnings calls and financial reports, indicating a neutral market reaction to these developments.",
+          "The lack of a clear positive or negative sentiment score suggests that the market is waiting for further developments or clarity on the companies' future outlook."
+        ],
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "analysis_type": "news_sentiment"
       },
       "business_model": {
         "method": "Business Model Analysis",
         "applicable": true,
-        "business_model_type": "Platform",
-        "primary_revenue_stream": "Mixed",
-        "revenue_quality": "Fair",
-        "recurring_percentage": 0.5,
-        "scalability_score": 8.5,
+        "business_model_type": "B2B SaaS",
+        "primary_revenue_stream": "Subscription",
+        "revenue_quality": "Good",
+        "recurring_percentage": 0.85,
+        "scalability_score": 9.5,
         "growth_consistency": null,
-        "strengths": [],
+        "strengths": [
+          "High recurring revenue provides predictable cash flows",
+          "Scalable SaaS model with high switching costs"
+        ],
         "risks": [],
-        "competitive_moat": "Strong - Network effects and ecosystem lock-in",
+        "competitive_moat": "Strong - High switching costs and network effects",
         "confidence": "Medium",
-        "recommendation": "Hold",
+        "recommendation": "Buy",
         "analysis_type": "business_model"
       },
-      "dcf": {
-        "method": "DCF Analysis",
-        "applicable": true,
-        "predicted_price": 32.51669235883726,
-        "current_price": 3.27,
-        "upside_downside_pct": 894.3942617381426,
-        "total_equity_value": 4308275319.348644,
-        "confidence": "Medium",
-        "valuation": "Undervalued",
-        "recommendation": "Strong Buy",
-        "dcf_calculations": {
-          "wacc": 0.08844520580782138,
-          "cost_equity": 0.096008,
-          "ev_ebitda_multiple": -97.249,
-          "fcf_cagr": 0.08000000000000002,
-          "ebitda_cagr": 0.05000000000000001,
-          "fcf_future": 214573325.69548807,
-          "ebitda_future": -149539356.41937494,
-          "terminal_value_pg": 3466576489.704788,
-          "terminal_value_ebitda_multiple": -1435577821.6259997,
-          "average_terminal_value": 3466576489.704788,
-          "adjusted_terminal_value": 3466576489.704788,
-          "terminal_adjustment_factor": 1.0,
-          "projected_free_cash_flows": [
-            157717800.0,
-            170335224.00000003,
-            183962041.92000002,
-            198679005.27360004,
-            214573325.69548807
-          ],
-          "present_value_free_cash_flows": [
-            144901919.87473097,
-            143777631.27594727,
-            142662065.99052233,
-            141555156.33459273,
-            140456835.1494517
-          ],
-          "pv_fcf": 713353608.6252451,
-          "pv_terminal_value": 2269174702.7233996,
-          "enterprise_value": 2982528311.3486447,
-          "adjusted_debt": -1325747008,
-          "equity_value": 4308275319.348644,
-          "share_price": 32.51669235883726,
-          "ticker_symbol": "zkh",
-          "last_close_price": 3.27,
-          "confidence": "Medium",
-          "terminal_ratio": 0.8293383880007361
+      "technical": {
+        "method": "Technical Analysis",
+        "current_price": 0.9144999980926514,
+        "predicted_price": 0.6962936299084517,
+        "price_targets": {
+          "short_term": 0.6962936299084517,
+          "medium_term": 1.6426324969530106,
+          "breakout_target": 5.958750200271607
         },
-        "parameters_used": {
-          "max_cagr": "8.0%",
-          "terminal_growth": "2.5%",
-          "sector": "Consumer Cyclical",
-          "industry": "Internet Retail",
-          "quality_adjustment": "D",
-          "valuation_discount": null
+        "recommendation": "Sell",
+        "ma_20": 0.979174992442131,
+        "ma_50": 1.0848299980163574,
+        "ma_200": 1.6426324969530106,
+        "trend": "Strong Downtrend",
+        "volatility_annual": 0.7953576403838418,
+        "high_52w": 5.675000190734863,
+        "low_52w": 0.8659999966621399,
+        "distance_from_high": -0.8388546313027997,
+        "distance_from_low": 0.056004620805366126,
+        "volume_trend": "Average Daily Volume:1075028.448, Trend: Below Average",
+        "rsi_14": 38.01907175263665,
+        "macd_line": -0.04238310357511543,
+        "macd_signal": -0.03955467950733982,
+        "macd_histogram": -0.0028284240677756145,
+        "bb_upper": 1.0922316847157523,
+        "bb_lower": 0.8661183001685098,
+        "stoch_k": 4.5068096772378725,
+        "stoch_d": 14.849946509564472,
+        "technical_signals": {
+          "recommendation": "Sell",
+          "bullish_signals": 3,
+          "bearish_signals": 6,
+          "net_signal": -3,
+          "signal_details": [
+            "Strong MA downtrend",
+            "RSI bullish zone",
+            "MACD bearish crossover",
+            "MACD histogram negative",
+            "Stochastic oversold",
+            "Near 52-week low"
+          ]
         },
-        "analysis_type": "dcf"
+        "chart_data": {
+          "prices": [
+            0.9629999995231628,
+            0.9300000071525574,
+            0.9179999828338623,
+            0.8769999742507935,
+            0.9679999947547913,
+            1.0199999809265137,
+            1.0149999856948853,
+            1.0399999618530273,
+            1.0299999713897705,
+            0.9670000076293945,
+            0.9599999785423279,
+            1.0800000429153442,
+            1.0499999523162842,
+            1.0499999523162842,
+            1.0099999904632568,
+            0.9950000047683716,
+            0.9800000190734863,
+            0.9399999976158142,
+            0.9190000295639038,
+            0.9200000166893005,
+            0.9144999980926514
+          ],
+          "dates": [
+            "11/17",
+            "11/18",
+            "11/19",
+            "11/20",
+            "11/21",
+            "11/24",
+            "11/25",
+            "11/26",
+            "11/28",
+            "12/01",
+            "12/02",
+            "12/03",
+            "12/04",
+            "12/05",
+            "12/08",
+            "12/09",
+            "12/10",
+            "12/11",
+            "12/12",
+            "12/15",
+            "12/16"
+          ]
+        },
+        "analysis_type": "technical"
       },
       "ai_insights": {
         "method": "AI Insights Analysis",
         "applicable": true,
-        "current_price": 3.27,
-        "predicted_price": 2.616,
+        "current_price": 0.9145,
+        "predicted_price": 0.7316,
         "recommendation": "Strong Sell",
         "confidence": "High",
         "ai_insights": {
@@ -263,28 +320,28 @@
           "management_quality": "Average",
           "industry_outlook": "Neutral",
           "key_strengths": [
-            "Established presence in the internet retail sector",
-            "Potential for expansion into new markets"
+            "Established presence in the healthcare sector",
+            "Potential for future growth and expansion"
           ],
           "key_risks": [
-            "Negative revenue growth rate of 2.1%",
-            "Low return on equity (ROE) of -5.8%",
-            "High market competition in the consumer cyclical sector"
+            "Significant revenue decline (-48.9%) indicating potential operational issues",
+            "Negative Return on Equity (-21.1%) suggesting poor management of shareholder value",
+            "High market volatility due to the company's weak market position"
           ],
           "ai_method": "LLM"
         },
         "revenue_trends": {
-          "trend_assessment": "Moderate Growth",
-          "growth_rate": 0.021,
+          "trend_assessment": "Declining",
+          "growth_rate": -0.489,
           "growth_consistency": "Consistent",
-          "future_outlook": "Positive",
+          "future_outlook": "Negative",
           "ai_method": "LLM"
         },
         "market_analysis": {
-          "market_cap_category": "Small Cap",
-          "sector": "Consumer Cyclical",
-          "industry": "Internet Retail",
-          "beta": 1.0
+          "market_cap_category": "Micro Cap",
+          "sector": "Healthcare",
+          "industry": "Medical Care Facilities",
+          "beta": 0.929
         },
         "ai_methods_used": {
           "insights": "LLM",
@@ -297,133 +354,95 @@
         ],
         "analysis_type": "ai_insights"
       },
-      "news_sentiment": {
-        "method": "News Sentiment Analysis",
+      "dcf": {
+        "method": "DCF Analysis",
         "applicable": true,
-        "overall_sentiment_score": 0.0,
-        "sentiment_rating": "Neutral",
-        "news_count": 10,
-        "recent_news": [
-          {
-            "title": "ZKH Group Ltd (ZKH) Q3 2025 Earnings Call Highlights: Navigating Challenges with Strategic ...",
-            "summary": "ZKH Group Ltd (ZKH) reports improved financial metrics and operational efficiency, driven by AI advancements and strategic cost management, despite a slight dip in GMV.",
-            "date": "2025-11-20",
-            "source": "GuruFocus.com",
-            "url": "https://finance.yahoo.com/news/zkh-group-ltd-zkh-q3-190123032.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "ZKH Group: Q3 Earnings Snapshot",
-            "summary": "SHANGHAI (AP) \u2014 ZKH Group (ZKH) on Thursday reported a loss of $3.4 million in its third quarter. The Shanghai-based company said it had a loss of 2 cents per share. Losses, adjusted for stock option expense, came to 1 cent per share.",
-            "date": "2025-11-20",
-            "source": "Associated Press Finance",
-            "url": "https://finance.yahoo.com/news/zkh-group-q3-earnings-snapshot-100621277.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Breakeven On The Horizon For ZKH Group Limited (NYSE:ZKH)",
-            "summary": "We feel now is a pretty good time to analyse ZKH Group Limited's ( NYSE:ZKH ) business as it appears the company may be...",
-            "date": "2025-10-26",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/breakeven-horizon-zkh-group-limited-121141760.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "September 2025's High Growth Stocks With Strong Insider Commitment",
-            "summary": "As the U.S. stock market navigates record highs with the Nasdaq and S&P 500 leading the charge, investors are keenly watching the Federal Reserve's upcoming interest rate decision amid ongoing trade negotiations between the U.S. and China. In this environment of heightened market activity, growth companies with high insider ownership can be particularly appealing to investors seeking alignment between company leadership and shareholder interests.",
-            "date": "2025-09-15",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/september-2025s-high-growth-stocks-173555237.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "ZKH Group Second Quarter 2025 Earnings: CN\u00a50.33 loss per share (vs CN\u00a50.40 loss in 2Q 2024)",
-            "summary": "ZKH Group ( NYSE:ZKH ) Second Quarter 2025 Results Key Financial Results Revenue: CN\u00a52.17b (down 3.7% from 2Q 2024...",
-            "date": "2025-08-24",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/zkh-group-second-quarter-2025-120849691.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "ZKH Group Ltd (ZKH) Q2 2025 Earnings Call Highlights: Navigating Challenges with Strategic ...",
-            "summary": "ZKH Group Ltd (ZKH) reports improved gross margins and significant US revenue growth despite a decline in GMV and total revenue.",
-            "date": "2025-08-23",
-            "source": "GuruFocus.com",
-            "url": "https://finance.yahoo.com/news/zkh-group-ltd-zkh-q2-070153180.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "ZKH Group: Q2 Earnings Snapshot",
-            "summary": "SHANGHAI (AP) \u2014 ZKH Group (ZKH) on Friday reported a loss of $7.5 million in its second quarter. The Shanghai-based company said it had a loss of 5 cents per share. Losses, adjusted for stock option expense, were 3 cents per share.",
-            "date": "2025-08-22",
-            "source": "Associated Press Finance",
-            "url": "https://finance.yahoo.com/news/zkh-group-q2-earnings-snapshot-101702351.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "3 Growth Companies With Insider Ownership Up To 17%",
-            "summary": "As the Dow Jones Industrial Average reaches new record highs, fueled by notable movements in health insurance stocks, investors are keenly observing the broader market dynamics where mixed performances across major indices reflect ongoing economic uncertainties. In this environment, growth companies with significant insider ownership can be particularly appealing as they often indicate strong confidence from those closest to the business.",
-            "date": "2025-08-15",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/3-growth-companies-insider-ownership-173548445.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "July 2025's Top Growth Companies With Strong Insider Ownership",
-            "summary": "As the U.S. stock market hovers near all-time highs, buoyed by strong earnings reports and investor optimism, growth companies with substantial insider ownership are drawing increased attention. In this environment, stocks that combine robust growth potential with significant insider stakes can offer unique insights into company confidence and alignment of interests between management and shareholders.",
-            "date": "2025-07-17",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/july-2025s-top-growth-companies-173551693.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "LexinFintech Holdings And 2 Other Growth Stocks Insiders Are Backing",
-            "summary": "As the U.S. stock market navigates a landscape shaped by geopolitical tensions and anticipation of the Federal Reserve's interest rate decision, investors are keenly observing how these factors influence market volatility and economic projections. In such an environment, growth companies with high insider ownership can be particularly appealing, as insider confidence often signals strong potential for long-term value creation despite external uncertainties.",
-            "date": "2025-06-18",
-            "source": "Simply Wall St.",
-            "url": "https://finance.yahoo.com/news/lexinfintech-holdings-2-other-growth-173538747.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          }
-        ],
-        "key_developments": [],
-        "sentiment_drivers": [],
-        "risk_factors": [],
-        "overall_summary": [
-          "The overall sentiment score of 0.00 suggests a neutral tone in the news articles, with no clear indication of positive or negative sentiment towards ZKH Group Ltd.",
-          "The articles focus on the company's financial performance, earnings calls, and insider commitment, indicating a neutral market reaction with no significant developments or surprises.",
-          "The future outlook for ZKH Group Ltd appears uncertain, with the company navigating challenges and aiming for breakeven, suggesting potential concerns about its financial stability and growth prospects."
-        ],
+        "predicted_price": 15.627301866138584,
+        "current_price": 0.9145,
+        "upside_downside_pct": 1608.8356332573628,
+        "total_equity_value": 1528559090.7889075,
         "confidence": "Medium",
-        "recommendation": "Hold",
-        "analysis_type": "news_sentiment"
+        "valuation": "Undervalued",
+        "recommendation": "Strong Buy",
+        "dcf_calculations": {
+          "wacc": 0.07385251922662257,
+          "cost_equity": 0.07728922,
+          "ev_ebitda_multiple": -0.737,
+          "fcf_cagr": 0.096,
+          "ebitda_cagr": 0.096,
+          "fcf_future": 102004190.42434351,
+          "ebitda_future": 72055328.45469888,
+          "terminal_value_pg": 2395855882.169934,
+          "terminal_value_ebitda_multiple": 864663941.4563866,
+          "average_terminal_value": 1630259911.8131602,
+          "adjusted_terminal_value": 1630259911.8131602,
+          "terminal_adjustment_factor": 1.0,
+          "projected_free_cash_flows": [
+            70692899.816,
+            77479418.19833602,
+            84917442.34537628,
+            93069516.8105324,
+            102004190.42434351
+          ],
+          "present_value_free_cash_flows": [
+            65831106.73978983,
+            67188828.7218174,
+            68574552.7999933,
+            69988856.49858183,
+            71432329.2528939
+          ],
+          "pv_fcf": 343015674.0130763,
+          "pv_terminal_value": 1141651752.7758312,
+          "enterprise_value": 1484667426.7889075,
+          "adjusted_debt": -43891664,
+          "equity_value": 1528559090.7889075,
+          "share_price": 15.627301866138584,
+          "ticker_symbol": "dcgo",
+          "last_close_price": 0.92,
+          "confidence": "Medium",
+          "terminal_ratio": 0.8261694025523297
+        },
+        "parameters_used": {
+          "max_cagr": "9.6%",
+          "terminal_growth": "3.0%",
+          "sector": "Healthcare",
+          "industry": "Medical Care Facilities",
+          "quality_adjustment": "D",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
       }
     },
-    "final_recommendation": "Recommendation(ticker='zkh', recommendation=<RecommendationType.BUY: 'Buy'>, confidence='Medium', target_price=np.float64(26.111214458062697), upside_potential=np.float64(698.508087402529), risk_level='Medium', bullish_signals=['COMPARABLE indicates Strong Buy', 'ANALYST_CONSENSUS indicates Strong Buy', 'TECHNICAL indicates Buy', 'Technical: Uptrend', 'DCF indicates Strong Buy'], bearish_signals=['COMPETITIVE_POSITION indicates Sell', 'AI_INSIGHTS indicates Strong Sell'], key_risks=['Low confidence in analyst_consensus analysis'], summary='Consensus: Buy | Confidence: Medium | Analyses: 9 | COMPETITIVE_POSITION: Sell | COMPARABLE: Strong Buy | MANAGEMENT_QUALITY: Hold | ANALYST_CONSENSUS: Strong Buy | TECHNICAL: Buy | BUSINESS_MODEL: Hold | DCF: Strong Buy | AI_INSIGHTS: Strong Sell | NEWS_SENTIMENT: Hold')",
+    "final_recommendation": "Recommendation(ticker='dcgo', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(7.217006915418549), upside_potential=np.float64(689.1751684437997), risk_level='Medium', bullish_signals=['COMPARABLE indicates Strong Buy', 'BUSINESS_MODEL indicates Buy', 'DCF indicates Strong Buy'], bearish_signals=['COMPETITIVE_POSITION indicates Sell', 'TECHNICAL indicates Sell', 'AI_INSIGHTS indicates Strong Sell'], key_risks=['High volatility'], summary='Consensus: Hold | Confidence: Low | Analyses: 9 | COMPETITIVE_POSITION: Sell | COMPARABLE: Strong Buy | ANALYST_CONSENSUS: Hold | MANAGEMENT_QUALITY: Hold | NEWS_SENTIMENT: Hold | BUSINESS_MODEL: Buy | TECHNICAL: Sell | AI_INSIGHTS: Strong Sell | DCF: Strong Buy')",
     "analyst_comparison": {
       "comparisons": [
-        "ComparisonResult(ticker='zkh', method='comparable', our_price=79.70810942936876, analyst_target=3.9924617, current_price=3.27, our_upside=2337.5568632834484, analyst_upside=22.093629969418956, deviation_score=2315.4632333140294, alignment='Directional_Aligned', both_bullish=True, both_bearish=False, analyst_count=3)",
-        "ComparisonResult(ticker='zkh', method='analyst_consensus', our_price=3.9924617, analyst_target=3.9924617, current_price=3.27, our_upside=22.093629969418956, analyst_upside=22.093629969418956, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=True, both_bearish=False, analyst_count=3)",
-        "ComparisonResult(ticker='zkh', method='technical', our_price=np.float64(4.332693716530874), analyst_target=3.9924617, current_price=3.27, our_upside=np.float64(32.49827879299308), analyst_upside=22.093629969418956, deviation_score=np.float64(10.40464882357412), alignment='Investment_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=3)",
-        "ComparisonResult(ticker='zkh', method='dcf', our_price=np.float64(32.51669235883726), analyst_target=3.9924617, current_price=3.27, our_upside=np.float64(894.3942617381426), analyst_upside=22.093629969418956, deviation_score=np.float64(872.3006317687236), alignment='Directional_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=3)",
-        "ComparisonResult(ticker='zkh', method='ai_insights', our_price=2.616, analyst_target=3.9924617, current_price=3.27, our_upside=-20.0, analyst_upside=22.093629969418956, deviation_score=42.093629969418956, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=3)"
+        "ComparisonResult(ticker='dcgo', method='comparable', our_price=12.042308521988181, analyst_target=2.7501428, current_price=0.9145, our_upside=1216.818865170933, analyst_upside=200.7263860032805, deviation_score=1016.0924791676524, alignment='Directional_Aligned', both_bullish=True, both_bearish=False, analyst_count=6)",
+        "ComparisonResult(ticker='dcgo', method='analyst_consensus', our_price=2.7501428, analyst_target=2.7501428, current_price=0.9145, our_upside=200.7263860032805, analyst_upside=200.7263860032805, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=True, both_bearish=False, analyst_count=6)",
+        "ComparisonResult(ticker='dcgo', method='technical', our_price=np.float64(0.6962936299084517), analyst_target=2.7501428, current_price=0.9145, our_upside=np.float64(-23.86072937031693), analyst_upside=200.7263860032805, deviation_score=np.float64(224.58711537359744), alignment='Divergent', both_bullish=np.False_, both_bearish=False, analyst_count=6)",
+        "ComparisonResult(ticker='dcgo', method='ai_insights', our_price=0.7316, analyst_target=2.7501428, current_price=0.9145, our_upside=-19.999999999999996, analyst_upside=200.7263860032805, deviation_score=220.7263860032805, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=6)",
+        "ComparisonResult(ticker='dcgo', method='dcf', our_price=np.float64(15.627301866138584), analyst_target=2.7501428, current_price=0.9145, our_upside=np.float64(1608.8356332573628), analyst_upside=200.7263860032805, deviation_score=np.float64(1408.1092472540822), alignment='Directional_Aligned', both_bullish=True, both_bearish=np.False_, analyst_count=6)"
       ],
       "summary": {
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 220.7263860032805
+        },
         "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 224.58711537359744
+        },
+        "comparable": {
           "total_comparisons": 1,
           "aligned_count": 1,
           "bullish_convergent": 1,
           "alignment_rate": 100.0,
-          "avg_deviation": 10.40464882357412
+          "avg_deviation": 1016.0924791676524
         },
         "analyst_consensus": {
           "total_comparisons": 1,
@@ -432,119 +451,155 @@
           "alignment_rate": 100.0,
           "avg_deviation": 0.0
         },
-        "ai_insights": {
-          "total_comparisons": 1,
-          "aligned_count": 0,
-          "bullish_convergent": 0,
-          "alignment_rate": 0.0,
-          "avg_deviation": 42.093629969418956
-        },
         "dcf": {
           "total_comparisons": 1,
           "aligned_count": 1,
           "bullish_convergent": 1,
           "alignment_rate": 100.0,
-          "avg_deviation": 872.3006317687236
-        },
-        "comparable": {
-          "total_comparisons": 1,
-          "aligned_count": 1,
-          "bullish_convergent": 1,
-          "alignment_rate": 100.0,
-          "avg_deviation": 2315.4632333140294
+          "avg_deviation": 1408.1092472540822
         }
       }
     },
-    "execution_time_seconds": 38.16,
+    "execution_time_seconds": 10.87,
     "analyses_count": 9
   },
-  "googl": {
-    "ticker": "googl",
-    "company_type": "growth_profitable",
+  "tsla": {
+    "ticker": "tsla",
+    "company_type": "cyclical",
     "financial_metrics": {
-      "market_cap": 3878058983424,
-      "sector": "Communication Services",
-      "industry": "Internet Content & Information",
+      "market_cap": 1629252354048,
+      "sector": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
       "fund_family": "",
       "category": "",
       "quote_type": "EQUITY",
-      "long_name": "Alphabet Inc.",
-      "enterprise_value": 3809310932992,
-      "total_revenue": 385476001792,
-      "net_income": 124250996736,
-      "current_revenue": "$385,476,001,792.00",
-      "yearly_revenue_growth": 0.159,
+      "long_name": "Tesla, Inc.",
+      "business_summary": "Tesla, Inc. designs, develops, manufactures, leases, and sells electric vehicles, and energy generation and storage systems in the United States, China, and internationally. The company operates in two segments, Automotive; and Energy Generation and Storage. The Automotive segment offers electric vehicles, as well as sells automotive regulatory credits; and non-warranty after-sales vehicle, used vehicles, body shop and parts, supercharging, retail merchandise, and vehicle insurance services. This segment also provides sedans and sport utility vehicles through direct and used vehicle sales, a network of Tesla Superchargers, and in-app upgrades; purchase financing and leasing services; services for electric vehicles through its company-owned service locations and Tesla mobile service technicians; and vehicle limited warranties and extended service plans. The Energy Generation and Storage segment engages in the design, manufacture, installation, sale, and leasing of solar energy generation and energy storage products, and related services to residential, commercial, and industrial customers and utilities through its website, stores, and galleries, as well as through a network of channel partners. This segment also provides services and repairs to its energy product customers, including under warranty; and various financing options to its residential customers. The company was formerly known as Tesla Motors, Inc. and changed its name to Tesla, Inc. in February 2017. Tesla, Inc. was incorporated in 2003 and is headquartered in Austin, Texas.",
+      "enterprise_value": 1553682137088,
+      "total_revenue": 95632998400,
+      "net_income": 5079000064,
+      "current_revenue": "$95,632,998,400.00",
+      "yearly_revenue_growth": 0.116,
       "quarterly_revenue_growth": 0,
-      "calculated_annual_growth": 13.866243322901553,
-      "calculated_quarterly_growth": 6.137221553905505,
-      "free_cash_flow": 72764000000.0,
-      "total_debt": 44195000320,
-      "total_cash": 98496004096,
-      "shares_outstanding": 5818000000,
-      "current_price": 320.18,
-      "beta": 1.082,
-      "pe_ratio": 31.63834,
-      "pb_ratio": 9.9953165,
-      "ps_ratio": 10.060442,
+      "calculated_annual_growth": 0.9475783534663594,
+      "calculated_quarterly_growth": 24.888869132290186,
+      "free_cash_flow": 3581000000.0,
+      "total_debt": 13788000256,
+      "total_cash": 41647001600,
+      "shares_outstanding": 3325819167,
+      "current_price": 489.88,
+      "beta": 1.878,
+      "pe_ratio": 333.2517,
+      "pb_ratio": 20.362457,
+      "ps_ratio": 17.036509,
       "peg_ratio": null,
-      "roe": 0.3545,
-      "roa": 0.16275999,
-      "debt_to_equity": 0.11424,
-      "current_ratio": 1.747,
-      "revenue_growth": 0.159,
-      "earnings_growth": 0.353,
-      "dividend_yield": 0.26,
-      "payout_ratio": 0.0809,
-      "fifty_two_week_high": 328.83,
-      "fifty_two_week_low": 140.53
+      "roe": 0.06791,
+      "roa": 0.0235,
+      "debt_to_equity": 0.17082,
+      "current_ratio": 2.066,
+      "revenue_growth": 0.116,
+      "earnings_growth": -0.371,
+      "dividend_yield": null,
+      "payout_ratio": 0.0,
+      "fifty_two_week_high": 491.5,
+      "fifty_two_week_low": 214.25
     },
     "quality_score": {
-      "quality_score": 77,
-      "grade": "B",
+      "quality_score": 50,
+      "grade": "C",
       "data_quality": "High",
       "missing_penalty": 0
     },
     "analyses": {
       "technical": {
         "method": "Technical Analysis",
-        "current_price": 320.17999267578125,
-        "predicted_price": 405.683268928424,
+        "current_price": 489.8800048828125,
+        "predicted_price": 806.864377698664,
         "price_targets": {
-          "short_term": 373.61954033368295,
-          "medium_term": 427.05908799158465,
-          "support_level": 133.2229132374274
+          "short_term": 648.3721912907382,
+          "medium_term": 806.864377698664,
+          "support_level": 203.5375
         },
-        "recommendation": "Buy",
-        "ma_20": 292.3404998779297,
-        "ma_50": 267.9414001464844,
-        "ma_200": 201.84155944824218,
+        "recommendation": "Hold",
+        "ma_20": 435.41900024414065,
+        "ma_50": 437.22440063476563,
+        "ma_200": 348.0185501861572,
         "trend": "Strong Uptrend",
-        "volatility_annual": 0.3338094127075288,
-        "high_52w": 328.8299865722656,
-        "low_52w": 140.2346455130815,
-        "distance_from_high": -0.026305368274506198,
-        "distance_from_low": 1.2831732593919807,
-        "volume_trend": "Average Daily Volume:36185044.4, Trend: Above Average",
-        "rsi_14": 73.51412905291292,
-        "macd_line": 14.477498153409329,
-        "macd_signal": 11.716205554195877,
-        "macd_histogram": 2.7612925992134514,
-        "bb_upper": 323.3829346672586,
-        "bb_lower": 261.29806508860077,
-        "stoch_k": 86.85706605879977,
-        "stoch_d": 89.34837772985789,
+        "volatility_annual": 0.6470653418313727,
+        "high_52w": 491.5,
+        "low_52w": 214.25,
+        "distance_from_high": -0.003296022618896236,
+        "distance_from_low": 1.2864877707482496,
+        "volume_trend": "Average Daily Volume:98643023.184, Trend: Below Average",
+        "rsi_14": 68.94760235441643,
+        "macd_line": 11.508730348428628,
+        "macd_signal": 5.807261610991686,
+        "macd_histogram": 5.701468737436942,
+        "bb_upper": 487.6618434831646,
+        "bb_lower": 383.1761570051167,
+        "stoch_k": 94.25593962354107,
+        "stoch_d": 91.04305984248124,
         "technical_signals": {
-          "recommendation": "Buy",
+          "recommendation": "Hold",
           "bullish_signals": 6,
-          "bearish_signals": 4,
-          "net_signal": 2,
+          "bearish_signals": 5,
+          "net_signal": 1,
           "signal_details": [
             "Strong MA uptrend",
-            "RSI overbought (73.5)",
+            "RSI bearish zone",
             "MACD bullish crossover",
             "MACD histogram positive",
+            "Price at upper Bollinger Band",
             "Stochastic overbought",
             "Near 52-week high"
+          ]
+        },
+        "chart_data": {
+          "prices": [
+            408.9200134277344,
+            401.25,
+            403.989990234375,
+            395.2300109863281,
+            391.0899963378906,
+            417.7799987792969,
+            419.3999938964844,
+            426.5799865722656,
+            430.1700134277344,
+            430.1400146484375,
+            429.239990234375,
+            446.739990234375,
+            454.5299987792969,
+            455.0,
+            439.5799865722656,
+            445.1700134277344,
+            451.45001220703125,
+            446.8900146484375,
+            458.9599914550781,
+            475.30999755859375,
+            489.8800048828125
+          ],
+          "dates": [
+            "11/17",
+            "11/18",
+            "11/19",
+            "11/20",
+            "11/21",
+            "11/24",
+            "11/25",
+            "11/26",
+            "11/28",
+            "12/01",
+            "12/02",
+            "12/03",
+            "12/04",
+            "12/05",
+            "12/08",
+            "12/09",
+            "12/10",
+            "12/11",
+            "12/12",
+            "12/15",
+            "12/16"
           ]
         },
         "analysis_type": "technical"
@@ -552,50 +607,40 @@
       "competitive_position": {
         "method": "Competitive Position Analysis",
         "applicable": true,
-        "overall_position_score": 9.6,
+        "overall_position_score": 9.9,
         "competitive_strength": "Dominant",
         "market_share_estimate": 0.15,
         "position_trend": "Strengthening",
         "key_differentiators": [
           "Scale Economics",
-          "Superior Profitability"
+          "Regulatory Barriers"
         ],
         "competitive_advantages": [
           "Scale Economics",
-          "Financial Performance"
+          "Brand Recognition",
+          "Regulatory Barriers"
         ],
-        "competitive_threats": [],
+        "competitive_threats": [
+          "Capital Requirements"
+        ],
         "strategic_risks": [],
         "confidence": "Medium",
         "recommendation": "Strong Buy",
         "analysis_type": "competitive_position"
       },
-      "comparable": {
-        "method": "Comparable Analysis",
+      "analyst_consensus": {
+        "method": "Professional Analyst Consensus",
         "applicable": true,
-        "target_multiples": {
-          "pe": 18.0,
-          "ps": 2.5,
-          "pb": 2.0,
-          "ev_ebitda": 12.0
-        },
-        "fair_values": {
-          "pe_fair_value": 384.41353407493983,
-          "ps_fair_value": 165.6393957511172
-        },
-        "predicted_price": 275.0264649130285,
-        "current_price": 320.18,
-        "upside_downside_pct": -14.102547031973103,
-        "recommendation": "Sell",
-        "confidence": "Medium",
-        "sector": "Communication Services",
-        "industry": "Internet Content & Information",
-        "parameters_used": {
-          "pe_multiple": "18.0x",
-          "ps_multiple": "2.5x",
-          "quality_adjustment": "B"
-        },
-        "analysis_type": "comparable"
+        "current_price": 489.88,
+        "predicted_price": 392.476,
+        "target_high": 600.0,
+        "target_low": 120.0,
+        "upside_downside_pct": -19.883236711031273,
+        "recommendation": "Hold",
+        "recommendation_mean": 2.63043,
+        "num_analysts": 40,
+        "confidence": "High",
+        "analysis_type": "analyst_consensus"
       },
       "management_quality": {
         "method": "Management Quality Analysis",
@@ -604,115 +649,171 @@
         "management_quality": "Average",
         "governance_risk": "Very High",
         "executive_count": 5,
-        "insider_ownership": 0.00569,
+        "insider_ownership": 0.12562001,
         "strengths": [
-          "Strong financial performance under current management"
+          "Optimal insider ownership alignment"
         ],
         "concerns": [
-          "High governance risk requires attention",
-          "Very low insider ownership may indicate lack of alignment"
+          "High governance risk requires attention"
         ],
         "key_insights": [
           "Leadership team of 5 key executives identified",
-          "Average executive compensation: $4,959,667"
+          "Average executive compensation: $412,548"
         ],
         "confidence": "Medium",
         "recommendation": "Hold",
         "analysis_type": "management_quality"
       },
-      "analyst_consensus": {
-        "method": "Professional Analyst Consensus",
+      "news_sentiment": {
+        "method": "News Sentiment Analysis",
         "applicable": true,
-        "current_price": 320.18,
-        "predicted_price": 323.69812,
-        "target_high": 390.0,
-        "target_low": 185.0,
-        "upside_downside_pct": 1.0987944281341777,
-        "recommendation": "Strong Buy",
-        "recommendation_mean": 1.45455,
-        "num_analysts": 53,
-        "confidence": "High",
-        "analysis_type": "analyst_consensus"
-      },
-      "dcf": {
-        "method": "DCF Analysis",
-        "applicable": true,
-        "predicted_price": 302.2053348258,
-        "current_price": 320.18,
-        "upside_downside_pct": -5.613925034105824,
-        "total_equity_value": 1758230638016.5044,
+        "overall_sentiment_score": 0.030000000000000006,
+        "sentiment_rating": "Neutral",
+        "news_count": 5,
+        "recent_news": [
+          {
+            "title": "Stock market today: Dow, S&P 500 slip, Nasdaq snaps three-day losing streak as Tesla climbs to record",
+            "summary": "Investors reacted to the delayed release of the November jobs report, seen as pivotal to the path of interest rates next year.",
+            "date": "2025-12-16",
+            "source": "Yahoo Finance",
+            "url": "https://finance.yahoo.com/news/live/stock-market-today-dow-sp-500-slip-nasdaq-snaps-three-day-losing-streak-as-tesla-climbs-to-record-210029709.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Tesla bear case: This analyst is 'skeptical' on robotaxi growth",
+            "summary": "Tesla (TSLA) stock is trading near record highs as the EV company is in the middle of testing out robotaxis without safety drivers. CFRA analyst Garrett Nelson, who has a Sell rating on the stock, joins Market Domination Overtime with Josh Lipton to outline why he's bearish on the Elon Musk-led company. To watch more expert insights and analysis on the latest market action, check out more Market Domination Overtime.",
+            "date": "2025-12-15",
+            "source": "Yahoo Finance Video",
+            "url": "https://finance.yahoo.com/video/tesla-bear-case-analyst-skeptical-231500637.html",
+            "sentiment": "neutral",
+            "sentiment_score": 0.4
+          },
+          {
+            "title": "Stock Market Today: Dow Slides, Nasdaq Positive After Jobs Data; Nvidia Rises (Live Coverage)",
+            "summary": "Stock Market Today: The Dow Jones index dropped Tuesday after a surprise November jobs report. Palantir and Tesla traded lower.",
+            "date": "2025-12-16",
+            "source": "Investor's Business Daily",
+            "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-november-jobs-report/?src=A00220&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": 0.15000000000000002
+          },
+          {
+            "title": "Analyst reveals fastest way for Elon Musk to reach $1 trillion net worth",
+            "summary": "Elon Musk\u2019s wealth is moving in rare air again. Forbes pegged the Tesla and SpaceX boss at $600 billion this week. The catalyst was renewed IPO chatter around SpaceX. But one Bitcoin strategist says Musk\u2019s fastest path to $1 trillion doesn\u2019t rely on a blockbuster listing or another Tesla moonshot. ...",
+            "date": "2025-12-16",
+            "source": "TheStreet",
+            "url": "https://www.thestreet.com/crypto/markets/analyst-reveals-fastest-way-for-elon-musk-to-reach-1-trillion-net-worth",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0
+          },
+          {
+            "title": "Tesla Stock Hits New Record High The Day After Longtime Bull Decided To Take Profit",
+            "summary": "Tesla stock hit a fresh record high during Tuesday's stock market a day after Cathie Wood and Ark Invest continued to take some profits from their Tesla holdings.  On Monday, Wood's ARK Innovation ETF and ARK Next Gen Internet ETF sold a combined 124,867 TSLA shares for an estimated $59.35 million, according to Wood's ETF daily trade disclosures.  This comes after Wood and her Ark Invest shaved their TSLA holdings last week, selling 87,993 shares on Friday.",
+            "date": "2025-12-16",
+            "source": "Investor's Business Daily",
+            "url": "https://www.investors.com/news/cathie-wood-decides-to-take-profit-tesla-stock-break-out-stock-market/?src=A00220&yptr=yahoo",
+            "sentiment": "neutral",
+            "sentiment_score": -0.4
+          }
+        ],
+        "key_developments": [
+          "Earnings concerns impacting market sentiment"
+        ],
+        "sentiment_drivers": [
+          "Positive coverage in 1 recent news items"
+        ],
+        "risk_factors": [
+          "Negative sentiment in 1 recent news items"
+        ],
+        "overall_summary": [
+          "The overall sentiment score of 0.03 suggests a slightly positive market outlook, despite some negative factors such as the Dow and S&P 500 slipping.",
+          "Market reactions include Tesla climbing to a record high, snapping a three-day losing streak for the Nasdaq, and Nvidia rising after jobs data.",
+          "Future concerns include analyst skepticism about robotaxi growth, which could impact Tesla's stock, and the need for Elon Musk to reach $1 trillion net worth through specific strategies."
+        ],
         "confidence": "Medium",
-        "valuation": "Fair Value",
         "recommendation": "Hold",
-        "dcf_calculations": {
-          "wacc": 0.07919781016657094,
-          "cost_equity": 0.08328164,
-          "ev_ebitda_multiple": 26.24,
-          "fcf_cagr": 0.0374347236605202,
-          "ebitda_cagr": 0.08,
-          "fcf_future": 87442077116.39432,
-          "ebitda_future": 198938205630.25928,
-          "terminal_value_pg": 1653722332486.1665,
-          "terminal_value_ebitda_multiple": 2387258467563.1113,
-          "average_terminal_value": 2020490400024.639,
-          "adjusted_terminal_value": 2020490400024.639,
-          "terminal_adjustment_factor": 1.0,
-          "projected_free_cash_flows": [
-            75487900232.43408,
-            78313768917.34818,
-            81245423215.58293,
-            84286823182.34029,
-            87442077116.39432
-          ],
-          "present_value_free_cash_flows": [
-            69948159198.7133,
-            67241286560.504395,
-            64639165206.15226,
-            62137741442.359795,
-            59733118446.7411
-          ],
-          "pv_fcf": 323699470854.4709,
-          "pv_terminal_value": 1380230163386.0334,
-          "enterprise_value": 1703929634240.5044,
-          "adjusted_debt": -54301003776,
-          "equity_value": 1758230638016.5044,
-          "share_price": 302.2053348258,
-          "ticker_symbol": "googl",
-          "last_close_price": 319.95,
-          "confidence": "Medium",
-          "terminal_ratio": 0.8619141414798971
-        },
-        "parameters_used": {
-          "max_cagr": "8.0%",
-          "terminal_growth": "2.5%",
-          "sector": "Communication Services",
-          "industry": "Internet Content & Information",
-          "quality_adjustment": "B",
-          "valuation_discount": null
-        },
-        "analysis_type": "dcf"
+        "analysis_type": "news_sentiment"
       },
       "business_model": {
         "method": "Business Model Analysis",
         "applicable": true,
-        "business_model_type": "Platform",
-        "primary_revenue_stream": "Mixed",
-        "revenue_quality": "Excellent",
-        "recurring_percentage": 0.5,
-        "scalability_score": 8.5,
+        "business_model_type": "Manufacturing",
+        "primary_revenue_stream": "Product Sales",
+        "revenue_quality": "Fair",
+        "recurring_percentage": 0.3,
+        "scalability_score": 4.0,
         "growth_consistency": null,
         "strengths": [],
         "risks": [],
-        "competitive_moat": "Strong - Network effects and ecosystem lock-in",
+        "competitive_moat": "Weak to Moderate - Scale and brand advantages",
         "confidence": "Medium",
-        "recommendation": "Strong Buy",
+        "recommendation": "Hold",
         "analysis_type": "business_model"
+      },
+      "dcf": {
+        "method": "DCF Analysis",
+        "applicable": true,
+        "predicted_price": 39.52166437023252,
+        "current_price": 489.88,
+        "upside_downside_pct": -91.93237846610751,
+        "total_equity_value": 131441908874.2603,
+        "confidence": "Medium",
+        "valuation": "Overvalued",
+        "recommendation": "Strong Sell",
+        "dcf_calculations": {
+          "wacc": 0.10329868724483693,
+          "cost_equity": 0.11352203999999999,
+          "ev_ebitda_multiple": 144.287,
+          "fcf_cagr": 0.009292274122154387,
+          "ebitda_cagr": 0.09000000000000001,
+          "fcf_future": 3750499097.2902403,
+          "ebitda_future": 22630081128.66921,
+          "terminal_value_pg": 49097394988.26641,
+          "terminal_value_ebitda_multiple": 244404876189.62747,
+          "average_terminal_value": 146751135588.94693,
+          "adjusted_terminal_value": 146751135588.94693,
+          "terminal_adjustment_factor": 1.0,
+          "projected_free_cash_flows": [
+            3614275633.631435,
+            3647860473.5721617,
+            3681757393.0519657,
+            3715969291.9994736,
+            3750499097.2902403
+          ],
+          "present_value_free_cash_flows": [
+            3275881386.8047123,
+            2996760363.142576,
+            2741421807.9678564,
+            2507839339.319303,
+            2294159232.832374
+          ],
+          "pv_fcf": 13816062130.066824,
+          "pv_terminal_value": 89766845400.19348,
+          "enterprise_value": 103582907530.2603,
+          "adjusted_debt": -27859001344,
+          "equity_value": 131441908874.2603,
+          "share_price": 39.52166437023252,
+          "ticker_symbol": "tsla",
+          "last_close_price": 475.31,
+          "confidence": "Low",
+          "terminal_ratio": 0.913954641257149
+        },
+        "parameters_used": {
+          "max_cagr": "9.0%",
+          "terminal_growth": "2.5%",
+          "sector": "Consumer Cyclical",
+          "industry": "Auto Manufacturers",
+          "quality_adjustment": "C",
+          "valuation_discount": null
+        },
+        "analysis_type": "dcf"
       },
       "ai_insights": {
         "method": "AI Insights Analysis",
         "applicable": true,
-        "current_price": 320.18,
-        "predicted_price": 400.225,
+        "current_price": 489.88,
+        "predicted_price": 612.35,
         "recommendation": "Strong Buy",
         "confidence": "High",
         "ai_insights": {
@@ -722,28 +823,29 @@
           "management_quality": "Excellent",
           "industry_outlook": "Very Positive",
           "key_strengths": [
-            "Diversified business model with Google Search, YouTube, and Google Cloud",
-            "Strong brand recognition and customer loyalty",
-            "Continuous innovation in AI, machine learning, and cloud computing"
+            "Dominant market position in the electric vehicle (EV) segment",
+            "Strong brand recognition and loyalty",
+            "Continuous innovation in autonomous driving and energy storage"
           ],
           "key_risks": [
-            "Regulatory risks related to antitrust laws and data privacy",
-            "Dependence on advertising revenue, which can be volatile"
+            "High competition from established automakers and new entrants in the EV market",
+            "Dependence on lithium and other critical materials for battery production",
+            "Potential regulatory risks and changes in government incentives for EV adoption"
           ],
           "ai_method": "LLM"
         },
         "revenue_trends": {
           "trend_assessment": "Strong Growth",
-          "growth_rate": 0.159,
+          "growth_rate": 0.116,
           "growth_consistency": "Consistent",
           "future_outlook": "Very Positive",
           "ai_method": "LLM"
         },
         "market_analysis": {
           "market_cap_category": "Mega Cap",
-          "sector": "Communication Services",
-          "industry": "Internet Content & Information",
-          "beta": 1.082
+          "sector": "Consumer Cyclical",
+          "industry": "Auto Manufacturers",
+          "beta": 1.878
         },
         "ai_methods_used": {
           "insights": "LLM",
@@ -752,137 +854,98 @@
         "risk_factors": [],
         "analysis_type": "ai_insights"
       },
-      "news_sentiment": {
-        "method": "News Sentiment Analysis",
+      "comparable": {
+        "method": "Comparable Analysis",
         "applicable": true,
-        "overall_sentiment_score": 0.08,
-        "sentiment_rating": "Neutral",
-        "news_count": 10,
-        "recent_news": [
-          {
-            "title": "Nvidia says it isn't using 'circular financing' schemes. 2 famous short sellers disagree.",
-            "summary": "Jim Chanos and Michael Burry claim Nvidia is engaged in questionable vendor financing.",
-            "date": "2025-11-26",
-            "source": "Yahoo Finance",
-            "url": "https://finance.yahoo.com/news/nvidia-says-it-isnt-using-circular-financing-schemes-2-famous-short-sellers-disagree-100021210.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "ChatGPT was unveiled 3 years ago, kicking off the AI revolution. For investors, it did even more.",
-            "summary": "OpenAI released ChatGPT on Nov. 30, 2022, not only kicking off the AI revolution but turning around one of the worst market environments of this century.",
-            "date": "2025-11-29",
-            "source": "Yahoo Finance",
-            "url": "https://finance.yahoo.com/news/chatgpt-was-unveiled-3-years-ago-kicking-off-the-ai-revolution-for-investors-it-did-even-more-110014912.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Prediction: This Unstoppable Stock Will Join Nvidia, Apple, Microsoft, and Alphabet in the $3 Trillion Club Before 2027 (Hint: Not a \"Magnificent Seven\" Stock)",
-            "summary": "This semiconductor specialist is a strong contender in the artificial intelligence (AI) race.",
-            "date": "2025-11-30",
-            "source": "Motley Fool",
-            "url": "https://www.fool.com/investing/2025/11/30/prediction-unstoppable-magnificent-seven/",
-            "sentiment": "neutral",
-            "sentiment_score": 0.4
-          },
-          {
-            "title": "'Going to university and getting a job is now a risky route \u2013 starting a business isn't'",
-            "summary": "Simon Squibb sold his creative agency for millions and now helps people for free with dreams of being successful in business.",
-            "date": "2025-11-30",
-            "source": "Yahoo Finance UK",
-            "url": "https://uk.finance.yahoo.com/news/simon-squibb-business-knowledge-helpbnk-060004259.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Could the Nvidia Killer Be Hiding in Plain Sight? 3 Stocks to Watch",
-            "summary": "Nvidia was an early leader in AI and has reaped the rewards. But it may soon need to defend its crown.",
-            "date": "2025-11-30",
-            "source": "Motley Fool",
-            "url": "https://www.fool.com/investing/2025/11/29/could-the-nvidia-killer-be-hiding-in-plain-sight-3/",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "The List of Analysts Who Think Tesla Will Benefit Immensely From Robotaxis Keeps Growing",
-            "summary": "Some analysts are bullish on Tesla's self-driving vehicles gamble, but investors should take a wait-and-see approach.",
-            "date": "2025-11-30",
-            "source": "Motley Fool",
-            "url": "https://www.fool.com/investing/2025/11/29/the-list-of-analysts-who-think-tesla-will-benefit/",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Brazil Just Closed A Major Crypto Loophole\u2014And Stablecoin Users Should Pay Attention",
-            "summary": "Brazil\u2019s central bank just tightened the screws on cryptocurrency trading with new regulations that could reshape how millions of Latin Americans use digital assets\u2014particularly stablecoins that have become a popular workaround for traditional banking ...",
-            "date": "2025-11-30",
-            "source": "Benzinga",
-            "url": "https://finance.yahoo.com/news/brazil-just-closed-major-crypto-020104598.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Is This the Undiscussed Reason Buffett Just Bought Alphabet (Google) Stock?",
-            "summary": "Apple and Alphabet just inked a big deal.",
-            "date": "2025-11-30",
-            "source": "Motley Fool",
-            "url": "https://www.fool.com/investing/2025/11/29/is-this-the-undiscussed-reason-buffett-just-bought/",
-            "sentiment": "neutral",
-            "sentiment_score": 0.4
-          },
-          {
-            "title": "Netflix Turns To In-Person Shopping Experiences As Gen Z Returns To The Mall",
-            "summary": "Gen Z is returning to the mall despite living in a life of e-commerce and social media. They're going for the experience as they seek more of the physical world after being key players in the digital world's growth. Gen Z is driving the next wave of retail and sparking a renaissance in the industry, NBC News reported. Companies have adapted to Gen Z's return to the mall, and it can result in malls rebounding from multiple years of decline. Don't Miss: The AI Marketing Platform Backed by Insiders",
-            "date": "2025-11-29",
-            "source": "Benzinga",
-            "url": "https://finance.yahoo.com/news/netflix-turns-person-shopping-experiences-210256932.html",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          },
-          {
-            "title": "Is Gemini a Game Changer for Alphabet?",
-            "summary": "Alphabet is at a crossroads, and Gemini could be the answer to its future.",
-            "date": "2025-11-29",
-            "source": "Motley Fool",
-            "url": "https://www.fool.com/investing/2025/11/29/is-gemini-a-game-changer-for-alphabet/",
-            "sentiment": "neutral",
-            "sentiment_score": 0.0
-          }
-        ],
-        "key_developments": [
-          "New product launches generating market interest"
-        ],
-        "sentiment_drivers": [
-          "Positive coverage in 2 recent news items"
-        ],
-        "risk_factors": [],
-        "overall_summary": [
-          "The overall sentiment score of 0.08 suggests a slightly positive tone, but it's essential to note that the individual article sentiments are mostly neutral (0.00) or mildly positive (0.40).",
-          "Market reactions and developments seem to be focused on tech companies like Nvidia, with some articles discussing potential threats or competitors, while others highlight the growth potential of certain stocks.",
-          "The future outlook appears to be cautiously optimistic, with some articles predicting significant growth for specific companies, but also acknowledging potential risks and uncertainties in the market."
-        ],
+        "target_multiples": {
+          "pe": 16.2,
+          "ps": 1.35,
+          "pb": 1.8,
+          "ev_ebitda": 10.8
+        },
+        "fair_values": {
+          "pe_fair_value": 24.739709799381284,
+          "ps_fair_value": 38.818871789850384
+        },
+        "predicted_price": 31.779290794615832,
+        "current_price": 489.88,
+        "upside_downside_pct": -93.5128417582641,
+        "recommendation": "Strong Sell",
         "confidence": "Medium",
-        "recommendation": "Hold",
-        "analysis_type": "news_sentiment"
+        "sector": "Consumer Cyclical",
+        "industry": "Auto Manufacturers",
+        "parameters_used": {
+          "pe_multiple": "16.2x",
+          "ps_multiple": "1.4x",
+          "quality_adjustment": "C"
+        },
+        "peer_tickers": [
+          "TSLA",
+          "F",
+          "GM",
+          "TM"
+        ],
+        "peer_averages": {
+          "pe_ratio": 92.49816537500001,
+          "ps_ratio": 4.4361914277,
+          "pb_ratio": 8.570582775,
+          "ev_ebitda": 44.975500000000004,
+          "roe": 0.08616499999999999,
+          "profit_margin": 0.0469975005
+        },
+        "current_multiples": {
+          "pe_ratio": 333.2517,
+          "ps_ratio": 17.036509,
+          "pb_ratio": 20.362457,
+          "ev_ebitda": 144.287,
+          "roe": 0.06791,
+          "profit_margin": 0.05314
+        },
+        "relative_position": {
+          "pe_ratio": "Premium",
+          "ps_ratio": "Premium",
+          "pb_ratio": "Premium",
+          "ev_ebitda": "Premium",
+          "roe": "Below",
+          "profit_margin": "Superior"
+        },
+        "peer_insights": [
+          "Trading at premium to peer group",
+          "Underperforming peers on profitability"
+        ],
+        "analysis_type": "comparable"
       }
     },
-    "final_recommendation": "Recommendation(ticker='googl', recommendation=<RecommendationType.BUY: 'Buy'>, confidence='Medium', target_price=np.float64(332.3673970283193), upside_potential=np.float64(3.806422834445875), risk_level='Low', bullish_signals=['TECHNICAL indicates Buy', 'Technical: Strong Uptrend', 'COMPETITIVE_POSITION indicates Strong Buy', 'ANALYST_CONSENSUS indicates Strong Buy', 'BUSINESS_MODEL indicates Strong Buy', 'AI_INSIGHTS indicates Strong Buy'], bearish_signals=['COMPARABLE indicates Sell'], key_risks=[], summary='Consensus: Buy | Confidence: Medium | Analyses: 9 | TECHNICAL: Buy | COMPETITIVE_POSITION: Strong Buy | COMPARABLE: Sell | MANAGEMENT_QUALITY: Hold | ANALYST_CONSENSUS: Strong Buy | DCF: Hold | BUSINESS_MODEL: Strong Buy | AI_INSIGHTS: Strong Buy | NEWS_SENTIMENT: Hold')",
+    "final_recommendation": "Recommendation(ticker='tsla', recommendation=<RecommendationType.HOLD: 'Hold'>, confidence='Low', target_price=np.float64(327.2374309062809), upside_potential=np.float64(-33.200492438028455), risk_level='Medium', bullish_signals=['Technical: Strong Uptrend', 'COMPETITIVE_POSITION indicates Strong Buy', 'AI_INSIGHTS indicates Strong Buy'], bearish_signals=['DCF indicates Strong Sell', 'DCF: Overvalued', 'COMPARABLE indicates Strong Sell'], key_risks=['High volatility'], summary='Consensus: Hold | Confidence: Low | Analyses: 9 | TECHNICAL: Hold | COMPETITIVE_POSITION: Strong Buy | ANALYST_CONSENSUS: Hold | MANAGEMENT_QUALITY: Hold | NEWS_SENTIMENT: Hold | BUSINESS_MODEL: Hold | DCF: Strong Sell | AI_INSIGHTS: Strong Buy | COMPARABLE: Strong Sell')",
     "analyst_comparison": {
       "comparisons": [
-        "ComparisonResult(ticker='googl', method='technical', our_price=np.float64(405.683268928424), analyst_target=323.69812, current_price=320.18, our_upside=np.float64(26.70475011819102), analyst_upside=1.0987944281341777, deviation_score=np.float64(25.60595569005684), alignment='Directional_Aligned', both_bullish=False, both_bearish=np.False_, analyst_count=53)",
-        "ComparisonResult(ticker='googl', method='comparable', our_price=275.0264649130285, analyst_target=323.69812, current_price=320.18, our_upside=-14.102547031973103, analyst_upside=1.0987944281341777, deviation_score=15.20134146010728, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=53)",
-        "ComparisonResult(ticker='googl', method='analyst_consensus', our_price=323.69812, analyst_target=323.69812, current_price=320.18, our_upside=1.0987944281341777, analyst_upside=1.0987944281341777, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=False, both_bearish=False, analyst_count=53)",
-        "ComparisonResult(ticker='googl', method='dcf', our_price=np.float64(302.2053348258), analyst_target=323.69812, current_price=320.18, our_upside=np.float64(-5.613925034105824), analyst_upside=1.0987944281341777, deviation_score=np.float64(6.712719462240002), alignment='Divergent', both_bullish=np.False_, both_bearish=False, analyst_count=53)",
-        "ComparisonResult(ticker='googl', method='ai_insights', our_price=400.225, analyst_target=323.69812, current_price=320.18, our_upside=25.000000000000007, analyst_upside=1.0987944281341777, deviation_score=23.90120557186583, alignment='Directional_Aligned', both_bullish=False, both_bearish=False, analyst_count=53)"
+        "ComparisonResult(ticker='tsla', method='technical', our_price=np.float64(806.864377698664), analyst_target=392.476, current_price=489.88, our_upside=np.float64(64.70653582482731), analyst_upside=-19.883236711031273, deviation_score=np.float64(84.58977253585859), alignment='Divergent', both_bullish=False, both_bearish=np.False_, analyst_count=40)",
+        "ComparisonResult(ticker='tsla', method='analyst_consensus', our_price=392.476, analyst_target=392.476, current_price=489.88, our_upside=-19.883236711031273, analyst_upside=-19.883236711031273, deviation_score=0.0, alignment='Precise_Aligned', both_bullish=False, both_bearish=True, analyst_count=40)",
+        "ComparisonResult(ticker='tsla', method='dcf', our_price=np.float64(39.52166437023252), analyst_target=392.476, current_price=489.88, our_upside=np.float64(-91.93237846610751), analyst_upside=-19.883236711031273, deviation_score=np.float64(72.04914175507623), alignment='Directional_Aligned', both_bullish=np.False_, both_bearish=True, analyst_count=40)",
+        "ComparisonResult(ticker='tsla', method='ai_insights', our_price=612.35, analyst_target=392.476, current_price=489.88, our_upside=25.000000000000007, analyst_upside=-19.883236711031273, deviation_score=44.88323671103128, alignment='Divergent', both_bullish=False, both_bearish=False, analyst_count=40)",
+        "ComparisonResult(ticker='tsla', method='comparable', our_price=31.779290794615832, analyst_target=392.476, current_price=489.88, our_upside=-93.5128417582641, analyst_upside=-19.883236711031273, deviation_score=73.62960504723283, alignment='Directional_Aligned', both_bullish=False, both_bearish=True, analyst_count=40)"
       ],
       "summary": {
+        "ai_insights": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 44.88323671103128
+        },
         "technical": {
+          "total_comparisons": 1,
+          "aligned_count": 0,
+          "bullish_convergent": 0,
+          "alignment_rate": 0.0,
+          "avg_deviation": 84.58977253585859
+        },
+        "comparable": {
           "total_comparisons": 1,
           "aligned_count": 1,
           "bullish_convergent": 0,
           "alignment_rate": 100.0,
-          "avg_deviation": 25.60595569005684
+          "avg_deviation": 73.62960504723283
         },
         "analyst_consensus": {
           "total_comparisons": 1,
@@ -891,30 +954,16 @@
           "alignment_rate": 100.0,
           "avg_deviation": 0.0
         },
-        "ai_insights": {
+        "dcf": {
           "total_comparisons": 1,
           "aligned_count": 1,
           "bullish_convergent": 0,
           "alignment_rate": 100.0,
-          "avg_deviation": 23.90120557186583
-        },
-        "dcf": {
-          "total_comparisons": 1,
-          "aligned_count": 0,
-          "bullish_convergent": 0,
-          "alignment_rate": 0.0,
-          "avg_deviation": 6.712719462240002
-        },
-        "comparable": {
-          "total_comparisons": 1,
-          "aligned_count": 0,
-          "bullish_convergent": 0,
-          "alignment_rate": 0.0,
-          "avg_deviation": 15.20134146010728
+          "avg_deviation": 72.04914175507623
         }
       }
     },
-    "execution_time_seconds": 32.77,
+    "execution_time_seconds": 9.31,
     "analyses_count": 9
   }
 }

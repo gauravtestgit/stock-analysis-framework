@@ -85,7 +85,7 @@ def test_comprehensive_analysis(ticker: str):
 
 def test_all_comprehensive():
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['zkh', 'googl']
+    test_tickers = ['dcgo', 'tsla']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")

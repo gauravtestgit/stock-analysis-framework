@@ -894,6 +894,7 @@ def display_horizontal_stock_cards(results):
             # Business Summary Section
         financial_metrics = data.get('financial_metrics', {})
         business_summary = financial_metrics.get('business_summary', '')
+        market_cap = financial_metrics.get('market_cap', 0) or 0
         if business_summary:
             st.subheader("📋 Business Summary")
             st.write(business_summary)
@@ -917,6 +918,7 @@ def display_horizontal_stock_cards(results):
             <p><strong>Upside:</strong> {f'{upside_pct:.1f}%' if upside_pct is not None else 'N/A'}</p>
             <p><strong>Industry:</strong> {financial_metrics.get('industry', 'N/A')}</p>
             <p><strong>Type:</strong> {company_type}</p>
+            <p><strong>Market Cap:</strong> ${market_cap:,.0f}</p>
             <p><strong>P/E:</strong> {financial_metrics.get('pe_ratio', 'N/A')}</p>
             <p><strong>P/S:</strong> {financial_metrics.get('ps_ratio', 'N/A')}</p>
             <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
