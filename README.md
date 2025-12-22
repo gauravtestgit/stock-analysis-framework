@@ -42,6 +42,46 @@ A comprehensive stock analysis framework with multiple valuation methods, analys
 
 ```
 Stock Lists (CSV) → Batch Analysis → Method Comparison → Convergence Analysis → Dashboard/API
+                         ↓
+                  Database Storage
+                         ↓
+                  PostgreSQL Database
+```
+
+## Database Storage Flow
+
+### Database Architecture
+- **Database**: PostgreSQL (`postgresql://postgres:M3rcury1@localhost:5432/strategy_framework`)
+- **ORM**: SQLAlchemy with declarative models
+- **Tables**: `analysis_history`, `portfolios`, `positions`, `trades`, `scenarios`, etc.
+
+### Storage Flow
+1. **Analysis Execution**:
+   - `AnalysisOrchestrator` → Individual analyzers → Analysis results
+   
+2. **Database Storage**:
+   - `AnalysisStorageService` → `DatabaseService` → PostgreSQL `analysis_history` table
+   
+3. **Storage Triggers**:
+   - **Batch Analysis**: `BatchAnalysisService(save_to_db=True)` 
+   - **API Calls**: Dashboard → API endpoints → Storage service
+   - **Test Scripts**: Manual execution with storage enabled
+
+### Key Storage Components
+- **AnalysisStorageService**: `src/share_insights_v1/services/storage/analysis_storage_service.py`
+- **DatabaseService**: `src/share_insights_v1/services/database/database_service.py`
+- **Database Models**: `src/share_insights_v1/models/database.py` & `strategy_models.py`
+- **Analysis History Table**: Stores comprehensive analysis results with individual method breakdowns
+
+### Storage Configuration
+```python
+# Enable database storage in batch analysis
+batch_service = BatchAnalysisService(save_to_db=True)
+
+# Storage happens automatically via:
+# 1. AnalysisStorageService.store_comprehensive_analysis()
+# 2. DatabaseService.save_comprehensive_analysis()
+# 3. PostgreSQL analysis_history table
 ```
 
 ## Setup and Installation

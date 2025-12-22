@@ -1,58 +1,91 @@
 import streamlit as st
-from app import main as batch_dashboard
-from detailed_analysis import show_detailed_analysis
+import sys
+import os
 
-# Page config
-st.set_page_config(
-    page_title="Stock Analysis Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Add the project root to the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-def main():
-    """Main dashboard with navigation"""
-    
-    # Initialize page selection in session state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Batch Results Dashboard"
-    
-    # Import watchlist component
-    from watchlist_component import show_watchlist_sidebar
-    
-    # Show watchlist in sidebar
-    show_watchlist_sidebar()
-    
-    # Sidebar navigation
-    st.sidebar.title("📊 Navigation")
-    page_options = ["Batch Results Dashboard", "Detailed Stock Analysis", "Analyst Alignment Analysis", "Bullish Convergence Analysis"]
-    
-    # Get current page index
-    try:
-        current_index = page_options.index(st.session_state.current_page)
-    except ValueError:
-        current_index = 0
-    
-    page = st.sidebar.selectbox(
-        "Choose Analysis Type:",
-        page_options,
-        index=current_index,
-        key="page_selector"
+from src.share_insights_v1.dashboard.login_page import check_authentication, logout, render_navigation
+
+def render_main_dashboard():
+    """Render the main dashboard with navigation"""
+    st.set_page_config(
+        page_title="Stock Analysis Dashboard",
+        page_icon="📊",
+        layout="wide"
     )
     
-    # Update session state
-    st.session_state.current_page = page
+    # Check authentication
+    if not check_authentication():
+        st.switch_page("pages/login_page.py")
+        return
     
-    if st.session_state.current_page == "Batch Results Dashboard":
-        batch_dashboard()
-    elif st.session_state.current_page == "Detailed Stock Analysis":
-        show_detailed_analysis()
-    elif st.session_state.current_page == "Analyst Alignment Analysis":
-        from analyst_alignment import show_analyst_alignment
-        show_analyst_alignment()
-    elif st.session_state.current_page == "Bullish Convergence Analysis":
-        from bullish_convergence_view import show_bullish_convergence
-        show_bullish_convergence()
+    # Navigation bar
+    render_navigation()
+    
+    st.title("📊 Stock Analysis Framework")
+    st.markdown("*Comprehensive stock analysis with multiple valuation methods and database management*")
+    
+    # Main dashboard content
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🔍 Analysis Tools")
+        
+        # Database Dashboard
+        if st.button("📊 Database Dashboard", use_container_width=True, help="View analysis results from PostgreSQL database"):
+            st.switch_page("pages/database_dashboard.py")
+        
+        # Stock Management (Admin only)
+        if st.session_state.user_role == "admin":
+            if st.button("🗃️ Stock Management", use_container_width=True, help="Manage stock information database"):
+                st.switch_page("pages/stock_management.py")
+        else:
+            st.button("🗃️ Stock Management", use_container_width=True, disabled=True, help="Admin access required")
+        
+        # Original Dashboard
+        if st.button("📈 File-based Dashboard", use_container_width=True, help="Original file-based analysis dashboard"):
+            st.switch_page("pages/file_dashboard.py")
+    
+    with col2:
+        st.subheader("⚙️ System Information")
+        
+        # User info
+        st.info(f"""
+        **Current User:** {st.session_state.username}
+        **Role:** {st.session_state.user_role}
+        **Access Level:** {'Full Access' if st.session_state.user_role == 'admin' else 'Analyst Access'}
+        """)
+        
+        # System features
+        st.markdown("### 🚀 Available Features")
+        
+        features = [
+            "📊 **Database Dashboard** - Real-time PostgreSQL analysis results",
+            "📈 **File Dashboard** - CSV-based analysis viewing",
+        ]
+        
+        if st.session_state.user_role == "admin":
+            features.append("🗃️ **Stock Management** - Database administration")
+        
+        for feature in features:
+            st.markdown(f"- {feature}")
+    
+    # Footer
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("🎯 Analysis Methods", "8+")
+    
+    with col2:
+        st.metric("📊 Exchanges", "4")
+    
+    with col3:
+        st.metric("🔄 Real-time Data", "✅")
+
+def main():
+    render_main_dashboard()
 
 if __name__ == "__main__":
     main()

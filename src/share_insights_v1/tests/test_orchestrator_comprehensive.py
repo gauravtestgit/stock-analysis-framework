@@ -3,6 +3,7 @@
 import json
 from typing import Dict, Any
 from ..services.orchestration.analysis_orchestrator import AnalysisOrchestrator
+from ..services.storage.analysis_storage_service import AnalysisStorageService
 from ..implementations.analyzers.dcf_analyzer import DCFAnalyzer
 from ..implementations.analyzers.technical_analyzer import TechnicalAnalyzer
 from ..implementations.analyzers.startup_analyzer import StartupAnalyzer
@@ -42,14 +43,27 @@ def setup_comprehensive_orchestrator():
     orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(data_provider))
     orchestrator.register_analyzer(AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(data_provider))
     
+    # Import and register industry analysis
+    from ..implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
+    orchestrator.register_analyzer(AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(data_provider))
+    
     return orchestrator
 
-def test_comprehensive_analysis(ticker: str):
+def test_comprehensive_analysis(ticker: str, save_to_db: bool = False):
     """Test comprehensive analysis with all analyzers"""
     print(f"\n=== Comprehensive Analysis for {ticker} ===")
     
     orchestrator = setup_comprehensive_orchestrator()
     results = orchestrator.analyze_stock(ticker)
+    
+    # Store to database if requested
+    if save_to_db and 'error' not in results:
+        try:
+            storage_service = AnalysisStorageService()
+            storage_service.store_comprehensive_analysis(ticker, results)
+            print(f"✅ Results stored to database for {ticker}")
+        except Exception as e:
+            print(f"❌ Database storage failed: {str(e)}")
     
     if 'error' in results:
         print(f"❌ Error: {results['error']}")
@@ -83,17 +97,19 @@ def test_comprehensive_analysis(ticker: str):
     
     return results
 
-def test_all_comprehensive():
+def test_all_comprehensive(save_to_db: bool = False):
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['dcgo', 'tsla']
+    test_tickers = ['MSFT', 'NVDA']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")
+    if save_to_db:
+        print("💾 Database storage ENABLED")
     print("=" * 60)
     
     for ticker in test_tickers:
         try:
-            result = test_comprehensive_analysis(ticker)
+            result = test_comprehensive_analysis(ticker, save_to_db)
             all_results[ticker] = result
         except Exception as e:
             print(traceback.format_exc())
@@ -108,4 +124,5 @@ def test_all_comprehensive():
     return all_results
 
 if __name__ == "__main__":
-    test_all_comprehensive()
+    # Set save_to_db=True to enable database storage
+    test_all_comprehensive(save_to_db=True)

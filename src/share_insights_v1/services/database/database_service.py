@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, distinct
 from typing import List, Optional
 from datetime import datetime, timedelta
+import math
 from ...models.database import get_db, create_tables
 from ...models.strategy_models import (
     Scenario, ScenarioOutcome, Strategy, StrategyScenario, 
@@ -158,12 +160,27 @@ class DatabaseService:
         """Save comprehensive analysis results from multiple analyzers"""
         saved_analyses = []
         
+        # Extract analyses first
+        analyses = analysis_results.get('analyses', {})
+        # print(f"DEBUG: Found {len(analyses)} analyses for {ticker}")
+        
+        # Extract current price from financial_metrics (primary source)
+        current_price = analysis_results.get('financial_metrics', {}).get('current_price')
+        if not current_price:
+            # Fallback: extract from any analyzer that has it
+            for analysis_data in analyses.values():
+                if analysis_data and 'current_price' in analysis_data:
+                    current_price = analysis_data['current_price']
+                    break
+        # print(f"DEBUG: Current price: {current_price}")
+        
         # Extract final recommendation
         final_rec = analysis_results.get('final_recommendation', {})
+        # print(f"DEBUG: Final recommendation exists: {bool(final_rec)}")
         
         # Save each individual analyzer result
-        analyses = analysis_results.get('analyses', {})
         for analysis_type, analysis_data in analyses.items():
+            # print(f"DEBUG: Processing {analysis_type}...")
             if analysis_data and not analysis_data.get('error'):
                 predicted_price = analysis_data.get('predicted_price', 0) or 0
                 # Handle infinity values
@@ -178,6 +195,7 @@ class DatabaseService:
                     analysis_type=analysis_type,
                     recommendation=analysis_data.get('recommendation', 'N/A'),
                     target_price=float(predicted_price),
+                    current_price=current_price,
                     confidence=analysis_data.get('confidence', 'N/A'),
                     raw_data=clean_raw_data,
                     scenario_context_id=scenario_context_id
@@ -206,6 +224,7 @@ class DatabaseService:
                 analysis_type='final_recommendation',
                 recommendation=rec_value,
                 target_price=float(target_price) if target_price else 0,
+                current_price=current_price,
                 confidence=str(confidence),
                 raw_data={
                     'final_recommendation': {
@@ -222,9 +241,10 @@ class DatabaseService:
             db.add(final_analysis)
             saved_analyses.append(final_analysis)
         
-        db.commit()
-        for analysis in saved_analyses:
-            db.refresh(analysis)
+        if saved_analyses:
+            db.commit()
+            for analysis in saved_analyses:
+                db.refresh(analysis)
         
         return saved_analyses
     
@@ -240,7 +260,6 @@ class DatabaseService:
             return None
         
         # Get all individual analyses from the same time period (within 1 hour)
-        from sqlalchemy import and_
         time_window = final_rec.analysis_date
         individual_analyses = db.query(AnalysisHistory).filter(
             and_(
@@ -280,8 +299,6 @@ class DatabaseService:
     def get_analysis_comparison(self, db: Session, ticker: str, 
                               days_back: int = 30) -> dict:
         """Compare analysis results over time for a ticker"""
-        from sqlalchemy import and_
-        from datetime import timedelta
         
         cutoff_date = datetime.utcnow() - timedelta(days=days_back)
         
@@ -311,10 +328,226 @@ class DatabaseService:
             'by_type': by_type
         }
     
+    def get_latest_analysis_by_exchange(self, db: Session, exchange: str = None, limit: int = None) -> List[AnalysisHistory]:
+        """Get latest analysis for each ticker, optionally filtered by exchange"""
+        
+        # Subquery to get latest analysis date for each ticker
+        latest_subquery = db.query(
+            AnalysisHistory.ticker,
+            func.max(AnalysisHistory.analysis_date).label('latest_date')
+        ).filter(
+            AnalysisHistory.analysis_type == 'final_recommendation'
+        ).group_by(AnalysisHistory.ticker).subquery()
+        
+        # Main query to get full records for latest analyses
+        query = db.query(AnalysisHistory).join(
+            latest_subquery,
+            and_(
+                AnalysisHistory.ticker == latest_subquery.c.ticker,
+                AnalysisHistory.analysis_date == latest_subquery.c.latest_date,
+                AnalysisHistory.analysis_type == 'final_recommendation'
+            )
+        )
+        
+        # Apply exchange filter if provided
+        if exchange:
+            # Extract exchange from ticker format
+            if exchange == 'ASX':
+                query = query.filter(AnalysisHistory.ticker.like('%.ax'))
+            elif exchange == 'NZX':
+                query = query.filter(AnalysisHistory.ticker.like('%.nz'))
+            elif exchange == 'NASDAQ':
+                query = query.filter(
+                    and_(
+                        ~AnalysisHistory.ticker.like('%.%'),
+                        func.length(AnalysisHistory.ticker) <= 4
+                    )
+                )
+            elif exchange == 'NYSE':
+                query = query.filter(
+                    and_(
+                        ~AnalysisHistory.ticker.like('%.%'),
+                        func.length(AnalysisHistory.ticker) > 4
+                    )
+                )
+        
+        query = query.order_by(AnalysisHistory.analysis_date.desc())
+        
+        if limit:
+            query = query.limit(limit)
+        
+        return query.all()
+    
+    def get_analysis_summary_stats(self, db: Session) -> dict:
+        """Get summary statistics of stored analysis"""
+        
+        # Total unique stocks analyzed
+        total_stocks = db.query(func.count(distinct(AnalysisHistory.ticker))).filter(
+            AnalysisHistory.analysis_type == 'final_recommendation'
+        ).scalar()
+        
+        # Latest analysis info
+        latest_analysis = db.query(AnalysisHistory).filter(
+            AnalysisHistory.analysis_type == 'final_recommendation'
+        ).order_by(AnalysisHistory.analysis_date.desc()).first()
+        
+        # Recommendation distribution (latest only)
+        latest_subquery = db.query(
+            AnalysisHistory.ticker,
+            func.max(AnalysisHistory.analysis_date).label('latest_date')
+        ).filter(
+            AnalysisHistory.analysis_type == 'final_recommendation'
+        ).group_by(AnalysisHistory.ticker).subquery()
+        
+        rec_distribution = db.query(
+            AnalysisHistory.recommendation,
+            func.count(AnalysisHistory.recommendation)
+        ).join(
+            latest_subquery,
+            and_(
+                AnalysisHistory.ticker == latest_subquery.c.ticker,
+                AnalysisHistory.analysis_date == latest_subquery.c.latest_date,
+                AnalysisHistory.analysis_type == 'final_recommendation'
+            )
+        ).group_by(AnalysisHistory.recommendation).all()
+        
+        # Exchange distribution
+        exchange_counts = {}
+        latest_analyses = db.query(AnalysisHistory).join(
+            latest_subquery,
+            and_(
+                AnalysisHistory.ticker == latest_subquery.c.ticker,
+                AnalysisHistory.analysis_date == latest_subquery.c.latest_date,
+                AnalysisHistory.analysis_type == 'final_recommendation'
+            )
+        ).all()
+        
+        for analysis in latest_analyses:
+            exchange = self._determine_exchange_from_ticker(analysis.ticker)
+            exchange_counts[exchange] = exchange_counts.get(exchange, 0) + 1
+        
+        return {
+            'total_stocks': total_stocks,
+            'latest_analysis_date': latest_analysis.analysis_date if latest_analysis else None,
+            'recommendation_distribution': dict(rec_distribution),
+            'exchange_distribution': exchange_counts
+        }
+    
+    def search_analysis_results(self, db: Session, 
+                               recommendation: str = None,
+                               exchange: str = None,
+                               min_target_price: float = None,
+                               max_target_price: float = None,
+                               limit: int = 100) -> List[AnalysisHistory]:
+        """Search analysis results with various filters"""
+        
+        # Subquery for latest analyses
+        latest_subquery = db.query(
+            AnalysisHistory.ticker,
+            func.max(AnalysisHistory.analysis_date).label('latest_date')
+        ).filter(
+            AnalysisHistory.analysis_type == 'final_recommendation'
+        ).group_by(AnalysisHistory.ticker).subquery()
+        
+        # Main query
+        query = db.query(AnalysisHistory).join(
+            latest_subquery,
+            and_(
+                AnalysisHistory.ticker == latest_subquery.c.ticker,
+                AnalysisHistory.analysis_date == latest_subquery.c.latest_date,
+                AnalysisHistory.analysis_type == 'final_recommendation'
+            )
+        )
+        
+        # Apply filters
+        if recommendation:
+            query = query.filter(AnalysisHistory.recommendation == recommendation)
+        
+        if exchange:
+            if exchange == 'ASX':
+                query = query.filter(AnalysisHistory.ticker.like('%.ax'))
+            elif exchange == 'NZX':
+                query = query.filter(AnalysisHistory.ticker.like('%.nz'))
+            elif exchange == 'NASDAQ':
+                query = query.filter(
+                    and_(
+                        ~AnalysisHistory.ticker.like('%.%'),
+                        func.length(AnalysisHistory.ticker) <= 4
+                    )
+                )
+            elif exchange == 'NYSE':
+                query = query.filter(
+                    and_(
+                        ~AnalysisHistory.ticker.like('%.%'),
+                        func.length(AnalysisHistory.ticker) > 4
+                    )
+                )
+        
+        if min_target_price is not None:
+            query = query.filter(AnalysisHistory.target_price >= min_target_price)
+        
+        if max_target_price is not None:
+            query = query.filter(AnalysisHistory.target_price <= max_target_price)
+        
+        query = query.order_by(AnalysisHistory.target_price.desc()).limit(limit)
+        
+        return query.all()
+    
+    def _determine_exchange_from_ticker(self, ticker: str) -> str:
+        """Determine exchange based on ticker format"""
+        if ticker.endswith('.ax'):
+            return 'ASX'
+        elif ticker.endswith('.nz'):
+            return 'NZX'
+        elif len(ticker) <= 4 and ticker.isupper() and '.' not in ticker:
+            return 'NASDAQ'
+        else:
+            return 'NYSE'
+    
+    def get_all_stocks(self, db: Session) -> List['StockInfo']:
+        """Get all stocks from stock_info table"""
+        from ...models.strategy_models import StockInfo
+        return db.query(StockInfo).order_by(StockInfo.symbol).all()
+    
+    def upsert_stock(self, db: Session, symbol: str, security_name: str, exchange: str) -> 'StockInfo':
+        """Insert or update stock information"""
+        from ...models.strategy_models import StockInfo
+        
+        stock = db.query(StockInfo).filter(StockInfo.symbol == symbol).first()
+        if stock:
+            stock.security_name = security_name
+            stock.exchange = exchange
+            stock.updated_at = datetime.utcnow()
+        else:
+            stock = StockInfo(
+                symbol=symbol,
+                security_name=security_name,
+                exchange=exchange
+            )
+            db.add(stock)
+        
+        db.commit()
+        db.refresh(stock)
+        return stock
+    
+    def bulk_upsert_stocks(self, db: Session, stocks_data: List[dict]) -> int:
+        """Bulk insert/update stock information"""
+        from ...models.strategy_models import StockInfo
+        
+        count = 0
+        for stock_data in stocks_data:
+            self.upsert_stock(
+                db, 
+                stock_data['symbol'], 
+                stock_data['security_name'], 
+                stock_data['exchange']
+            )
+            count += 1
+        
+        return count
+    
     def _clean_infinity_values(self, data):
         """Recursively clean infinity values from data structure"""
-        import math
-        
         if isinstance(data, dict):
             return {k: self._clean_infinity_values(v) for k, v in data.items()}
         elif isinstance(data, list):

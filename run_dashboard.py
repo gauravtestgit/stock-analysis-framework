@@ -27,7 +27,7 @@ def run_dashboard():
         sys.executable, "-m", "streamlit", "run", 
         dashboard_file,
         "--server.port", "8501",
-        "--server.address", "0.0.0.0"
+        "--server.address", "localhost"
     ]
     
     try:

@@ -16,6 +16,7 @@ class AnalysisType(Enum):
     FINANCIAL_HEALTH = "financial_health"
     ANALYST_CONSENSUS = "analyst_consensus"
     REVENUE_STREAM = "revenue_stream"  # New analyzer
+    INDUSTRY_ANALYSIS = "industry_analysis"
 
 @dataclass
 class AnalysisResult:

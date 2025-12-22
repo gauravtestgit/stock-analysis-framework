@@ -61,7 +61,7 @@ def show_detailed_analysis():
         available_analyzers = [
             "dcf", "technical", "comparable", "startup", 
             "ai_insights", "news_sentiment", "business_model", 
-            "financial_health", "analyst_consensus"
+            "financial_health", "analyst_consensus", "industry_analysis"
         ]
         
         selected_analyzers = st.multiselect(
@@ -104,7 +104,7 @@ def show_detailed_analysis():
         available_analyzers = [
             "dcf", "technical", "comparable", "startup", 
             "ai_insights", "news_sentiment", "business_model", 
-            "financial_health", "analyst_consensus"
+            "financial_health", "analyst_consensus", "industry_analysis"
         ]
         
         batch_analyzers = st.multiselect(
@@ -1204,7 +1204,8 @@ def display_horizontal_stock_cards(results):
                 <h5>📈 Technical</h5>
                 <p><strong>Rec:</strong> {tech_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${tech_data.get('predicted_price', 0) or 0:.2f}</p>
-                <p><strong>Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
+                <p><strong>MACD Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
+                <p><strong>Volume:</strong> {tech_data.get('volume_trend', 'N/A')}</p>                
                 <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -1222,6 +1223,10 @@ def display_horizontal_stock_cards(results):
                             <div style="flex: 1;">
                                 <h4>Technical Indicators:</h4>
                                 {indicators_html}
+                            </div>
+                            <div style="flex: 1;">
+                                <h4>Technical Signals:</h4>
+                                {tech_data.get('technical_signals', 'N/A')}
                             </div>
                             <div style="flex: 1;">
                                 <h4>Price Chart (Last 30 Days):</h4>

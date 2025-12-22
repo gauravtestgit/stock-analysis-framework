@@ -1,7 +1,20 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+
+class StockInfo(Base):
+    """Stock information table"""
+    __tablename__ = "stock_info"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(20), unique=True, index=True, nullable=False)
+    security_name = Column(String(500), nullable=False)
+    exchange = Column(String(10), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (UniqueConstraint('symbol', name='uq_stock_symbol'),)
 
 class Scenario(Base):
     """Investment scenarios (US-China Trade War, Tech Regulation, etc.)"""
@@ -119,6 +132,7 @@ class AnalysisHistory(Base):
     analysis_type = Column(String(50))  # dcf, technical, ai_insights
     recommendation = Column(String(20))  # Buy, Hold, Sell
     target_price = Column(Float)
+    current_price = Column(Float)  # Price at time of analysis
     confidence = Column(String(20))
     raw_data = Column(JSON)  # Full analysis result
     scenario_context_id = Column(Integer, ForeignKey("scenarios.id"))

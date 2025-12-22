@@ -88,11 +88,14 @@ class AnalysisOrchestrator:
                         try:
                             result = future.result(timeout=30)  # Increased per-analyzer timeout
                             if result and not result.get('error'):
+                                # Inject current_price into successful results
+                                result['current_price'] = financial_metrics.get('current_price')
                                 results['analyses'][analysis_type.value] = result
-                                print(f"✅ {analysis_type.value} completed successfully for {ticker}")
+                                # print(f"✅ {analysis_type.value} completed successfully for {ticker}")
                             else:
                                 results['analyses'][analysis_type.value] = result
-                                print(f"⚠️ {analysis_type.value} completed with issues for {ticker}: {result.get('error', 'Unknown issue')}")
+                                # print(f"⚠️ {analysis_type.value} completed with issues for {ticker}: {result.get('error', 'Unknown issue')}")
+                                # print(f"⚠️ {analysis_type.value} completed with issues for {ticker}: {result.get('error', 'Unknown issue')}")
                         except TimeoutError:
                             print(f"⏰ TIMEOUT: {analysis_type.value} timed out after 30s for {ticker}")
                             results['analyses'][analysis_type.value] = {
@@ -159,18 +162,18 @@ class AnalysisOrchestrator:
             # Check if analyzer is applicable
             company_type = data.get('company_type', CompanyType.MATURE_PROFITABLE.value)
             if hasattr(analyzer, 'is_applicable') and not analyzer.is_applicable(company_type):
-                print(f"INFO: {analysis_type.value} not applicable to {company_type} for {ticker}")
+                # print(f"INFO: {analysis_type.value} not applicable to {company_type} for {ticker}")
                 return {'applicable': False, 'reason': f'{analysis_type.value} not applicable to {company_type}'}
             
             # Run analysis
-            print(f"🔄 Starting {analysis_type.value} for {ticker}")
+            # print(f"🔄 Starting {analysis_type.value} for {ticker}")
             result = analyzer.analyze(ticker, data)
             
-            # Check if result is valid
-            if not result or ('error' in result and result.get('applicable', True)):
-                print(f"⚠️ WARNING: {analysis_type.value} returned invalid result for {ticker}: {result}")
-            else:
-                print(f"✅ {analysis_type.value} analysis completed for {ticker}")
+            # # Check if result is valid
+            # if not result or ('error' in result and result.get('applicable', True)):
+            #     print(f"⚠️ WARNING: {analysis_type.value} returned invalid result for {ticker}: {result}")
+            # else:
+            #     print(f"✅ {analysis_type.value} analysis completed for {ticker}")
             
             result['analysis_type'] = analysis_type.value
             return result
@@ -196,7 +199,8 @@ class AnalysisOrchestrator:
             AnalysisType.MANAGEMENT_QUALITY,
             AnalysisType.FINANCIAL_HEALTH,
             AnalysisType.ANALYST_CONSENSUS,
-            AnalysisType.REVENUE_STREAM
+            AnalysisType.REVENUE_STREAM,
+            AnalysisType.INDUSTRY_ANALYSIS
         ]
         
         # Type-specific analyses

@@ -76,7 +76,7 @@ class YahooFinanceProvider(IDataProvider):
             # Debug: Print available price fields for ETFs
             price_fields = ['currentPrice', 'regularMarketPrice', 'navPrice', 'previousClose', 'ask', 'bid', 'open']
             available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
-            print(f"Yahoo Provider - Available price fields for {ticker}: {available_prices}")
+            # print(f"Yahoo Provider - Available price fields for {ticker}: {available_prices}")
             
             return {
                 'market_cap': info.get('marketCap', 0),

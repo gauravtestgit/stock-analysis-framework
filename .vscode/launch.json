@@ -13,7 +13,7 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_dcf_new_architecture",
+            "module": "src.share_insights_v1.tests.test_batch_analysis",
             // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
