@@ -103,3 +103,21 @@ class GroqProvider(ILLMProvider):
             "requests_per_minute": 30,
             "min_request_interval": self.min_request_interval
         }
+    
+    def get_current_model(self) -> str:
+        """Get currently selected model name"""
+        return self.model_name
+    
+    def set_current_model(self, model: str) -> bool:
+        """Set current model, returns success status"""
+        try:
+            self.model_name = model
+            self.llm = ChatGroq(
+                groq_api_key=os.getenv("GROQ_API_KEY"),
+                model_name=model,
+                temperature=0.1
+            )
+            return True
+        except Exception as e:
+            print(f"Failed to switch to model {model}: {e}")
+            return False

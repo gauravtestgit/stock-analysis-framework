@@ -23,3 +23,13 @@ class ILLMProvider(ABC):
     def get_rate_limit_info(self) -> Dict[str, Any]:
         """Get rate limit information"""
         pass
+    
+    @abstractmethod
+    def get_current_model(self) -> str:
+        """Get currently selected model name"""
+        pass
+    
+    @abstractmethod
+    def set_current_model(self, model: str) -> bool:
+        """Set current model, returns success status"""
+        pass

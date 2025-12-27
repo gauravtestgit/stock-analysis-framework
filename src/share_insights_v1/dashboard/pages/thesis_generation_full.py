@@ -17,6 +17,26 @@ load_dotenv()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
 from src.share_insights_v1.services.database.database_service import DatabaseService
+from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
+import yaml
+
+def load_llm_config():
+    """Load LLM configuration from config file"""
+    try:
+        config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'llm_config.yaml')
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        return config.get('llm_providers', [])
+    except Exception as e:
+        st.error(f"Failed to load LLM config: {e}")
+        return []
+
+def get_provider_models(providers_config, provider_name):
+    """Get models for a specific provider"""
+    for provider in providers_config:
+        if provider['name'] == provider_name:
+            return provider.get('models', [])
+    return []
 
 def show_thesis_generation():
     """Show thesis generation page with full detailed analysis functionality"""
@@ -28,6 +48,69 @@ def show_thesis_generation():
     
     # Show watchlist in sidebar
     show_watchlist_sidebar()
+    
+    # Load LLM configuration
+    providers_config = load_llm_config()
+    
+    # LLM Provider Selection (affects both analysis and thesis generation)
+    st.subheader("🤖 LLM Provider Selection")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Provider selection
+        provider_options = [(p['name'], f"{p['display_name']} {p['icon']}") for p in providers_config if os.getenv(p['api_key_env'])]
+        if provider_options:
+            selected_provider_name = st.selectbox(
+                "Provider:",
+                options=[p[0] for p in provider_options],
+                format_func=lambda x: next(p[1] for p in provider_options if p[0] == x),
+                key="global_provider_selector"
+            )
+        else:
+            st.error("No LLM providers available (missing API keys)")
+            selected_provider_name = None
+    
+    with col2:
+        # Model selection based on selected provider
+        if selected_provider_name:
+            models = get_provider_models(providers_config, selected_provider_name)
+            if models:
+                selected_model = st.selectbox(
+                    "Model:",
+                    options=[m['name'] for m in models],
+                    format_func=lambda x: next(f"{m['display_name']} ({m['name']})" for m in models if m['name'] == x),
+                    key="global_model_selector"
+                )
+            else:
+                st.error(f"No models available for {selected_provider_name}")
+                selected_model = None
+        else:
+            selected_model = None
+    
+    # Initialize shared LLM manager with selected provider/model
+    if selected_provider_name and selected_model:
+        try:
+            shared_llm_manager = LLMManager(use_plugin_system=True)
+            shared_llm_manager.set_primary_provider(selected_provider_name, selected_model)
+            st.session_state.thesis_llm_manager = shared_llm_manager
+            # Store provider and model names for API calls
+            st.session_state.thesis_llm_provider = selected_provider_name
+            st.session_state.thesis_llm_model = selected_model
+            st.success(f"✅ Using {selected_provider_name} with {selected_model}")
+        except Exception as e:
+            st.error(f"Failed to initialize LLM provider: {e}")
+            shared_llm_manager = LLMManager()
+            st.session_state.thesis_llm_manager = shared_llm_manager
+            # Clear provider/model on failure
+            st.session_state.thesis_llm_provider = None
+            st.session_state.thesis_llm_model = None
+    else:
+        # Fallback to default
+        shared_llm_manager = LLMManager()
+        st.session_state.thesis_llm_manager = shared_llm_manager
+        # Clear provider/model when no selection
+        st.session_state.thesis_llm_provider = None
+        st.session_state.thesis_llm_model = None
     
     # Define available analyzers for both modes
     available_analyzers = [
@@ -45,11 +128,19 @@ def show_thesis_generation():
         
         # News sentiment options
         st.subheader("News Sentiment Options")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             enable_web_scraping = st.checkbox("Enable Web Scraping", value=True, help="Fetch full article content for better accuracy (slower)")
         with col2:
             enable_llm_sentiment = st.checkbox("Enable LLM Sentiment", value=True, help="Use AI for sentiment analysis (slower but more accurate)")
+        with col3:
+            max_news_articles = st.number_input(
+                "Max News Articles",
+                min_value=1,
+                max_value=20,
+                value=5,
+                help="Number of news articles to analyze for sentiment"
+            )
         
         # Analyzer selection
         st.subheader("Select Analyzers")
@@ -62,13 +153,17 @@ def show_thesis_generation():
         )
         
         if st.button("🔍 Analyze Stock") and ticker:
-            if selected_analyzers:
+            if not selected_provider_name or not selected_model:
+                st.error("Please select LLM provider and model first")
+            elif selected_analyzers:
                 # Store news sentiment options in session state
                 st.session_state.news_options = {
                     'enable_web_scraping': enable_web_scraping,
-                    'enable_llm_sentiment': enable_llm_sentiment
+                    'enable_llm_sentiment': enable_llm_sentiment,
+                    'max_news_articles': max_news_articles
                 }
-                analyze_single_stock(ticker, selected_analyzers)
+                # Pass LLM manager to analysis
+                analyze_single_stock(ticker, selected_analyzers, st.session_state.thesis_llm_manager, max_news_articles)
             else:
                 st.error("Please select at least one analyzer")
     
@@ -83,11 +178,19 @@ def show_thesis_generation():
         
         # News sentiment options for batch
         st.subheader("News Sentiment Options")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             batch_web_scraping = st.checkbox("Enable Web Scraping (Batch)", value=False, help="Fetch full article content (much slower for batch)")
         with col2:
             batch_llm_sentiment = st.checkbox("Enable LLM Sentiment (Batch)", value=False, help="Use AI for sentiment analysis (slower for batch)")
+        with col3:
+            batch_max_news_articles = st.number_input(
+                "Max News Articles (Batch)",
+                min_value=1,
+                max_value=20,
+                value=3,
+                help="Number of news articles per stock for batch analysis"
+            )
         
         # Analyzer selection for batch
         st.subheader("Select Analyzers for Batch")
@@ -99,13 +202,17 @@ def show_thesis_generation():
         )
         
         if st.button("Analyze All Watchlist Stocks"):
-            if batch_analyzers:
+            if not selected_provider_name or not selected_model:
+                st.error("Please select LLM provider and model first")
+            elif batch_analyzers:
                 # Store batch news sentiment options
                 st.session_state.batch_news_options = {
                     'enable_web_scraping': batch_web_scraping,
-                    'enable_llm_sentiment': batch_llm_sentiment
+                    'enable_llm_sentiment': batch_llm_sentiment,
+                    'max_news_articles': batch_max_news_articles
                 }
-                analyze_watchlist_batch(watchlist, batch_analyzers)
+                # Pass LLM manager to batch analysis
+                analyze_watchlist_batch(watchlist, batch_analyzers, st.session_state.thesis_llm_manager, batch_max_news_articles)
             else:
                 st.error("Please select at least one analyzer")
     
@@ -123,28 +230,69 @@ def show_thesis_generation():
         with col2:
             generate_button = st.button("🚀 Generate Thesis", type="primary")
         
-        # Handle thesis generation outside column layout
+        # Handle thesis generation
         if generate_button:
-            # Use the latest analysis data from session state
-            latest_analysis_data = st.session_state.thesis_analysis_data
-            latest_ticker = st.session_state.thesis_ticker
-            
-            # Debug info to verify we're using latest data
-            st.info(f"Generating thesis using analysis from: {latest_analysis_data.get('timestamp', 'Unknown time')}")
-            
-            generate_investment_thesis(
-                latest_ticker, 
-                latest_analysis_data, 
-                thesis_type
-            )
+            if not selected_provider_name or not selected_model:
+                st.error("Please select LLM provider and model first")
+            else:
+                latest_analysis_data = st.session_state.thesis_analysis_data
+                latest_ticker = st.session_state.thesis_ticker
+                
+                st.info(f"Generating thesis using analysis from: {latest_analysis_data.get('timestamp', 'Unknown time')}")
+                st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
+                
+                generate_investment_thesis(
+                    latest_ticker, 
+                    latest_analysis_data, 
+                    thesis_type,
+                    st.session_state.thesis_llm_manager,
+                    show_prompt=True
+                )
     
     # Display persisted batch results if available
     if 'batch_results' in st.session_state and 'batch_timing' in st.session_state:
         st.markdown("---")
         st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
         display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
+        
+        # Batch thesis generation section
+        successful_stocks = {ticker: data for ticker, data in st.session_state.batch_results.items() if 'error' not in data}
+        if successful_stocks:
+            st.markdown("---")
+            st.subheader("🎯 Generate Thesis from Batch Results")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                selected_stock = st.selectbox(
+                    "Select Stock:",
+                    options=list(successful_stocks.keys()),
+                    key="batch_thesis_stock_selector"
+                )
+            with col2:
+                batch_thesis_type = st.selectbox(
+                    "Thesis Type:", 
+                    ["Balanced", "Bull Case", "Bear Case"],
+                    key="batch_thesis_type_selector"
+                )
+            with col3:
+                generate_thesis_button = st.button("🚀 Generate Thesis", key="batch_thesis_generate")
+            
+            # Handle batch thesis generation
+            if generate_thesis_button:
+                if not selected_provider_name or not selected_model:
+                    st.error("Please select LLM provider and model first")
+                elif selected_stock and selected_stock in successful_stocks:
+                    st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
+                    
+                    generate_investment_thesis(
+                        selected_stock,
+                        successful_stocks[selected_stock],
+                        batch_thesis_type,
+                        st.session_state.thesis_llm_manager,
+                        show_prompt=True
+                    )
 
-def analyze_watchlist_batch(watchlist, selected_analyzers=None):
+def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None, max_news_articles=5):
     """Analyze all stocks in watchlist with selected analyzers in parallel"""
     results = {}
     progress_bar = st.progress(0)
@@ -153,6 +301,13 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
     # Track batch timing
     batch_start = time.time()
     
+    # Get LLM configuration from session state
+    llm_provider = None
+    llm_model = None
+    if 'thesis_llm_provider' in st.session_state and 'thesis_llm_model' in st.session_state:
+        llm_provider = st.session_state.thesis_llm_provider
+        llm_model = st.session_state.thesis_llm_model
+    
     # Parallel execution with balanced workers for performance and cost
     max_workers = min(len(watchlist), 4)  # Balanced for performance and cost
     status_text.text(f"Starting parallel analysis of {len(watchlist)} stocks with {max_workers} workers...")
@@ -160,7 +315,7 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all analysis tasks
         future_to_ticker = {
-            executor.submit(analyze_single_stock_api, ticker, selected_analyzers): ticker
+            executor.submit(analyze_single_stock_api, ticker, selected_analyzers, llm_provider, llm_model, max_news_articles): ticker
             for ticker in watchlist
         }
         
@@ -195,7 +350,7 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None):
     
     display_batch_results(results, batch_timing)
 
-def analyze_single_stock_api(ticker, selected_analyzers=None):
+def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None, llm_model=None, max_news_articles=5):
     """Analyze a single stock via API - helper function for parallel execution"""
     try:
         stock_start = time.time()
@@ -204,6 +359,12 @@ def analyze_single_stock_api(ticker, selected_analyzers=None):
         request_data = {"ticker": ticker}
         if selected_analyzers:
             request_data["enabled_analyzers"] = selected_analyzers
+        if llm_provider:
+            request_data["llm_provider"] = llm_provider
+        if llm_model:
+            request_data["llm_model"] = llm_model
+        if max_news_articles != 5:  # Only include if different from default
+            request_data["max_news_articles"] = max_news_articles
         
         response = requests.post(endpoint, json=request_data)
         stock_end = time.time()
@@ -270,22 +431,9 @@ def display_batch_results(results, batch_timing=None):
             st.subheader("📊 Quick Summary")
             st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
     
-    # Scrollable detailed results
-    st.subheader("📋 Detailed Analysis Results")
-    
-    # Generate text summary for all stocks
-    detailed_text = generate_batch_text_summary(results)
-    
-    # Display in scrollable text area
-    st.text_area(
-        "Analysis Results (Scrollable)",
-        value=detailed_text,
-        height=400,
-        help="Scroll through detailed analysis results for all stocks"
-    )
-    
     # Horizontal scrollable stock analysis cards
-    with st.expander("🔍 Individual Stock Deep Dive (Horizontal Scroll)"):
+    st.subheader("🔍 Individual Stock Analysis")
+    with st.expander("Detailed Results"):
         display_horizontal_stock_cards(results)
 
 def generate_batch_text_summary(results):
@@ -340,6 +488,8 @@ def display_horizontal_stock_cards(results):
         if 'error' in data:
             st.error(f"❌ {ticker}: {data['error']}")
             continue
+
+        sanitized_ticker = ticker.replace('.', '_')
             
         # Get data for the row
         financial_metrics = data.get('financial_metrics') or {}
@@ -348,9 +498,15 @@ def display_horizontal_stock_cards(results):
         timing = data.get('dashboard_timing', {})
         analysis_time = timing.get('orchestrator_time', data.get('execution_time_seconds', 0))
         analyses = data.get('analyses', {})
+        business_summary = financial_metrics.get('business_summary', '')
+        market_cap = financial_metrics.get('market_cap', 0) or 0
         
         # Create horizontal scrollable container for this stock
         st.markdown(f"**📊 {ticker} - {final_rec.get('recommendation', 'N/A')}**")
+        if business_summary:
+            st.subheader("📋 Business Summary")
+            st.write(business_summary)
+            st.markdown("---")
         
         # Create all cards in one row with horizontal scroll
         all_cards = []
@@ -369,34 +525,607 @@ def display_horizontal_stock_cards(results):
             <p><strong>Price:</strong> {f'${current_price:.2f}' if current_price else 'N/A'}</p>
             <p><strong>Target:</strong> {f'${target_price:.2f}' if target_price else 'N/A'}</p>
             <p><strong>Upside:</strong> {f'{upside_pct:.1f}%' if upside_pct is not None else 'N/A'}</p>
+            <p><strong>Market Cap:</strong> ${market_cap:,.0f}</p>
+            <p><strong>P/E:</strong> {financial_metrics.get('pe_ratio', 'N/A')}</p>
+            <p><strong>P/S:</strong> {financial_metrics.get('ps_ratio', 'N/A')}</p>
+            <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
+            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}%</p>
+            <p><strong>Debt Ratio:</strong> {financial_metrics.get('debt_to_equity', 'N/A')}</p> 
             <p><strong>Type:</strong> {company_type}</p>
             <p><strong>Time:</strong> {analysis_time}s</p>
         </div>
         """
         all_cards.append(stock_card)
-        
+        # Financial Statements Card (second card)
+        try:
+            # Use existing financial data from analysis
+            financial_metrics = data.get('financial_metrics', {})
+            revenue_data_statements = financial_metrics.get('revenue_data_statements', {})
+            
+            # Extract latest values directly from the serialized data
+            latest_revenue = 0
+            latest_gross_income = 0
+            latest_net_income = 0
+            latest_op_cf = 0
+            latest_free_cf = 0
+            years_count = 0
+            
+            # Get annual revenue data
+            annual_revenue = revenue_data_statements.get('annual_revenue', {})
+            if annual_revenue:
+                revenue_values = list(annual_revenue.values())
+                if revenue_values:
+                    latest_revenue = revenue_values[0]  # Most recent year
+                    years_count = len(revenue_values)
+            
+            # Get annual income statement data
+            annual_income = revenue_data_statements.get('annual_income_stmt', {})
+            quarterly_income = revenue_data_statements.get('quarterly_income_stmt', {})
+            
+            # Use annual data first, fallback to quarterly
+            income_data = annual_income if annual_income else quarterly_income
+            
+            # Debug: Print the structure to understand the data format
+            if quarterly_income:
+                # The quarterly data structure is: date -> field -> value
+                # We need to extract from the most recent quarter
+                latest_quarter = list(quarterly_income.keys())[0]  # Most recent quarter
+                quarter_data = quarterly_income[latest_quarter]
+                
+                # Extract values directly from the quarter data
+                latest_net_income = quarter_data.get('Net Income', 0) or 0
+                latest_gross_income = quarter_data.get('Gross Profit', 0) or 0
+            
+            # Get cashflow data - check if it follows the same structure
+            cashflow_data = revenue_data_statements.get('cashflow', {})
+            if cashflow_data:
+                # Check if cashflow has the same date->field->value structure
+                if cashflow_data:
+                    latest_cf_date = list(cashflow_data.keys())[0]  # Most recent date
+                    cf_data = cashflow_data[latest_cf_date]
+                    
+                    latest_op_cf = cf_data.get('Operating Cash Flow', 0) or 0
+                    latest_free_cf = cf_data.get('Free Cash Flow', 0) or 0
+            
+            # Determine scale and format
+            max_value = max(abs(latest_revenue), abs(latest_gross_income), abs(latest_net_income), abs(latest_op_cf), abs(latest_free_cf))
+            scale_billions = max_value >= 1e9
+            scale_factor = 1e9 if scale_billions else 1e6
+            scale_label = "B" if scale_billions else "M"
+            
+            def format_value(val):
+                if val == 0:
+                    return "0"
+                scaled = val / scale_factor
+                return f"{scaled:.1f}" if abs(scaled) < 10 else f"{scaled:.0f}"
+            
+            # Build chart data for all years
+            revenue_data = []
+            gross_income_data = []
+            net_income_data = []
+            operating_cf_data = []
+            free_cf_data = []
+            years = []
+            
+            # Extract multi-year data for charts
+            if annual_revenue:
+                for date_str, value in reversed(list(annual_revenue.items())):
+                    year = date_str[:4]
+                    years.append(year)
+                    revenue_data.append(value)
+            
+            if quarterly_income:
+                # Get data for each quarter to build trend
+                for i, (date_str, quarter_data) in enumerate(reversed(list(quarterly_income.items())[:4])):
+                    if i < len(years):  # Match with revenue years
+                        gross_income_data.append(quarter_data.get('Gross Profit', 0) or 0)
+                        net_income_data.append(quarter_data.get('Net Income', 0) or 0)
+            
+            if cashflow_data:
+                # Get cash flow data for each period
+                for i, (date_str, cf_data) in enumerate(reversed(list(cashflow_data.items())[:4])):
+                    if i < len(years):  # Match with revenue years
+                        operating_cf_data.append(cf_data.get('Operating Cash Flow', 0) or 0)
+                        free_cf_data.append(cf_data.get('Free Cash Flow', 0) or 0)
+            
+            # Ensure all arrays have same length
+            while len(gross_income_data) < len(years):
+                gross_income_data.append(0)
+            while len(net_income_data) < len(years):
+                net_income_data.append(0)
+            while len(operating_cf_data) < len(years):
+                operating_cf_data.append(0)
+            while len(free_cf_data) < len(years):
+                free_cf_data.append(0)
+            
+            # Create chart bars
+            max_val = max([abs(x) for x in revenue_data + gross_income_data + net_income_data + operating_cf_data + free_cf_data]) if revenue_data else 1
+            
+            # Create revenue bars
+            revenue_bars = ''.join([
+                f'<div style="display: inline-block; width: 60px; margin: 2px; text-align: center;">'
+                f'<div style="width: 50px; height: {int(abs(rev)/max_val*100) if max_val > 0 else 0}px; background: #007acc; border-radius: 2px; margin: 0 auto;"></div>'
+                f'<small>{year}<br>${format_value(rev)}{scale_label}</small>'
+                f'</div>'
+                for year, rev in zip(years, revenue_data)
+            ])
+            
+            income_bars = ''.join([
+                f'<div style="display: inline-block; width: 80px; margin: 2px; text-align: center;">'
+                f'<div style="position: relative; height: 120px; display: flex; justify-content: center; align-items: center; gap: 2px;">'
+                f'<div style="width: 18px; height: {int(abs(gross)/max_val*50) if max_val > 0 else 0}px; background: #ffc107; border-radius: 2px; align-self: flex-end; margin-bottom: 60px;"></div>'
+                f'<div style="width: 18px; height: {int(abs(net)/max_val*50) if max_val > 0 else 0}px; background: {"#28a745" if net >= 0 else "#dc3545"}; border-radius: 2px; align-self: flex-end; margin-bottom: 60px;"></div>'
+                f'</div>'
+                f'<small>{year}<br>G:${format_value(gross)}{scale_label}<br>N:${format_value(net)}{scale_label}</small>'
+                f'</div>'
+                for year, gross, net in zip(years, gross_income_data, net_income_data)
+            ])
+            
+            cf_bars = ''.join([
+                f'<div style="display: inline-block; width: 80px; margin: 2px; text-align: center;">'
+                f'<div style="position: relative; height: 200px; display: flex; justify-content: center; align-items: center; gap: 4px;">'
+                f'<div style="width: 25px; height: {int(abs(op_cf)/max_val*90) if max_val > 0 else 0}px; background: {"#17a2b8" if op_cf >= 0 else "#ffc107"}; border-radius: 2px; align-self: flex-end; margin-bottom: 70px;"></div>'
+                f'<div style="width: 25px; height: {int(abs(free_cf)/max_val*90) if max_val > 0 else 0}px; background: {"#28a745" if free_cf >= 0 else "#dc3545"}; border-radius: 2px; align-self: flex-end; margin-bottom: 70px;"></div>'
+                f'</div>'
+                f'<small>{year}<br>Op:${format_value(op_cf)}{scale_label}<br>Free:${format_value(free_cf)}{scale_label}</small>'
+                f'</div>'
+                for year, op_cf, free_cf in zip(years, operating_cf_data, free_cf_data)
+            ])
+            
+            latest_revenue_display = format_value(latest_revenue)
+            latest_gross_display = format_value(latest_gross_income)
+            latest_net_display = format_value(latest_net_income)
+            latest_op_cf_display = format_value(latest_op_cf)
+            latest_free_cf_display = format_value(latest_free_cf)
+            
+            financial_card = f"""
+            <div style="min-width: 200px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📊 Financials</h5>
+                <p><strong>Revenue:</strong> ${latest_revenue_display}{scale_label}</p>
+                <p><strong>Gross Income:</strong> ${latest_gross_display}{scale_label}</p>
+                <p><strong>Net Income:</strong> ${latest_net_display}{scale_label}</p>
+                <p><strong>Op Cash Flow:</strong> ${latest_op_cf_display}{scale_label}</p>
+                <p><strong>Free Cash Flow:</strong> ${latest_free_cf_display}{scale_label}</p>
+                <p><strong>Years:</strong> {years_count} years</p>
+                <button onclick="showModal('financials_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="financials_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div id="financials_{sanitized_ticker}_content" style="background-color: white; margin: 3% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 900px; max-height: 85%; overflow-y: auto; transition: all 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">📊 {ticker} Financial Statements</h3>
+                            <div>
+                                <button id="financials_{sanitized_ticker}_maximize" onclick="maximizeModal('financials_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                <button id="financials_{sanitized_ticker}_restore" onclick="restoreModal('financials_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                <span onclick="closeModal('financials_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <h4>📈 Revenue Trend ({'Billions' if scale_billions else 'Millions'} $)</h4>
+                                <div style="display: flex; align-items: end; height: 150px; border-bottom: 1px solid #ccc; padding: 10px;">
+                                    {revenue_bars}
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>💰 Income Trend ({'Billions' if scale_billions else 'Millions'} $)</h4>
+                                <div style="display: flex; align-items: center; height: 150px; border-bottom: 1px solid #ccc; padding: 10px; position: relative;">
+                                    {income_bars}
+                                </div>
+                                <div style="margin-top: 5px; font-size: 12px; text-align: center;">
+                                    <span style="color: #ffc107;">■</span> Gross Income &nbsp;
+                                    <span style="color: #28a745;">■</span> Net Income (Profit) &nbsp;
+                                    <span style="color: #dc3545;">■</span> Net Income (Loss)
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4>💧 Cash Flow Trend ({'Billions' if scale_billions else 'Millions'} $)</h4>
+                                <div style="display: flex; align-items: center; height: 220px; border-bottom: 1px solid #ccc; padding: 10px; position: relative;">
+                                    {cf_bars}
+                                </div>
+                                <div style="margin-top: 5px; font-size: 12px; text-align: center;">
+                                    <span style="color: #17a2b8;">■</span> Operating CF (Positive) &nbsp;
+                                    <span style="color: #ffc107;">■</span> Operating CF (Negative) &nbsp;
+                                    <span style="color: #28a745;">■</span> Free CF (Positive) &nbsp;
+                                    <span style="color: #dc3545;">■</span> Free CF (Negative)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4>📋 Key Financial Metrics Summary</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Revenue:</strong> ${latest_revenue_display}{scale_label}<br>
+                                    <strong>Revenue Growth:</strong> {financial_metrics.get('calculated_annual_growth', 0):.1f}%
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Gross Income:</strong> ${latest_gross_display}{scale_label}<br>
+                                    <strong>Gross Margin:</strong> {(latest_gross_income / latest_revenue * 100 if latest_revenue > 0 else 0):.1f}%
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Latest Net Income:</strong> ${latest_net_display}{scale_label}<br>
+                                    <strong>Net Margin:</strong> {(latest_net_income / latest_revenue * 100 if latest_revenue > 0 else 0):.1f}%
+                                </div>
+                                <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                    <strong>Operating CF:</strong> ${latest_op_cf_display}{scale_label}<br>
+                                    <strong>Free CF:</strong> ${latest_free_cf_display}{scale_label}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(financial_card)
+            
+        except Exception as e:
+            # Fallback card if financial data unavailable
+            financial_card = f"""
+            <div style="min-width: 200px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
+                <h5>📊 Financials</h5>
+                <p style="color: #dc3545;">Financial data unavailable</p>
+                <p><small>Error: {str(e)[:50]}...</small></p>
+            </div>
+            """
+            all_cards.append(financial_card)
         # Add analysis cards
         for analysis_type, analysis_data in analyses.items():
+            # Create sanitized ticker for JavaScript usage
+            sanitized_ticker = ticker.replace('.', '_')
+            
             if analysis_type == 'dcf':
+                params = analysis_data.get('parameters_used', {})
+                dcf_calcs = analysis_data.get('dcf_calculations', {})
+                params_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in params.items()]) if params else "<p>No parameters available</p>"
+                calcs_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in dcf_calcs.items()]) if dcf_calcs else "<p>No calculations available</p>"
+                
                 dcf_card = f"""
-                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px;">
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
                     <h5>💰 DCF</h5>
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Fair Value:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                     <p><strong>Upside:</strong> {(analysis_data.get('upside_downside_pct', 0) or 0):.1f}%</p>
+                    <button onclick="showModal('dcf_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="dcf_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="dcf_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">💰 {ticker} DCF Analysis Details</h3>
+                                <div>
+                                    <button id="dcf_{sanitized_ticker}_maximize" onclick="maximizeModal('dcf_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="dcf_{sanitized_ticker}_restore" onclick="restoreModal('dcf_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('dcf_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Parameters:</h4>
+                            {params_html}
+                            <h4>Calculations:</h4>
+                            {calcs_html}
+                        </div>
+                    </div>
                 </div>
                 """
                 all_cards.append(dcf_card)
             elif analysis_type == 'technical':
+                indicators = ['rsi_14', 'ma_20', 'ma_50', 'ma_200', 'macd_line', 'macd_signal']
+                indicators_html = ''.join([f"<p>• {indicator.upper()}: {analysis_data.get(indicator, 'N/A')}</p>" for indicator in indicators if analysis_data.get(indicator) is not None])
+                
                 tech_card = f"""
-                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px;">
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
                     <h5>📈 Technical</h5>
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                     <p><strong>Trend:</strong> {analysis_data.get('trend', 'N/A')}</p>
+                    <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="tech_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">📈 {ticker} Technical Analysis Details</h3>
+                                <div>
+                                    <button id="tech_{sanitized_ticker}_maximize" onclick="maximizeModal('tech_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="tech_{sanitized_ticker}_restore" onclick="restoreModal('tech_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('tech_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Technical Indicators:</h4>
+                            {indicators_html}
+                            <div style="flex: 1;">
+                                <h4>Price Chart (Last 30 Days):</h4>
+                                <div id="price_chart_{sanitized_ticker}" style="height: 400px; width: 100%; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                                    <div style="text-align: center; margin-top: 180px; color: #666;">📈 Loading price chart...</div>
+                                </div>
+                                <script>
+                                console.log('DEBUG: Creating chart for {sanitized_ticker}');
+                                window.chartData_{sanitized_ticker} = {analysis_data.get('chart_data', {})};
+                                setTimeout(() => {{
+                                    const chartDiv = document.getElementById('price_chart_{sanitized_ticker}');
+                                    const chartData = window.chartData_{sanitized_ticker};
+                                    
+                                    if (!chartData || !chartData.prices || chartData.prices.length === 0) {{
+                                        chartDiv.innerHTML = '<div style="text-align: center; margin-top: 180px; color: #666;">Chart data not available</div>';
+                                        return;
+                                    }}
+                                    
+                                    const prices = chartData.prices;
+                                    const dates = chartData.dates || [];
+                                    const maxPrice = Math.max(...prices);
+                                    const minPrice = Math.min(...prices);
+                                    const priceRange = maxPrice - minPrice || 1;
+                                    
+                                    let chartHtml = '<div style="position: relative; height: 350px; padding: 20px;">';
+                                    chartHtml += '<svg width="100%" height="300" style="position: absolute; top: 20px;">';
+                                    
+                                    let pathData = '';
+                                    prices.forEach((price, i) => {{
+                                        const x = (i / (prices.length - 1)) * 90 + 5;
+                                        const y = ((maxPrice - price) / priceRange) * 80 + 10;
+                                        pathData += i === 0 ? `M${{x}} ${{y}}` : ` L${{x}} ${{y}}`;
+                                    }});
+                                    
+                                    chartHtml += `<path d="${{pathData}}" stroke="#007acc" stroke-width="2" fill="none"/>`;
+                                    chartHtml += '</svg>';
+                                    chartHtml += `<div style="position: absolute; top: 20px; left: 5px; font-size: 12px; color: #666;">$${{maxPrice.toFixed(2)}}</div>`;
+                                    chartHtml += `<div style="position: absolute; bottom: 50px; left: 5px; font-size: 12px; color: #666;">$${{minPrice.toFixed(2)}}</div>`;
+                                    
+                                    if (dates.length > 0) {{
+                                        chartHtml += `<div style="position: absolute; bottom: 20px; left: 20px; font-size: 11px; color: #666;">${{dates[0]}}</div>`;
+                                        chartHtml += `<div style="position: absolute; bottom: 20px; right: 20px; font-size: 11px; color: #666;">${{dates[dates.length-1]}}</div>`;
+                                    }}
+                                    
+                                    chartHtml += '</div>';
+                                    chartDiv.innerHTML = chartHtml;
+                                }}, 100);
+                                </script>
+
+                            </div> 
+                        </div>                        
+                    </div>
+                    
                 </div>
                 """
                 all_cards.append(tech_card)
+            elif analysis_type == 'ai_insights':
+                ai_insights = analysis_data.get('ai_insights', {})
+                strengths = ai_insights.get('key_strengths', [])
+                risks = ai_insights.get('key_risks', [])
+                strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
+                risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+                
+                ai_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>🤖 AI Insights</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                    <p><strong>Position:</strong> {ai_insights.get('market_position', 'N/A')}</p>
+                    <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="ai_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">🤖 {ticker} AI Insights Details</h3>
+                                <div>
+                                    <button id="ai_{sanitized_ticker}_maximize" onclick="maximizeModal('ai_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="ai_{sanitized_ticker}_restore" onclick="restoreModal('ai_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('ai_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Key Strengths:</h4>
+                            {strengths_html}
+                            <h4>Key Risks:</h4>
+                            {risks_html}
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(ai_card)
+            elif analysis_type == 'news_sentiment':
+                recent_news = analysis_data.get('recent_news', [])
+                news_html = ''.join([
+                    f"""<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #007acc; background: #f8f9fa;">
+                    <h6><a href="{article.get('url', '#')}" target="_blank" style="color: #007acc; text-decoration: none;">{article.get('title', 'No title')}</a></h6>
+                    <p style="margin: 5px 0;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f} | <strong>Date:</strong> {article.get('date', 'NA')}</p>
+                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">{article.get('summary', 'No summary available')}</p>
+                    </div>"""
+                    for article in recent_news
+                ]) if recent_news else "<p>No recent news available</p>"
+                
+                news_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>📰 News</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Score:</strong> {analysis_data.get('overall_sentiment_score', 0) or 0:.2f}</p>
+                    <p><strong>Count:</strong> {analysis_data.get('news_count', 0)}</p>
+                    <button onclick="showModal('news_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="news_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="news_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">📰 {ticker} News Sentiment Details</h3>
+                                <div>
+                                    <button id="news_{sanitized_ticker}_maximize" onclick="maximizeModal('news_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="news_{sanitized_ticker}_restore" onclick="restoreModal('news_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('news_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Recent Articles:</h4>
+                            {news_html}
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(news_card)
+            elif analysis_type == 'comparable':
+                multiples = analysis_data.get('target_multiples', {})
+                peers = analysis_data.get('peer_tickers', [])
+                peers_html = ', '.join(peers[:5]) if peers else "No peers listed"
+                multiples_html = ''.join([f"<p>• {k.upper()}: {v:.1f}x</p>" for k, v in multiples.items()]) if multiples else "<p>No multiples available</p>"
+                
+                comp_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>📊 Comparable</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Fair Value:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                    <p><strong>P/E:</strong> {multiples.get('pe', 'N/A')}x</p>
+                    <button onclick="showModal('comp_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="comp_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="comp_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">📊 {ticker} Comparable Analysis Details</h3>
+                                <div>
+                                    <button id="comp_{sanitized_ticker}_maximize" onclick="maximizeModal('comp_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="comp_{sanitized_ticker}_restore" onclick="restoreModal('comp_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('comp_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Target Multiples:</h4>
+                            {multiples_html}
+                            <h4>Peer Companies:</h4>
+                            <p>{peers_html}</p>
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(comp_card)
+            elif analysis_type == 'startup':
+                startup_metrics = analysis_data.get('startup_metrics', {})
+                metrics_html = ''.join([f"<p>• {k.replace('_', ' ').title()}: {v}</p>" for k, v in startup_metrics.items()]) if startup_metrics else "<p>No startup metrics available</p>"
+                
+                startup_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>🚀 Startup</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Fair Value:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                    <p><strong>Stage:</strong> {analysis_data.get('stage', 'N/A')}</p>
+                    <button onclick="showModal('startup_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="startup_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="startup_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">🚀 {ticker} Startup Analysis Details</h3>
+                                <div>
+                                    <button id="startup_{sanitized_ticker}_maximize" onclick="maximizeModal('startup_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="startup_{sanitized_ticker}_restore" onclick="restoreModal('startup_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('startup_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Startup Metrics:</h4>
+                            {metrics_html}
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(startup_card)
+            elif analysis_type == 'business_model':
+                strengths = analysis_data.get('strengths', [])
+                risks = analysis_data.get('risks', [])
+                product_portfolio = analysis_data.get('product_portfolio', {})
+                competitive_diff = analysis_data.get('competitive_differentiation', {})
+                
+                strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
+                risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+                
+                # Product portfolio summary
+                product_html = f"""
+                <h5>📦 Product Portfolio</h5>
+                <p><strong>Breadth:</strong> {product_portfolio.get('product_breadth', 'N/A')}</p>
+                <p><strong>Innovation:</strong> {product_portfolio.get('innovation_level', 'N/A')}</p>
+                <p><strong>Core Products:</strong> {', '.join(product_portfolio.get('core_products', []))}</p>
+                
+                <h5>🏆 Competitive Position</h5>
+                <p><strong>Strategy:</strong> {competitive_diff.get('differentiation_strategy', 'N/A')}</p>
+                <p><strong>Brand Strength:</strong> {competitive_diff.get('brand_strength', 'N/A')}</p>
+                <p><strong>Switching Costs:</strong> {competitive_diff.get('switching_costs', 'N/A')}</p>
+                """ if product_portfolio or competitive_diff else "<p>Enhanced analysis available</p>"
+                
+                bm_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>🏢 Business Model</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Type:</strong> {analysis_data.get('business_model_type', 'N/A')}</p>
+                    <p><strong>Moat:</strong> {analysis_data.get('competitive_moat', 'N/A')[:20]}...</p>
+                    <button onclick="showModal('bm_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="bm_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="bm_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">🏢 {ticker} Business Model Details</h3>
+                                <div>
+                                    <button id="bm_{sanitized_ticker}_maximize" onclick="maximizeModal('bm_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="bm_{sanitized_ticker}_restore" onclick="restoreModal('bm_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('bm_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            {product_html}
+                            <h4>Strengths:</h4>
+                            {strengths_html}
+                            <h4>Risks:</h4>
+                            {risks_html}
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(bm_card)
+            elif analysis_type == 'financial_health':
+                health_metrics = analysis_data.get('health_metrics', {})
+                metrics_html = ''.join([f"<p>• {k.replace('_', ' ').title()}: {v}</p>" for k, v in health_metrics.items()]) if health_metrics else "<p>No health metrics available</p>"
+                
+                fh_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>💊 Financial Health</h5>
+                    <p><strong>Grade:</strong> {analysis_data.get('overall_grade', 'N/A')}</p>
+                    <p><strong>Cash Flow:</strong> {analysis_data.get('cash_flow_score', 'N/A')}</p>
+                    <button onclick="showModal('fh_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="fh_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="fh_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">💊 {ticker} Financial Health Details</h3>
+                                <div>
+                                    <button id="fh_{sanitized_ticker}_maximize" onclick="maximizeModal('fh_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="fh_{sanitized_ticker}_restore" onclick="restoreModal('fh_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('fh_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Health Metrics:</h4>
+                            {metrics_html}
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(fh_card)
+            elif analysis_type == 'analyst_consensus':
+                analyst_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>👥 Analyst</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                    <p><strong>Count:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                    <button onclick="showModal('analyst_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="analyst_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="analyst_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
+                                <div>
+                                    <button id="analyst_{sanitized_ticker}_maximize" onclick="maximizeModal('analyst_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="analyst_{sanitized_ticker}_restore" onclick="restoreModal('analyst_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0):.2f}</p>
+                            <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
+                            <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
+                            <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(analyst_card)
         
         # Combine cards with horizontal scroll
         cards_html = ''.join(all_cards)
@@ -404,11 +1133,63 @@ def display_horizontal_stock_cards(results):
         <div style="display: flex; overflow-x: auto; overflow-y: visible; padding: 10px 0; gap: 10px; height: 320px;">
             {cards_html}
         </div>
+        <script>
+        function showModal(modalId) {{
+            document.getElementById(modalId).style.display = 'block';
+        }}
+        function closeModal(modalId) {{
+            document.getElementById(modalId).style.display = 'none';
+        }}
+        function maximizeModal(modalId) {{
+            const content = document.getElementById(modalId + '_content');
+            const maximizeBtn = document.getElementById(modalId + '_maximize');
+            const restoreBtn = document.getElementById(modalId + '_restore');
+            
+            content.style.width = '95%';
+            content.style.height = '95%';
+            content.style.maxWidth = 'none';
+            content.style.maxHeight = 'none';
+            content.style.margin = '2.5% auto';
+            
+            maximizeBtn.style.display = 'none';
+            restoreBtn.style.display = 'inline-block';
+        }}
+        function restoreModal(modalId) {{
+            const content = document.getElementById(modalId + '_content');
+            const maximizeBtn = document.getElementById(modalId + '_maximize');
+            const restoreBtn = document.getElementById(modalId + '_restore');
+            
+            // Restore original size based on modal type
+            if (modalId.startsWith('tech_') || modalId.startsWith('financials_')) {{
+                content.style.width = '90%';
+                content.style.maxWidth = modalId.startsWith('financials_') ? '900px' : '800px';
+                content.style.margin = '3% auto';
+                content.style.maxHeight = '85%';
+            }} else {{
+                content.style.width = '80%';
+                content.style.maxWidth = '600px';
+                content.style.margin = '5% auto';
+                content.style.maxHeight = '80%';
+            }}
+            content.style.height = 'auto';
+            
+            maximizeBtn.style.display = 'inline-block';
+            restoreBtn.style.display = 'none';
+        }}
+        window.onclick = function(event) {{
+            if (event.target.classList.contains('modal')) {{
+                event.target.style.display = 'none';
+            }}
+        }}
+        </script>
         """
         
-        st.components.v1.html(scrollable_row, height=320)
+        # Calculate dynamic height based on number of cards
+        card_count = len(all_cards)
+        dynamic_height = max(200, min(400, card_count * 50 + 100))
+        st.components.v1.html(scrollable_row, height=dynamic_height)
         st.markdown("---")
-def analyze_single_stock(ticker, selected_analyzers=None):
+def analyze_single_stock(ticker, selected_analyzers=None, llm_manager=None, max_news_articles=5):
     """Analyze a single stock with selected analyzers"""
     with st.spinner(f"Analyzing {ticker}..."):
         try:
@@ -421,46 +1202,8 @@ def analyze_single_stock(ticker, selected_analyzers=None):
             request_data = {"ticker": ticker}
             if selected_analyzers:
                 request_data["enabled_analyzers"] = selected_analyzers
-            
-            response = requests.post(endpoint, json=request_data)
-            analysis_end = time.time()
-            total_request_time = analysis_end - analysis_start
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Add timing info to data
-                data['dashboard_timing'] = {
-                    'total_request_time': round(total_request_time, 2),
-                    'orchestrator_time': data.get('execution_time_seconds', 0),
-                    'analyses_count': data.get('analyses_count', 0)
-                }
-                
-                # Add timestamp for thesis generation verification
-                data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                
-                st.success(f"Analysis completed in {total_request_time:.2f}s!")
-                
-                # Store analysis data for thesis generation
-                st.session_state.thesis_analysis_data = data
-                st.session_state.thesis_ticker = ticker
-                
-            else:
-                st.error(f"Failed to analyze {ticker}: {response.text}")
-        except Exception as e:
-            st.error(f"Error connecting to API: {str(e)}")
-    """Analyze a single stock with selected analyzers"""
-    with st.spinner(f"Analyzing {ticker}..."):
-        try:
-            # Measure analysis time
-            analysis_start = time.time()
-            
-            endpoint = f"http://localhost:8000/analyze/{ticker}"
-            
-            # Prepare request data with selected analyzers
-            request_data = {"ticker": ticker}
-            if selected_analyzers:
-                request_data["enabled_analyzers"] = selected_analyzers
+            if max_news_articles != 5:  # Only include if different from default
+                request_data["max_news_articles"] = max_news_articles
             
             response = requests.post(endpoint, json=request_data)
             analysis_end = time.time()
@@ -799,6 +1542,42 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
     function closeModal(modalId) {{
         document.getElementById(modalId).style.display = 'none';
     }}
+    function maximizeModal(modalId) {{
+        const content = document.getElementById(modalId + '_content');
+        const maximizeBtn = document.getElementById(modalId + '_maximize');
+        const restoreBtn = document.getElementById(modalId + '_restore');
+        
+        content.style.width = '95%';
+        content.style.height = '95%';
+        content.style.maxWidth = 'none';
+        content.style.maxHeight = 'none';
+        content.style.margin = '2.5% auto';
+        
+        maximizeBtn.style.display = 'none';
+        restoreBtn.style.display = 'inline-block';
+    }}
+    function restoreModal(modalId) {{
+        const content = document.getElementById(modalId + '_content');
+        const maximizeBtn = document.getElementById(modalId + '_maximize');
+        const restoreBtn = document.getElementById(modalId + '_restore');
+        
+        // Restore original size based on modal type
+        if (modalId.startsWith('tech_') || modalId.startsWith('financials_')) {{
+            content.style.width = '90%';
+            content.style.maxWidth = modalId.startsWith('financials_') ? '900px' : '800px';
+            content.style.margin = '3% auto';
+            content.style.maxHeight = '85%';
+        }} else {{
+            content.style.width = '80%';
+            content.style.maxWidth = '600px';
+            content.style.margin = '5% auto';
+            content.style.maxHeight = '80%';
+        }}
+        content.style.height = 'auto';
+        
+        maximizeBtn.style.display = 'inline-block';
+        restoreBtn.style.display = 'none';
+    }}
     window.onclick = function(event) {{
         if (event.target.classList.contains('modal')) {{
             event.target.style.display = 'none';
@@ -809,7 +1588,7 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
     
     st.components.v1.html(scrollable_row, height=320)
 
-def generate_investment_thesis(ticker, analysis_data, thesis_type):
+def generate_investment_thesis(ticker, analysis_data, thesis_type, llm_manager=None, show_prompt=False):
     """Generate investment thesis based on analysis data"""
     
     with st.spinner(f"Generating {thesis_type.lower()} thesis for {ticker}..."):
@@ -821,13 +1600,12 @@ def generate_investment_thesis(ticker, analysis_data, thesis_type):
             # Build enhanced thesis components
             thesis_components = extract_enhanced_thesis_components(ticker, analysis_data, analyses)
             
-            # Generate thesis with LLM enhancement
-            if thesis_type == "Bull Case":
-                thesis = generate_enhanced_bull_case(ticker, thesis_components)
-            elif thesis_type == "Bear Case":
-                thesis = generate_enhanced_bear_case(ticker, thesis_components)
-            else:  # Balanced
-                thesis = generate_enhanced_balanced_thesis(ticker, thesis_components)
+            # Generate thesis with unified LLM enhancement
+            thesis, prompt_used = generate_unified_thesis(ticker, thesis_components, thesis_type, llm_manager, return_prompt=True)
+            
+            # Display prompt if requested
+            if show_prompt and prompt_used:
+                display_prompt_used(prompt_used)
             
             # Display generated thesis
             display_generated_thesis(ticker, thesis, thesis_type)
@@ -841,6 +1619,36 @@ def extract_enhanced_thesis_components(ticker, analysis_data, analyses):
     # Get base components
     components = extract_thesis_components(ticker, analysis_data, analyses)
     
+    # Add financial metrics from analysis_data
+    components['financial_metrics'] = analysis_data.get('financial_metrics', {})
+    
+    # Extract and calculate financial performance data
+    components['financial_performance'] = extract_financial_performance_data(ticker, components['financial_metrics'])
+    
+    # Add industry analysis data
+    if 'industry_analysis' in analyses:
+        industry_data = analyses['industry_analysis']
+        components['industry_analysis'] = {
+            'industry_outlook': industry_data.get('industry_outlook', 'Neutral'),
+            'competitive_position': industry_data.get('competitive_position', 'Average'),
+            'market_catalysts': industry_data.get('market_catalysts', []),
+            'porters_five_forces': industry_data.get('porters_five_forces', {}),
+            'regulatory_risk': industry_data.get('regulatory_risk', 'Medium'),
+            'esg_score': industry_data.get('esg_score', 5.0),
+            'industry_insights': industry_data.get('industry_insights', {}),
+            'competitive_analysis': industry_data.get('competitive_analysis', {})
+        }
+        
+        # Extract industry-specific strengths and risks
+        industry_insights = industry_data.get('industry_insights', {})
+        components['strengths'].extend(industry_insights.get('growth_drivers', [])[:3])
+        components['risks'].extend(industry_insights.get('headwinds', [])[:3])
+        
+        # Add competitive advantages from industry analysis
+        comp_analysis = industry_data.get('competitive_analysis', {})
+        components['strengths'].extend(comp_analysis.get('competitive_advantages', [])[:2])
+        components['risks'].extend(comp_analysis.get('competitive_disadvantages', [])[:2])
+    
     # Add cross-method valuation analysis
     components['cross_method_analysis'] = reconcile_valuation_methods(components['valuation_methods'])
     
@@ -851,6 +1659,100 @@ def extract_enhanced_thesis_components(ticker, analysis_data, analyses):
     components['investment_narrative'] = generate_investment_narrative(analyses, components)
     
     return components
+
+def extract_financial_performance_data(ticker, financial_metrics):
+    """Extract and calculate financial performance metrics and growth rates"""
+    
+    performance_data = {
+        'current_metrics': {},
+        'growth_analysis': {},
+        'profitability_trends': {},
+        'financial_health': {}
+    }
+    
+    # Current market metrics
+    performance_data['current_metrics'] = {
+        'current_price': financial_metrics.get('current_price', 0),
+        'market_cap': financial_metrics.get('market_cap', 0),
+        'pe_ratio': financial_metrics.get('pe_ratio', 0),
+        'ps_ratio': financial_metrics.get('ps_ratio', 0),
+        'pb_ratio': financial_metrics.get('pb_ratio', 0),
+        'enterprise_value': financial_metrics.get('enterprise_value', 0)
+    }
+    
+    # Growth metrics
+    performance_data['growth_analysis'] = {
+        'revenue_growth': financial_metrics.get('yearly_revenue_growth', 0),
+        'earnings_growth': financial_metrics.get('earnings_growth', 0),
+        'revenue_growth_quarterly': financial_metrics.get('revenue_growth', 0),
+        'total_revenue': financial_metrics.get('total_revenue', 0)
+    }
+    
+    # Profitability metrics
+    performance_data['profitability_trends'] = {
+        'roe': financial_metrics.get('roe', 0),
+        'roa': financial_metrics.get('roa', 0),
+        'gross_margin': financial_metrics.get('gross_margin', 0),
+        'operating_margin': financial_metrics.get('operating_margin', 0),
+        'net_margin': financial_metrics.get('net_margin', 0)
+    }
+    
+    # Financial health metrics
+    performance_data['financial_health'] = {
+        'debt_to_equity': financial_metrics.get('debt_to_equity', 0),
+        'current_ratio': financial_metrics.get('current_ratio', 0),
+        'quick_ratio': financial_metrics.get('quick_ratio', 0),
+        'cash_per_share': financial_metrics.get('cash_per_share', 0),
+        'free_cash_flow': financial_metrics.get('free_cash_flow', 0)
+    }
+    
+    # Get historical financial data for growth calculations
+    try:
+        # First try to use existing revenue trend data if available
+        revenue_data_statements = financial_metrics.get('revenue_data_statements')
+        
+        if revenue_data_statements and isinstance(revenue_data_statements, dict):
+            # Use existing financial statements data from Yahoo provider
+            income_stmt = revenue_data_statements.get('annual_income_stmt')
+            cashflow = revenue_data_statements.get('cashflow')
+        else:
+            # Fallback to direct yfinance call
+            import yfinance as yf
+            stock = yf.Ticker(ticker)
+            income_stmt = stock.financials
+            cashflow = stock.cashflow
+        
+        if not income_stmt.empty and len(income_stmt.columns) >= 2:
+            # Calculate revenue growth from historical data
+            latest_revenue = income_stmt.loc['Total Revenue', income_stmt.columns[0]] if 'Total Revenue' in income_stmt.index else 0
+            previous_revenue = income_stmt.loc['Total Revenue', income_stmt.columns[1]] if 'Total Revenue' in income_stmt.index else 0
+            
+            if previous_revenue and previous_revenue != 0:
+                historical_revenue_growth = ((latest_revenue - previous_revenue) / previous_revenue) * 100
+                performance_data['growth_analysis']['historical_revenue_growth'] = historical_revenue_growth
+            
+            # Calculate net income growth
+            latest_net_income = income_stmt.loc['Net Income', income_stmt.columns[0]] if 'Net Income' in income_stmt.index else 0
+            previous_net_income = income_stmt.loc['Net Income', income_stmt.columns[1]] if 'Net Income' in income_stmt.index else 0
+            
+            if previous_net_income and previous_net_income != 0:
+                net_income_growth = ((latest_net_income - previous_net_income) / previous_net_income) * 100
+                performance_data['growth_analysis']['net_income_growth'] = net_income_growth
+        
+        if not cashflow.empty and len(cashflow.columns) >= 2:
+            # Calculate cash flow growth
+            latest_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[0]] if 'Operating Cash Flow' in cashflow.index else 0
+            previous_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[1]] if 'Operating Cash Flow' in cashflow.index else 0
+            
+            if previous_operating_cf and previous_operating_cf != 0:
+                operating_cf_growth = ((latest_operating_cf - previous_operating_cf) / previous_operating_cf) * 100
+                performance_data['growth_analysis']['operating_cf_growth'] = operating_cf_growth
+    
+    except Exception as e:
+        # If yfinance data unavailable, use existing metrics
+        pass
+    
+    return performance_data
 
 def reconcile_valuation_methods(valuation_methods):
     """Analyze discrepancies between valuation methods"""
@@ -942,11 +1844,18 @@ def extract_thesis_components(ticker, analysis_data, analyses):
             'competitive_advantage': ai_insights.get('competitive_advantage', 'N/A')
         }
     
-    # Extract from Business Model
+    # Extract from Business Model (including segment revenue data)
     if 'business_model' in analyses:
         bm_data = analyses['business_model']
         components['strengths'].extend(bm_data.get('strengths', []))
         components['risks'].extend(bm_data.get('risks', []))
+        
+        # Add product portfolio and competitive differentiation data
+        components['product_portfolio'] = bm_data.get('product_portfolio', {})
+        components['competitive_differentiation'] = bm_data.get('competitive_differentiation', {})
+        
+        # Extract segment revenue data from business model analyzer
+        components['segment_revenue_data'] = bm_data.get('segment_revenue_data', {})
     
     # Extract valuation data
     valuation_methods = ['dcf', 'technical', 'comparable', 'analyst_consensus']
@@ -971,127 +1880,474 @@ def extract_thesis_components(ticker, analysis_data, analyses):
     
     return components
 
-def generate_enhanced_bull_case(ticker, components):
-    """Generate enhanced bullish investment thesis with LLM synthesis"""
+def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, return_prompt=False):
+    """Generate unified investment thesis with scenario-specific focus"""
     
     try:
-        llm_manager = LLMManager()
+        # Use provided LLM manager or create new one
+        if llm_manager is None:
+            llm_manager = LLMManager()
         
-        # Prepare data for LLM synthesis
-        cross_analysis = components['cross_method_analysis']
-        catalysts = components['key_catalysts']
+        # Extract current price from analysis data
+        current_price = None
+        if 'financial_metrics' in components:
+            current_price = components['financial_metrics'].get('current_price')
         
-        prompt = f"""
-        Generate a professional bull case investment thesis for {ticker} using this data:
+        if not current_price:
+            try:
+                import yfinance as yf
+                stock = yf.Ticker(ticker)
+                current_price = stock.info.get('currentPrice') or stock.info.get('regularMarketPrice')
+            except:
+                current_price = 0
         
-        VALUATION ANALYSIS:
-        - Average target price: ${cross_analysis.get('average_target', 0):.2f}
-        - Method consensus: {cross_analysis.get('method_agreement', 'N/A')}
-        - Valuation spread: {cross_analysis.get('valuation_spread', 0):.1f}%
+        current_price_str = f"${current_price:.2f}" if current_price else "Unable to obtain current price"
         
-        KEY STRENGTHS: {', '.join(components['strengths'][:5])}
-        
-        CATALYSTS:
-        - Short-term: {', '.join(catalysts['short_term'][:3])}
-        - Medium-term: {', '.join(catalysts['medium_term'][:3])}
-        
-        COMPETITIVE POSITION: {components['competitive_position']}
-        
-        Provide a structured thesis with:
-        1. Executive summary with target price rationale
-        2. Key investment strengths (3-5 points)
-        3. Growth catalysts by timeframe
-        4. Valuation rationale reconciling different methods
-        5. Investment recommendation
-        
-        Keep it professional, concise, and data-driven.
-        """
-        
-        llm_response = llm_manager.generate_response(prompt)
-        
-        # Fallback to template if LLM fails
-        if not llm_response or len(llm_response.strip()) < 100:
-            return generate_bull_case(ticker, components)
-        
-        return llm_response
-        
-    except Exception as e:
-        st.warning(f"LLM enhancement failed, using template: {str(e)}")
-        return generate_bull_case(ticker, components)
-
-def generate_enhanced_bear_case(ticker, components):
-    """Generate enhanced bearish investment thesis with LLM synthesis"""
-    
-    try:
-        llm_manager = LLMManager()
-        
-        cross_analysis = components['cross_method_analysis']
-        
-        prompt = f"""
-        Generate a professional bear case investment thesis for {ticker} using this data:
-        
-        VALUATION CONCERNS:
-        - Valuation spread: {cross_analysis.get('valuation_spread', 0):.1f}%
-        - Method disagreement suggests uncertainty
-        
-        KEY RISKS: {', '.join(components['risks'][:5])}
-        
-        MARKET SENTIMENT: {components['market_sentiment'].get('sentiment_rating', 'Neutral')}
-        
-        Provide a structured bear case with:
-        1. Executive summary highlighting key concerns
-        2. Primary risk factors
-        3. Valuation concerns and method discrepancies
-        4. Market headwinds
-        5. Investment recommendation
-        
-        Focus on downside risks and valuation concerns.
-        """
-        
-        llm_response = llm_manager.generate_response(prompt)
-        
-        if not llm_response or len(llm_response.strip()) < 100:
-            return generate_bear_case(ticker, components)
-        
-        return llm_response
-        
-    except Exception as e:
-        st.warning(f"LLM enhancement failed, using template: {str(e)}")
-        return generate_bear_case(ticker, components)
-
-def generate_enhanced_balanced_thesis(ticker, components):
-    """Generate enhanced balanced investment thesis with LLM synthesis"""
-    
-    try:
-        llm_manager = LLMManager()
-        
+        # Get recommendation and cross-analysis data
         final_rec = components['final_recommendation']
         cross_analysis = components['cross_method_analysis']
+        target_price = final_rec.get('target_price', 0)
+        
+        # Extract financial performance data
+        financial_perf = components.get('financial_performance', {})
+        current_metrics = financial_perf.get('current_metrics', {})
+        growth_analysis = financial_perf.get('growth_analysis', {})
+        profitability = financial_perf.get('profitability_trends', {})
+        financial_health = financial_perf.get('financial_health', {})
+        
+        # Extract comprehensive financial metrics from analysis data
+        financial_metrics = components.get('financial_metrics', {})
+        
+        # Extract actual financial statement values from revenue_data_statements
+        revenue_data_statements = financial_metrics.get('revenue_data_statements', {})
+        
+        # Get latest financial values from the serialized data structure
+        latest_net_income = 0
+        latest_gross_profit = 0
+        latest_operating_income = 0
+        latest_operating_cf = 0
+        latest_capital_expenditures = 0
+        latest_total_revenue = 0
+        
+        # Extract from annual income statement (most recent year) for margin calculations
+        annual_income = revenue_data_statements.get('annual_income_stmt', {})
+        if annual_income:
+            latest_year = list(annual_income.keys())[0]  # Most recent year
+            annual_data = annual_income[latest_year]
+            latest_total_revenue = annual_data.get('Total Revenue', 0) or 0
+            latest_gross_profit = annual_data.get('Gross Profit', 0) or 0
+            latest_net_income = annual_data.get('Net Income', 0) or 0
+            latest_operating_income = annual_data.get('Operating Income', 0) or 0
+        
+        # Calculate margins from annual data
+        calculated_gross_margin = (latest_gross_profit / latest_total_revenue) if latest_total_revenue > 0 else 0
+        calculated_operating_margin = (latest_operating_income / latest_total_revenue) if latest_total_revenue > 0 else 0
+        calculated_net_margin = (latest_net_income / latest_total_revenue) if latest_total_revenue > 0 else 0
+        
+        # Extract from quarterly income statement (most recent quarter) as fallback
+        quarterly_income = revenue_data_statements.get('quarterly_income_stmt', {})
+        if quarterly_income and latest_total_revenue == 0:
+            latest_quarter = list(quarterly_income.keys())[0]  # Most recent quarter
+            quarter_data = quarterly_income[latest_quarter]
+            latest_net_income = quarter_data.get('Net Income', 0) or 0
+            latest_gross_profit = quarter_data.get('Gross Profit', 0) or 0
+            latest_operating_income = quarter_data.get('Operating Income', 0) or 0
+        
+        # Extract from cash flow data (most recent period)
+        cashflow_data = revenue_data_statements.get('cashflow', {})
+        if cashflow_data:
+            latest_cf_date = list(cashflow_data.keys())[0]  # Most recent date
+            cf_data = cashflow_data[latest_cf_date]
+            latest_operating_cf = cf_data.get('Operating Cash Flow', 0) or 0
+            latest_capital_expenditures = abs(cf_data.get('Capital Expenditures', 0) or 0)  # Make positive for display
+        
+        # Combine all financial data for comprehensive prompt
+        all_financial_data = {
+            'market_cap': financial_metrics.get('market_cap', current_metrics.get('market_cap', 0)),
+            'pe_ratio': financial_metrics.get('pe_ratio', current_metrics.get('pe_ratio', 'N/A')),
+            'ps_ratio': financial_metrics.get('ps_ratio', current_metrics.get('ps_ratio', 'N/A')),
+            'pb_ratio': financial_metrics.get('pb_ratio', current_metrics.get('pb_ratio', 'N/A')),
+            'enterprise_value': financial_metrics.get('enterprise_value', current_metrics.get('enterprise_value', 0)),
+            'ev_ebitda_multiple': financial_metrics.get('ev_ebitda_multiple', 'N/A'),
+            'roe': financial_metrics.get('roe', profitability.get('roe', 0)),
+            'roa': financial_metrics.get('roa', profitability.get('roa', 0)),
+            'debt_to_equity': financial_metrics.get('debt_to_equity', financial_health.get('debt_to_equity', 0)),
+            'current_ratio': financial_metrics.get('current_ratio', financial_health.get('current_ratio', 0)),
+            'quick_ratio': financial_metrics.get('quick_ratio', financial_health.get('quick_ratio', 0)),
+            'gross_margin': calculated_gross_margin or financial_metrics.get('gross_margin', profitability.get('gross_margin', 0)),
+            'operating_margin': calculated_operating_margin or financial_metrics.get('operating_margin', profitability.get('operating_margin', 0)),
+            'net_margin': calculated_net_margin or financial_metrics.get('net_margin', profitability.get('net_margin', 0)),
+            'revenue_growth': financial_metrics.get('revenue_growth', growth_analysis.get('revenue_growth', 0)),
+            'earnings_growth': financial_metrics.get('earnings_growth', growth_analysis.get('earnings_growth', 0)),
+            'free_cash_flow': financial_metrics.get('free_cash_flow', financial_health.get('free_cash_flow', 0)),
+            'cash_per_share': financial_metrics.get('cash_per_share', financial_health.get('cash_per_share', 0)),
+            'total_revenue': financial_metrics.get('total_revenue', growth_analysis.get('total_revenue', 0)),
+            'industry': financial_metrics.get('industry', 'N/A'),
+            'sector': financial_metrics.get('sector', 'N/A'),
+            'beta': financial_metrics.get('beta', 'N/A'),
+            'dividend_yield': financial_metrics.get('dividend_yield', 'N/A'),
+            'payout_ratio': financial_metrics.get('payout_ratio', 'N/A'),
+            'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
+            'price_to_sales_ttm': financial_metrics.get('price_to_sales_ttm', 'N/A'),
+            'price_to_book_mrq': financial_metrics.get('price_to_book_mrq', 'N/A'),            
+            'profit_margin': financial_metrics.get('profit_margin', 'N/A'),
+            'quick_ratio': financial_metrics.get('quick_ratio', 'N/A'),
+            'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
+            'cash_per_share': financial_metrics.get('cash_per_share', 'N/A'),
+            'return_on_assets': financial_metrics.get('return_on_assets', 'N/A'),
+            'return_on_equity': financial_metrics.get('return_on_equity', 'N/A')
+        }
+        
+        # Scenario-specific configurations
+        scenario_configs = {
+            "Bull Case": {
+                "analysis_type": "Bull Case Scenario",
+                "focus_instruction": "Focus on growth opportunities, competitive advantages, and positive catalysts. Emphasize upside potential and favorable scenarios.",
+                "price_expectation": "target price should be significantly above current price",
+                "validation_emphasis": "Bull case must be supported by growth catalysts and competitive advantages"
+            },
+            "Bear Case": {
+                "analysis_type": "Bear Case Scenario", 
+                "focus_instruction": "Focus on risk factors, competitive threats, and negative catalysts. Emphasize downside risks and unfavorable scenarios.",
+                "price_expectation": "explain why current price is overvalued and provide downside price targets",
+                "validation_emphasis": "Bear case must be supported by deteriorating fundamentals and risk factors"
+            },
+            "Balanced": {
+                "analysis_type": "Balanced Investment Analysis",
+                "focus_instruction": "Provide balanced assessment of both opportunities and risks. Present objective analysis with equal weight to positive and negative factors.",
+                "price_expectation": "explain target vs current price relationship and provide balanced recommendation rationale",
+                "validation_emphasis": "Balanced case must reconcile both positive and negative factors with logical recommendation"
+            }
+        }
+        
+        config = scenario_configs[thesis_type]
+        
+        # Extract segment revenue data and format for prompt
+        segment_data = components.get('segment_revenue_data', {})
+        segment_info = ""
+        if segment_data and segment_data.get('primary_segments'):
+            segments = segment_data['primary_segments']
+            segment_breakdown = ", ".join([f"{seg['segment_name']}: {seg['revenue_percentage']:.1f}% ({seg['growth_trend']})" for seg in segments[:3]])
+            segment_info = f"\n- Revenue segments: {segment_breakdown}"
+            segment_info += f"\n- Largest segment: {segment_data.get('largest_segment', 'N/A')}"
+            segment_info += f"\n- Fastest growing: {segment_data.get('fastest_growing_segment', 'N/A')}"
+            segment_info += f"\n- Diversification: {segment_data.get('revenue_diversification', 'Medium')}"
         
         prompt = f"""
-        Generate a balanced investment thesis for {ticker} using this comprehensive analysis:
+        Generate an AI-generated investment analysis for {ticker}. Use neutral, machine-like language:
         
-        OVERALL RECOMMENDATION: {final_rec.get('recommendation', 'Hold')}
-        TARGET PRICE: ${final_rec.get('target_price', 0):.2f}
+        **IMPORTANT DISCLAIMER: This analysis is generated by artificial intelligence and may contain errors, inaccuracies, or outdated information. This content should not be considered professional financial advice. Users should conduct their own research and consult qualified financial advisors before making investment decisions.**
         
-        VALUATION CONSENSUS:
-        - Average target: ${cross_analysis.get('average_target', 0):.2f}
+        SECURITY: {ticker} - {components.get('company_type', 'Unknown')} classification
+        ANALYSIS TYPE: {config['analysis_type']}
+        COMPUTED RECOMMENDATION: {final_rec.get('recommendation', 'Hold')}
+        ALGORITHMIC TARGET PRICE: ${target_price:.2f}
+        CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
+        
+        SCENARIO FOCUS: {config['focus_instruction']}
+        
+        CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. For this scenario, {config['price_expectation']}.
+        
+        COMPREHENSIVE FINANCIAL FOUNDATION:
+        - Market metrics: Market cap ${all_financial_data['market_cap']:,.0f}, Enterprise value ${all_financial_data['enterprise_value']:,.0f}, Beta {all_financial_data['beta']}
+        - Valuation ratios: P/E {all_financial_data['pe_ratio']}, P/S {all_financial_data['ps_ratio']}, P/B {all_financial_data['pb_ratio']}, EV/EBITDA {all_financial_data['ev_ebitda_multiple']}
+        - Profitability metrics: Gross margin {(all_financial_data['gross_margin']*100 if isinstance(all_financial_data['gross_margin'], (int, float)) else 0):.1f}%, Operating margin {(all_financial_data['operating_margin']*100 if isinstance(all_financial_data['operating_margin'], (int, float)) else 0):.1f}%, Net margin {(all_financial_data['net_margin']*100 if isinstance(all_financial_data['net_margin'], (int, float)) else 0):.1f}%, Profit margin {all_financial_data['profit_margin']}
+        - Return metrics: ROE {(all_financial_data['roe']*100 if isinstance(all_financial_data['roe'], (int, float)) else 0):.1f}%, ROA {(all_financial_data['roa']*100 if isinstance(all_financial_data['roa'], (int, float)) else 0):.1f}
+        - Growth metrics: Revenue growth {(all_financial_data['revenue_growth']*100 if isinstance(all_financial_data['revenue_growth'], (int, float)) else 0):.1f}%, Earnings growth {(all_financial_data['earnings_growth']*100 if isinstance(all_financial_data['earnings_growth'], (int, float)) else 0):.1f}%
+        - Financial health: Debt/Equity {all_financial_data['debt_to_equity']}, Current ratio {all_financial_data['current_ratio']}, Quick ratio {all_financial_data['quick_ratio']}
+        - Cash metrics: Free cash flow ${all_financial_data['free_cash_flow']:,.0f}, Cash per share ${all_financial_data['cash_per_share']}, Book value per share ${all_financial_data['book_value_per_share']}
+        - Dividend metrics: Dividend yield {all_financial_data['dividend_yield']}, Payout ratio {all_financial_data['payout_ratio']}
+        - Revenue & Income: Total revenue ${all_financial_data['total_revenue']:,.0f}, Net income ${latest_net_income:,.0f}, Operating income ${latest_operating_income:,.0f}, Gross profit ${latest_gross_profit:,.0f}
+        - Cash Flow: Operating cash flow ${latest_operating_cf:,.0f}, Free cash flow ${all_financial_data['free_cash_flow']:,.0f}, Capital expenditures ${latest_capital_expenditures:,.0f}
+        - Company profile: Industry {all_financial_data['industry']}, Sector {all_financial_data['sector']}{segment_info}
+        - Historical performance: Net income growth {growth_analysis.get('net_income_growth', 0):.1f}%, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%
+        
+        DATA PROCESSING METHODOLOGY:
+        • Financial statement analysis: Income statement, balance sheet, cash flow examination with ratio calculations
+        • Technical pattern recognition: Price movements, volume analysis, indicator calculations
+        • Valuation model execution: DCF, comparable company, precedent transaction analysis
+        • Industry dynamics assessment: Porter's Five Forces, competitive positioning, market analysis
+        • Qualitative factor evaluation: Management quality, governance, brand strength, litigation risks
+        • Event impact modeling: Earnings, M&A, product launches, regulatory decisions
+        
+        CROSS-METHOD VALIDATION RESULTS:
+        - Computed average target: ${cross_analysis.get('average_target', 0):.2f}
         - Consensus strength: {cross_analysis.get('consensus_strength', 'Medium')}
         - Method agreement: {cross_analysis.get('method_agreement', 'Mixed')}
         
-        INVESTMENT NARRATIVE: {components.get('investment_narrative', 'Balanced outlook')}
+        POSITIVE FACTORS: {', '.join(components['strengths'][:5])}
+        RISK FACTORS: {', '.join(components['risks'][:5])}
         
-        STRENGTHS: {', '.join(components['strengths'][:3])}
-        RISKS: {', '.join(components['risks'][:3])}
+        NEWS SENTIMENT DATA:
+        - Recent developments: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
+        - Sentiment rating: {components['market_sentiment'].get('sentiment_rating', 'Neutral')} from {components['market_sentiment'].get('news_count', 0)} articles
+        - News sources: {', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}..." for article in components['market_sentiment'].get('recent_news', [])[:3]])}
         
-        Provide a balanced analysis with:
-        1. Executive summary with recommendation rationale
-        2. Key investment strengths (top 3)
-        3. Primary risk factors (top 3)
-        4. Cross-method valuation analysis
-        5. Investment recommendation with risk-reward assessment
+        INDUSTRY CONTEXT:
+        - Industry outlook: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')}
+        - Competitive position: {components.get('industry_analysis', {}).get('competitive_position', 'Average')}
+        - Regulatory risk: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')}
+        - ESG score: {components.get('industry_analysis', {}).get('esg_score', 5.0)}/10
         
-        Present both sides objectively with data-driven conclusions.
+        SEGMENT REVENUE DATA:
+        - Business segments: {', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])])}
+        - Revenue breakdown: {', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])])}
+        - Total revenue: ${all_financial_data['total_revenue']:,.0f}
+        - Data source: {components.get('segment_revenue_data', {}).get('data_source', 'N/A')}
+        - Revenue diversification: {components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A')}
+        
+        Generate analysis with these sections (interpret all data through {thesis_type.lower()} lens):
+        
+        **FINANCIAL PERFORMANCE ANALYSIS**
+        Analyze the comprehensive financial data above. For {thesis_type.lower()}, {'emphasize growth momentum and operational excellence' if thesis_type == 'Bull Case' else 'emphasize financial deterioration and stress indicators' if thesis_type == 'Bear Case' else 'provide balanced assessment of financial strengths and weaknesses'}. Explain what the metrics reveal about {'growth trajectory and competitive positioning' if thesis_type == 'Bull Case' else 'financial stress and declining fundamentals' if thesis_type == 'Bear Case' else 'overall financial health and sustainability'}.
+        
+        **ALGORITHMIC ASSESSMENT SUMMARY**
+        - Current market price: {current_price_str}
+        - Target price analysis: Calculate and explain ${target_price:.2f} vs {current_price_str} relationship
+        - {'Computed bullish probability with upside scenarios' if thesis_type == 'Bull Case' else 'Computed bearish probability with downside scenarios' if thesis_type == 'Bear Case' else 'Risk-adjusted probability with balanced scenarios'}
+        - Primary {'value drivers' if thesis_type == 'Bull Case' else 'risk factors' if thesis_type == 'Bear Case' else 'value and risk factors'} with quantified impact
+        
+        **NEWS CATALYST & SENTIMENT ANALYSIS**
+        Analyze the news sentiment data above. For {thesis_type.lower()}, {'focus on positive developments and growth catalysts' if thesis_type == 'Bull Case' else 'focus on negative developments and risk catalysts' if thesis_type == 'Bear Case' else 'provide balanced interpretation of both positive and negative catalysts'}. Reference specific news sources and explain how developments {'support growth thesis' if thesis_type == 'Bull Case' else 'indicate deteriorating prospects' if thesis_type == 'Bear Case' else 'affect balanced investment outlook'}.
+        
+        **COMPREHENSIVE INDUSTRY ANALYSIS**
+        - Industry positioning: Analyze outlook and competitive position data
+        - Porter's Five Forces assessment: Provide scores (1-5) for supplier power, buyer power, competitive rivalry, substitution threats, and barriers to entry
+        - {'Emphasize industry tailwinds and competitive advantages' if thesis_type == 'Bull Case' else 'Emphasize industry headwinds and competitive pressures' if thesis_type == 'Bear Case' else 'Balance industry opportunities and challenges'}
+        - Regulatory and ESG impact: Explain how factors {'support long-term positioning' if thesis_type == 'Bull Case' else 'create additional risks and challenges' if thesis_type == 'Bear Case' else 'affect overall investment attractiveness'}
+        
+        **PRODUCT PORTFOLIO & REVENUE STREAM ANALYSIS**
+        Analyze product portfolio and segment revenue data. For {thesis_type.lower()}, {'emphasize innovation, market positioning strengths, revenue diversification benefits, and competitive moats' if thesis_type == 'Bull Case' else 'emphasize competitive vulnerabilities, revenue concentration risks, market share erosion, and differentiation challenges' if thesis_type == 'Bear Case' else 'provide balanced assessment of competitive positioning strengths, revenue stream sustainability, and portfolio diversification'}. 
+        
+        CRITICAL: Create a detailed revenue breakdown table using the segment revenue data provided above. Show each business segment's actual contribution to total revenue and operating income with specific dollar amounts and percentages.
+        
+        **REVENUE BREAKDOWN BY BUSINESS SEGMENT:**
+        Use the segment revenue data to create a comprehensive table showing:
+        - Each business segment name and actual revenue contribution in dollars (calculate by multiplying percentage by total revenue ${all_financial_data['total_revenue']:,.0f})
+        - Percentage of total revenue for each segment  
+        - Operating margins and profitability by segment
+        - Growth rates and trends for each business line
+        - Total company revenue and aggregate metricscentage by total revenue)
+        - Percentage of total revenue for each segment  
+        - Operating margins and profitability by segment
+        - Growth rates and trends for each business line
+        - Total company revenue and aggregate metrics
+        
+        CRITICAL CALCULATION REQUIREMENT: For each segment, calculate actual revenue dollars by multiplying the segment percentage by total company revenue. Do NOT use the percentage as the dollar amount.
+        
+        For each segment, explain:
+        - Revenue contribution in both dollars and percentage (e.g., Segment A: $X.X billion, XX.X% of total revenue)
+        - Profitability and competitive positioning
+        - {'Growth catalysts and expansion opportunities' if thesis_type == 'Bull Case' else 'Risk factors and competitive threats' if thesis_type == 'Bear Case' else 'Both opportunities and challenges'}
+        - Market share dynamics and competitive moats
+        
+        **REVENUE CONCENTRATION ANALYSIS:**
+        - Analyze revenue diversification vs concentration risks
+        - Identify top revenue sources and dependency levels
+        - Assess cross-selling opportunities between segments
+        - Evaluate {'diversification benefits' if thesis_type == 'Bull Case' else 'concentration risks' if thesis_type == 'Bear Case' else 'both diversification benefits and concentration risks'}
+        
+        **VALUATION MODEL RECONCILIATION**
+        - Multi-method synthesis: Analyze DCF, comparable, and consensus outputs
+        - {'Upside scenario modeling with growth assumptions' if thesis_type == 'Bull Case' else 'Downside scenario modeling with risk assumptions' if thesis_type == 'Bear Case' else 'Balanced scenario modeling with probability weighting'}
+        - Fair value vs current price: Explain {'why target represents achievable upside' if thesis_type == 'Bull Case' else 'why current price represents overvaluation' if thesis_type == 'Bear Case' else 'valuation relationship and recommendation logic'}
+        
+        **RISK-RETURN ASSESSMENT**
+        - {'Growth probability calculations with catalyst timing' if thesis_type == 'Bull Case' else 'Risk probability calculations with downside scenarios' if thesis_type == 'Bear Case' else 'Balanced risk-return calculations with scenario probabilities'}
+        - {'Mitigation of identified risks through competitive advantages' if thesis_type == 'Bull Case' else 'Risk amplification through fundamental deterioration' if thesis_type == 'Bear Case' else 'Risk mitigation factors and residual risk assessment'}
+        - Expected value calculation: {'Probability-weighted upside scenarios' if thesis_type == 'Bull Case' else 'Probability-weighted downside scenarios' if thesis_type == 'Bear Case' else 'Probability-weighted bull/base/bear scenarios'}
+        
+        **ALGORITHMIC RECOMMENDATION**
+        - Final recommendation with confidence level based on data convergence
+        - Target price with 12-month probability distribution
+        - {'Position sizing for growth opportunity' if thesis_type == 'Bull Case' else 'Risk management and position sizing' if thesis_type == 'Bear Case' else 'Balanced position sizing with risk optimization'}
+        - Recommendation logic: Explain why {'bullish factors outweigh risks' if thesis_type == 'Bull Case' else 'risk factors outweigh potential upside' if thesis_type == 'Bear Case' else 'balanced assessment leads to current recommendation'}
+        
+        VALIDATION REQUIREMENTS:
+        - Current market price must be stated as {current_price_str}
+        - All probabilities must include calculation methodology
+        - Porter's Five Forces scores must be justified
+        - {config['validation_emphasis']}
+        - Target price relationship must be logically explained
+        """
+        
+        llm_response = llm_manager.generate_response(prompt)
+        
+        # Fallback to appropriate template if LLM fails
+        if not llm_response or len(llm_response.strip()) < 100:
+            if thesis_type == "Bull Case":
+                fallback_response = generate_bull_case(ticker, components)
+            elif thesis_type == "Bear Case":
+                fallback_response = generate_bear_case(ticker, components)
+            else:
+                fallback_response = generate_balanced_thesis(ticker, components)
+            
+            if return_prompt:
+                return fallback_response, prompt
+            return fallback_response
+        
+        if return_prompt:
+            return llm_response, prompt
+        return llm_response
+        
+    except Exception as e:
+        st.warning(f"LLM enhancement failed, using template: {str(e)}")
+        if thesis_type == "Bull Case":
+            fallback_response = generate_bull_case(ticker, components)
+        elif thesis_type == "Bear Case":
+            fallback_response = generate_bear_case(ticker, components)
+        else:
+            fallback_response = generate_balanced_thesis(ticker, components)
+        
+        if return_prompt:
+            return fallback_response, None
+        return fallback_response
+        
+        prompt = f"""
+        Generate an AI-generated investment analysis for {ticker}. Use neutral, machine-like language:
+        
+        **IMPORTANT DISCLAIMER: This analysis is generated by artificial intelligence and may contain errors, inaccuracies, or outdated information. This content should not be considered professional financial advice. Users should conduct their own research and consult qualified financial advisors before making investment decisions.**
+        
+        SECURITY: {ticker} - {components.get('company_type', 'Unknown')} classification
+        COMPUTED RECOMMENDATION: {final_rec.get('recommendation', 'Hold')}
+        ALGORITHMIC TARGET PRICE: ${target_price:.2f}
+        CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
+        
+        CRITICAL FORMATTING REQUIREMENTS:
+        - Use proper spacing between all words and numbers
+        - Format all prices as: $XXX.XX (with dollar sign and two decimal places)
+        - Format all percentages as: XX.X% (with percent sign)
+        - Use line breaks between sections
+        - Do not concatenate numbers or text without spaces
+        
+        CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. If target price is below current price, recommendation must be "Sell" unless you provide specific justification for "Hold". If target price is above current price, recommendation should be "Buy" unless risks outweigh upside.
+        
+        COMPREHENSIVE FINANCIAL ANALYSIS:
+        - Current valuation metrics: Market cap ${current_metrics.get('market_cap', 0):,.0f}, P/E {current_metrics.get('pe_ratio', 'N/A')}, P/S {current_metrics.get('ps_ratio', 'N/A')}, P/B {current_metrics.get('pb_ratio', 'N/A')}
+        - Growth performance: Revenue growth {growth_analysis.get('revenue_growth', 0):.1%} annual, {growth_analysis.get('historical_revenue_growth', 0):.1f}% historical trend
+        - Profitability assessment: ROE {profitability.get('roe', 0):.1%}, Operating margin {profitability.get('operating_margin', 0):.1%}, Net margin {profitability.get('net_margin', 0):.1%}
+        - Financial position: Debt-to-equity {financial_health.get('debt_to_equity', 0):.2f}, Current ratio {financial_health.get('current_ratio', 0):.2f}, Free cash flow ${financial_health.get('free_cash_flow', 0):,.0f}
+        - Earnings quality: Net income growth {growth_analysis.get('net_income_growth', 0):.1f}%, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%
+        
+        DATA PROCESSING METHODOLOGY:
+        • Financial statement parsing: Income statement, balance sheet, cash flow data extraction and ratio calculations (P/E, debt-to-equity, ROE)
+        • Technical pattern recognition: Price movement analysis, support/resistance identification, moving average calculations, RSI computations, volume trend analysis
+        • Valuation model execution: DCF calculations, comparable company multiple analysis, precedent transaction evaluation for fair value determination
+        • Industry data correlation: Market size analysis, growth rate calculations, competitive dynamics assessment using Porter's Five Forces framework
+        • Qualitative factor scoring: Management track record evaluation, corporate governance assessment, brand strength measurement, litigation risk analysis
+        • Event impact modeling: Earnings release effects, M&A probability assessment, product launch impact, regulatory decision consequences
+        
+        CROSS-METHOD VALIDATION RESULTS:
+        - Computed average target: ${cross_analysis.get('average_target', 0):.2f}
+        - Consensus strength metric: {cross_analysis.get('consensus_strength', 'Medium')}
+        - Method agreement coefficient: {cross_analysis.get('method_agreement', 'Mixed')}
+        
+        POSITIVE FACTORS IDENTIFIED: {', '.join(components['strengths'][:5])}
+        RISK FACTORS DETECTED: {', '.join(components['risks'][:5])}
+        
+        NEWS SENTIMENT INTEGRATION:
+        - Recent developments impact: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
+        - Sentiment analysis: {components['market_sentiment'].get('sentiment_rating', 'Neutral')} rating from {components['market_sentiment'].get('news_count', 0)} articles
+        - News-driven catalyst probability assessment
+        
+        INDUSTRY CONTEXT VARIABLES:
+        - Industry outlook classification: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')}
+        - Competitive position score: {components.get('industry_analysis', {}).get('competitive_position', 'Average')}
+        - Regulatory risk level: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')}
+        
+        Generate analysis with these sections (use proper formatting and spacing):
+        
+        **COMPREHENSIVE FINANCIAL FOUNDATION**
+        - Market positioning: Market cap ${current_metrics.get('market_cap', 0):,.0f} with valuation ratios P/E {current_metrics.get('pe_ratio', 'N/A')}, P/S {current_metrics.get('ps_ratio', 'N/A')}, P/B {current_metrics.get('pb_ratio', 'N/A')}
+        - Growth trajectory analysis: Revenue growth {growth_analysis.get('revenue_growth', 0):.1%} annual vs {growth_analysis.get('historical_revenue_growth', 0):.1f}% historical, indicating {"accelerating" if growth_analysis.get('revenue_growth', 0) > growth_analysis.get('historical_revenue_growth', 0) else "decelerating"} trend
+        - Profitability profile: ROE {profitability.get('roe', 0):.1%}, Operating efficiency {profitability.get('operating_margin', 0):.1%}, Net profitability {profitability.get('net_margin', 0):.1%}
+        - Balance sheet strength: Debt management {financial_health.get('debt_to_equity', 0):.2f} debt-to-equity, Liquidity {financial_health.get('current_ratio', 0):.2f} current ratio
+        - Cash generation capability: Free cash flow ${financial_health.get('free_cash_flow', 0):,.0f}, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%, Earnings quality {growth_analysis.get('net_income_growth', 0):.1f}%
+        
+        Interpret the comprehensive financial data to explain the company's fundamental position. Describe what growth trends and profitability metrics reveal about operational performance and competitive positioning. Explain how balance sheet strength and cash generation support or constrain future growth opportunities and financial flexibility.
+        
+        **ALGORITHMIC ASSESSMENT SUMMARY**
+        - Current market price: {current_price_str} (use this exact figure)
+        - Target price vs current price variance: Calculate percentage difference between ${target_price:.2f} and {current_price_str}
+        - Computed investment probability with catalyst identification and quantified impact estimates
+        - Primary value drivers (2-3 factors) with supporting data correlations
+        - Risk-adjusted assessment with probability-weighted scenario modeling
+        
+        For each assessment metric above, provide a clear explanation of what the computed probabilities indicate about investment potential. Explain the methodology behind probability calculations (e.g., based on historical patterns, peer analysis, etc.). Describe how the value drivers were identified and what the risk-adjusted assessment means for expected returns. CRITICAL: Explain why target price differs from current price and how this affects the recommendation.
+        
+        **NEWS CATALYST & SENTIMENT ANALYSIS**
+        - Recent news developments impact assessment: {components['market_sentiment'].get('sentiment_score', 0):.2f} sentiment score from {components['market_sentiment'].get('news_count', 0)} articles
+        - Key developments driving market perception: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
+        - News source analysis and credibility: {', '.join([f"{article.get('source', 'Unknown')} (Score: {article.get('sentiment_score', 0):.2f})" for article in components['market_sentiment'].get('recent_news', [])[:3]])}
+        - Article references for validation: {', '.join([f"{article.get('title', 'No title')[:35]}... - {article.get('url', 'No URL')}" for article in components['market_sentiment'].get('recent_news', [])[:3]])}
+        - News flow momentum analysis with catalyst timing probability (explain how news cycles affect stock performance)
+        - Media coverage quality assessment with credibility and reach metrics
+        
+        Interpret the news sentiment data to explain market perception trends and momentum factors. Describe what recent developments indicate about business trajectory and market confidence. Reference specific news articles and sources to validate analysis claims. Explain how news flow patterns affect investment timing and provide assessment of catalyst sustainability.
+        
+        **COMPREHENSIVE INDUSTRY ANALYSIS**
+        - Industry classification and outlook: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')} with specific growth/decline drivers
+        - Market positioning assessment: {components.get('industry_analysis', {}).get('competitive_position', 'Average')} with competitive moat analysis
+        - Porter's Five Forces comprehensive scoring (provide specific scores 1-5 for each force with detailed justification):
+          • Supplier Power: Score and explanation of supplier concentration and switching costs
+          • Buyer Power: Score and explanation of customer concentration and price sensitivity  
+          • Competitive Rivalry: Score and explanation of market concentration and differentiation
+          • Threat of Substitutes: Score and explanation of alternative solutions and switching barriers
+          • Barriers to Entry: Score and explanation of capital requirements and regulatory hurdles
+        - Regulatory environment analysis: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')} risk with specific policy implications
+        - ESG positioning evaluation: {components.get('industry_analysis', {}).get('esg_score', 5.0)}/10 with sustainability competitive advantages/disadvantages
+        - Market catalysts identification: {', '.join(components.get('industry_analysis', {}).get('market_catalysts', [])[:3])}
+        
+        Interpret the comprehensive industry analysis to explain the company's strategic positioning within its sector. Describe what each Porter's Five Forces score reveals about competitive dynamics and provide specific reasoning for each score (explain how forces interact to create or erode competitive advantages). Explain how regulatory trends and ESG factors affect long-term industry attractiveness and company positioning. Describe what market catalysts mean for sector-wide opportunities or threats.
+        
+        **BUSINESS MODEL & COMPETITIVE ANALYSIS**
+        - Revenue stream analysis with market position quantification
+        - Competitive advantage/disadvantage assessment with sustainable moat evaluation
+        - Management execution track record with strategic initiative success rates
+        
+        Interpret the business model data to explain the company's operational strengths and strategic positioning. Describe what competitive advantages reveal about long-term sustainability and market defensibility. Explain how management execution history affects confidence in strategic direction and value creation capability.
+        
+        **PRODUCT PORTFOLIO & COMPETITIVE ANALYSIS**
+        - Product portfolio assessment: {components.get('product_portfolio', {}).get('product_breadth', 'N/A')} breadth with {components.get('product_portfolio', {}).get('innovation_level', 'N/A')} innovation level
+        - Core product offerings: {', '.join(components.get('product_portfolio', {}).get('core_products', [])[:3])}
+        - Competitive differentiation strategy: {components.get('competitive_differentiation', {}).get('differentiation_strategy', 'N/A')}
+        - Brand positioning strength: {components.get('competitive_differentiation', {}).get('brand_strength', 'N/A')} with {components.get('competitive_differentiation', {}).get('switching_costs', 'N/A')} switching costs
+        - Technology moat assessment: {components.get('competitive_differentiation', {}).get('technology_moat', 'N/A')}
+        - Key competitive threats: {', '.join(components.get('competitive_differentiation', {}).get('competitive_threats', [])[:2])}
+        
+        Explain how the product portfolio supports balanced investment assessment through diversification analysis, innovation pipeline evaluation, and market positioning strength. Describe what competitive differentiation reveals about sustainable advantages and defensive capabilities. Explain how brand strength and switching costs create customer retention benefits while acknowledging competitive vulnerabilities and market positioning challenges.
+        
+        **VALUATION MODEL RECONCILIATION**
+        - Multi-method valuation synthesis (DCF, comparable, precedent transaction outputs)
+        - Fair value calculation with methodology weighting and sensitivity analysis
+        - Scenario probability modeling with key variable assumption testing
+        - Current valuation vs fair value analysis (premium/discount explanation using {current_price_str})
+        
+        Interpret the valuation model results to explain fair value determination. Describe how different methodologies compare and what the sensitivity analysis reveals about valuation confidence and key risk factors. CRITICAL: Explain whether current market price of {current_price_str} represents overvaluation or undervaluation and provide specific reasoning.
+        
+        **RISK-RETURN COMPUTATION**
+        - Primary risk factors with quantified potential impact calculations (explain calculation methodology)
+        - Mitigation factor analysis with management track record and strategic initiative assessment
+        - Expected value calculation with risk-reward optimization metrics
+        - Probability-weighted return scenarios (bull/base/bear cases with probabilities)
+        
+        Explain what the risk-return analysis indicates about investment attractiveness. Describe how identified risks affect expected outcomes and provide methodology for impact calculations. Explain what mitigation factors suggest about downside protection and how probability weights were determined.
+        
+        **ALGORITHMIC OUTPUT RECOMMENDATION**
+        - Computed recommendation with confidence level (1-5 scale) based on data convergence
+        - Target price with 12-month probability distribution and milestone trigger identification
+        - Position sizing calculation (portfolio percentage) with risk parameter optimization
+        - Recommendation logic: If target < current price, explain why not "Sell"; if target > current price, explain risk factors preventing "Buy"
+        
+        Explain what the algorithmic recommendation means for practical investment decisions. Describe how the confidence level should be interpreted and what the position sizing calculation suggests about appropriate portfolio allocation. CRITICAL: Provide clear logical reasoning for the recommendation given the target price vs current price relationship using {current_price_str}.
+        
+        VALIDATION REQUIREMENTS:
+        - All probabilities must include methodology explanation
+        - Porter's Five Forces scores must be justified
+        - Target price vs current price discrepancy must be addressed using {current_price_str}
+        - Recommendation must be logically consistent with price targets
+        - Risk factors and positive factors must be balanced and reconciled
+        - Use proper number formatting with spaces between words and numbers
         """
         
         llm_response = llm_manager.generate_response(prompt)
@@ -1213,6 +2469,42 @@ def generate_balanced_thesis(ticker, components):
 """
     
     return thesis
+
+def display_prompt_used(prompt):
+    """Display the prompt that was passed to the LLM"""
+    
+    st.subheader("🔍 LLM Prompt Used")
+    
+    with st.expander("View Full Prompt Sent to LLM", expanded=False):
+        st.markdown(
+            f"""
+            <div style="
+                background-color: #f8f9fa;
+                padding: 15px;
+                border: 1px solid #dee2e6;
+                border-radius: 5px;
+                margin: 10px 0;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.4;
+                max-height: 500px;
+                overflow-y: auto;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            ">
+                {prompt}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Add copy button functionality
+        st.code(prompt, language="text")
+        
+        # Show prompt statistics
+        word_count = len(prompt.split())
+        char_count = len(prompt)
+        st.caption(f"📊 Prompt Statistics: {word_count:,} words, {char_count:,} characters")
 
 def display_generated_thesis(ticker, thesis, thesis_type):
     """Display the generated investment thesis"""

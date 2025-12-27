@@ -49,10 +49,29 @@ async def analyze_stock(ticker: str, request: AnalysisRequest = None):
         if request and request.enabled_analyzers:
             enabled_analyzers = request.enabled_analyzers
         
-        logger.info(f"Starting analysis for {actual_ticker}")
+        # Get LLM configuration from request
+        llm_provider = None
+        llm_model = None
+        max_news_articles = 5  # Default value
+        if request:
+            llm_provider = request.llm_provider
+            llm_model = request.llm_model
+            if request.max_news_articles is not None:
+                max_news_articles = request.max_news_articles
         
-        # Run analysis
-        result = await analysis_service.analyze_stock(actual_ticker, enabled_analyzers)
+        logger.info(f"Starting analysis for {actual_ticker}")
+        if llm_provider and llm_model:
+            logger.info(f"Using LLM: {llm_provider} with {llm_model}")
+        else:
+            logger.info("No LLM configuration provided - using default")
+        
+        # Create service with custom max_news_articles if different from default
+        if max_news_articles != 5:
+            custom_service = AnalysisService(save_to_db=True, max_news_articles=max_news_articles)
+            result = await custom_service.analyze_stock(actual_ticker, enabled_analyzers, llm_provider, llm_model)
+        else:
+            # Use default service
+            result = await analysis_service.analyze_stock(actual_ticker, enabled_analyzers, llm_provider, llm_model)
         
         if 'error' in result:
             raise HTTPException(status_code=400, detail=result['error'])

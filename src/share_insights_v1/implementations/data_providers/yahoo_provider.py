@@ -19,19 +19,30 @@ class YahooFinanceProvider(IDataProvider):
         quarterly_financials = stock.quarterly_financials
         annual_financials = stock.financials
         
-        # Extract revenue data
+        # Extract revenue data (serialize DataFrames to dicts for JSON compatibility)
+        def serialize_dataframe(df):
+            if df.empty:
+                return {}
+            # Convert DataFrame to dict with string keys for JSON compatibility
+            df_dict = df.to_dict()
+            # Convert all keys and values to JSON-serializable types
+            serialized = {}
+            for row_key, row_data in df_dict.items():
+                serialized[str(row_key)] = {str(col_key): (str(value) if hasattr(value, 'strftime') else value) for col_key, value in row_data.items()}
+            return serialized
+        
         revenue_data = {
-            'quarterly_income_stmt': quarterly_income,
-            'annual_income_stmt': annual_income,
-            'quarterly_financial_stmt': quarterly_financials,
-            'annual_financial_stmt': annual_financials,
-            'cashflow': cashflow
+            'quarterly_income_stmt': serialize_dataframe(quarterly_income),
+            'annual_income_stmt': serialize_dataframe(annual_income),
+            'quarterly_financial_stmt': serialize_dataframe(quarterly_financials),
+            'annual_financial_stmt': serialize_dataframe(annual_financials),
+            'cashflow': serialize_dataframe(cashflow)
         }
     
         # Annual revenue
         if not annual_income.empty and 'Total Revenue' in annual_income.index:
             annual_revenue = annual_income.loc['Total Revenue'].dropna()
-            revenue_data['annual_revenue'] = annual_revenue.to_dict()
+            revenue_data['annual_revenue'] = {str(k): v for k, v in annual_revenue.to_dict().items()}
             
             # Calculate growth rates
             revenue_values = annual_revenue.values
@@ -42,7 +53,7 @@ class YahooFinanceProvider(IDataProvider):
         # Quarterly revenue
         if not quarterly_income.empty and 'Total Revenue' in quarterly_income.index:
             quarterly_revenue = quarterly_income.loc['Total Revenue'].dropna()
-            revenue_data['quarterly_revenue'] = quarterly_revenue.to_dict()
+            revenue_data['quarterly_revenue'] = {str(k): v for k, v in quarterly_revenue.to_dict().items()}
             
             # Calculate QoQ growth
             revenue_values = quarterly_revenue.values
@@ -88,6 +99,7 @@ class YahooFinanceProvider(IDataProvider):
                 'long_name': info.get('longName', ''),
                 'business_summary': info.get('longBusinessSummary', ''),
                 'enterprise_value': info.get('enterpriseValue', 0),
+                'ev_ebitda_multiple': info.get('enterpriseToEbitda', 0),
                 'total_revenue': info.get('totalRevenue', 0),
                 'net_income': info.get('netIncomeToCommon', 0),
                 'current_revenue': f"${revenue_data.get('current_revenue'):,.2f}",
@@ -95,7 +107,7 @@ class YahooFinanceProvider(IDataProvider):
                 'quarterly_revenue_growth': revenue_data.get('quarterly_revenue_growth'),
                 'calculated_annual_growth': revenue_data.get('recent_annual_growth', 0),
                 'calculated_quarterly_growth': revenue_data.get('recent_quarterly_growth', 0),
-                # 'revenue_data_statements': revenue_data,
+                'revenue_data_statements': revenue_data,  # Include full revenue trend data
                 'free_cash_flow': fcf,
                 'total_debt': info.get('totalDebt', 0) or 0,
                 'total_cash': info.get('totalCash', 0) or 0,
@@ -114,6 +126,10 @@ class YahooFinanceProvider(IDataProvider):
                 'earnings_growth': info.get('earningsGrowth'),
                 'dividend_yield': info.get('dividendYield'),
                 'payout_ratio': info.get('payoutRatio'),
+                'profit_margin': info.get('profitMargins', 0) * 100,
+                'quick_ratio': info.get('quickRatio', 0),
+                'book_value_per_share': info.get('bookValue', 0),
+                'cash_per_share': info.get('totalCashPerShare', 0),                
                 'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
                 'fifty_two_week_low': info.get('fiftyTwoWeekLow')
             }

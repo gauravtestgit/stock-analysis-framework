@@ -27,6 +27,21 @@ def setup_comprehensive_orchestrator():
     classifier = CompanyClassifier()
     quality_calculator = QualityScoreCalculator()
     
+    # Initialize plugin system for LLM providers
+    from ..implementations.llm_providers.plugin_manager import LLMPluginManager
+    from ..implementations.llm_providers.llm_manager import LLMManager
+    
+    try:
+        llm_manager = LLMManager(use_plugin_system=True)
+        # Use enhanced set_primary_provider to switch to specific model
+        llm_manager.set_primary_provider("groq", "llama-3.3-70b-versatile")
+        primary = llm_manager.get_primary_provider()
+        print("✅ Plugin system initialized successfully")
+        print(f"🎯 Primary provider: {primary.get_provider_name()} using model: {primary.get_current_model()}")
+    except Exception as e:
+        llm_manager = LLMManager()  # Fallback to legacy
+        print(f"⚠️  Plugin system failed ({e}), using legacy LLM manager")
+    
     orchestrator = AnalysisOrchestrator(data_provider, classifier, quality_calculator)
     
     # Register quantitative analyzers
@@ -35,10 +50,10 @@ def setup_comprehensive_orchestrator():
     orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer())
     orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer())
     
-    # Register qualitative analyzers
-    orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(data_provider))
-    orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(data_provider))
-    orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(data_provider))
+    # Register qualitative analyzers with plugin system support
+    orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(data_provider, llm_manager))
+    orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(data_provider, llm_manager))
+    orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(data_provider, llm_manager))
     orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(data_provider))
     orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(data_provider))
     orchestrator.register_analyzer(AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(data_provider))
@@ -99,7 +114,7 @@ def test_comprehensive_analysis(ticker: str, save_to_db: bool = False):
 
 def test_all_comprehensive(save_to_db: bool = False):
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['MSFT', 'NVDA']
+    test_tickers = ['CRM']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")

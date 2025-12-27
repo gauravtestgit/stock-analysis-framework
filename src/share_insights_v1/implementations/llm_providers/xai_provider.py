@@ -6,11 +6,11 @@ from ...interfaces.llm_provider import ILLMProvider
 class XAIProvider(ILLMProvider):
     """XAI (Grok) LLM provider"""
     
-    def __init__(self):
+    def __init__(self, model_name: str = "grok-beta"):
+        self.model_name = model_name
         self.api_key = os.getenv('XAI_API_KEY')
         self.base_url = "https://api.x.ai/v1"
-        self.model = "grok-beta"
-        print(f"[XAI_DEBUG] API key found: {bool(self.api_key)}")
+        print(f"[XAI_DEBUG] API key found: {bool(self.api_key)}, model: {model_name}")
     
     def generate_response(self, prompt: str, **kwargs) -> str:
         """Generate response using XAI Grok"""
@@ -31,7 +31,7 @@ class XAIProvider(ILLMProvider):
                         "content": prompt
                     }
                 ],
-                "model": self.model,
+                "model": self.model_name,
                 "temperature": 0.1,
                 "max_tokens": 2000
             }
@@ -60,12 +60,28 @@ class XAIProvider(ILLMProvider):
     
     def get_provider_name(self) -> str:
         """Get provider name"""
-        return "XAI (Grok)"
+        return f"XAI ({self.model_name})"
     
     def get_rate_limit_info(self) -> Optional[dict]:
         """Get rate limit information"""
         return {
+            "provider": "XAI",
+            "model": self.model_name,
             "requests_per_minute": 60,
             "tokens_per_minute": 10000,
             "requests_per_day": 1000
         }
+    
+    def get_current_model(self) -> str:
+        """Get currently selected model name"""
+        return self.model_name
+    
+    def set_current_model(self, model: str) -> bool:
+        """Set current model, returns success status"""
+        try:
+            self.model_name = model
+            print(f"[XAI_DEBUG] Switched to model {model}")
+            return True
+        except Exception as e:
+            print(f"Failed to switch to model {model}: {e}")
+            return False

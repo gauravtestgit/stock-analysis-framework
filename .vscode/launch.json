@@ -1,11 +1,12 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
         // {
         //     "name": "Debug Test",
         //     "type": "debugpy",
         //     "request": "launch",
-        //     "module": "src.share_insights_v1.tests.test_dcf_analyzer",
+        //     "module": "src.share_insights_v1.tests.test_plugin_system",
         //     "console": "integratedTerminal",
         //     "cwd": "${workspaceFolder}"
         // },
@@ -13,7 +14,7 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_batch_analysis",
+            "module": "src.share_insights_v1.tests.test_plugin_system",
             // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

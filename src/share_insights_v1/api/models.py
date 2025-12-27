@@ -5,6 +5,9 @@ from enum import Enum
 class AnalysisRequest(BaseModel):
     ticker: str
     enabled_analyzers: Optional[List[str]] = None
+    llm_provider: Optional[str] = None
+    llm_model: Optional[str] = None
+    max_news_articles: Optional[int] = 5
 
 class AnalysisResponse(BaseModel):
     ticker: str

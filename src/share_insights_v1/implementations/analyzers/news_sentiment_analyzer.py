@@ -10,15 +10,17 @@ import json
 import os
 from datetime import datetime, timedelta
 from ...implementations.llm_providers.llm_manager import LLMManager
+from ...utils.prompt_formatter import PromptFormatter
 
 class NewsSentimentAnalyzer(IAnalyzer):
     """Enhanced news sentiment analyzer with recent developments tracking"""
     
-    def __init__(self, data_provider: IDataProvider, debug_mode: bool = False, enable_web_scraping: bool = False):
+    def __init__(self, data_provider: IDataProvider, llm_manager=None, debug_mode: bool = False, enable_web_scraping: bool = False, max_articles: int = 5):
         self.data_provider = data_provider
-        self.llm_manager = LLMManager()
+        self.llm_manager = llm_manager or LLMManager()
         self.debug_mode = debug_mode
         self.enable_web_scraping = enable_web_scraping
+        self.max_articles = max_articles
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze news sentiment and recent developments"""
@@ -81,8 +83,8 @@ class NewsSentimentAnalyzer(IAnalyzer):
 
             
             processed_news = []
-            # Limit to 5 most recent for faster processing
-            for news_item in news_data[:5]:
+            # Limit to configured number of articles for processing
+            for news_item in news_data[:self.max_articles]:
                 # Extract content from nested structure
                 content = news_item.get('content', {})
                 
@@ -274,8 +276,19 @@ class NewsSentimentAnalyzer(IAnalyzer):
         # Use LLM analysis by default when web scraping is enabled
         if self.enable_web_scraping:
             try:
+                # Get provider name for formatting
+                provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
+                
                 if ticker:
-                    prompt = f"""TASK: Score sentiment for {ticker}.
+                    # Create universal prompt for ticker-specific sentiment
+                    news_info = {
+                        'ticker': ticker,
+                        'title': title,
+                        'summary': summary,
+                        'context': f"This article appeared in {ticker}'s news feed, meaning it relates to {ticker}."
+                    }
+                    
+                    base_prompt = f"""TASK: Score sentiment for {ticker}.
 
 Title: {title}
 Summary: {summary}
@@ -290,24 +303,33 @@ If warns against {ticker} → Score -0.5
 
 Note: Summary may be truncated, but title indicates {ticker} relevance.
 
-Return JSON:
-{{
-    "sentiment_score": 0.0,
-    "confidence": 0.8
-}}"""
+Return JSON:"""
+                    
+                    schema = {
+                        "sentiment_score": 0.0,
+                        "confidence": 0.8
+                    }
+                    
+                    prompt = base_prompt + "\n" + PromptFormatter._format_json_schema(schema)
+                    prompt = PromptFormatter.format_json_prompt(prompt, provider_name)
                 else:
-                    prompt = f"""Analyze the sentiment of this financial news and respond with ONLY valid JSON:
+                    # Generic sentiment analysis
+                    base_prompt = f"""Analyze the sentiment of this financial news and respond with ONLY valid JSON:
 
 Title: {title}
 Summary: {summary}
 
 CRITICAL: Return ONLY the JSON object below, no explanations or additional text:
-{{
-    "sentiment_score": 0.0,
-    "confidence": 0.0
-}}
 
 Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
+                    
+                    schema = {
+                        "sentiment_score": 0.0,
+                        "confidence": 0.0
+                    }
+                    
+                    prompt = base_prompt + "\n" + PromptFormatter._format_json_schema(schema)
+                    prompt = PromptFormatter.format_json_prompt(prompt, provider_name)
                 
                 response = self.llm_manager.generate_response(prompt)
                 json_str = self._extract_json_from_response(response)
@@ -527,6 +549,9 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
     def _generate_overall_summary(self, report: NewsSentimentReport) -> List[str]:
         """Generate overall summary of news sentiment analysis"""
         try:
+            # Get provider name for formatting
+            provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
+            
             # Prepare news titles and sentiment info for LLM
             news_info = []
             for item in report.recent_news[:5]:  # Top 5 news items
@@ -534,16 +559,21 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
             
             news_text = "\n".join(news_info)
             
-            prompt = f"""Analyze these recent news articles and provide a 3-4 bullet point summary explaining the overall sentiment score of {report.overall_sentiment_score:.2f}:
+            # Create universal prompt
+            base_prompt = f"""Analyze these recent news articles and provide a 3-4 bullet point summary explaining the overall sentiment score of {report.overall_sentiment_score:.2f}:
 
 {news_text}
 
-Provide ONLY a JSON array of bullet points:
-[
-    "Bullet point 1 explaining key positive/negative factors",
-    "Bullet point 2 about market reactions or developments",
-    "Bullet point 3 about future outlook or concerns"
-]"""
+Provide ONLY a JSON array of bullet points:"""
+            
+            schema = [
+                "Bullet point 1 explaining key positive/negative factors",
+                "Bullet point 2 about market reactions or developments",
+                "Bullet point 3 about future outlook or concerns"
+            ]
+            
+            prompt = base_prompt + "\n" + json.dumps(schema, indent=2)
+            prompt = PromptFormatter.format_json_prompt(prompt, provider_name)
             
             response = self.llm_manager.generate_response(prompt)
             json_str = self._extract_json_from_response(response)

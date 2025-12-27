@@ -1,0 +1,70 @@
+llm_providers:
+  - name: "groq"
+    display_name: "Groq"
+    class: "GroqProvider"
+    module: "src.share_insights_v1.implementations.llm_providers.groq_provider"
+    description: "Fast inference with Llama models"
+    icon: "🚀"
+    api_key_env: "GROQ_API_KEY"
+    default_model: "llama-3.1-8b-instant"
+    models:
+      - name: "llama-3.1-8b-instant"
+        display_name: "Llama 3.1 8B (Fast)"
+        description: "Fastest model, good for most tasks"
+        context_length: 8192
+        cost_per_1k_tokens: 0.0001
+      - name: "llama-3.3-70b-versatile"
+        display_name: "Llama 3.3 70B (Best)"
+        description: "Most capable model, slower but higher quality"
+        context_length: 131072
+        cost_per_1k_tokens: 0.001
+      - name: "mixtral-8x7b-32768"
+        display_name: "Mixtral 8x7B"
+        description: "Good balance of speed and quality"
+        context_length: 32768
+        cost_per_1k_tokens: 0.0005
+      - name: "openai/gpt-oss-20b"
+        display_name: "GPT OSS 20B"
+        description: "Open source GPT model with 20B parameters"
+        context_length: 8192
+        cost_per_1k_tokens: 0.0003
+
+  - name: "openai"
+    display_name: "OpenAI"
+    class: "OpenAIProvider"
+    module: "src.share_insights_v1.implementations.llm_providers.openai_provider"
+    description: "Industry standard GPT models"
+    icon: "🤖"
+    api_key_env: "OPENAI_API_KEY"
+    default_model: "gpt-3.5-turbo"
+    models:
+      - name: "gpt-3.5-turbo"
+        display_name: "GPT-3.5 Turbo"
+        description: "Fast and cost-effective"
+        context_length: 4096
+        cost_per_1k_tokens: 0.002
+      - name: "gpt-4"
+        display_name: "GPT-4"
+        description: "Most capable OpenAI model"
+        context_length: 8192
+        cost_per_1k_tokens: 0.03
+      - name: "gpt-4-turbo"
+        display_name: "GPT-4 Turbo"
+        description: "Latest GPT-4 with improved performance"
+        context_length: 128000
+        cost_per_1k_tokens: 0.01
+
+  - name: "xai"
+    display_name: "xAI"
+    class: "XAIProvider"
+    module: "src.share_insights_v1.implementations.llm_providers.xai_provider"
+    description: "Grok models from xAI"
+    icon: "⚡"
+    api_key_env: "XAI_API_KEY"
+    default_model: "grok-beta"
+    models:
+      - name: "grok-beta"
+        display_name: "Grok Beta"
+        description: "xAI's conversational AI model"
+        context_length: 8192
+        cost_per_1k_tokens: 0.005

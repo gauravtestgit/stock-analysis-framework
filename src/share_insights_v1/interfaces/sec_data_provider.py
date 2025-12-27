@@ -19,3 +19,8 @@ class SECDataProvider(ABC):
     def get_filing_facts(self, ticker: str) -> Optional[Dict[str, Any]]:
         """Get company facts from SEC API"""
         pass
+    
+    @abstractmethod
+    def get_segment_revenue_data(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """Get segment revenue data from SEC filings"""
+        pass

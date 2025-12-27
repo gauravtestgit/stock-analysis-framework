@@ -73,12 +73,16 @@ class AnalysisOrchestrator:
                 'analyses': {}
             }
             
-            # Execute analyses in parallel
+            # Separate industry analysis from other analyses (needs other results as input)
+            industry_analysis_type = AnalysisType.INDUSTRY_ANALYSIS
+            other_analyses = [a for a in analyses_to_run if a != industry_analysis_type]
+            
+            # Execute other analyses in parallel first
             with ThreadPoolExecutor(max_workers=8) as executor:
-                # Submit only registered analyses
+                # Submit non-industry analyses
                 future_to_analysis = {
                     executor.submit(self._run_analysis, analysis_type, ticker, analysis_data): analysis_type
-                    for analysis_type in analyses_to_run
+                    for analysis_type in other_analyses
                 }
                 
                 # Collect results as they complete (with timeout)
@@ -121,6 +125,25 @@ class AnalysisOrchestrator:
                                 'analysis_type': analysis_type.value,
                                 'applicable': False
                             }
+            
+            # Now run industry analysis with other results as input
+            if industry_analysis_type in analyses_to_run:
+                # Add other analysis results to analysis_data for industry analyzer
+                enhanced_analysis_data = analysis_data.copy()
+                enhanced_analysis_data.update(results['analyses'])
+                
+                try:
+                    industry_result = self._run_analysis(industry_analysis_type, ticker, enhanced_analysis_data)
+                    if industry_result and not industry_result.get('error'):
+                        industry_result['current_price'] = financial_metrics.get('current_price')
+                        results['analyses'][industry_analysis_type.value] = industry_result
+                except Exception as e:
+                    print(f"❌ ERROR: {industry_analysis_type.value} analysis failed for {ticker}: {str(e)}")
+                    results['analyses'][industry_analysis_type.value] = {
+                        'error': f"{industry_analysis_type.value} analysis failed: {str(e)}",
+                        'analysis_type': industry_analysis_type.value,
+                        'applicable': False
+                    }
             
             # Generate consolidated recommendation if we have analyses
             if results['analyses']:

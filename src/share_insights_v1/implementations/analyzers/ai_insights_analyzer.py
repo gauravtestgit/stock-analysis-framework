@@ -5,13 +5,14 @@ import json
 import os
 from datetime import datetime, timedelta
 from ...implementations.llm_providers.llm_manager import LLMManager
+from ...utils.prompt_formatter import PromptFormatter, create_company_insights_prompt, create_revenue_trends_prompt, create_etf_insights_prompt
 
 class AIInsightsAnalyzer(IAnalyzer):
     """AI-powered analyzer for market insights and revenue trends"""
     
-    def __init__(self, data_provider: IDataProvider):
+    def __init__(self, data_provider: IDataProvider, llm_manager=None):
         self.data_provider = data_provider
-        self.llm_manager = LLMManager()
+        self.llm_manager = llm_manager or LLMManager()
     
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze using AI insights for market analysis and revenue trends"""
@@ -95,34 +96,29 @@ class AIInsightsAnalyzer(IAnalyzer):
     def _get_etf_insights(self, ticker: str, fund_name: str, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Get ETF-specific insights"""
         
-        market_cap = financial_metrics.get('market_cap', 0)
-        current_price = financial_metrics.get('current_price', 0)
-        pe_ratio = financial_metrics.get('pe_ratio', 0)
-        pb_ratio = financial_metrics.get('pb_ratio', 0)
+        # Get provider name for formatting
+        provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
         
         # Determine market context
         market_context = self._get_market_context(ticker)
         
-        prompt = f"""Analyze {fund_name} ({ticker}) ETF and provide insights:
-
-ETF Details:
-- Fund Name: {fund_name}
-- Assets Under Management: ${market_cap:,.0f}
-- Current Price: ${current_price:.2f}
-- P/E Ratio: {pe_ratio:.2f}
-- P/B Ratio: {pb_ratio or 'N/A'}
-- Market Context: {market_context['market_name']}
-
-As an ETF analyst, provide analysis focusing on ETF-specific factors in JSON format:
-{{
-    "market_position": "Strong/Moderate/Weak",
-    "growth_prospects": "High/Moderate/Low", 
-    "competitive_advantage": "Strong/Moderate/Weak",
-    "management_quality": "Excellent/Good/Average/Poor",
-    "industry_outlook": "Very Positive/Positive/Neutral/Negative",
-    "key_strengths": ["Low expense ratio", "Diversified holdings", "Good liquidity"],
-    "key_risks": ["Market concentration risk", "Tracking error", "Currency risk"]
-}}
+        # Prepare ETF info
+        etf_info = {
+            'name': f"{fund_name} ({ticker}) ETF",
+            'fund_name': fund_name,
+            'assets_under_management': f"${financial_metrics.get('market_cap', 0):,.0f}",
+            'current_price': f"${financial_metrics.get('current_price', 0):.2f}",
+            'pe_ratio': f"{financial_metrics.get('pe_ratio', 0):.2f}",
+            'pb_ratio': financial_metrics.get('pb_ratio', 'N/A'),
+            'market_context': market_context['market_name'],
+            'analysis_notes': market_context['analysis_notes']
+        }
+        
+        # Create universal prompt with ETF-specific context
+        base_prompt = create_etf_insights_prompt(etf_info, provider_name)
+        
+        # Add ETF-specific considerations
+        etf_considerations = f"""
 
 IMPORTANT: {market_context['analysis_notes']}
 
@@ -132,6 +128,8 @@ Consider ETF-specific factors like:
 - Tracking performance vs benchmark
 - Geographic/sector concentration
 - Provider reputation in {market_context['market_name']}"""
+        
+        prompt = base_prompt + etf_considerations
         
         response = self.llm_manager.generate_response(prompt)
         if not response or not response.strip():
@@ -148,31 +146,21 @@ Consider ETF-specific factors like:
     def _get_company_insights(self, ticker: str, company_name: str, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Get company-specific insights"""
         
-        sector = financial_metrics.get('sector', 'Unknown')
-        industry = financial_metrics.get('industry', 'Unknown')
-        market_cap = financial_metrics.get('market_cap', 0)
-        revenue_growth = financial_metrics.get('yearly_revenue_growth', 0)
-        roe = financial_metrics.get('roe', 0) or 0
+        # Get provider name for formatting
+        provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
         
-        prompt = f"""Analyze {company_name} ({ticker}) and provide insights:
-
-Company Details:
-- Sector: {sector}
-- Industry: {industry}
-- Market Cap: ${market_cap:,.0f}
-- Revenue Growth: {revenue_growth:.1%}
-- ROE: {roe:.1%}
-
-Provide analysis in JSON format:
-{{
-    "market_position": "Strong/Moderate/Weak",
-    "growth_prospects": "High/Moderate/Low", 
-    "competitive_advantage": "Strong/Moderate/Weak",
-    "management_quality": "Excellent/Good/Average/Poor",
-    "industry_outlook": "Very Positive/Positive/Neutral/Negative",
-    "key_strengths": ["strength1", "strength2"],
-    "key_risks": ["risk1", "risk2"]
-}}"""
+        # Prepare company info
+        company_info = {
+            'name': f"{company_name} ({ticker})",
+            'sector': financial_metrics.get('sector', 'Unknown'),
+            'industry': financial_metrics.get('industry', 'Unknown'),
+            'market_cap': f"${financial_metrics.get('market_cap', 0):,.0f}",
+            'revenue_growth': f"{financial_metrics.get('yearly_revenue_growth', 0):.1%}",
+            'roe': f"{financial_metrics.get('roe', 0) or 0:.1%}"
+        }
+        
+        # Create universal prompt
+        prompt = create_company_insights_prompt(company_info, provider_name)
         
         response = self.llm_manager.generate_response(prompt)
         if not response or not response.strip():
@@ -267,22 +255,18 @@ Consider factors like:
     def _analyze_company_revenue_trends(self, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze company revenue trends"""
         
-        revenue_growth = financial_metrics.get('revenue_growth', 0) or 0
-        yearly_growth = financial_metrics.get('yearly_revenue_growth', 0) or 0
-        total_revenue = financial_metrics.get('total_revenue', 0) or 0
+        # Get provider name for formatting
+        provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
         
-        prompt = f"""Analyze revenue trends for a company with these metrics:
-- Current revenue growth: {revenue_growth:.1%}
-- Yearly revenue growth: {yearly_growth:.1%}
-- Total revenue: ${total_revenue:,.0f}
-
-Provide analysis in JSON format:
-{{
-    "trend_assessment": "Strong Growth/Moderate Growth/Stable/Declining",
-    "growth_rate": {yearly_growth},
-    "growth_consistency": "Consistent/Variable/Volatile",
-    "future_outlook": "Very Positive/Positive/Neutral/Cautious/Negative"
-}}"""
+        # Prepare company info
+        company_info = {
+            'current_revenue_growth': f"{financial_metrics.get('revenue_growth', 0) or 0:.1%}",
+            'yearly_revenue_growth': f"{financial_metrics.get('yearly_revenue_growth', 0) or 0:.1%}",
+            'total_revenue': f"${financial_metrics.get('total_revenue', 0) or 0:,.0f}"
+        }
+        
+        # Create universal prompt
+        prompt = create_revenue_trends_prompt(company_info, provider_name)
         
         response = self.llm_manager.generate_response(prompt)
         if not response or not response.strip():

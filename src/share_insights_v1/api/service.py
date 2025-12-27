@@ -23,14 +23,16 @@ from .models import AnalyzerInfo
 class AnalysisService:
     """Service layer for stock analysis API"""
     
-    def __init__(self, save_to_db: bool = True, debug_mode: bool = False):
+    def __init__(self, save_to_db: bool = True, debug_mode: bool = False, max_news_articles: int = 5):
         self.data_provider = YahooFinanceProvider()
         self.classifier = CompanyClassifier()
         self.quality_calculator = QualityScoreCalculator()
         self.save_to_db = save_to_db
         self.debug_mode = debug_mode
+        self.max_news_articles = max_news_articles
         self.storage_service = AnalysisStorageService() if save_to_db else None
-        self.orchestrator = self._setup_orchestrator()
+        # Don't create default orchestrator - create on demand
+        self._default_orchestrator = None
     
     def _setup_orchestrator(self) -> AnalysisOrchestrator:
         """Setup orchestrator with all analyzers"""
@@ -49,7 +51,7 @@ class AnalysisService:
         
         # Register qualitative analyzers
         orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider))
-        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, self.debug_mode, enable_web_scraping=True))
+        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles))
         orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
@@ -61,13 +63,13 @@ class AnalysisService:
         
         return orchestrator
     
-    async def analyze_stock(self, ticker: str, enabled_analyzers: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def analyze_stock(self, ticker: str, enabled_analyzers: Optional[List[str]] = None, llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> Dict[str, Any]:
         """Run comprehensive stock analysis"""
         # Create selective orchestrator if specific analyzers requested
         if enabled_analyzers:
-            orchestrator = self._create_selective_orchestrator(enabled_analyzers)
+            orchestrator = self._create_selective_orchestrator(enabled_analyzers, llm_provider, llm_model)
         else:
-            orchestrator = self.orchestrator
+            orchestrator = self._create_orchestrator_with_llm(llm_provider, llm_model)
         
         # Run analysis in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
@@ -100,7 +102,50 @@ class AnalysisService:
         
         return result
     
-    def _create_selective_orchestrator(self, enabled_analyzers: List[str]) -> AnalysisOrchestrator:
+    def _create_orchestrator_with_llm(self, llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> AnalysisOrchestrator:
+        """Create orchestrator with LLM configuration"""
+        if llm_provider and llm_model:
+            # Import LLM manager here to avoid circular imports
+            from ..implementations.llm_providers.llm_manager import LLMManager
+            
+            # Create LLM manager with specified provider/model
+            llm_manager = LLMManager(use_plugin_system=True)
+            llm_manager.set_primary_provider(llm_provider, llm_model)
+            
+            # Create orchestrator with LLM manager
+            orchestrator = AnalysisOrchestrator(
+                self.data_provider, 
+                self.classifier, 
+                self.quality_calculator,
+                self.debug_mode
+            )
+            
+            # Register analyzers with shared LLM manager
+            orchestrator.register_analyzer(AnalysisType.DCF, DCFAnalyzer())
+            orchestrator.register_analyzer(AnalysisType.TECHNICAL, TechnicalAnalyzer())
+            orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer())
+            orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer())
+            
+            # Register qualitative analyzers with shared LLM manager
+            orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider, llm_manager))
+            orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles))
+            orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider, llm_manager))
+            orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
+            orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
+            orchestrator.register_analyzer(AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(self.data_provider))
+            
+            # Register SEC-based analyzer
+            sec_provider = SECEdgarProvider()
+            orchestrator.register_analyzer(AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(sec_provider))
+            
+            return orchestrator
+        else:
+            # Create default orchestrator with legacy system
+            if not self._default_orchestrator:
+                self._default_orchestrator = self._setup_orchestrator()
+            return self._default_orchestrator
+    
+    def _create_selective_orchestrator(self, enabled_analyzers: List[str], llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> AnalysisOrchestrator:
         """Create orchestrator with only selected analyzers"""
         orchestrator = AnalysisOrchestrator(
             self.data_provider, 
@@ -109,15 +154,22 @@ class AnalysisService:
             self.debug_mode
         )
         
-        # Analyzer mapping
+        # Create LLM manager if provider/model specified
+        llm_manager = None
+        if llm_provider and llm_model:
+            from ..implementations.llm_providers.llm_manager import LLMManager
+            llm_manager = LLMManager(use_plugin_system=True)
+            llm_manager.set_primary_provider(llm_provider, llm_model)
+        
+        # Analyzer mapping with LLM manager support
         analyzer_map = {
             'dcf': (AnalysisType.DCF, DCFAnalyzer()),
             'technical': (AnalysisType.TECHNICAL, TechnicalAnalyzer()),
             'comparable': (AnalysisType.COMPARABLE, ComparableAnalyzer()),
             'startup': (AnalysisType.STARTUP, StartupAnalyzer()),
-            'ai_insights': (AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider)),
-            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, self.debug_mode, enable_web_scraping=True)),
-            'business_model': (AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider)),
+            'ai_insights': (AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider, llm_manager) if llm_manager else AIInsightsAnalyzer(self.data_provider)),
+            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles) if llm_manager else NewsSentimentAnalyzer(self.data_provider, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles)),
+            'business_model': (AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider, llm_manager) if llm_manager else BusinessModelAnalyzer(self.data_provider)),
             'competitive_position': (AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider)),
             'management_quality': (AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider)),
             'analyst_consensus': (AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(self.data_provider)),

@@ -177,3 +177,50 @@ class SECEdgarProvider(SECDataProvider):
             
         except Exception as e:
             return {'error': str(e)}
+    
+    def get_segment_revenue_data(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """Extract segment revenue data from SEC filings"""
+        try:
+            facts = self.get_filing_facts(ticker)
+            if not facts or 'facts' not in facts:
+                return None
+            
+            # Extract segment data from XBRL facts
+            us_gaap = facts['facts'].get('us-gaap', {})
+            dei = facts['facts'].get('dei', {})
+            
+            segment_data = {
+                'primary_segments': [],
+                'revenue_diversification': 'Medium',
+                'total_revenue': 0
+            }
+            
+            # Look for segment revenue items
+            segment_keys = [
+                'RevenueFromContractWithCustomerIncludingAssessedTax',
+                'Revenues', 'RevenueFromContractWithCustomer',
+                'SegmentReporting', 'RevenueFromExternalCustomers'
+            ]
+            
+            for key in segment_keys:
+                if key in us_gaap:
+                    units = us_gaap[key].get('units', {})
+                    if 'USD' in units:
+                        recent_data = sorted(units['USD'], key=lambda x: x.get('end', ''), reverse=True)[:3]
+                        if recent_data:
+                            segment_data['total_revenue'] = recent_data[0].get('val', 0)
+                            break
+            
+            # Extract entity name for context
+            entity_name = dei.get('EntityRegistrantName', {}).get('units', {}).get('shares', [{}])[0].get('val', ticker)
+            
+            return {
+                'ticker': ticker,
+                'entity_name': entity_name,
+                'segment_data': segment_data,
+                'data_source': 'SEC EDGAR XBRL'
+            }
+            
+        except Exception as e:
+            print(f"Error extracting segment data for {ticker}: {e}")
+            return None
