@@ -1,0 +1,25 @@
+{
+  "UBER": {
+    "ticker": "UBER",
+    "company_type": "growth_profitable",
+    "financial_metrics": {
+      "market_cap": 170399547392,
+      "sector": "Technology",
+      "industry": "Software - Application",
+      "fund_family": "",
+      "category": "",
+      "quote_type": "EQUITY",
+      "long_name": "Uber Technologies, Inc.",
+      "business_summary": "Uber Technologies, Inc. develops and operates proprietary technology applications in the United States, Canada, Latin America, Europe, the Middle East, Africa, and the Asia Pacific. It operates through three segments: Mobility, Delivery, and Freight. The Mobility segment connects consumers with a range of transportation modalities, such as ridesharing, carsharing, micromobility, rentals, public transit, taxis, and other modalities; and offers riders in a variety of vehicle types, as well as financial partnerships products and advertising services. The Delivery segment allows consumers to search for and discover restaurants to grocery, alcohol, convenience, and other retails, as well as order a meal or other items, and either pick-up at the restaurant or have it delivered; and provides Uber direct, a white-label delivery-as-a-service for retailers and restaurants, as well as advertising services. The Freight segment manages transportation and logistics network, which connects shippers and carriers in digital marketplace, including carriers upfronts, pricing, and shipment booking; and offers on-demand platform to automate logistics end-to-end transactions for small-and medium-sized business to global enterprises. The company was formerly known as Ubercab, Inc. and changed its name to Uber Technologies, Inc. in February 2011. Uber Technologies, Inc. was founded in 2009 and is headquartered in San Francisco, California.",
+      "enterprise_value": 175054520320,
+      "ev_ebitda_multiple": 33.085,
+      "total_revenue": 49609998336,
+      "net_income": 16640000000,
+      "current_revenue": "$49,609,998,336.00",
+      "yearly_revenue_growth": 0.204,
+      "quarterly_revenue_growth": 0,
+      "calculated_annual_growth": 17.963573938467317,
+      "calculated_quarterly_growth": 6.450082997391511
+    }
+  }
+}

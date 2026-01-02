@@ -183,6 +183,7 @@ class DCFEngine:
             'wacc': wacc_data['wacc'],
             'cost_equity': wacc_data['cost_equity'],
             'ev_ebitda_multiple': ticker.info.get('enterpriseToEbitda', self.config.default_ev_ebitda_multiple),
+            'ev_ebitda_multiple_used': terminal_data.get('ev_ebitda_multiple_used', self.config.default_ev_ebitda_multiple),
             'fcf_cagr': fcf_cagr,
             'ebitda_cagr': ebitda_cagr,
             'fcf_future': fcf_future,

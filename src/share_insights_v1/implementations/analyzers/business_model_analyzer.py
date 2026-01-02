@@ -17,7 +17,12 @@ class BusinessModelAnalyzer(IAnalyzer):
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
         self.data_provider = data_provider
         self.llm_manager = llm_manager
-        self.sec_provider = sec_provider
+        # Default to SECEdgarProvider if no SEC provider is provided
+        if sec_provider is None:
+            from ...implementations.data_providers.sec_edgar_provider import SECEdgarProvider
+            self.sec_provider = SECEdgarProvider()
+        else:
+            self.sec_provider = sec_provider
         
         # Industry to business model mappings
         self.industry_business_models = {
@@ -81,6 +86,10 @@ class BusinessModelAnalyzer(IAnalyzer):
             if hasattr(report, 'segment_revenue_data') and report.segment_revenue_data:
                 result['segment_revenue_data'] = report.segment_revenue_data
             
+            # Add complete SEC Edgar data
+            if hasattr(report, 'sec_edgar_data') and report.sec_edgar_data:
+                result['sec_edgar_data'] = report.sec_edgar_data
+            
             print(f"[BM_DEBUG] Returning result for {ticker}: {result.get('business_model_type')}")
             return result
             
@@ -107,10 +116,14 @@ class BusinessModelAnalyzer(IAnalyzer):
         # Determine business model type
         business_model_type = self._classify_business_model(sector, industry, financial_metrics)
         
-        # Analyze revenue streams
-        revenue_stream_analysis = self._analyze_revenue_streams(
-            ticker, business_model_type, financial_metrics
-        )
+        # Analyze revenue streams (SEC Edgar first, then LLM fallback)
+        try:
+            revenue_stream_analysis = self._analyze_revenue_streams(
+                ticker, business_model_type, financial_metrics
+            )
+        except Exception as e:
+            print(f"[BM_DEBUG] Revenue stream analysis failed for {ticker}: {e}")
+            return None
         
         # Assess revenue quality
         revenue_quality = self._assess_revenue_quality(revenue_stream_analysis, financial_metrics)
@@ -121,7 +134,10 @@ class BusinessModelAnalyzer(IAnalyzer):
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
         product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics)
         competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics)
-        segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics)
+        segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics, product_analysis)
+        
+        # Collect SEC Edgar data
+        sec_edgar_data = self._collect_sec_edgar_data(ticker)
         
         # Generate insights (now includes product and competitive insights)
         strengths, risks = self._generate_insights(
@@ -153,6 +169,7 @@ class BusinessModelAnalyzer(IAnalyzer):
         report.product_portfolio = product_analysis
         report.competitive_differentiation = competitive_differentiation
         report.segment_revenue_data = segment_revenue_data
+        report.sec_edgar_data = sec_edgar_data
         
         return report
     
@@ -280,39 +297,216 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
     
     def _analyze_revenue_streams(self, ticker: str, business_model_type: BusinessModelType,
                                financial_metrics: Dict[str, Any]) -> RevenueStreamAnalysis:
-        """Analyze revenue stream characteristics"""
+        """Analyze revenue stream characteristics using SEC Edgar data first, then LLM fallback"""
         
-        # Determine primary revenue stream based on business model
-        primary_stream_mapping = {
-            BusinessModelType.B2B_SAAS: RevenueStreamType.SUBSCRIPTION,
-            BusinessModelType.B2C_SUBSCRIPTION: RevenueStreamType.SUBSCRIPTION,
-            BusinessModelType.MARKETPLACE: RevenueStreamType.TRANSACTION_FEES,
-            BusinessModelType.TRADITIONAL_RETAIL: RevenueStreamType.PRODUCT_SALES,
-            BusinessModelType.MANUFACTURING: RevenueStreamType.PRODUCT_SALES,
-            BusinessModelType.FINANCIAL_SERVICES: RevenueStreamType.INTEREST_INCOME,
-            BusinessModelType.ADVERTISING_BASED: RevenueStreamType.ADVERTISING,
-            BusinessModelType.ASSET_HEAVY: RevenueStreamType.RENTAL_INCOME,
-            BusinessModelType.PLATFORM: RevenueStreamType.MIXED
-        }
+        print(f"[BM_DEBUG] Analyzing revenue streams for {ticker}")
         
-        primary_stream = primary_stream_mapping.get(business_model_type, RevenueStreamType.PRODUCT_SALES)
+        # Try SEC Edgar data first
+        sec_result = self._analyze_revenue_streams_from_sec(ticker)
+        if sec_result:
+            print(f"[BM_DEBUG] Using SEC Edgar revenue stream data for {ticker}")
+            return sec_result
         
-        # Estimate recurring percentage based on business model
-        recurring_percentage = self._estimate_recurring_percentage(business_model_type, financial_metrics)
+        # Fallback to LLM analysis
+        llm_result = self._analyze_revenue_streams_from_llm(ticker, business_model_type, financial_metrics)
+        if llm_result:
+            print(f"[BM_DEBUG] Using LLM revenue stream data for {ticker}")
+            return llm_result
         
-        # Calculate growth consistency from revenue history
-        growth_consistency = self._calculate_growth_consistency(financial_metrics)
-        
+        # Last resort: return default analysis for pre-revenue companies
+        print(f"[BM_DEBUG] Returning default analysis for pre-revenue company {ticker}")
         return RevenueStreamAnalysis(
-            primary_stream=primary_stream,
-            secondary_streams=[],  # Could be enhanced with more detailed analysis
-            recurring_percentage=recurring_percentage,
-            growth_consistency=growth_consistency
+            primary_stream=RevenueStreamType.MIXED,
+            secondary_streams=[],
+            recurring_percentage=0.0,
+            growth_consistency=None
         )
     
-    def _estimate_recurring_percentage(self, business_model_type: BusinessModelType,
+    def _analyze_revenue_streams_from_sec(self, ticker: str) -> Optional[RevenueStreamAnalysis]:
+        """Analyze revenue streams from SEC Edgar XBRL data"""
+        try:
+            if not self.sec_provider:
+                return None
+            
+            facts = self.sec_provider.get_filing_facts(ticker)
+            if not facts or 'facts' not in facts:
+                print(f"[BM_DEBUG] No SEC facts data for {ticker}")
+                return None
+            
+            us_gaap = facts['facts'].get('us-gaap', {})
+            print(f"[BM_DEBUG] SEC XBRL fields available for {ticker}: {len(us_gaap)} total fields")
+            
+            # Generic revenue field detection
+            revenue_keywords = {
+                'revenue': RevenueStreamType.MIXED,
+                'sales': RevenueStreamType.PRODUCT_SALES,
+                'subscription': RevenueStreamType.SUBSCRIPTION,
+                'service': RevenueStreamType.SUBSCRIPTION,
+                'interest': RevenueStreamType.INTEREST_INCOME,
+                'commission': RevenueStreamType.TRANSACTION_FEES,
+                'fee': RevenueStreamType.TRANSACTION_FEES,
+                'advertising': RevenueStreamType.ADVERTISING,
+                'rental': RevenueStreamType.RENTAL_INCOME,
+                'lease': RevenueStreamType.RENTAL_INCOME
+            }
+            
+            # Find all potential revenue fields
+            potential_revenue_fields = []
+            for field_name in us_gaap.keys():
+                field_lower = field_name.lower()
+                # Check if field contains revenue-related keywords
+                if any(keyword in field_lower for keyword in ['revenue', 'sales', 'income']) and \
+                   not any(exclude in field_lower for exclude in ['expense', 'cost', 'loss', 'tax', 'deferred']):
+                    potential_revenue_fields.append(field_name)
+            
+            print(f"[BM_DEBUG] Potential revenue fields for {ticker}: {potential_revenue_fields[:10]}")
+            
+            # Find revenue components
+            revenue_components = {}
+            total_revenue = 0
+            
+            for field_name in potential_revenue_fields:
+                units = us_gaap[field_name].get('units', {})
+                if 'USD' in units:
+                    # Get most recent data point
+                    recent_data = sorted(units['USD'], key=lambda x: x.get('end', ''), reverse=True)[:1]
+                    if recent_data and recent_data[0].get('val', 0) > 0:
+                        value = recent_data[0]['val']
+                        
+                        # Classify revenue stream type based on field name
+                        stream_type = RevenueStreamType.MIXED  # default
+                        field_lower = field_name.lower()
+                        for keyword, rev_type in revenue_keywords.items():
+                            if keyword in field_lower:
+                                stream_type = rev_type
+                                break
+                        
+                        revenue_components[stream_type] = revenue_components.get(stream_type, 0) + value
+                        total_revenue += value
+                        print(f"[BM_DEBUG] Found {field_name}: ${value:,.0f} -> {stream_type.value}")
+            
+            if not revenue_components:
+                print(f"[BM_DEBUG] No revenue components found in SEC data for {ticker}")
+                # Check if this is a pre-revenue company by looking at available fields
+                all_fields = list(us_gaap.keys())
+                print(f"[BM_DEBUG] Available XBRL fields: {all_fields[:5]}...")
+                return None
+            
+            # Determine primary stream (largest component)
+            primary_stream = max(revenue_components.items(), key=lambda x: x[1])[0]
+            secondary_streams = [stream for stream in revenue_components.keys() if stream != primary_stream]
+            
+            # Calculate recurring percentage based on stream types
+            recurring_percentage = self._calculate_recurring_from_streams(revenue_components, total_revenue)
+            
+            print(f"[BM_DEBUG] SEC revenue analysis for {ticker}: Primary={primary_stream.value}, Components={len(revenue_components)}, Total=${total_revenue:,.0f}, Recurring={recurring_percentage:.2f}")
+            
+            return RevenueStreamAnalysis(
+                primary_stream=primary_stream,
+                secondary_streams=secondary_streams,
+                recurring_percentage=recurring_percentage,
+                growth_consistency=None  # Would need historical data
+            )
+            
+        except Exception as e:
+            print(f"[BM_DEBUG] SEC revenue stream analysis failed for {ticker}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def _analyze_revenue_streams_from_llm(self, ticker: str, business_model_type: BusinessModelType, 
+                                        financial_metrics: Dict[str, Any]) -> Optional[RevenueStreamAnalysis]:
+        """Analyze revenue streams using LLM"""
+        try:
+            llm_manager = self.llm_manager or LLMManager()
+            
+            company_name = financial_metrics.get('long_name', ticker)
+            sector = financial_metrics.get('sector', '')
+            industry = financial_metrics.get('industry', '')
+            total_revenue = financial_metrics.get('total_revenue', 0)
+            
+            prompt = f"""
+Analyze revenue streams for {company_name} ({ticker}) and respond with JSON:
+
+Company: {company_name}
+Sector: {sector}
+Industry: {industry}
+Business Model: {business_model_type.value}
+Total Revenue: ${total_revenue:,.0f}
+
+Revenue Stream Types:
+- SUBSCRIPTION: Recurring subscription/SaaS revenue
+- PRODUCT_SALES: One-time product sales
+- TRANSACTION_FEES: Marketplace/platform fees
+- INTEREST_INCOME: Financial services interest
+- ADVERTISING: Ad-based revenue
+- RENTAL_INCOME: Asset rental/leasing
+- MIXED: Multiple significant streams
+
+Respond with JSON:
+{{
+    "primary_stream": "SUBSCRIPTION",
+    "secondary_streams": ["PRODUCT_SALES"],
+    "recurring_percentage": 0.75,
+    "revenue_breakdown": {{
+        "subscription_revenue": 75.0,
+        "product_sales": 25.0
+    }}
+}}
+"""
+            
+            response = llm_manager.generate_response(prompt)
+            json_str = self._extract_json_from_response(response)
+            
+            if json_str:
+                import json
+                result = json.loads(json_str)
+                
+                # Map string to enum
+                primary_stream = RevenueStreamType(result['primary_stream'])
+                secondary_streams = [RevenueStreamType(s) for s in result.get('secondary_streams', [])]
+                
+                print(f"[BM_DEBUG] LLM revenue streams: Primary={primary_stream.value}, Recurring={result.get('recurring_percentage', 0):.2f}")
+                
+                return RevenueStreamAnalysis(
+                    primary_stream=primary_stream,
+                    secondary_streams=secondary_streams,
+                    recurring_percentage=result.get('recurring_percentage', 0.5),
+                    growth_consistency=self._calculate_growth_consistency(financial_metrics)
+                )
+            
+            return None
+            
+        except Exception as e:
+            print(f"[BM_DEBUG] LLM revenue stream analysis failed: {e}")
+            return None
+    
+    def _calculate_recurring_from_streams(self, revenue_components: Dict, total_revenue: float) -> float:
+        """Calculate recurring percentage based on revenue stream composition"""
+        if total_revenue <= 0:
+            return 0.0
+        
+        # Recurring revenue weights by stream type
+        recurring_weights = {
+            RevenueStreamType.SUBSCRIPTION: 0.95,
+            RevenueStreamType.INTEREST_INCOME: 0.80,
+            RevenueStreamType.RENTAL_INCOME: 0.85,
+            RevenueStreamType.TRANSACTION_FEES: 0.60,
+            RevenueStreamType.ADVERTISING: 0.40,
+            RevenueStreamType.PRODUCT_SALES: 0.20,
+            RevenueStreamType.MIXED: 0.50
+        }
+        
+        weighted_recurring = 0
+        for stream_type, amount in revenue_components.items():
+            weight = recurring_weights.get(stream_type, 0.30)
+            weighted_recurring += (amount / total_revenue) * weight
+        
+        return min(weighted_recurring, 1.0)
+    
+    def _estimate_recurring_percentage_hardcoded(self, business_model_type: BusinessModelType,
                                      financial_metrics: Dict[str, Any]) -> Optional[float]:
-        """Estimate percentage of recurring revenue"""
+        """LEGACY: Estimate percentage of recurring revenue (kept for future use)"""
         
         # Business model-based estimates
         recurring_estimates = {
@@ -365,7 +559,7 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
         factors = 0
         
         # Recurring revenue factor
-        if revenue_analysis.recurring_percentage:
+        if revenue_analysis.recurring_percentage is not None:
             if revenue_analysis.recurring_percentage > 0.7:
                 score += 2
             elif revenue_analysis.recurring_percentage > 0.4:
@@ -373,7 +567,7 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
             factors += 1
         
         # Growth consistency factor
-        if revenue_analysis.growth_consistency:
+        if revenue_analysis.growth_consistency is not None:
             if revenue_analysis.growth_consistency < 0.3:
                 score += 2
             elif revenue_analysis.growth_consistency < 0.6:
@@ -422,29 +616,61 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
         return metrics
     
     def _analyze_product_portfolio(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze product portfolio breadth, depth, and innovation"""
+        """Analyze product portfolio using SEC filing data + LLM analysis"""
         try:
+            # First, try to get SEC business description
+            sec_business_data = None
+            if self.sec_provider:
+                try:
+                    sec_business_data = self.sec_provider.get_business_description(ticker)
+                    print(f"[BM_DEBUG] SEC business data for {ticker}: {'Found' if sec_business_data else 'Not found'}")
+                except Exception as e:
+                    print(f"[BM_DEBUG] SEC business data error for {ticker}: {e}")
+            
             # Use injected LLM manager if available, otherwise create new one
             llm_manager = self.llm_manager or LLMManager()
             
             company_name = financial_metrics.get('long_name', ticker)
             sector = company_info.get('sector', '')
             industry = company_info.get('industry', '')
-            business_summary = financial_metrics.get('business_summary', '')
             
-            print(f"[BM_DEBUG] Product analysis for {ticker}: {company_name}, sector={sector}, industry={industry}")
-            
-            prompt = f"""
+            # Build prompt with SEC data if available
+            if sec_business_data and sec_business_data.get('business_description'):
+                business_context = sec_business_data['business_description']
+                filing_date = sec_business_data.get('filing_date', 'Unknown')
+                
+                prompt = f"""
+Analyze {company_name} ({ticker}) product portfolio using official SEC filing data:
+
+SEC 10-K Business Description (Filed: {filing_date}):
+{business_context}
+
+Company: {company_name}
+Sector: {sector}
+Industry: {industry}
+
+Based on the official SEC filing above, analyze the product portfolio and respond with ONLY valid JSON:
+{{
+    "product_breadth": "Narrow/Moderate/Broad",
+    "product_depth": "Shallow/Moderate/Deep", 
+    "core_products": ["Specific Product 1", "Specific Product 2", "Specific Product 3"],
+    "innovation_level": "Low/Moderate/High",
+    "cross_selling_potential": "Low/Moderate/High",
+    "product_strengths": ["Strength 1", "Strength 2"],
+    "product_weaknesses": ["Weakness 1", "Weakness 2"],
+    "data_source": "SEC Filing + LLM Analysis"
+}}
+"""
+            else:
+                # Fallback to general analysis if no SEC data
+                prompt = f"""
 Analyze {company_name} ({ticker}) product portfolio:
 
 Company: {company_name}
 Sector: {sector}
 Industry: {industry}
 
-For UBER: Focus on ride-sharing, delivery, freight
-For COCA-COLA: Focus on beverages, brands, geographic reach
-For TESLA: Focus on vehicles, energy, software
-For NVIDIA: Focus on GPUs, AI chips, software platforms
+Note: SEC filing data not available, using general industry knowledge.
 
 Respond with ONLY valid JSON:
 {{
@@ -454,7 +680,8 @@ Respond with ONLY valid JSON:
     "innovation_level": "Low/Moderate/High",
     "cross_selling_potential": "Low/Moderate/High",
     "product_strengths": ["Strength 1", "Strength 2"],
-    "product_weaknesses": ["Weakness 1", "Weakness 2"]
+    "product_weaknesses": ["Weakness 1", "Weakness 2"],
+    "data_source": "LLM Analysis Only"
 }}
 """
             
@@ -489,7 +716,7 @@ Respond with ONLY valid JSON:
             prompt = f"""
 Analyze competitive differentiation for {company_name} ({ticker}) in the {industry} industry.
 
-Core Products: {', '.join(core_products[:3])}
+Core Products: {', '.join(core_products)}
 Sector: {sector}
 
 Analyze competitive positioning and respond with JSON:
@@ -516,25 +743,58 @@ Analyze competitive positioning and respond with JSON:
             return self._get_fallback_competitive_analysis(industry)
     
     def _extract_json_from_response(self, response: str) -> str:
-        """Extract JSON from LLM response"""
+        """Extract JSON from LLM response with robust error handling"""
         import re
         import json
+        
+        print(f"[BM_DEBUG] Raw LLM response: {response[:200]}...")
         
         # Try to find JSON in markdown code blocks
         json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
         if json_match:
-            return json_match.group(1).strip()
+            json_str = json_match.group(1).strip()
+            try:
+                json.loads(json_str)  # Validate
+                return json_str
+            except json.JSONDecodeError as e:
+                print(f"[BM_DEBUG] Invalid JSON in code block: {e}")
         
         # Try to find JSON object in the text
         json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
         if json_match:
+            json_str = json_match.group(0)
             try:
-                # Validate it's proper JSON
-                json.loads(json_match.group(0))
-                return json_match.group(0)
-            except:
-                pass
+                json.loads(json_str)  # Validate
+                return json_str
+            except json.JSONDecodeError as e:
+                print(f"[BM_DEBUG] Invalid JSON object: {e}")
         
+        # Try to extract and fix common JSON issues
+        lines = response.split('\n')
+        json_lines = []
+        in_json = False
+        
+        for line in lines:
+            if '{' in line and not in_json:
+                in_json = True
+            if in_json:
+                json_lines.append(line)
+            if '}' in line and in_json:
+                break
+        
+        if json_lines:
+            json_str = '\n'.join(json_lines)
+            # Fix common issues
+            json_str = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*):([^,}\n]*)', r'"\1":\2', json_str)  # Add quotes to keys
+            json_str = re.sub(r':\s*([a-zA-Z][^,}\n]*)', r': "\1"', json_str)  # Add quotes to string values
+            
+            try:
+                json.loads(json_str)
+                return json_str
+            except json.JSONDecodeError as e:
+                print(f"[BM_DEBUG] Failed to fix JSON: {e}")
+        
+        print(f"[BM_DEBUG] No valid JSON found in response")
         return None
     
     def _get_fallback_product_analysis(self, sector: str, industry: str) -> Dict[str, Any]:
@@ -581,15 +841,21 @@ Analyze competitive positioning and respond with JSON:
             "competitive_threats": ["New entrants", "Technology disruption"]
         }
     
-    def _extract_segment_revenue_data(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_segment_revenue_data(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], product_analysis: Dict[str, Any] = None) -> Dict[str, Any]:
         """Extract segment revenue breakdown and growth trends"""
         # Try SEC data first if provider is available
         if self.sec_provider:
             try:
                 sec_data = self.sec_provider.get_segment_revenue_data(ticker)
                 if sec_data and sec_data.get('segment_data'):
-                    print(f"[BM_DEBUG] Using SEC segment data for {ticker}")
-                    return self._process_sec_segment_data(sec_data['segment_data'])
+                    processed_data = self._process_sec_segment_data(sec_data['segment_data'])
+                    if processed_data:
+                        print(f"[BM_DEBUG] Using SEC segment data for {ticker}")
+                        return processed_data
+                    else:
+                        print(f"[BM_DEBUG] SEC data not segment-specific for {ticker}, using LLM")
+                else:
+                    print(f"[BM_DEBUG] No SEC segment data for {ticker}, using LLM")
             except Exception as e:
                 print(f"[BM_DEBUG] SEC segment data failed for {ticker}: {e}")
         
@@ -642,36 +908,122 @@ Respond with JSON containing segment breakdown:
                 print(f"[BM_DEBUG] Segment revenue data for {ticker}: {result}")
                 return result
             else:
-                return self._get_fallback_segment_data(sector, industry)
+                return self._get_fallback_segment_data(sector, industry, product_analysis)
                 
         except Exception as e:
             print(f"[BM_DEBUG] Error extracting segment data for {ticker}: {e}")
-            return self._get_fallback_segment_data(sector, industry)
+            return self._get_fallback_segment_data(sector, industry, product_analysis)
     
-    def _process_sec_segment_data(self, sec_segment_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process SEC segment data into standardized format"""
-        total_revenue = sec_segment_data.get('total_revenue', 0)
-        
-        # Basic processing - would need more sophisticated parsing for real segment data
-        return {
-            "primary_segments": [
-                {
-                    "segment_name": "Primary Business",
-                    "revenue_percentage": 100.0,
-                    "growth_trend": "Stable",
-                    "margin_profile": "Medium"
-                }
-            ],
-            "revenue_diversification": "Low",
-            "fastest_growing_segment": "Primary Business",
-            "largest_segment": "Primary Business",
-            "segment_risks": ["Regulatory changes", "Market competition"],
-            "cross_segment_synergies": ["Operational efficiency"],
-            "data_source": "SEC Filing"
+    def _collect_sec_edgar_data(self, ticker: str) -> Dict[str, Any]:
+        """Collect complete SEC Edgar data for the ticker"""
+        sec_data = {
+            'ticker': ticker,
+            'data_available': False
         }
+        
+        if not self.sec_provider:
+            sec_data['error'] = 'SEC provider not available'
+            return sec_data
+        
+        try:
+            # Get CIK
+            cik = self.sec_provider._get_cik(ticker)
+            if cik:
+                sec_data['cik'] = cik
+                sec_data['data_available'] = True
+            
+            # Get filing facts - summary only
+            facts = self.sec_provider.get_filing_facts(ticker)
+            if facts:
+                sec_data['filing_facts'] = {
+                    'total_xbrl_fields': len(facts.get('facts', {}).get('us-gaap', {})),
+                    'entity_name': facts.get('entityName'),
+                    'cik': facts.get('cik')
+                }
+                
+                # Count segment-related fields only
+                us_gaap = facts.get('facts', {}).get('us-gaap', {})
+                segment_field_count = 0
+                for field_name in us_gaap.keys():
+                    if any(keyword in field_name.lower() for keyword in ['segment', 'reportable', 'product', 'geographic']):
+                        segment_field_count += 1
+                
+                sec_data['segment_fields_count'] = segment_field_count
+            
+            # Get latest 10-K
+            filing_10k = self.sec_provider.get_latest_10k(ticker)
+            if filing_10k:
+                sec_data['latest_10k'] = filing_10k
+            
+            # Get business description - summary only
+            business_desc = self.sec_provider.get_business_description(ticker)
+            if business_desc:
+                sec_data['business_description'] = {
+                    'filing_date': business_desc.get('filing_date'),
+                    'description_length': len(business_desc.get('business_description', '')),
+                    'data_source': business_desc.get('data_source')
+                }
+            
+            # Get segment revenue data - summary only
+            segment_data = self.sec_provider.get_segment_revenue_data(ticker)
+            if segment_data:
+                sec_data['segment_data'] = segment_data
+            
+            # Get management data
+            mgmt_data = self.sec_provider.get_management_data(ticker)
+            if mgmt_data and 'error' not in mgmt_data:
+                sec_data['management_data'] = mgmt_data
+            
+        except Exception as e:
+            sec_data['error'] = str(e)
+        
+        return sec_data
     
-    def _get_fallback_segment_data(self, sector: str, industry: str) -> Dict[str, Any]:
-        """Fallback segment data when LLM fails"""
+    def _process_sec_segment_data(self, sec_segment_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Process SEC segment data into standardized format"""
+        segments = sec_segment_data.get('primary_segments', [])
+        
+        # Only use SEC data if it has actual segment breakdown (not just "Total Company")
+        if segments and len(segments) > 1:
+            return sec_segment_data
+        elif segments and len(segments) == 1 and segments[0].get('segment_name') != 'Total Company':
+            return sec_segment_data
+        
+        # Return None to trigger LLM fallback for company-level data
+        return None
+    
+    def _get_fallback_segment_data(self, sector: str, industry: str, product_analysis: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Fallback segment data using LLM product analysis when available"""
+        
+        # Use core products from LLM analysis if available
+        if product_analysis and product_analysis.get('core_products'):
+            core_products = product_analysis['core_products']
+            segments = []
+            
+            # Distribute revenue across core products
+            revenue_per_segment = 100.0 / len(core_products)
+            
+            for i, product in enumerate(core_products):
+                # Clean up product name
+                segment_name = product.replace("Repay's ", "").replace("Uber ", "")
+                
+                segments.append({
+                    "segment_name": segment_name,
+                    "revenue_percentage": round(revenue_per_segment, 1),
+                    "growth_trend": "Growing" if i == 0 else "Stable",
+                    "margin_profile": "High" if i == 0 else "Medium"
+                })
+            
+            return {
+                "primary_segments": segments,
+                "revenue_diversification": "Medium" if len(segments) > 2 else "Low",
+                "fastest_growing_segment": segments[0]["segment_name"] if segments else "Unknown",
+                "largest_segment": segments[0]["segment_name"] if segments else "Unknown",
+                "segment_risks": ["Market competition", "Technology disruption"],
+                "cross_segment_synergies": ["Platform integration", "Customer base sharing"]
+            }
+        
+        # Original fallback logic
         if 'Technology' in sector:
             return {
                 "primary_segments": [
@@ -707,15 +1059,15 @@ Respond with JSON containing segment breakdown:
         risks = []
         
         # Recurring revenue strengths/risks
-        if revenue_analysis.recurring_percentage and revenue_analysis.recurring_percentage > 0.6:
+        if revenue_analysis.recurring_percentage is not None and revenue_analysis.recurring_percentage > 0.6:
             strengths.append("High recurring revenue provides predictable cash flows")
-        elif revenue_analysis.recurring_percentage and revenue_analysis.recurring_percentage < 0.3:
+        elif revenue_analysis.recurring_percentage is not None and revenue_analysis.recurring_percentage < 0.3:
             risks.append("Low recurring revenue creates earnings volatility")
         
         # Growth consistency
-        if revenue_analysis.growth_consistency and revenue_analysis.growth_consistency < 0.4:
+        if revenue_analysis.growth_consistency is not None and revenue_analysis.growth_consistency < 0.4:
             strengths.append("Consistent revenue growth pattern")
-        elif revenue_analysis.growth_consistency and revenue_analysis.growth_consistency > 0.8:
+        elif revenue_analysis.growth_consistency is not None and revenue_analysis.growth_consistency > 0.8:
             risks.append("Volatile revenue growth pattern")
         
         # Business model specific insights
@@ -827,7 +1179,7 @@ Respond with JSON containing segment breakdown:
         # Adjust based on metrics
         if key_metrics.get('profit_margin', 0) > 0.2:
             base_score += 0.5
-        if revenue_analysis.recurring_percentage and revenue_analysis.recurring_percentage > 0.7:
+        if revenue_analysis.recurring_percentage is not None and revenue_analysis.recurring_percentage > 0.7:
             base_score += 0.5
         
         return min(base_score, 10.0)

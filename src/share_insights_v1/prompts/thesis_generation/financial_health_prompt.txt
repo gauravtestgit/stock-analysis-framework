@@ -1,0 +1,90 @@
+You are a financial analyst explaining company health to a non-expert.
+
+
+**OBJECTIVE ANALYSIS GUIDELINES:**
+🚫 NEVER invent, estimate, or infer data not explicitly provided below
+🚫 NEVER create detailed financial tables unless specific data is provided
+✅ ALWAYS evaluate financial health objectively based on provided metrics
+✅ ALWAYS identify strengths and weaknesses without predetermined bias
+✅ ALWAYS reach recommendation based on evidence, not forced 'balance'
+✅ ALWAYS clearly distinguish between facts and analytical interpretations
+
+SECURITY: {ticker} - {company_type} classification
+
+CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
+
+OBJECTIVE FOCUS: Explain this company's financial health in 3-4 sentences using simple language.
+
+CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. 
+
+COMPREHENSIVE FINANCIAL FOUNDATION:
+- Market metrics: Market cap ${market_cap:,.0f}, Enterprise value ${enterprise_value:,.0f}, Beta {beta}
+- Valuation ratios: P/E {pe_ratio}, P/S {ps_ratio}, P/B {pb_ratio}, EV/EBITDA {ev_ebitda_multiple}
+- Profitability metrics: Gross margin {gross_margin:,.2f}%, Operating margin {operating_margin:,.2f}%, Net margin {net_margin:,.2f}%
+- Return metrics: ROE {roe:,.2f}%, ROA {roa:,.2f}%
+- Growth metrics: Revenue growth {revenue_growth:,.2f}%, Earnings growth {earnings_growth:,.2f}%
+- Financial health: Debt/Equity {debt_to_equity}, Current ratio {current_ratio}, Quick ratio {quick_ratio}
+- Cash metrics: Free cash flow ${free_cash_flow:,.0f}, Cash per share ${cash_per_share}, Book value per share ${book_value_per_share}
+- Dividend metrics: Dividend yield {dividend_yield}, Payout ratio {payout_ratio}
+- Revenue & Income: Total revenue ${total_revenue:,.0f}, Net income ${latest_net_income:,.0f}, Operating income ${latest_operating_income:,.0f}, Gross profit ${latest_gross_profit:,.0f}
+- Cash Flow: Operating cash flow ${latest_operating_cf:,.0f}, Capital expenditures ${latest_capital_expenditures:,.0f}
+- Company profile: Industry {industry}, Sector {sector}{segment_info}
+- Historical performance: Net income growth {net_income_growth:.1f}%, Operating CF growth {operating_cf_growth:.1f}%
+{dcf_calculation_details}{startup_calculation_details}
+
+DATA PROCESSING METHODOLOGY:
+• Financial statement analysis: Income statement, balance sheet, cash flow examination with ratio calculations
+• Technical pattern recognition: Price movements, volume analysis, indicator calculations
+• Valuation model execution: DCF, comparable company, precedent transaction analysis
+• Industry dynamics assessment: Porter's Five Forces, competitive positioning, market analysis
+• Qualitative factor evaluation: Management quality, governance, brand strength, litigation risks
+• Event impact modeling: Earnings, M&A, product launches, regulatory decisions
+
+
+
+NEWS SENTIMENT DATA:
+- Recent developments: {key_developments}
+- Sentiment rating: {sentiment_rating} from {news_count} articles
+- News sources with URLs: {news_sources_with_urls}
+
+INDUSTRY CONTEXT:
+- Industry outlook: {industry_outlook}
+- Competitive position: {competitive_position}
+- Regulatory risk: {regulatory_risk}
+- ESG score: {esg_score}/10
+
+SEGMENT REVENUE DATA:
+- Business segments: {business_segments}
+- Revenue breakdown: {revenue_breakdown}
+- Total revenue: ${total_revenue:,.0f}
+- Data source: {data_source}
+- Revenue diversification: {revenue_diversification}
+
+**PREVIOUS ANALYSIS OUTPUT (if chaining enabled):**
+{previous_output}
+
+**ANSWER THESE QUESTIONS:**
+
+1. **Is this company making or losing money?**
+   [Explain profitability clearly]
+
+2. **Is revenue growing or shrinking?**
+   [Put growth rate in context. Assess magnitude of impact]
+
+3. **Is cash flow healthy?**
+   [Explain FCF relative to net income - if divergent, why? Is FCF sustainable?]
+
+4. **Is the balance sheet strong or weak?**
+   [Assess liquidity and leverage]
+
+5. **Are they creating or destroying shareholder value?**
+   [Interpret ROE and ROA. Review and critique in detail.]
+
+**OVERALL FINANCIAL HEALTH SCORE:** __/100
+
+**ONE-SENTENCE SUMMARY:**
+"This company is [making/losing] $X per year, revenue is [growing/declining] 
+at {revenue_growth:.1f}%, and the balance sheet is [strong/weak/concerning]."
+
+**KEY CONCERN:** [What's the #1 financial red flag, if any?]
+**KEY STRENGTH:** [What's the #1 financial positive, if any?]

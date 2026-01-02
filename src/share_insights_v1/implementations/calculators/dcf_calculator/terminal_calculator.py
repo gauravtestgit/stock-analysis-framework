@@ -24,7 +24,8 @@ class TerminalCalculator:
         return {
             'terminal_value_pg': perpetuity_value,
             'terminal_value_ebitda_multiple': multiple_value,
-            'average_terminal_value': average_value
+            'average_terminal_value': average_value,
+            'ev_ebitda_multiple_used': self._get_ebitda_multiple_used(ticker)
         }
     
     def apply_terminal_caps(self, terminal_value: float, pv_fcf: float) -> Dict:
@@ -85,13 +86,21 @@ class TerminalCalculator:
         debug_print(f"Terminal Value Perpetuity Growth: ${terminal_value_pg:,.0f}")
         return terminal_value_pg
     
-    def _ebitda_multiple_method(self, ticker, ebitda_future: float) -> float:
-        """Calculate terminal value using EBITDA multiple"""
+    def _get_ebitda_multiple_used(self, ticker) -> float:
+        """Get the actual EV/EBITDA multiple used in calculations"""
         ev_ebitda_multiple = ticker.info.get('enterpriseToEbitda', self.config.default_ev_ebitda_multiple)
         
         if ev_ebitda_multiple is None or ev_ebitda_multiple <= 0 or ev_ebitda_multiple > 25:
-            debug_print(f"Warning: Invalid EV/EBITDA multiple {ev_ebitda_multiple}x, using default of {self.config.default_ev_ebitda_multiple}x")
-            ev_ebitda_multiple = self.config.default_ev_ebitda_multiple
+            return self.config.default_ev_ebitda_multiple
+        else:
+            return ev_ebitda_multiple
+    
+    def _ebitda_multiple_method(self, ticker, ebitda_future: float) -> float:
+        """Calculate terminal value using EBITDA multiple"""
+        ev_ebitda_multiple = self._get_ebitda_multiple_used(ticker)
+        
+        if ev_ebitda_multiple == self.config.default_ev_ebitda_multiple:
+            debug_print(f"Warning: Using default EV/EBITDA multiple {ev_ebitda_multiple}x")
         else:
             debug_print(f'using retrieved EV/EBITDA multiple: {ev_ebitda_multiple}x')
         

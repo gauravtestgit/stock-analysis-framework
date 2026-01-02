@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
 from src.share_insights_v1.services.database.database_service import DatabaseService
 from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
+from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
 import yaml
 
 def load_llm_config():
@@ -120,7 +121,7 @@ def show_thesis_generation():
     ]
     
     # Analysis mode selection
-    analysis_mode = st.radio("Analysis Mode:", ["Single Stock", "Watchlist Batch"])
+    analysis_mode = st.radio("Analysis Mode:", ["Watchlist Batch", "Single Stock"])
     
     if analysis_mode == "Single Stock":
         # Stock input
@@ -188,7 +189,7 @@ def show_thesis_generation():
                 "Max News Articles (Batch)",
                 min_value=1,
                 max_value=20,
-                value=3,
+                value=7,
                 help="Number of news articles per stock for batch analysis"
             )
         
@@ -216,6 +217,13 @@ def show_thesis_generation():
             else:
                 st.error("Please select at least one analyzer")
     
+    # Get available thesis types dynamically (outside conditional blocks)
+    prompt_loader = ThesisPromptLoader()
+    available_prompts = prompt_loader.list_available_prompts()
+    
+    # Convert prompt types to display names dynamically
+    thesis_options = [prompt.replace('_', ' ').title() for prompt in available_prompts]
+    
     # Display analysis data if loaded
     if 'thesis_analysis_data' in st.session_state and 'thesis_ticker' in st.session_state:
         display_detailed_results(st.session_state.thesis_ticker, st.session_state.thesis_analysis_data)
@@ -224,11 +232,15 @@ def show_thesis_generation():
         st.markdown("---")
         st.subheader("🎯 Generate Investment Thesis")
         
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([2, 2, 1])
         with col1:
-            thesis_type = st.selectbox("Thesis Type:", ["Balanced", "Bull Case", "Bear Case"])
+            thesis_type = st.selectbox("Thesis Type:", thesis_options)
         with col2:
+            prompt_chaining = st.checkbox("Prompt Chaining", help="Use output from previous prompt as input to next prompt")
+        with col3:
             generate_button = st.button("🚀 Generate Thesis", type="primary")
+            if st.button("🔄 Refresh Prompts"):
+                st.rerun()
         
         # Handle thesis generation
         if generate_button:
@@ -241,13 +253,40 @@ def show_thesis_generation():
                 st.info(f"Generating thesis using analysis from: {latest_analysis_data.get('timestamp', 'Unknown time')}")
                 st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
                 
-                generate_investment_thesis(
-                    latest_ticker, 
-                    latest_analysis_data, 
-                    thesis_type,
-                    st.session_state.thesis_llm_manager,
-                    show_prompt=True
-                )
+                # Convert display name back to prompt type dynamically
+                prompt_type = thesis_type.lower().replace(' ', '_')
+                
+                st.info(f"🔍 DEBUG: thesis_type='{thesis_type}', prompt_type='{prompt_type}'")
+                
+                # Handle prompt chaining
+                if prompt_chaining:
+                    # Store previous output for chaining
+                    previous_output = st.session_state.get('previous_prompt_output', '')
+                    
+                    # Generate thesis with chaining
+                    thesis_response = generate_investment_thesis(
+                        latest_ticker, 
+                        latest_analysis_data, 
+                        thesis_type,
+                        st.session_state.thesis_llm_manager,
+                        show_prompt=True,
+                        return_response=True,
+                        previous_output=previous_output
+                    )
+                    
+                    # Store output for next chain
+                    if thesis_response:
+                        st.session_state.previous_prompt_output = thesis_response
+                        st.success(f"✅ Thesis generated and stored for chaining ({len(thesis_response)} characters)")
+                else:
+                    # Regular generation without chaining
+                    generate_investment_thesis(
+                        latest_ticker, 
+                        latest_analysis_data, 
+                        thesis_type,
+                        st.session_state.thesis_llm_manager,
+                        show_prompt=True
+                    )
     
     # Display persisted batch results if available
     if 'batch_results' in st.session_state and 'batch_timing' in st.session_state:
@@ -261,7 +300,7 @@ def show_thesis_generation():
             st.markdown("---")
             st.subheader("🎯 Generate Thesis from Batch Results")
             
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
             with col1:
                 selected_stock = st.selectbox(
                     "Select Stock:",
@@ -271,10 +310,12 @@ def show_thesis_generation():
             with col2:
                 batch_thesis_type = st.selectbox(
                     "Thesis Type:", 
-                    ["Balanced", "Bull Case", "Bear Case"],
+                    thesis_options,
                     key="batch_thesis_type_selector"
                 )
             with col3:
+                batch_prompt_chaining = st.checkbox("Prompt Chaining", help="Use output from previous prompt as input to next prompt", key="batch_prompt_chaining")
+            with col4:
                 generate_thesis_button = st.button("🚀 Generate Thesis", key="batch_thesis_generate")
             
             # Handle batch thesis generation
@@ -284,13 +325,29 @@ def show_thesis_generation():
                 elif selected_stock and selected_stock in successful_stocks:
                     st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
                     
-                    generate_investment_thesis(
-                        selected_stock,
-                        successful_stocks[selected_stock],
-                        batch_thesis_type,
-                        st.session_state.thesis_llm_manager,
-                        show_prompt=True
-                    )
+                    # Handle prompt chaining for batch
+                    if batch_prompt_chaining:
+                        previous_output = st.session_state.get('previous_prompt_output', '')
+                        thesis_response = generate_investment_thesis(
+                            selected_stock,
+                            successful_stocks[selected_stock],
+                            batch_thesis_type,
+                            st.session_state.thesis_llm_manager,
+                            show_prompt=True,
+                            return_response=True,
+                            previous_output=previous_output
+                        )
+                        if thesis_response:
+                            st.session_state.previous_prompt_output = thesis_response
+                            st.success(f"✅ Thesis generated and stored for chaining ({len(thesis_response)} characters)")
+                    else:
+                        generate_investment_thesis(
+                            selected_stock,
+                            successful_stocks[selected_stock],
+                            batch_thesis_type,
+                            st.session_state.thesis_llm_manager,
+                            show_prompt=True
+                        )
 
 def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None, max_news_articles=5):
     """Analyze all stocks in watchlist with selected analyzers in parallel"""
@@ -1588,9 +1645,9 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
     
     st.components.v1.html(scrollable_row, height=320)
 
-def generate_investment_thesis(ticker, analysis_data, thesis_type, llm_manager=None, show_prompt=False):
+def generate_investment_thesis(ticker, analysis_data, thesis_type, llm_manager=None, show_prompt=False, return_response=False, previous_output=""):
     """Generate investment thesis based on analysis data"""
-    
+    print(f"[GEN-INV-THESIS]: Return Response: {return_response}")
     with st.spinner(f"Generating {thesis_type.lower()} thesis for {ticker}..."):
         try:
             # Extract key data points
@@ -1601,23 +1658,34 @@ def generate_investment_thesis(ticker, analysis_data, thesis_type, llm_manager=N
             thesis_components = extract_enhanced_thesis_components(ticker, analysis_data, analyses)
             
             # Generate thesis with unified LLM enhancement
-            thesis, prompt_used = generate_unified_thesis(ticker, thesis_components, thesis_type, llm_manager, return_prompt=True)
+            thesis, prompt_used = generate_unified_thesis(ticker, thesis_components, thesis_type, llm_manager, return_prompt=True, previous_output=previous_output)
             
             # Display prompt if requested
             if show_prompt and prompt_used:
                 display_prompt_used(prompt_used)
             
-            # Display generated thesis
+            # Always display the generated thesis
             display_generated_thesis(ticker, thesis, thesis_type)
+            
+            # Return response if requested (for storage in blind test workflow)
+            print(f"[GEN-INV-THESIS]: Return Response: {return_response}")
+            # print(f"[GEN-INV-THESIS]: Thesis: {thesis}")
+            if return_response:
+                return thesis
             
         except Exception as e:
             st.error(f"Error generating thesis: {str(e)}")
+            if return_response:
+                return None
 
 def extract_enhanced_thesis_components(ticker, analysis_data, analyses):
     """Extract enhanced thesis components with cross-method analysis"""
     
     # Get base components
     components = extract_thesis_components(ticker, analysis_data, analyses)
+    
+    # Add analyses to components for use in thesis generation
+    components['analyses'] = analyses
     
     # Add financial metrics from analysis_data
     components['financial_metrics'] = analysis_data.get('financial_metrics', {})
@@ -1875,18 +1943,25 @@ def extract_thesis_components(ticker, analysis_data, analyses):
             'sentiment_score': news_data.get('overall_sentiment_score', 0),
             'sentiment_rating': news_data.get('sentiment_rating', 'Neutral'),
             'key_developments': news_data.get('key_developments', []),
-            'news_count': news_data.get('news_count', 0)
+            'news_count': news_data.get('news_count', 0),
+            'recent_news': news_data.get('recent_news', [])  # Add recent_news with URLs
         }
     
     return components
 
-def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, return_prompt=False):
-    """Generate unified investment thesis with scenario-specific focus"""
+def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, return_prompt=False, previous_output=""):
+    """Generate unified investment thesis with scenario-specific focus using external prompt templates"""
     
     try:
         # Use provided LLM manager or create new one
         if llm_manager is None:
             llm_manager = LLMManager()
+        
+        # Initialize prompt loader
+        prompt_loader = ThesisPromptLoader()
+        
+        # Extract analyses from components (they should be available there)
+        analyses = components.get('analyses', {})
         
         # Extract current price from analysis data
         current_price = None
@@ -1989,187 +2064,164 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'payout_ratio': financial_metrics.get('payout_ratio', 'N/A'),
             'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
             'price_to_sales_ttm': financial_metrics.get('price_to_sales_ttm', 'N/A'),
-            'price_to_book_mrq': financial_metrics.get('price_to_book_mrq', 'N/A'),            
-            'profit_margin': financial_metrics.get('profit_margin', 'N/A'),
-            'quick_ratio': financial_metrics.get('quick_ratio', 'N/A'),
-            'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
-            'cash_per_share': financial_metrics.get('cash_per_share', 'N/A'),
+            'price_to_book_mrq': financial_metrics.get('price_to_book_mrq', 'N/A'),
             'return_on_assets': financial_metrics.get('return_on_assets', 'N/A'),
             'return_on_equity': financial_metrics.get('return_on_equity', 'N/A')
         }
         
-        # Scenario-specific configurations
-        scenario_configs = {
-            "Bull Case": {
-                "analysis_type": "Bull Case Scenario",
-                "focus_instruction": "Focus on growth opportunities, competitive advantages, and positive catalysts. Emphasize upside potential and favorable scenarios.",
-                "price_expectation": "target price should be significantly above current price",
-                "validation_emphasis": "Bull case must be supported by growth catalysts and competitive advantages"
-            },
-            "Bear Case": {
-                "analysis_type": "Bear Case Scenario", 
-                "focus_instruction": "Focus on risk factors, competitive threats, and negative catalysts. Emphasize downside risks and unfavorable scenarios.",
-                "price_expectation": "explain why current price is overvalued and provide downside price targets",
-                "validation_emphasis": "Bear case must be supported by deteriorating fundamentals and risk factors"
-            },
-            "Balanced": {
-                "analysis_type": "Balanced Investment Analysis",
-                "focus_instruction": "Provide balanced assessment of both opportunities and risks. Present objective analysis with equal weight to positive and negative factors.",
-                "price_expectation": "explain target vs current price relationship and provide balanced recommendation rationale",
-                "validation_emphasis": "Balanced case must reconcile both positive and negative factors with logical recommendation"
-            }
-        }
-        
-        config = scenario_configs[thesis_type]
+        # Convert display name back to prompt type dynamically
+        prompt_type = thesis_type.lower().replace(' ', '_')
         
         # Extract segment revenue data and format for prompt
         segment_data = components.get('segment_revenue_data', {})
         segment_info = ""
         if segment_data and segment_data.get('primary_segments'):
-            segments = segment_data['primary_segments']
-            segment_breakdown = ", ".join([f"{seg['segment_name']}: {seg['revenue_percentage']:.1f}% ({seg['growth_trend']})" for seg in segments[:3]])
-            segment_info = f"\n- Revenue segments: {segment_breakdown}"
-            segment_info += f"\n- Largest segment: {segment_data.get('largest_segment', 'N/A')}"
-            segment_info += f"\n- Fastest growing: {segment_data.get('fastest_growing_segment', 'N/A')}"
-            segment_info += f"\n- Diversification: {segment_data.get('revenue_diversification', 'Medium')}"
+            try:
+                segments = segment_data['primary_segments']
+                segment_breakdown = ", ".join([f"{seg['segment_name']}: {seg['revenue_percentage']:.1f}% ({seg['growth_trend']})" for seg in segments[:3]])
+                segment_info = f"\n- Revenue segments: {segment_breakdown}"
+                segment_info += f"\n- Largest segment: {segment_data.get('largest_segment', 'N/A')}"
+                segment_info += f"\n- Fastest growing: {segment_data.get('fastest_growing_segment', 'N/A')}"
+                segment_info += f"\n- Diversification: {segment_data.get('revenue_diversification', 'Medium')}"
+                
+                # Add operating income data if available
+                if segment_data.get('total_operating_income'):
+                    segment_info += f"\n- Total operating income: ${segment_data['total_operating_income']:,.0f}"
+                    # Calculate operating margin if both revenue and operating income available
+                    total_revenue = segment_data.get('total_revenue', 0)
+                    if total_revenue > 0:
+                        operating_margin = (segment_data['total_operating_income'] / total_revenue) * 100
+                        segment_info += f"\n- Operating margin: {operating_margin:.1f}%"
+            except (ValueError, TypeError, KeyError):
+                segment_info = "\n- Segment data: Formatting error"
         
-        prompt = f"""
-        Generate an AI-generated investment analysis for {ticker}. Use neutral, machine-like language:
+        # Extract DCF calculation details if available
+        dcf_calculation_details = ""
+        if 'dcf' in analyses:
+            dcf_data = analyses['dcf']
+            dcf_calcs = dcf_data.get('dcf_calculations', {})
+            params = dcf_data.get('parameters_used', {})
+            
+            if dcf_calcs:
+                try:
+                    dcf_calculation_details = f"""
         
-        **IMPORTANT DISCLAIMER: This analysis is generated by artificial intelligence and may contain errors, inaccuracies, or outdated information. This content should not be considered professional financial advice. Users should conduct their own research and consult qualified financial advisors before making investment decisions.**
-        
-        SECURITY: {ticker} - {components.get('company_type', 'Unknown')} classification
-        ANALYSIS TYPE: {config['analysis_type']}
-        COMPUTED RECOMMENDATION: {final_rec.get('recommendation', 'Hold')}
-        ALGORITHMIC TARGET PRICE: ${target_price:.2f}
-        CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
-        
-        SCENARIO FOCUS: {config['focus_instruction']}
-        
-        CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. For this scenario, {config['price_expectation']}.
-        
-        COMPREHENSIVE FINANCIAL FOUNDATION:
-        - Market metrics: Market cap ${all_financial_data['market_cap']:,.0f}, Enterprise value ${all_financial_data['enterprise_value']:,.0f}, Beta {all_financial_data['beta']}
-        - Valuation ratios: P/E {all_financial_data['pe_ratio']}, P/S {all_financial_data['ps_ratio']}, P/B {all_financial_data['pb_ratio']}, EV/EBITDA {all_financial_data['ev_ebitda_multiple']}
-        - Profitability metrics: Gross margin {(all_financial_data['gross_margin']*100 if isinstance(all_financial_data['gross_margin'], (int, float)) else 0):.1f}%, Operating margin {(all_financial_data['operating_margin']*100 if isinstance(all_financial_data['operating_margin'], (int, float)) else 0):.1f}%, Net margin {(all_financial_data['net_margin']*100 if isinstance(all_financial_data['net_margin'], (int, float)) else 0):.1f}%, Profit margin {all_financial_data['profit_margin']}
-        - Return metrics: ROE {(all_financial_data['roe']*100 if isinstance(all_financial_data['roe'], (int, float)) else 0):.1f}%, ROA {(all_financial_data['roa']*100 if isinstance(all_financial_data['roa'], (int, float)) else 0):.1f}
-        - Growth metrics: Revenue growth {(all_financial_data['revenue_growth']*100 if isinstance(all_financial_data['revenue_growth'], (int, float)) else 0):.1f}%, Earnings growth {(all_financial_data['earnings_growth']*100 if isinstance(all_financial_data['earnings_growth'], (int, float)) else 0):.1f}%
-        - Financial health: Debt/Equity {all_financial_data['debt_to_equity']}, Current ratio {all_financial_data['current_ratio']}, Quick ratio {all_financial_data['quick_ratio']}
-        - Cash metrics: Free cash flow ${all_financial_data['free_cash_flow']:,.0f}, Cash per share ${all_financial_data['cash_per_share']}, Book value per share ${all_financial_data['book_value_per_share']}
-        - Dividend metrics: Dividend yield {all_financial_data['dividend_yield']}, Payout ratio {all_financial_data['payout_ratio']}
-        - Revenue & Income: Total revenue ${all_financial_data['total_revenue']:,.0f}, Net income ${latest_net_income:,.0f}, Operating income ${latest_operating_income:,.0f}, Gross profit ${latest_gross_profit:,.0f}
-        - Cash Flow: Operating cash flow ${latest_operating_cf:,.0f}, Free cash flow ${all_financial_data['free_cash_flow']:,.0f}, Capital expenditures ${latest_capital_expenditures:,.0f}
-        - Company profile: Industry {all_financial_data['industry']}, Sector {all_financial_data['sector']}{segment_info}
-        - Historical performance: Net income growth {growth_analysis.get('net_income_growth', 0):.1f}%, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%
-        
-        DATA PROCESSING METHODOLOGY:
-        • Financial statement analysis: Income statement, balance sheet, cash flow examination with ratio calculations
-        • Technical pattern recognition: Price movements, volume analysis, indicator calculations
-        • Valuation model execution: DCF, comparable company, precedent transaction analysis
-        • Industry dynamics assessment: Porter's Five Forces, competitive positioning, market analysis
-        • Qualitative factor evaluation: Management quality, governance, brand strength, litigation risks
-        • Event impact modeling: Earnings, M&A, product launches, regulatory decisions
-        
-        CROSS-METHOD VALIDATION RESULTS:
-        - Computed average target: ${cross_analysis.get('average_target', 0):.2f}
-        - Consensus strength: {cross_analysis.get('consensus_strength', 'Medium')}
-        - Method agreement: {cross_analysis.get('method_agreement', 'Mixed')}
-        
-        POSITIVE FACTORS: {', '.join(components['strengths'][:5])}
-        RISK FACTORS: {', '.join(components['risks'][:5])}
-        
-        NEWS SENTIMENT DATA:
-        - Recent developments: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
-        - Sentiment rating: {components['market_sentiment'].get('sentiment_rating', 'Neutral')} from {components['market_sentiment'].get('news_count', 0)} articles
-        - News sources: {', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}..." for article in components['market_sentiment'].get('recent_news', [])[:3]])}
-        
-        INDUSTRY CONTEXT:
-        - Industry outlook: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')}
-        - Competitive position: {components.get('industry_analysis', {}).get('competitive_position', 'Average')}
-        - Regulatory risk: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')}
-        - ESG score: {components.get('industry_analysis', {}).get('esg_score', 5.0)}/10
-        
-        SEGMENT REVENUE DATA:
-        - Business segments: {', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])])}
-        - Revenue breakdown: {', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])])}
-        - Total revenue: ${all_financial_data['total_revenue']:,.0f}
-        - Data source: {components.get('segment_revenue_data', {}).get('data_source', 'N/A')}
-        - Revenue diversification: {components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A')}
-        
-        Generate analysis with these sections (interpret all data through {thesis_type.lower()} lens):
-        
-        **FINANCIAL PERFORMANCE ANALYSIS**
-        Analyze the comprehensive financial data above. For {thesis_type.lower()}, {'emphasize growth momentum and operational excellence' if thesis_type == 'Bull Case' else 'emphasize financial deterioration and stress indicators' if thesis_type == 'Bear Case' else 'provide balanced assessment of financial strengths and weaknesses'}. Explain what the metrics reveal about {'growth trajectory and competitive positioning' if thesis_type == 'Bull Case' else 'financial stress and declining fundamentals' if thesis_type == 'Bear Case' else 'overall financial health and sustainability'}.
-        
-        **ALGORITHMIC ASSESSMENT SUMMARY**
-        - Current market price: {current_price_str}
-        - Target price analysis: Calculate and explain ${target_price:.2f} vs {current_price_str} relationship
-        - {'Computed bullish probability with upside scenarios' if thesis_type == 'Bull Case' else 'Computed bearish probability with downside scenarios' if thesis_type == 'Bear Case' else 'Risk-adjusted probability with balanced scenarios'}
-        - Primary {'value drivers' if thesis_type == 'Bull Case' else 'risk factors' if thesis_type == 'Bear Case' else 'value and risk factors'} with quantified impact
-        
-        **NEWS CATALYST & SENTIMENT ANALYSIS**
-        Analyze the news sentiment data above. For {thesis_type.lower()}, {'focus on positive developments and growth catalysts' if thesis_type == 'Bull Case' else 'focus on negative developments and risk catalysts' if thesis_type == 'Bear Case' else 'provide balanced interpretation of both positive and negative catalysts'}. Reference specific news sources and explain how developments {'support growth thesis' if thesis_type == 'Bull Case' else 'indicate deteriorating prospects' if thesis_type == 'Bear Case' else 'affect balanced investment outlook'}.
-        
-        **COMPREHENSIVE INDUSTRY ANALYSIS**
-        - Industry positioning: Analyze outlook and competitive position data
-        - Porter's Five Forces assessment: Provide scores (1-5) for supplier power, buyer power, competitive rivalry, substitution threats, and barriers to entry
-        - {'Emphasize industry tailwinds and competitive advantages' if thesis_type == 'Bull Case' else 'Emphasize industry headwinds and competitive pressures' if thesis_type == 'Bear Case' else 'Balance industry opportunities and challenges'}
-        - Regulatory and ESG impact: Explain how factors {'support long-term positioning' if thesis_type == 'Bull Case' else 'create additional risks and challenges' if thesis_type == 'Bear Case' else 'affect overall investment attractiveness'}
-        
-        **PRODUCT PORTFOLIO & REVENUE STREAM ANALYSIS**
-        Analyze product portfolio and segment revenue data. For {thesis_type.lower()}, {'emphasize innovation, market positioning strengths, revenue diversification benefits, and competitive moats' if thesis_type == 'Bull Case' else 'emphasize competitive vulnerabilities, revenue concentration risks, market share erosion, and differentiation challenges' if thesis_type == 'Bear Case' else 'provide balanced assessment of competitive positioning strengths, revenue stream sustainability, and portfolio diversification'}. 
-        
-        CRITICAL: Create a detailed revenue breakdown table using the segment revenue data provided above. Show each business segment's actual contribution to total revenue and operating income with specific dollar amounts and percentages.
-        
-        **REVENUE BREAKDOWN BY BUSINESS SEGMENT:**
-        Use the segment revenue data to create a comprehensive table showing:
-        - Each business segment name and actual revenue contribution in dollars (calculate by multiplying percentage by total revenue ${all_financial_data['total_revenue']:,.0f})
-        - Percentage of total revenue for each segment  
-        - Operating margins and profitability by segment
-        - Growth rates and trends for each business line
-        - Total company revenue and aggregate metricscentage by total revenue)
-        - Percentage of total revenue for each segment  
-        - Operating margins and profitability by segment
-        - Growth rates and trends for each business line
-        - Total company revenue and aggregate metrics
-        
-        CRITICAL CALCULATION REQUIREMENT: For each segment, calculate actual revenue dollars by multiplying the segment percentage by total company revenue. Do NOT use the percentage as the dollar amount.
-        
-        For each segment, explain:
-        - Revenue contribution in both dollars and percentage (e.g., Segment A: $X.X billion, XX.X% of total revenue)
-        - Profitability and competitive positioning
-        - {'Growth catalysts and expansion opportunities' if thesis_type == 'Bull Case' else 'Risk factors and competitive threats' if thesis_type == 'Bear Case' else 'Both opportunities and challenges'}
-        - Market share dynamics and competitive moats
-        
-        **REVENUE CONCENTRATION ANALYSIS:**
-        - Analyze revenue diversification vs concentration risks
-        - Identify top revenue sources and dependency levels
-        - Assess cross-selling opportunities between segments
-        - Evaluate {'diversification benefits' if thesis_type == 'Bull Case' else 'concentration risks' if thesis_type == 'Bear Case' else 'both diversification benefits and concentration risks'}
-        
-        **VALUATION MODEL RECONCILIATION**
-        - Multi-method synthesis: Analyze DCF, comparable, and consensus outputs
-        - {'Upside scenario modeling with growth assumptions' if thesis_type == 'Bull Case' else 'Downside scenario modeling with risk assumptions' if thesis_type == 'Bear Case' else 'Balanced scenario modeling with probability weighting'}
-        - Fair value vs current price: Explain {'why target represents achievable upside' if thesis_type == 'Bull Case' else 'why current price represents overvaluation' if thesis_type == 'Bear Case' else 'valuation relationship and recommendation logic'}
-        
-        **RISK-RETURN ASSESSMENT**
-        - {'Growth probability calculations with catalyst timing' if thesis_type == 'Bull Case' else 'Risk probability calculations with downside scenarios' if thesis_type == 'Bear Case' else 'Balanced risk-return calculations with scenario probabilities'}
-        - {'Mitigation of identified risks through competitive advantages' if thesis_type == 'Bull Case' else 'Risk amplification through fundamental deterioration' if thesis_type == 'Bear Case' else 'Risk mitigation factors and residual risk assessment'}
-        - Expected value calculation: {'Probability-weighted upside scenarios' if thesis_type == 'Bull Case' else 'Probability-weighted downside scenarios' if thesis_type == 'Bear Case' else 'Probability-weighted bull/base/bear scenarios'}
-        
-        **ALGORITHMIC RECOMMENDATION**
-        - Final recommendation with confidence level based on data convergence
-        - Target price with 12-month probability distribution
-        - {'Position sizing for growth opportunity' if thesis_type == 'Bull Case' else 'Risk management and position sizing' if thesis_type == 'Bear Case' else 'Balanced position sizing with risk optimization'}
-        - Recommendation logic: Explain why {'bullish factors outweigh risks' if thesis_type == 'Bull Case' else 'risk factors outweigh potential upside' if thesis_type == 'Bear Case' else 'balanced assessment leads to current recommendation'}
-        
-        VALIDATION REQUIREMENTS:
-        - Current market price must be stated as {current_price_str}
-        - All probabilities must include calculation methodology
-        - Porter's Five Forces scores must be justified
-        - {config['validation_emphasis']}
-        - Target price relationship must be logically explained
+        **DCF CALCULATION VALIDATION:**
+        - WACC (Weighted Average Cost of Capital): {dcf_calcs.get('wacc', 'N/A'):.2%} 
+        - FCF CAGR (Free Cash Flow Growth): {dcf_calcs.get('fcf_cagr', 'N/A'):.2%}
+        - EBITDA CAGR: {dcf_calcs.get('ebitda_cagr', 'N/A'):.2%}
+        - Terminal Growth Rate: {params.get('terminal_growth', 'N/A')}
+        - EV/EBITDA Multiple Used: {dcf_calcs.get('ev_ebitda_multiple', 'N/A'):.1f}x
+        - Terminal Value (Perpetual Growth): ${dcf_calcs.get('terminal_value_pg', 0):,.0f}
+        - Terminal Value (EBITDA Multiple): ${dcf_calcs.get('terminal_value_ebitda_multiple', 0):,.0f}
+        - Present Value of FCF: ${dcf_calcs.get('pv_fcf', 0):,.0f}
+        - Present Value of Terminal Value: ${dcf_calcs.get('pv_terminal_value', 0):,.0f}
+        - Enterprise Value: ${dcf_calcs.get('enterprise_value', 0):,.0f}
+        - Equity Value: ${dcf_calcs.get('equity_value', 0):,.0f}
+        - Terminal Value Dominance: {dcf_calcs.get('terminal_ratio', 0):.1%}
+        - DCF Confidence Level: {dcf_calcs.get('confidence', 'N/A')}
+        - Sector/Industry Adjustments: {params.get('sector', 'N/A')} / {params.get('industry', 'N/A')}
+        - Quality Grade Adjustment: {params.get('quality_adjustment', 'N/A')}
+        - Max CAGR Threshold: {params.get('max_cagr', 'N/A')}
         """
+                except (ValueError, TypeError, KeyError):
+                    dcf_calculation_details = "\n\n**DCF CALCULATION VALIDATION:** Data formatting error"
+        
+        # Extract startup analysis calculation details if available
+        startup_calculation_details = ""
+        if 'startup' in analyses:
+            startup_data = analyses['startup']
+            revenue_multiple = startup_data.get('revenue_multiple_breakdown', {})
+            
+            if revenue_multiple:
+                try:
+                    startup_calculation_details = f"""
+        
+        **STARTUP VALUATION CALCULATION VALIDATION:**
+        - Current Revenue: ${startup_data.get('current_revenue', 0):,.0f}
+        - Median Revenue Growth Rate: {startup_data.get('median_growth', 'N/A')}
+        - Revenue Volatility: {startup_data.get('revenue_volatility', 'N/A')}
+        - Cash Runway: {startup_data.get('cash_runway_years', 0):.1f} years
+        - Quarterly Burn Rate: ${startup_data.get('quarterly_burn_rate', 0):,.0f}
+        - Growth Quality Assessment: {startup_data.get('growth_quality', 'N/A')}
+        - Company Stage: {startup_data.get('stage', 'N/A')}
+        - Base Revenue Multiple: {revenue_multiple.get('base_multiple', 'N/A'):.1f}x
+        - Risk Adjustment Factor: {revenue_multiple.get('risk_adjustment', 'N/A'):.2f}
+        - Stage Adjustment Factor: {revenue_multiple.get('stage_adjustment', 'N/A'):.2f}
+        - Final Revenue Multiple: {revenue_multiple.get('final_multiple', 'N/A'):.1f}x
+        - Risk Score (0-100): {startup_data.get('risk_score', 'N/A')}/100
+        - Projected Revenue (1Y): ${startup_data.get('projected_revenue_1yr', 0):,.0f}
+        - Projected Revenue (2Y): ${startup_data.get('projected_revenue_2yr', 0):,.0f}
+        - Implied Enterprise Value: ${startup_data.get('implied_value_estimate', 0):,.0f}
+        - Investment Risk Level: {startup_data.get('confidence_level', 'N/A')}
+        """
+                except (ValueError, TypeError, KeyError):
+                    startup_calculation_details = "\n\n**STARTUP VALUATION CALCULATION VALIDATION:** Data formatting error"
+        
+        # Prepare prompt data
+        prompt_data = {
+            'ticker': ticker,
+            'company_type': components.get('company_type', 'Unknown'),
+            'target_price': target_price,
+            'current_price_str': current_price_str,
+            'market_cap': all_financial_data['market_cap'],
+            'enterprise_value': all_financial_data['enterprise_value'],
+            'beta': all_financial_data['beta'],
+            'pe_ratio': all_financial_data['pe_ratio'],
+            'ps_ratio': all_financial_data['ps_ratio'],
+            'pb_ratio': all_financial_data['pb_ratio'],
+            'ev_ebitda_multiple': all_financial_data['ev_ebitda_multiple'],
+            'gross_margin': all_financial_data['gross_margin'] * 100 if isinstance(all_financial_data['gross_margin'], (int, float)) else 0,
+            'operating_margin': all_financial_data['operating_margin'] * 100 if isinstance(all_financial_data['operating_margin'], (int, float)) else 0,
+            'net_margin': all_financial_data['net_margin'] * 100 if isinstance(all_financial_data['net_margin'], (int, float)) else 0,
+            'roe': all_financial_data['roe'] * 100 if isinstance(all_financial_data['roe'], (int, float)) else 0,
+            'roa': all_financial_data['roa'] * 100 if isinstance(all_financial_data['roa'], (int, float)) else 0,
+            'revenue_growth': all_financial_data['revenue_growth']*100 if isinstance(all_financial_data['revenue_growth'], (int, float)) else 0,
+            'earnings_growth': all_financial_data['earnings_growth']*100 if isinstance(all_financial_data['earnings_growth'], (int, float)) else 0,
+            'debt_to_equity': all_financial_data['debt_to_equity'],
+            'current_ratio': all_financial_data['current_ratio'],
+            'quick_ratio': all_financial_data['quick_ratio'],
+            'free_cash_flow': all_financial_data['free_cash_flow'],
+            'cash_per_share': all_financial_data['cash_per_share'],
+            'book_value_per_share': all_financial_data['book_value_per_share'],
+            'dividend_yield': all_financial_data['dividend_yield'],
+            'payout_ratio': all_financial_data['payout_ratio'],
+            'total_revenue': all_financial_data['total_revenue'],
+            'latest_net_income': latest_net_income,
+            'latest_operating_income': latest_operating_income,
+            'latest_gross_profit': latest_gross_profit,
+            'latest_operating_cf': latest_operating_cf,
+            'latest_capital_expenditures': latest_capital_expenditures,
+            'industry': all_financial_data['industry'],
+            'sector': all_financial_data['sector'],
+            'segment_info': segment_info,
+            'net_income_growth': growth_analysis.get('net_income_growth', 0),
+            'operating_cf_growth': growth_analysis.get('operating_cf_growth', 0),
+            'dcf_calculation_details': dcf_calculation_details,
+            'startup_calculation_details': startup_calculation_details,
+            'average_target': cross_analysis.get('average_target', 0),
+            'consensus_strength': cross_analysis.get('consensus_strength', 'Medium'),
+            'method_agreement': cross_analysis.get('method_agreement', 'Mixed'),
+            'strengths': ', '.join(components['strengths'][:5]),
+            'risks': ', '.join(components['risks'][:5]),
+            'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])[:3]),
+            'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
+            'news_count': components['market_sentiment'].get('news_count', 0),
+            'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')})" for article in components['market_sentiment'].get('recent_news', [])[:3]]),
+            'industry_outlook': components.get('industry_analysis', {}).get('industry_outlook', 'Neutral'),
+            'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
+            'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
+            'esg_score': components.get('industry_analysis', {}).get('esg_score', 5.0),
+            'business_segments': ', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+            'revenue_breakdown': ', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+            'data_source': components.get('segment_revenue_data', {}).get('data_source', 'N/A'),
+            'revenue_diversification': components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A'),
+            'thesis_type_lower': thesis_type.lower(),
+            'previous_output': previous_output
+        }
+        
+        # Load and format the appropriate prompt template
+        prompt = prompt_loader.format_prompt(prompt_type, **prompt_data)
         
         llm_response = llm_manager.generate_response(prompt)
         
@@ -2488,18 +2540,20 @@ def display_prompt_used(prompt):
                 font-size: 12px;
                 line-height: 1.4;
                 max-height: 500px;
+                max-width: 100%;
                 overflow-y: auto;
+                overflow-x: hidden;
                 white-space: pre-wrap;
                 word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                box-sizing: border-box;
             ">
                 {prompt}
             </div>
             """,
             unsafe_allow_html=True
         )
-        
-        # Add copy button functionality
-        st.code(prompt, language="text")
         
         # Show prompt statistics
         word_count = len(prompt.split())

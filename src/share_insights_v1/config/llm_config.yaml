@@ -8,16 +8,16 @@ llm_providers:
     api_key_env: "GROQ_API_KEY"
     default_model: "llama-3.1-8b-instant"
     models:
-      - name: "llama-3.1-8b-instant"
-        display_name: "Llama 3.1 8B (Fast)"
-        description: "Fastest model, good for most tasks"
-        context_length: 8192
-        cost_per_1k_tokens: 0.0001
       - name: "llama-3.3-70b-versatile"
         display_name: "Llama 3.3 70B (Best)"
         description: "Most capable model, slower but higher quality"
         context_length: 131072
         cost_per_1k_tokens: 0.001
+      - name: "llama-3.1-8b-instant"
+        display_name: "Llama 3.1 8B (Fast)"
+        description: "Fastest model, good for most tasks"
+        context_length: 8192
+        cost_per_1k_tokens: 0.0001      
       - name: "mixtral-8x7b-32768"
         display_name: "Mixtral 8x7B"
         description: "Good balance of speed and quality"

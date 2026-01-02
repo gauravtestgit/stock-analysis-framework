@@ -14,7 +14,7 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_plugin_system",
+            "module": "src.share_insights_v1.tests.test_business_model_analyzer",
             // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

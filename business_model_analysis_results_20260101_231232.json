@@ -1,0 +1,385 @@
+{
+  "test_metadata": {
+    "timestamp": "20260101_231232",
+    "test_description": "Enhanced Business Model Analyzer Test - SEC Edgar \u2192 LLM \u2192 Error",
+    "tickers_tested": [
+      "AAPL",
+      "AMZN"
+    ],
+    "total_companies": 2,
+    "successful_analyses": 2,
+    "failed_analyses": 0
+  },
+  "results": {
+    "AAPL": {
+      "success": true,
+      "company_name": "Apple Inc.",
+      "analysis_result": {
+        "method": "Business Model Analysis",
+        "applicable": true,
+        "business_model_type": "Platform",
+        "primary_revenue_stream": "Product Sales",
+        "revenue_quality": "Fair",
+        "recurring_percentage": 0.2855308763112197,
+        "scalability_score": 8.5,
+        "growth_consistency": null,
+        "strengths": [
+          "Strong innovation capabilities drive competitive advantage",
+          "High cross-selling potential enhances customer lifetime value",
+          "High switching costs create customer retention advantages",
+          "Strong brand provides pricing power and market position",
+          "Strong technology moat provides sustainable competitive advantage"
+        ],
+        "risks": [
+          "Low recurring revenue creates earnings volatility",
+          "Competitive threat: Increasing competition from Chinese manufacturers",
+          "Competitive threat: Rising prices and decreasing profit margins"
+        ],
+        "competitive_moat": "Strong - Network effects and ecosystem lock-in",
+        "confidence": "Medium",
+        "recommendation": "Hold",
+        "product_portfolio": {
+          "product_breadth": "Moderate",
+          "product_depth": "Moderate",
+          "core_products": [
+            "iPhone",
+            "Mac",
+            "iPad"
+          ],
+          "innovation_level": "High",
+          "cross_selling_potential": "High",
+          "product_strengths": [
+            "Brand Loyalty",
+            "Ecosystem Effectiveness"
+          ],
+          "product_weaknesses": [
+            "Dependence on Supply Chain",
+            "High Competition in Consumer Electronics"
+          ],
+          "data_source": "SEC Filing + LLM Analysis"
+        },
+        "competitive_differentiation": {
+          "differentiation_strategy": "Hybrid",
+          "competitive_advantages": [
+            "Ecosystem integration (iPhone, Mac, iPad, Apple Watch, Apple TV)",
+            "Premium brand image and loyalty",
+            "Strong retail presence and customer experience"
+          ],
+          "unique_value_propositions": [
+            "Design and user experience",
+            "Security and privacy features",
+            "Integration with other Apple devices and services"
+          ],
+          "key_competitors": [
+            "Samsung Electronics (Galaxy series)",
+            "Huawei Technologies (Mate series)",
+            "Google LLC (Pixel series)"
+          ],
+          "competitive_positioning": "Leader",
+          "barriers_to_entry": [
+            "High research and development costs",
+            "Strong brand recognition and loyalty",
+            "Complex supply chain and manufacturing processes"
+          ],
+          "switching_costs": "High",
+          "brand_strength": "Strong",
+          "technology_moat": "Strong",
+          "distribution_advantages": [
+            "Controlled retail presence (Apple Stores)",
+            "Strong online presence and e-commerce platform"
+          ],
+          "competitive_threats": [
+            "Increasing competition from Chinese manufacturers",
+            "Rising prices and decreasing profit margins"
+          ]
+        },
+        "segment_revenue_data": {
+          "primary_segments": [
+            {
+              "segment_name": "iPhone",
+              "revenue_percentage": 53.7,
+              "growth_trend": "Stable",
+              "margin_profile": "High"
+            },
+            {
+              "segment_name": "Services",
+              "revenue_percentage": 19.6,
+              "growth_trend": "Growing",
+              "margin_profile": "High"
+            },
+            {
+              "segment_name": "Mac",
+              "revenue_percentage": 9.4,
+              "growth_trend": "Declining",
+              "margin_profile": "Medium"
+            },
+            {
+              "segment_name": "iPad",
+              "revenue_percentage": 8.3,
+              "growth_trend": "Declining",
+              "margin_profile": "Medium"
+            },
+            {
+              "segment_name": "Wearables",
+              "revenue_percentage": 9.0,
+              "growth_trend": "Growing",
+              "margin_profile": "High"
+            }
+          ],
+          "revenue_diversification": "Medium",
+          "fastest_growing_segment": "Services",
+          "largest_segment": "iPhone",
+          "segment_risks": [
+            "Dependence on iPhone sales",
+            "Competition from Android and other smartphone manufacturers"
+          ],
+          "cross_segment_synergies": [
+            "Integration of Apple Watch with iPhone",
+            "Use of Apple Pay across various Apple devices"
+          ]
+        },
+        "sec_edgar_data": {
+          "ticker": "AAPL",
+          "data_available": true,
+          "cik": 320193,
+          "filing_facts": {
+            "total_xbrl_fields": 503,
+            "entity_name": "Apple Inc.",
+            "cik": 320193
+          },
+          "segment_fields_count": 12,
+          "latest_10k": {
+            "form": "10-K",
+            "filing_date": "2025-10-31",
+            "accession_number": "0000320193-25-000079",
+            "primary_document": "aapl-20250927.htm"
+          },
+          "business_description": {
+            "filing_date": "2025-10-31",
+            "description_length": 19,
+            "data_source": "SEC 10-K Filing"
+          },
+          "segment_data": {
+            "ticker": "AAPL",
+            "segment_data": {
+              "primary_segments": [
+                {
+                  "segment_name": "Total Company",
+                  "revenue": 416161000000,
+                  "revenue_percentage": 100.0,
+                  "operating_income": 133050000000,
+                  "operating_margin": 31.97,
+                  "margin_profile": "High"
+                }
+              ],
+              "total_revenue": 416161000000,
+              "total_operating_income": 133050000000
+            },
+            "data_source": "SEC EDGAR XBRL"
+          },
+          "management_data": {
+            "ticker": "AAPL",
+            "cik": 320193,
+            "management_metrics": {
+              "proxy_filings_found": 2,
+              "latest_proxy_date": "2025-01-10",
+              "executive_compensation_disclosed": true,
+              "board_composition_disclosed": true,
+              "insider_ownership_disclosed": true
+            },
+            "data_source": "SEC EDGAR"
+          }
+        }
+      },
+      "financial_summary": {
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "total_revenue": 416161005568,
+        "current_price": 271.86
+      }
+    },
+    "AMZN": {
+      "success": true,
+      "company_name": "Amazon.com, Inc.",
+      "analysis_result": {
+        "method": "Business Model Analysis",
+        "applicable": true,
+        "business_model_type": "Platform",
+        "primary_revenue_stream": "Mixed",
+        "revenue_quality": "Good",
+        "recurring_percentage": 0.4065703035954823,
+        "scalability_score": 8.5,
+        "growth_consistency": null,
+        "strengths": [
+          "Strong innovation capabilities drive competitive advantage",
+          "High cross-selling potential enhances customer lifetime value",
+          "Strong brand provides pricing power and market position",
+          "Strong technology moat provides sustainable competitive advantage"
+        ],
+        "risks": [
+          "Competitive threat: Increasing competition from brick-and-mortar retailers with e-commerce capabilities",
+          "Competitive threat: Rising costs and regulatory pressures in the logistics and supply chain management sectors"
+        ],
+        "competitive_moat": "Strong - Network effects and ecosystem lock-in",
+        "confidence": "Medium",
+        "recommendation": "Buy",
+        "product_portfolio": {
+          "product_breadth": "Moderate",
+          "product_depth": "Moderate",
+          "core_products": [
+            "Online Retail Services",
+            "Cloud Computing Services",
+            "Advertising Services"
+          ],
+          "innovation_level": "High",
+          "cross_selling_potential": "High",
+          "product_strengths": [
+            "Diversified Revenue Streams",
+            "Strong Brand Recognition"
+          ],
+          "product_weaknesses": [
+            "High Competition in Online Retail",
+            "Dependence on Key Suppliers"
+          ],
+          "data_source": "SEC Filing + LLM Analysis"
+        },
+        "competitive_differentiation": {
+          "differentiation_strategy": "Hybrid (Cost Leadership and Differentiation)",
+          "competitive_advantages": [
+            "Unmatched logistics and supply chain management capabilities",
+            "Diversified product offerings across various categories",
+            "Strong brand recognition and customer loyalty"
+          ],
+          "unique_value_propositions": [
+            "Personalized shopping experience through AI-driven recommendations",
+            "Convenience of one-stop shopping with a wide range of products"
+          ],
+          "key_competitors": [
+            "eBay Inc. (EBAY)",
+            "Walmart Inc. (WMT)",
+            "Alibaba Group Holding Limited (BABA)"
+          ],
+          "competitive_positioning": "Leader",
+          "barriers_to_entry": [
+            "High fixed costs for building and maintaining a robust logistics network",
+            "Significant investments required for developing and maintaining a wide range of products"
+          ],
+          "switching_costs": "Moderate",
+          "brand_strength": "Strong",
+          "technology_moat": "Strong",
+          "distribution_advantages": [
+            "Global distribution network with a presence in over 180 countries",
+            "Partnerships with various third-party sellers and logistics providers"
+          ],
+          "competitive_threats": [
+            "Increasing competition from brick-and-mortar retailers with e-commerce capabilities",
+            "Rising costs and regulatory pressures in the logistics and supply chain management sectors"
+          ]
+        },
+        "segment_revenue_data": {
+          "primary_segments": [
+            {
+              "segment_name": "AWS",
+              "revenue_percentage": 32.4,
+              "growth_trend": "Growing",
+              "margin_profile": "High"
+            },
+            {
+              "segment_name": "Online stores",
+              "revenue_percentage": 44.5,
+              "growth_trend": "Stable",
+              "margin_profile": "Medium"
+            },
+            {
+              "segment_name": "Physical stores",
+              "revenue_percentage": 6.1,
+              "growth_trend": "Declining",
+              "margin_profile": "Low"
+            },
+            {
+              "segment_name": "Advertising",
+              "revenue_percentage": 8.5,
+              "growth_trend": "Growing",
+              "margin_profile": "High"
+            },
+            {
+              "segment_name": "Subscriptions",
+              "revenue_percentage": 8.5,
+              "growth_trend": "Growing",
+              "margin_profile": "High"
+            }
+          ],
+          "revenue_diversification": "High",
+          "fastest_growing_segment": "AWS",
+          "largest_segment": "Online stores",
+          "segment_risks": [
+            "Dependence on AWS for revenue growth",
+            "Competition from other cloud providers"
+          ],
+          "cross_segment_synergies": [
+            "Synergy between AWS and Online stores through data analytics",
+            "Synergy between Advertising and Online stores through targeted advertising"
+          ]
+        },
+        "sec_edgar_data": {
+          "ticker": "AMZN",
+          "data_available": true,
+          "cik": 1018724,
+          "filing_facts": {
+            "total_xbrl_fields": 519,
+            "entity_name": "AMAZON.COM, INC.",
+            "cik": 1018724
+          },
+          "segment_fields_count": 8,
+          "latest_10k": {
+            "form": "10-K",
+            "filing_date": "2025-02-07",
+            "accession_number": "0001018724-25-000004",
+            "primary_document": "amzn-20241231.htm"
+          },
+          "business_description": {
+            "filing_date": "2025-02-07",
+            "description_length": 19,
+            "data_source": "SEC 10-K Filing"
+          },
+          "segment_data": {
+            "ticker": "AMZN",
+            "segment_data": {
+              "primary_segments": [
+                {
+                  "segment_name": "Total Company",
+                  "revenue": 503538000000,
+                  "revenue_percentage": 100.0,
+                  "operating_income": 54998000000,
+                  "operating_margin": 10.92,
+                  "margin_profile": "Medium"
+                }
+              ],
+              "total_revenue": 503538000000,
+              "total_operating_income": 54998000000
+            },
+            "data_source": "SEC EDGAR XBRL"
+          },
+          "management_data": {
+            "ticker": "AMZN",
+            "cik": 1018724,
+            "management_metrics": {
+              "proxy_filings_found": 2,
+              "latest_proxy_date": "2025-04-10",
+              "executive_compensation_disclosed": true,
+              "board_composition_disclosed": true,
+              "insider_ownership_disclosed": true
+            },
+            "data_source": "SEC EDGAR"
+          }
+        }
+      },
+      "financial_summary": {
+        "sector": "Consumer Cyclical",
+        "industry": "Internet Retail",
+        "total_revenue": 691330023424,
+        "current_price": 230.82
+      }
+    }
+  }
+}
