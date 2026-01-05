@@ -42,6 +42,15 @@ def get_provider_models(providers_config, provider_name):
 def show_thesis_generation():
     """Show thesis generation page with full detailed analysis functionality"""
     
+    # Check for show_history query parameter
+    query_params = st.query_params
+    if 'show_history' in query_params:
+        ticker = query_params['show_history']
+        show_thesis_history(ticker)
+        # Clear the query parameter
+        del st.query_params['show_history']
+        return
+    
     st.title("📝 Investment Thesis Generator")
     st.markdown("*Generate comprehensive investment theses with full analysis capabilities*")
     
@@ -256,12 +265,30 @@ def show_thesis_generation():
                 # Convert display name back to prompt type dynamically
                 prompt_type = thesis_type.lower().replace(' ', '_')
                 
-                st.info(f"🔍 DEBUG: thesis_type='{thesis_type}', prompt_type='{prompt_type}'")
+                # Debug the prompt type conversion
+                print(f"🔍 DEBUG: thesis_type='{thesis_type}', prompt_type='{prompt_type}'")
+                
+                # Check if prompt file exists, if not try alternative names
+                prompt_loader = ThesisPromptLoader()
+                available_prompts = prompt_loader.list_available_prompts()
+                print(f"🔍 DEBUG: Available prompts: {available_prompts}")
+                
+                if prompt_type not in available_prompts:
+                    # Try alternative mappings
+                    if prompt_type == 'objective_case':
+                        prompt_type = 'objective_case'
+                    elif prompt_type == 'product_portfolio_catalyst':
+                        prompt_type = 'product_portfolio_catalyst'
+                    print(f"🔍 DEBUG: Mapped to prompt_type='{prompt_type}'")
                 
                 # Handle prompt chaining
                 if prompt_chaining:
-                    # Store previous output for chaining
-                    previous_output = st.session_state.get('previous_prompt_output', '')
+                    # Initialize stock-specific prompt outputs if not exists
+                    if 'stock_prompt_outputs' not in st.session_state:
+                        st.session_state.stock_prompt_outputs = {}
+                    
+                    # Get previous output for this specific stock
+                    previous_output = st.session_state.stock_prompt_outputs.get(latest_ticker, '')
                     
                     # Generate thesis with chaining
                     thesis_response = generate_investment_thesis(
@@ -274,10 +301,10 @@ def show_thesis_generation():
                         previous_output=previous_output
                     )
                     
-                    # Store output for next chain
+                    # Store output for this specific stock
                     if thesis_response:
-                        st.session_state.previous_prompt_output = thesis_response
-                        st.success(f"✅ Thesis generated and stored for chaining ({len(thesis_response)} characters)")
+                        st.session_state.stock_prompt_outputs[latest_ticker] = thesis_response
+                        st.success(f"✅ Thesis generated and stored for {latest_ticker} chaining ({len(thesis_response)} characters)")
                 else:
                     # Regular generation without chaining
                     generate_investment_thesis(
@@ -327,7 +354,13 @@ def show_thesis_generation():
                     
                     # Handle prompt chaining for batch
                     if batch_prompt_chaining:
-                        previous_output = st.session_state.get('previous_prompt_output', '')
+                        # Initialize stock-specific prompt outputs if not exists
+                        if 'stock_prompt_outputs' not in st.session_state:
+                            st.session_state.stock_prompt_outputs = {}
+                        
+                        # Get previous output for this specific stock
+                        previous_output = st.session_state.stock_prompt_outputs.get(selected_stock, '')
+                        
                         thesis_response = generate_investment_thesis(
                             selected_stock,
                             successful_stocks[selected_stock],
@@ -338,8 +371,8 @@ def show_thesis_generation():
                             previous_output=previous_output
                         )
                         if thesis_response:
-                            st.session_state.previous_prompt_output = thesis_response
-                            st.success(f"✅ Thesis generated and stored for chaining ({len(thesis_response)} characters)")
+                            st.session_state.stock_prompt_outputs[selected_stock] = thesis_response
+                            st.success(f"✅ Thesis generated and stored for {selected_stock} chaining ({len(thesis_response)} characters)")
                     else:
                         generate_investment_thesis(
                             selected_stock,
@@ -351,6 +384,8 @@ def show_thesis_generation():
 
 def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None, max_news_articles=5):
     """Analyze all stocks in watchlist with selected analyzers in parallel"""
+    import uuid
+    
     results = {}
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -370,7 +405,7 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
     status_text.text(f"Starting parallel analysis of {len(watchlist)} stocks with {max_workers} workers...")
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all analysis tasks
+        # Submit all analysis tasks - let orchestrator generate stock_analysis_id
         future_to_ticker = {
             executor.submit(analyze_single_stock_api, ticker, selected_analyzers, llm_provider, llm_model, max_news_articles): ticker
             for ticker in watchlist
@@ -405,6 +440,16 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
     st.session_state.batch_timing = batch_timing
     st.session_state.batch_watchlist = watchlist
     
+    # Debug: Print batch_analysis_id availability for each ticker
+    print("\n🔍 DEBUG: Batch analysis ID availability:")
+    for ticker, data in results.items():
+        if 'error' not in data:
+            batch_id = data.get('batch_analysis_id')
+            print(f"  {ticker}: {batch_id if batch_id else 'MISSING'}")
+        else:
+            print(f"  {ticker}: ERROR - {data['error']}")
+    print("")
+    
     display_batch_results(results, batch_timing)
 
 def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None, llm_model=None, max_news_articles=5):
@@ -428,11 +473,20 @@ def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None,
         
         if response.status_code == 200:
             data = response.json()
+            
+            # Debug: Show what API actually returned
+            print(f"🔍 DEBUG: API response keys for {ticker}: {list(data.keys())}")
+            
             data['dashboard_timing'] = {
                 'total_request_time': round(stock_end - stock_start, 2),
                 'orchestrator_time': data.get('execution_time_seconds', 0),
                 'analyses_count': data.get('analyses_count', 0)
             }
+            # Ensure batch_analysis_id is available for thesis linking
+            if 'batch_analysis_id' not in data:
+                print(f"⚠️ WARNING: No batch_analysis_id returned for {ticker}")
+            else:
+                print(f"✅ DEBUG: batch_analysis_id found for {ticker}: {data['batch_analysis_id']}")
             return ticker, data
         else:
             return ticker, {"error": response.text}
@@ -590,6 +644,17 @@ def display_horizontal_stock_cards(results):
             <p><strong>Debt Ratio:</strong> {financial_metrics.get('debt_to_equity', 'N/A')}</p> 
             <p><strong>Type:</strong> {company_type}</p>
             <p><strong>Time:</strong> {analysis_time}s</p>
+            <button onclick="showModal('history_{sanitized_ticker}')" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">📊 History</button>
+            
+            <div id="history_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                <div style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 95%; height: 95%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;">
+                        <h3 style="margin: 0;">📊 {ticker} Thesis History</h3>
+                        <span onclick="closeModal('history_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                    </div>
+                    <div id="history_content_{sanitized_ticker}" style="flex: 1; overflow-y: auto; padding-right: 10px;">Loading history...</div>
+                </div>
+            </div>
         </div>
         """
         all_cards.append(stock_card)
@@ -1184,7 +1249,8 @@ def display_horizontal_stock_cards(results):
                 """
                 all_cards.append(analyst_card)
         
-        # Combine cards with horizontal scroll
+
+        # Arrange cards in horizontal scroll
         cards_html = ''.join(all_cards)
         scrollable_row = f"""
         <div style="display: flex; overflow-x: auto; overflow-y: visible; padding: 10px 0; gap: 10px; height: 320px;">
@@ -1193,6 +1259,43 @@ def display_horizontal_stock_cards(results):
         <script>
         function showModal(modalId) {{
             document.getElementById(modalId).style.display = 'block';
+            
+            // Load thesis history if it's a history modal
+            if (modalId.startsWith('history_')) {{
+                const ticker = modalId.replace('history_', '').replace('_', '.');
+                loadThesisHistory(ticker, modalId);
+            }}
+        }}
+        
+        function loadThesisHistory(ticker, modalId) {{
+            const contentDiv = document.getElementById('history_content_' + modalId.replace('history_', ''));
+            
+            // Make API call to get thesis history
+            fetch(`http://localhost:8000/thesis_history/${{ticker}}`)
+                .then(response => response.json())
+                .then(data => {{
+                    if (data.error) {{
+                        contentDiv.innerHTML = '<p>Error: ' + data.error + '</p>';
+                    }} else if (data.length === 0) {{
+                        contentDiv.innerHTML = '<p>No thesis history available yet. Generate a thesis first to see history.</p>';
+                    }} else {{
+                        let historyHtml = '';
+                        data.history.forEach(thesis => {{
+                            historyHtml += `
+                                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
+                                    <h4 style="color: #007acc; margin-bottom: 10px;">${{thesis.thesis_type.replace('_', ' ').toUpperCase()}}</h4>
+                                    <p style="margin-bottom: 8px;"><strong>Date:</strong> ${{thesis.created_at}}</p>
+                                    <p style="margin-bottom: 8px;"><strong>LLM:</strong> ${{thesis.llm_provider}} - ${{thesis.llm_model}}</p>
+                                    <div style="white-space: pre-wrap; line-height: 1.6; font-family: Arial, sans-serif;">${{thesis.content}}</div>
+                                </div>
+                            `;
+                        }});
+                        contentDiv.innerHTML = historyHtml;
+                    }}
+                }})
+                .catch(error => {{
+                    contentDiv.innerHTML = '<p>Error loading thesis history: ' + error.message + '</p>';
+                }});
         }}
         function closeModal(modalId) {{
             document.getElementById(modalId).style.display = 'none';
@@ -1949,6 +2052,111 @@ def extract_thesis_components(ticker, analysis_data, analyses):
     
     return components
 
+def prepare_standardized_prompt_data(ticker, components, analyses, financial_metrics, target_price, current_price_str, dcf_calculation_details, startup_calculation_details):
+    """Prepare standardized prompt data for all thesis types"""
+    
+    # Get cross-analysis data
+    cross_analysis = components.get('cross_method_analysis', {})
+    
+    # Extract financial performance data
+    financial_perf = components.get('financial_performance', {})
+    growth_analysis = financial_perf.get('growth_analysis', {})
+    
+    # Calculate segment info
+    segment_data = components.get('segment_revenue_data', {})
+    segment_info = ""
+    if segment_data and segment_data.get('primary_segments'):
+        try:
+            segments = segment_data['primary_segments']
+            segment_breakdown = ", ".join([f"{seg['segment_name']}: {seg['revenue_percentage']:.1f}% ({seg['growth_trend']})" for seg in segments[:3]])
+            segment_info = f"\n- Revenue segments: {segment_breakdown}"
+            segment_info += f"\n- Largest segment: {segment_data.get('largest_segment', 'N/A')}"
+            segment_info += f"\n- Fastest growing: {segment_data.get('fastest_growing_segment', 'N/A')}"
+            segment_info += f"\n- Diversification: {segment_data.get('revenue_diversification', 'Medium')}"
+        except (ValueError, TypeError, KeyError):
+            segment_info = "\n- Segment data: Formatting error"
+    
+    # Standardized data dictionary
+    return {
+        'ticker': ticker,
+        'company_type': components.get('company_type', 'Unknown'),
+        'target_price': target_price,
+        'current_price_str': current_price_str,
+        'market_cap': financial_metrics.get('market_cap', 0),
+        'enterprise_value': financial_metrics.get('enterprise_value', 0),
+        'beta': financial_metrics.get('beta', 'N/A'),
+        'pe_ratio': financial_metrics.get('pe_ratio', 'N/A'),
+        'ps_ratio': financial_metrics.get('ps_ratio', 'N/A'),
+        'pb_ratio': financial_metrics.get('pb_ratio', 'N/A'),
+        'ev_ebitda_multiple': financial_metrics.get('ev_ebitda_multiple', 'N/A'),
+        'gross_margin': financial_metrics.get('gross_margin', 0) * 100 if isinstance(financial_metrics.get('gross_margin', 0), (int, float)) else 0,
+        'operating_margin': financial_metrics.get('operating_margin', 0) * 100 if isinstance(financial_metrics.get('operating_margin', 0), (int, float)) else 0,
+        'net_margin': financial_metrics.get('net_margin', 0) * 100 if isinstance(financial_metrics.get('net_margin', 0), (int, float)) else 0,
+        'roe': financial_metrics.get('roe', 0) * 100 if isinstance(financial_metrics.get('roe', 0), (int, float)) else 0,
+        'roa': financial_metrics.get('roa', 0) * 100 if isinstance(financial_metrics.get('roa', 0), (int, float)) else 0,
+        'revenue_growth': financial_metrics.get('revenue_growth', 0) * 100 if isinstance(financial_metrics.get('revenue_growth', 0), (int, float)) else 0,
+        'earnings_growth': financial_metrics.get('earnings_growth', 0) * 100 if isinstance(financial_metrics.get('earnings_growth', 0), (int, float)) else 0,
+        'debt_to_equity': financial_metrics.get('debt_to_equity', 'N/A'),
+        'current_ratio': financial_metrics.get('current_ratio', 'N/A'),
+        'quick_ratio': financial_metrics.get('quick_ratio', 'N/A'),
+        'free_cash_flow': financial_metrics.get('free_cash_flow', 0),
+        'cash_per_share': financial_metrics.get('cash_per_share', 'N/A'),
+        'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
+        'dividend_yield': financial_metrics.get('dividend_yield', 'N/A'),
+        'payout_ratio': financial_metrics.get('payout_ratio', 'N/A'),
+        'total_revenue': financial_metrics.get('total_revenue', 0),
+        'latest_net_income': financial_metrics.get('latest_net_income', 0),
+        'latest_operating_income': financial_metrics.get('latest_operating_income', 0),
+        'latest_gross_profit': financial_metrics.get('latest_gross_profit', 0),
+        'latest_operating_cf': financial_metrics.get('latest_operating_cf', 0),
+        'latest_capital_expenditures': financial_metrics.get('latest_capital_expenditures', 0),
+        'industry': financial_metrics.get('industry', 'N/A'),
+        'sector': financial_metrics.get('sector', 'N/A'),
+        'segment_info': segment_info,
+        'net_income_growth': growth_analysis.get('net_income_growth', 0),
+        'operating_cf_growth': growth_analysis.get('operating_cf_growth', 0),
+        'dcf_calculation_details': dcf_calculation_details,
+        'startup_calculation_details': startup_calculation_details,
+        'average_target': cross_analysis.get('average_target', 0),
+        'consensus_strength': cross_analysis.get('consensus_strength', 'Medium'),
+        'method_agreement': cross_analysis.get('method_agreement', 'Mixed'),
+        'strengths': ', '.join(components['strengths'][:5]),
+        'risks': ', '.join(components['risks'][:5]),
+        'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])[:3]),
+        'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
+        'news_count': components['market_sentiment'].get('news_count', 0),
+        'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')})" for article in components['market_sentiment'].get('recent_news', [])[:3]]),
+        'industry_outlook': components.get('industry_analysis', {}).get('industry_outlook', 'Neutral'),
+        'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
+        'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
+        'esg_score': components.get('industry_analysis', {}).get('esg_score', 5.0),
+        'business_segments': ', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+        'revenue_breakdown': ', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+        'data_source': components.get('segment_revenue_data', {}).get('data_source', 'N/A'),
+        'revenue_diversification': components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A'),
+        'TOTAL_REVENUE': f"${financial_metrics.get('total_revenue', 0):,.0f}" if financial_metrics.get('total_revenue') else "$0",
+        'SEGMENT_REVENUE_DATA': generate_segment_revenue_table(components.get('segment_revenue_data', {}), financial_metrics.get('total_revenue', 0))
+    }
+
+def generate_segment_revenue_table(segment_data, total_revenue):
+    """Generate pre-calculated segment revenue table for prompt"""
+    if not segment_data or not segment_data.get('primary_segments'):
+        return "No segment data available"
+    
+    segments = segment_data['primary_segments']
+    table_rows = []
+    
+    for seg in segments:
+        segment_name = seg.get('segment_name', 'Unknown')
+        percentage = seg.get('revenue_percentage', 0)
+        revenue_amount = (percentage / 100) * total_revenue if total_revenue else 0
+        revenue_millions = revenue_amount / 1_000_000  # Convert to millions
+        growth_trend = seg.get('growth_trend', 'Unknown')
+        
+        table_rows.append(f"| {segment_name} | ${revenue_millions:,.0f} | {percentage:.1f}% | {growth_trend} | Core | Medium |")
+    
+    return "\n".join(table_rows)
+
 def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, return_prompt=False, previous_output=""):
     """Generate unified investment thesis with scenario-specific focus using external prompt templates"""
     
@@ -2158,70 +2366,21 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
                 except (ValueError, TypeError, KeyError):
                     startup_calculation_details = "\n\n**STARTUP VALUATION CALCULATION VALIDATION:** Data formatting error"
         
-        # Prepare prompt data
-        prompt_data = {
-            'ticker': ticker,
-            'company_type': components.get('company_type', 'Unknown'),
-            'target_price': target_price,
-            'current_price_str': current_price_str,
-            'market_cap': all_financial_data['market_cap'],
-            'enterprise_value': all_financial_data['enterprise_value'],
-            'beta': all_financial_data['beta'],
-            'pe_ratio': all_financial_data['pe_ratio'],
-            'ps_ratio': all_financial_data['ps_ratio'],
-            'pb_ratio': all_financial_data['pb_ratio'],
-            'ev_ebitda_multiple': all_financial_data['ev_ebitda_multiple'],
-            'gross_margin': all_financial_data['gross_margin'] * 100 if isinstance(all_financial_data['gross_margin'], (int, float)) else 0,
-            'operating_margin': all_financial_data['operating_margin'] * 100 if isinstance(all_financial_data['operating_margin'], (int, float)) else 0,
-            'net_margin': all_financial_data['net_margin'] * 100 if isinstance(all_financial_data['net_margin'], (int, float)) else 0,
-            'roe': all_financial_data['roe'] * 100 if isinstance(all_financial_data['roe'], (int, float)) else 0,
-            'roa': all_financial_data['roa'] * 100 if isinstance(all_financial_data['roa'], (int, float)) else 0,
-            'revenue_growth': all_financial_data['revenue_growth']*100 if isinstance(all_financial_data['revenue_growth'], (int, float)) else 0,
-            'earnings_growth': all_financial_data['earnings_growth']*100 if isinstance(all_financial_data['earnings_growth'], (int, float)) else 0,
-            'debt_to_equity': all_financial_data['debt_to_equity'],
-            'current_ratio': all_financial_data['current_ratio'],
-            'quick_ratio': all_financial_data['quick_ratio'],
-            'free_cash_flow': all_financial_data['free_cash_flow'],
-            'cash_per_share': all_financial_data['cash_per_share'],
-            'book_value_per_share': all_financial_data['book_value_per_share'],
-            'dividend_yield': all_financial_data['dividend_yield'],
-            'payout_ratio': all_financial_data['payout_ratio'],
-            'total_revenue': all_financial_data['total_revenue'],
-            'latest_net_income': latest_net_income,
-            'latest_operating_income': latest_operating_income,
-            'latest_gross_profit': latest_gross_profit,
-            'latest_operating_cf': latest_operating_cf,
-            'latest_capital_expenditures': latest_capital_expenditures,
-            'industry': all_financial_data['industry'],
-            'sector': all_financial_data['sector'],
-            'segment_info': segment_info,
-            'net_income_growth': growth_analysis.get('net_income_growth', 0),
-            'operating_cf_growth': growth_analysis.get('operating_cf_growth', 0),
-            'dcf_calculation_details': dcf_calculation_details,
-            'startup_calculation_details': startup_calculation_details,
-            'average_target': cross_analysis.get('average_target', 0),
-            'consensus_strength': cross_analysis.get('consensus_strength', 'Medium'),
-            'method_agreement': cross_analysis.get('method_agreement', 'Mixed'),
-            'strengths': ', '.join(components['strengths'][:5]),
-            'risks': ', '.join(components['risks'][:5]),
-            'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])[:3]),
-            'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
-            'news_count': components['market_sentiment'].get('news_count', 0),
-            'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')})" for article in components['market_sentiment'].get('recent_news', [])[:3]]),
-            'industry_outlook': components.get('industry_analysis', {}).get('industry_outlook', 'Neutral'),
-            'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
-            'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
-            'esg_score': components.get('industry_analysis', {}).get('esg_score', 5.0),
-            'business_segments': ', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
-            'revenue_breakdown': ', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
-            'data_source': components.get('segment_revenue_data', {}).get('data_source', 'N/A'),
-            'revenue_diversification': components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A'),
-            'thesis_type_lower': thesis_type.lower(),
-            'previous_output': previous_output
-        }
+        # Prepare standardized prompt data
+        prompt_data = prepare_standardized_prompt_data(
+            ticker, components, analyses, all_financial_data, 
+            target_price, current_price_str, dcf_calculation_details, startup_calculation_details
+        )
         
         # Load and format the appropriate prompt template
         prompt = prompt_loader.format_prompt(prompt_type, **prompt_data)
+        
+        # Print the formatted prompt to terminal for debugging
+        print("\n" + "="*80)
+        print(f"FORMATTED PROMPT FOR {ticker} - {thesis_type}")
+        print("="*80)
+        print(prompt)
+        print("="*80 + "\n")
         
         llm_response = llm_manager.generate_response(prompt)
         
@@ -2560,55 +2719,169 @@ def display_prompt_used(prompt):
         char_count = len(prompt)
         st.caption(f"📊 Prompt Statistics: {word_count:,} words, {char_count:,} characters")
 
+@st.fragment
+def save_thesis_fragment(ticker, thesis, thesis_type):
+    """Fragment for save thesis button to prevent full page refresh"""
+    save_key = f"save_{ticker}_{thesis_type.replace(' ', '_')}"
+    saved_key = f"saved_{save_key}"
+    
+    # Show different button state if already saved
+    if st.session_state.get(saved_key, False):
+        st.success("✅ Thesis Saved")
+    else:
+        if st.button("💾 Save Thesis", key=save_key):
+            success = save_thesis_to_database(ticker, thesis, thesis_type)
+            if success:
+                st.session_state[saved_key] = True
+                st.rerun(scope="fragment")
+
 def display_generated_thesis(ticker, thesis, thesis_type):
     """Display the generated investment thesis"""
     
+    print(f"🔍 DEBUG: display_generated_thesis called for {ticker} - {thesis_type}")
+    
+    # Store thesis in session state for button actions
+    thesis_key = f"thesis_{ticker}_{thesis_type.replace(' ', '_')}"
+    st.session_state[thesis_key] = thesis
+    print(f"🔍 DEBUG: Stored thesis in session state with key: {thesis_key}")
+    
     st.subheader(f"📝 Generated {thesis_type} for {ticker}")
     
-    # Display thesis using full-width container with white background
-    st.markdown(
-        f"""
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            max-height: 600px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            width: 100%;
-            box-sizing: border-box;
-        ">
-            {thesis}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Display thesis using Streamlit's native markdown
+    st.markdown(thesis)
     
     # Add action buttons
     col1, col2, col3 = st.columns(3)
     
+    print(f"🔍 DEBUG: About to create save button for {ticker}")
+    
     with col1:
-        if st.button("💾 Save Thesis"):
-            save_thesis_to_database(ticker, thesis, thesis_type)
+        save_thesis_fragment(ticker, thesis, thesis_type)
     
     with col2:
         if st.button("📄 Export PDF"):
             st.info("PDF export functionality coming soon!")
     
     with col3:
-        if st.button("📧 Share Thesis"):
-            st.info("Share functionality coming soon!")
+        history_key = f"history_{ticker}_{thesis_type.replace(' ', '_')}"
+        if st.button("📊 View History", key=history_key):
+            show_thesis_history(ticker)
 
 def save_thesis_to_database(ticker, thesis, thesis_type):
-    """Save generated thesis to database (placeholder)"""
+    """Save generated thesis to database"""
+    print(f"🔍 DEBUG: save_thesis_to_database called with ticker={ticker}, type={thesis_type}")
     
-    # TODO: Implement database storage for theses
-    st.success(f"✅ {thesis_type} thesis for {ticker} saved successfully!")
-    st.info("💡 Database storage for theses will be implemented in the next phase.")
+    try:
+        print("🔍 DEBUG: Importing ThesisStorageService...")
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        from src.share_insights_v1.services.storage.thesis_storage_service import ThesisStorageService
+        
+        # Get LLM provider info from session state
+        llm_provider = st.session_state.get('thesis_llm_provider')
+        llm_model = st.session_state.get('thesis_llm_model')
+        
+        print(f"🔍 DEBUG: LLM Provider: {llm_provider}, Model: {llm_model}")
+        
+        # Convert thesis type to database format
+        db_thesis_type = thesis_type.lower().replace(' ', '_')
+        print(f"🔍 DEBUG: DB thesis type: {db_thesis_type}")
+        
+        # Get batch_analysis_id - try multiple sources in order of preference
+        batch_analysis_id = None
+        
+        # Debug: Show what's available in session state
+        print(f"🔍 DEBUG: Session state keys: {list(st.session_state.keys())}")
+        if 'batch_results' in st.session_state:
+            print(f"🔍 DEBUG: Batch results tickers: {list(st.session_state.batch_results.keys())}")
+            if ticker in st.session_state.batch_results:
+                batch_data = st.session_state.batch_results[ticker]
+                print(f"🔍 DEBUG: {ticker} data keys: {list(batch_data.keys())}")
+        
+        # 1. First try to get from the specific ticker's batch results
+        if 'batch_results' in st.session_state and ticker in st.session_state.batch_results:
+            batch_data = st.session_state.batch_results[ticker]
+            batch_analysis_id = batch_data.get('batch_analysis_id')
+            print(f"🔍 DEBUG: Found batch_analysis_id from batch_results[{ticker}]: {batch_analysis_id}")
+        
+        # 2. If not found, try from single stock analysis data
+        if not batch_analysis_id and 'thesis_analysis_data' in st.session_state:
+            thesis_data = st.session_state.thesis_analysis_data
+            batch_analysis_id = thesis_data.get('batch_analysis_id')
+            print(f"🔍 DEBUG: Found batch_analysis_id from thesis_analysis_data: {batch_analysis_id}")
+        
+        # 3. If still not found, check if the ticker matches the current analysis ticker
+        if not batch_analysis_id and 'thesis_ticker' in st.session_state:
+            current_ticker = st.session_state.get('thesis_ticker')
+            if current_ticker == ticker and 'thesis_analysis_data' in st.session_state:
+                thesis_data = st.session_state.thesis_analysis_data
+                batch_analysis_id = thesis_data.get('batch_analysis_id')
+                print(f"🔍 DEBUG: Found batch_analysis_id from current analysis ticker match: {batch_analysis_id}")
+        
+        print(f"🔍 DEBUG: Using batch_analysis_id directly: {batch_analysis_id}")
+        
+        # If no batch_analysis_id found, warn but still save thesis without linking
+        if not batch_analysis_id:
+            print(f"🔍 DEBUG: No batch_analysis_id found for {ticker} - thesis will be saved without analysis linking")
+            st.warning(f"⚠️ No analysis record found for {ticker}. Thesis will be saved but not linked to analysis data.")
+        
+        print("🔍 DEBUG: Creating storage service...")
+        storage_service = ThesisStorageService()
+        
+        print("🔍 DEBUG: Calling store_thesis...")
+        thesis_id = storage_service.store_thesis(
+            ticker=ticker,
+            thesis_type=db_thesis_type,
+            content=thesis,
+            llm_provider=llm_provider,
+            llm_model=llm_model,
+            prompt_template=f"{db_thesis_type}_prompt.txt",
+            previous_thesis_id=None,
+            batch_analysis_id=batch_analysis_id  # Use UUID directly
+        )
+        
+        print(f"🔍 DEBUG: Returned thesis_id: {thesis_id}")
+        
+        if thesis_id:
+            if batch_analysis_id:
+                st.success(f"✅ Thesis saved to database (ID: {thesis_id}) and linked to analysis batch {batch_analysis_id}")
+            else:
+                st.success(f"✅ Thesis saved to database (ID: {thesis_id}) - no analysis link available")
+            return True
+        else:
+            st.error("❌ Failed to save thesis to database")
+            return False
+            
+    except Exception as e:
+        print(f"🔍 DEBUG: Exception occurred: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
+        st.error(f"❌ Database save error: {str(e)}")
+        return False
+
+def show_thesis_history(ticker):
+    """Show thesis history for a ticker"""
+    try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        from src.share_insights_v1.services.storage.thesis_storage_service import ThesisStorageService
+        
+        storage_service = ThesisStorageService()
+        history = storage_service.get_thesis_history(ticker, limit=5)
+        
+        if history:
+            st.subheader(f"📈 Thesis History for {ticker}")
+            for i, thesis in enumerate(history):
+                with st.expander(f"{thesis['thesis_type'].replace('_', ' ').title()} - {thesis['created_at'].strftime('%Y-%m-%d %H:%M')}"):
+                    st.write(f"**LLM:** {thesis['llm_provider']} - {thesis['llm_model']}")
+                    st.write(thesis['content'][:500] + "..." if len(thesis['content']) > 500 else thesis['content'])
+        else:
+            st.info(f"No thesis history found for {ticker}")
+            
+    except Exception as e:
+        st.error(f"Error loading thesis history: {str(e)}")
 
 def main():
     """Main function for thesis generation page"""

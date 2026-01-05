@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, JSON, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+import uuid
 
 class StockInfo(Base):
     """Stock information table"""
@@ -136,9 +138,11 @@ class AnalysisHistory(Base):
     confidence = Column(String(20))
     raw_data = Column(JSON)  # Full analysis result
     scenario_context_id = Column(Integer, ForeignKey("scenarios.id"))
+    batch_analysis_id = Column(UUID(as_uuid=True), index=True)  # UUID for grouping analysis methods per stock
     
     # Relationships
     scenario_context = relationship("Scenario")
+    theses = relationship("InvestmentThesis", primaryjoin="AnalysisHistory.batch_analysis_id == InvestmentThesis.batch_analysis_id", foreign_keys="[InvestmentThesis.batch_analysis_id]", back_populates="analysis_data")
 
 class StrategyPerformance(Base):
     """Strategy performance tracking over time"""
@@ -221,3 +225,22 @@ class Trade(Base):
     # Relationships
     rebalancing_event = relationship("RebalancingEvent", back_populates="trades")
     position = relationship("Position", back_populates="trades")
+
+class InvestmentThesis(Base):
+    """Generated investment theses storage"""
+    __tablename__ = "investment_theses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(String(10), nullable=False, index=True)
+    thesis_type = Column(String(50), nullable=False)  # bull_case, bear_case, balanced
+    content = Column(Text, nullable=False)
+    llm_provider = Column(String(50))  # openai, anthropic, groq
+    llm_model = Column(String(100))  # gpt-4, claude-3, etc
+    prompt_template = Column(String(100))  # prompt file used
+    batch_analysis_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Link to analysis batch UUID
+    previous_thesis_id = Column(Integer, ForeignKey("investment_theses.id"))  # for chaining
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    previous_thesis = relationship("InvestmentThesis", remote_side=[id])
+    analysis_data = relationship("AnalysisHistory", primaryjoin="InvestmentThesis.batch_analysis_id == AnalysisHistory.batch_analysis_id", foreign_keys="[InvestmentThesis.batch_analysis_id]", back_populates="theses")

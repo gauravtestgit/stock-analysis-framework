@@ -63,6 +63,9 @@ SEGMENT REVENUE DATA:
 **PREVIOUS ANALYSIS OUTPUT (if chaining enabled):**
 {previous_output}
 
+- If avaiable, utilize the previous analysis output for current analysis where relevant.
+- Specify where previous analysis output is being utilized and how it impacts current analysis.
+
 **ANSWER THESE QUESTIONS:**
 
 1. **Is this company making or losing money?**

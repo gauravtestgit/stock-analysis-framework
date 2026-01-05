@@ -87,7 +87,10 @@ class BatchAnalysisService:
                     # Store in database if enabled
                     if self.save_to_db and self.storage_service:
                         try:
-                            self.storage_service.store_comprehensive_analysis(ticker, analysis_result)
+                            # Storage service will generate batch_analysis_id
+                            batch_analysis_id = self.storage_service.store_comprehensive_analysis(ticker, analysis_result)
+                            # Add the generated ID back to analysis_result for potential thesis use
+                            analysis_result['batch_analysis_id'] = batch_analysis_id
                         except Exception as db_error:
                             self._log_failure(ticker, "DB_STORAGE_ERROR", str(db_error))
                 else:

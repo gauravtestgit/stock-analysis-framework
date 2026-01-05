@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func, distinct
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime, timedelta
 import math
+import uuid
 from ...models.database import get_db, create_tables
 from ...models.strategy_models import (
     Scenario, ScenarioOutcome, Strategy, StrategyScenario, 
@@ -156,7 +157,8 @@ class DatabaseService:
     
     def save_comprehensive_analysis(self, db: Session, ticker: str, 
                                    analysis_results: dict, 
-                                   scenario_context_id: Optional[int] = None) -> List[AnalysisHistory]:
+                                   scenario_context_id: Optional[int] = None,
+                                   batch_analysis_id: Optional[Union[str, uuid.UUID]] = None) -> List[AnalysisHistory]:
         """Save comprehensive analysis results from multiple analyzers"""
         saved_analyses = []
         
@@ -198,7 +200,8 @@ class DatabaseService:
                     current_price=current_price,
                     confidence=analysis_data.get('confidence', 'N/A'),
                     raw_data=clean_raw_data,
-                    scenario_context_id=scenario_context_id
+                    scenario_context_id=scenario_context_id,
+                    batch_analysis_id=batch_analysis_id
                 )
                 db.add(analysis_record)
                 saved_analyses.append(analysis_record)
@@ -236,7 +239,8 @@ class DatabaseService:
                     'analyses_count': analysis_results.get('analyses_count', 0),
                     'execution_time_seconds': analysis_results.get('execution_time_seconds', 0)
                 },
-                scenario_context_id=scenario_context_id
+                scenario_context_id=scenario_context_id,
+                batch_analysis_id=batch_analysis_id
             )
             db.add(final_analysis)
             saved_analyses.append(final_analysis)

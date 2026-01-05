@@ -9,17 +9,22 @@ class AnalysisStorageService:
         self.db_service = DatabaseService()
     
     def store_comprehensive_analysis(self, ticker: str, analysis_results: Dict[str, Any], 
-                                   scenario_context_id: Optional[int] = None) -> bool:
-        """Store comprehensive analysis results from orchestrator"""
+                                   scenario_context_id: Optional[int] = None) -> str:
+        """Store comprehensive analysis results from orchestrator and return batch_analysis_id"""
+        import uuid
+        
+        # Generate unique batch analysis ID as UUID object
+        batch_analysis_id = uuid.uuid4()
+        
         db = SessionLocal()
         try:
             self.db_service.save_comprehensive_analysis(
-                db, ticker, analysis_results, scenario_context_id
+                db, ticker, analysis_results, scenario_context_id, batch_analysis_id
             )
-            return True
+            return str(batch_analysis_id)
         except Exception as e:
             print(f"Failed to store analysis for {ticker}: {e}")
-            return False
+            raise e
         finally:
             db.close()
     

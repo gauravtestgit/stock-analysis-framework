@@ -64,9 +64,18 @@ class ThesisPromptLoader:
         safe_kwargs = self._prepare_safe_kwargs(kwargs)
         
         try:
+            # Use regular format method
             return template.format(**safe_kwargs)
         except KeyError as e:
+            print(f"KeyError in prompt formatting: Missing key {e}")
             raise ValueError(f"Missing required prompt parameter: {e}")
+        except ValueError as e:
+            print(f"ValueError in prompt formatting: {e}")
+            # Try simple string replacement as fallback
+            result = template
+            for key, value in safe_kwargs.items():
+                result = result.replace(f"{{{key}}}", str(value))
+            return result
     
     def _prepare_safe_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare kwargs with safe defaults for missing values"""

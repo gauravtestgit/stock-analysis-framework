@@ -7,6 +7,7 @@ from .models import AnalysisRequest, AnalysisResponse, HealthResponse, ConfigRes
 from .batch_models import BatchJobResponse, BatchResultsResponse
 from .service import AnalysisService
 from .batch_service import BatchAnalysisService
+from ..services.storage.thesis_storage_service import ThesisStorageService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,7 @@ app.add_middleware(
 # Initialize services
 analysis_service = AnalysisService(save_to_db=True)  # Default: save to database
 batch_service = BatchAnalysisService()  # Uses flag in constructor
+thesis_service = ThesisStorageService()
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -82,7 +84,8 @@ async def analyze_stock(ticker: str, request: AnalysisRequest = None):
             analyses=result.get('analyses', {}),
             financial_metrics=result.get('financial_metrics'),
             final_recommendation=result.get('final_recommendation'),
-            status="completed"
+            status="completed",
+            batch_analysis_id=result.get('batch_analysis_id')
         )
         
     except Exception as e:
@@ -193,6 +196,16 @@ async def list_batch_jobs():
         return batch_service.list_jobs()
     except Exception as e:
         logger.error(f"Failed to list jobs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/thesis_history/{ticker}")
+async def get_thesis_history(ticker: str, limit: int = 10):
+    """Get thesis history for a ticker"""
+    try:
+        history = thesis_service.get_thesis_history(ticker.upper(), limit)
+        return {"ticker": ticker.upper(), "history": history}
+    except Exception as e:
+        logger.error(f"Failed to get thesis history for {ticker}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

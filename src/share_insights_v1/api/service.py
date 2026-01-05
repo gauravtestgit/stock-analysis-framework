@@ -98,7 +98,10 @@ class AnalysisService:
         
         # Store in database if enabled
         if 'error' not in result and self.save_to_db and self.storage_service:
-            self.storage_service.store_comprehensive_analysis(ticker, result)
+            batch_analysis_id = self.storage_service.store_comprehensive_analysis(ticker, result)
+            # Add the generated ID back to result for thesis linking
+            if batch_analysis_id:
+                result['batch_analysis_id'] = batch_analysis_id
         
         return result
     

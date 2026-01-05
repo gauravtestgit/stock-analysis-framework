@@ -16,6 +16,7 @@ class AnalysisResponse(BaseModel):
     financial_metrics: Optional[Dict[str, Any]] = None
     final_recommendation: Optional[Dict[str, Any]] = None
     status: str = "completed"
+    batch_analysis_id: Optional[str] = None
 
 class HealthResponse(BaseModel):
     status: str
