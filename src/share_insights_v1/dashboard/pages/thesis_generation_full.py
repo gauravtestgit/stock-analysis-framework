@@ -640,7 +640,7 @@ def display_horizontal_stock_cards(results):
             <p><strong>P/E:</strong> {financial_metrics.get('pe_ratio', 'N/A')}</p>
             <p><strong>P/S:</strong> {financial_metrics.get('ps_ratio', 'N/A')}</p>
             <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
-            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}%</p>
+            <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}</p>
             <p><strong>Debt Ratio:</strong> {financial_metrics.get('debt_to_equity', 'N/A')}</p> 
             <p><strong>Type:</strong> {company_type}</p>
             <p><strong>Time:</strong> {analysis_time}s</p>
@@ -672,13 +672,14 @@ def display_horizontal_stock_cards(results):
             latest_free_cf = 0
             years_count = 0
             
-            # Get annual revenue data
-            annual_revenue = revenue_data_statements.get('annual_revenue', {})
-            if annual_revenue:
-                revenue_values = list(annual_revenue.values())
-                if revenue_values:
-                    latest_revenue = revenue_values[0]  # Most recent year
-                    years_count = len(revenue_values)
+            # Get annual revenue data - but don't override if we already have revenue from income statement
+            if not latest_revenue:
+                annual_revenue = revenue_data_statements.get('annual_revenue', {})
+                if annual_revenue:
+                    revenue_values = list(annual_revenue.values())
+                    if revenue_values:
+                        latest_revenue = revenue_values[0]  # Most recent year
+                        years_count = len(revenue_values)
             
             # Get annual income statement data
             annual_income = revenue_data_statements.get('annual_income_stmt', {})
@@ -688,15 +689,27 @@ def display_horizontal_stock_cards(results):
             income_data = annual_income if annual_income else quarterly_income
             
             # Debug: Print the structure to understand the data format
-            if quarterly_income:
-                # The quarterly data structure is: date -> field -> value
-                # We need to extract from the most recent quarter
+            if annual_income:
+                # The annual data structure is: date -> field -> value
+                # We need to extract from the most recent year
+                latest_year = list(annual_income.keys())[0]  # Most recent year
+                annual_data = annual_income[latest_year]
+                
+                # Extract values directly from the annual data
+                latest_net_income = annual_data.get('Net Income', 0) or 0
+                latest_gross_income = annual_data.get('Gross Profit', 0) or 0
+                latest_revenue = annual_data.get('Total Revenue', 0) or 0
+                years_count = len(annual_income)
+            elif quarterly_income:
+                # Fallback to quarterly data if annual not available
                 latest_quarter = list(quarterly_income.keys())[0]  # Most recent quarter
                 quarter_data = quarterly_income[latest_quarter]
                 
                 # Extract values directly from the quarter data
                 latest_net_income = quarter_data.get('Net Income', 0) or 0
                 latest_gross_income = quarter_data.get('Gross Profit', 0) or 0
+                latest_revenue = quarter_data.get('Total Revenue', 0) or 0
+                years_count = len(quarterly_income)
             
             # Get cashflow data - check if it follows the same structure
             cashflow_data = revenue_data_statements.get('cashflow', {})
@@ -941,6 +954,7 @@ def display_horizontal_stock_cards(results):
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                     <p><strong>Trend:</strong> {analysis_data.get('trend', 'N/A')}</p>
+                    <p><strong>Volume:</strong> {analysis_data.get('volume_trend', 'N/A')}</p>
                     <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -1047,10 +1061,17 @@ def display_horizontal_stock_cards(results):
             elif analysis_type == 'news_sentiment':
                 recent_news = analysis_data.get('recent_news', [])
                 news_html = ''.join([
-                    f"""<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #007acc; background: #f8f9fa;">
+                    f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">
                     <h6><a href="{article.get('url', '#')}" target="_blank" style="color: #007acc; text-decoration: none;">{article.get('title', 'No title')}</a></h6>
                     <p style="margin: 5px 0;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f} | <strong>Date:</strong> {article.get('date', 'NA')}</p>
-                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">{article.get('summary', 'No summary available')}</p>
+                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">{article.get('summary', 'No summary available')[:200]}...</p>
+                    {f'''<div style="background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                        <h6 style="color: #0066cc; margin: 0 0 8px 0;">🎯 Extracted Fact Block:</h6>
+                        <p style="margin: 3px 0;"><strong>Lead Fact:</strong> {article.get('enhanced_facts', {}).get('lead_fact', 'Not extracted')}</p>
+                        <p style="margin: 3px 0;"><strong>Quantitative:</strong> {article.get('enhanced_facts', {}).get('quantitative_evidence', 'Not extracted')}</p>
+                        <p style="margin: 3px 0;"><strong>Business Impact:</strong> {article.get('enhanced_facts', {}).get('business_mechanism', 'Not extracted')}</p>
+                        {f'<p style="margin: 3px 0;"><strong>Quote:</strong> "{article.get("enhanced_facts", {}).get("verbatim_quote", "")}"</p>' if article.get('enhanced_facts', {}).get('verbatim_quote') and article.get('enhanced_facts', {}).get('verbatim_quote') not in ['None available in the provided content', 'None available', 'None'] else ''}
+                    </div>''' if article.get('enhanced_facts') else '<p style="color: #999; font-style: italic;">No structured facts extracted (web scraping may be disabled)</p>'}
                     </div>"""
                     for article in recent_news
                 ]) if recent_news else "<p>No recent news available</p>"
@@ -1061,6 +1082,7 @@ def display_horizontal_stock_cards(results):
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Score:</strong> {analysis_data.get('overall_sentiment_score', 0) or 0:.2f}</p>
                     <p><strong>Count:</strong> {analysis_data.get('news_count', 0)}</p>
+                    <p><strong>Facts:</strong> {len([a for a in recent_news if a.get('enhanced_facts')])}/{len(recent_news)}</p>
                     <button onclick="showModal('news_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="news_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -1220,6 +1242,42 @@ def display_horizontal_stock_cards(results):
                 </div>
                 """
                 all_cards.append(fh_card)
+            elif analysis_type == 'industry_analysis':
+                porters_forces = analysis_data.get('porters_five_forces', {})
+                industry_card = f"""
+                <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
+                    <h5>🏭 Industry</h5>
+                    <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                    <p><strong>Outlook:</strong> {analysis_data.get('industry_outlook', 'N/A')}</p>
+                    <p><strong>Position:</strong> {analysis_data.get('competitive_position', 'N/A')}</p>
+                    <p><strong>ESG:</strong> {analysis_data.get('esg_score', 0):.1f}/10</p>
+                    <button onclick="showModal('industry_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                    
+                    <div id="industry_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                        <div id="industry_{sanitized_ticker}_content" style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">🏭 {ticker} Industry Analysis Details</h3>
+                                <div>
+                                    <button id="industry_{sanitized_ticker}_maximize" onclick="maximizeModal('industry_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
+                                    <button id="industry_{sanitized_ticker}_restore" onclick="restoreModal('industry_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
+                                    <span onclick="closeModal('industry_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                                </div>
+                            </div>
+                            <h4>Porter's Five Forces:</h4>
+                            <p><strong>Supplier Power:</strong> {porters_forces.get('supplier_power', {}).get('level', 'N/A')} ({porters_forces.get('supplier_power', {}).get('score', 0)}/10)</p>
+                            <p><strong>Buyer Power:</strong> {porters_forces.get('buyer_power', {}).get('level', 'N/A')} ({porters_forces.get('buyer_power', {}).get('score', 0)}/10)</p>
+                            <p><strong>Competitive Rivalry:</strong> {porters_forces.get('competitive_rivalry', {}).get('level', 'N/A')} ({porters_forces.get('competitive_rivalry', {}).get('score', 0)}/10)</p>
+                            <p><strong>Threat of Substitutes:</strong> {porters_forces.get('threat_of_substitutes', {}).get('level', 'N/A')} ({porters_forces.get('threat_of_substitutes', {}).get('score', 0)}/10)</p>
+                            <p><strong>Barriers to Entry:</strong> {porters_forces.get('barriers_to_entry', {}).get('level', 'N/A')} ({porters_forces.get('barriers_to_entry', {}).get('score', 0)}/10)</p>
+                            <h4>Industry Metrics:</h4>
+                            <p><strong>Regulatory Risk:</strong> {analysis_data.get('regulatory_risk', 'N/A')}</p>
+                            <p><strong>Growth Rate:</strong> {analysis_data.get('industry_growth_rate', 0):.1%}</p>
+                            <p><strong>Market Size:</strong> {analysis_data.get('market_size_estimate', 'N/A')}</p>
+                        </div>
+                    </div>
+                </div>
+                """
+                all_cards.append(industry_card)
             elif analysis_type == 'analyst_consensus':
                 analyst_card = f"""
                 <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
@@ -1604,11 +1662,19 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
         elif analysis_type == 'news_sentiment':
             recent_news = analysis_data.get('recent_news', [])
             news_html = ''.join([
-                f"""<div style="margin-bottom: 10px; padding: 8px; border-left: 3px solid #007acc;">
-                <h6>{article.get('title', 'No title')}</h6>
-                <p><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f}</p>
+                f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">
+                <h6><a href="{article.get('url', '#')}" target="_blank" style="color: #007acc; text-decoration: none;">{article.get('title', 'No title')}</a></h6>
+                <p style="margin: 5px 0;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f} | <strong>Date:</strong> {article.get('date', 'NA')}</p>
+                <p style="margin: 5px 0; font-size: 0.9em; color: #666;">{article.get('summary', 'No summary available')[:200]}...</p>
+                {f'''<div style="background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                    <h6 style="color: #0066cc; margin: 0 0 8px 0;">🎯 Extracted Fact Block:</h6>
+                    <p style="margin: 3px 0;"><strong>Lead Fact:</strong> {article.get('enhanced_facts', {}).get('lead_fact', 'Not extracted')}</p>
+                    <p style="margin: 3px 0;"><strong>Quantitative:</strong> {article.get('enhanced_facts', {}).get('quantitative_evidence', 'Not extracted')}</p>
+                    <p style="margin: 3px 0;"><strong>Business Impact:</strong> {article.get('enhanced_facts', {}).get('business_mechanism', 'Not extracted')}</p>
+                    {f'<p style="margin: 3px 0;"><strong>Quote:</strong> "{article.get("enhanced_facts", {}).get("verbatim_quote", "")}"</p>' if article.get('enhanced_facts', {}).get('verbatim_quote') else ''}
+                </div>''' if article.get('enhanced_facts') else '<p style="color: #999; font-style: italic;">No structured facts extracted (web scraping may be disabled)</p>'}
                 </div>"""
-                for article in recent_news[:3]
+                for article in recent_news
             ]) if recent_news else "<p>No recent news available</p>"
             
             news_card = f"""
@@ -2122,10 +2188,10 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'method_agreement': cross_analysis.get('method_agreement', 'Mixed'),
         'strengths': ', '.join(components['strengths'][:5]),
         'risks': ', '.join(components['risks'][:5]),
-        'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])[:3]),
+        'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])),
         'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
         'news_count': components['market_sentiment'].get('news_count', 0),
-        'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')})" for article in components['market_sentiment'].get('recent_news', [])[:3]]),
+        'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')}) - Facts: {article.get('enhanced_facts', {}).get('lead_fact', 'No structured facts')}" for article in components['market_sentiment'].get('recent_news', [])]),
         'industry_outlook': components.get('industry_analysis', {}).get('industry_outlook', 'Neutral'),
         'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
         'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
@@ -2135,7 +2201,15 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'data_source': components.get('segment_revenue_data', {}).get('data_source', 'N/A'),
         'revenue_diversification': components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A'),
         'TOTAL_REVENUE': f"${financial_metrics.get('total_revenue', 0):,.0f}" if financial_metrics.get('total_revenue') else "$0",
-        'SEGMENT_REVENUE_DATA': generate_segment_revenue_table(components.get('segment_revenue_data', {}), financial_metrics.get('total_revenue', 0))
+        'enhanced_news_facts': json.dumps([{
+            'title': article.get('title', ''),
+            'url': article.get('url', ''),
+            'lead_fact': article.get('enhanced_facts', {}).get('lead_fact', ''),
+            'quantitative_evidence': article.get('enhanced_facts', {}).get('quantitative_evidence', ''),
+            'business_mechanism': article.get('enhanced_facts', {}).get('business_mechanism', ''),
+            'verbatim_quote': article.get('enhanced_facts', {}).get('verbatim_quote', '')
+        } for article in components['market_sentiment'].get('recent_news', []) if article.get('enhanced_facts')], indent=2),
+        'business_summary': financial_metrics.get('business_summary', 'No business summary available'),
     }
 
 def generate_segment_revenue_table(segment_data, total_revenue):
@@ -2274,7 +2348,8 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'price_to_sales_ttm': financial_metrics.get('price_to_sales_ttm', 'N/A'),
             'price_to_book_mrq': financial_metrics.get('price_to_book_mrq', 'N/A'),
             'return_on_assets': financial_metrics.get('return_on_assets', 'N/A'),
-            'return_on_equity': financial_metrics.get('return_on_equity', 'N/A')
+            'return_on_equity': financial_metrics.get('return_on_equity', 'N/A'),
+            'business_summary': financial_metrics.get('business_summary', 'No business summary available')
         }
         
         # Convert display name back to prompt type dynamically
@@ -2366,11 +2441,83 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
                 except (ValueError, TypeError, KeyError):
                     startup_calculation_details = "\n\n**STARTUP VALUATION CALCULATION VALIDATION:** Data formatting error"
         
+        # Generate segment revenue table for product portfolio catalyst prompt
+        segment_revenue_table = generate_segment_revenue_table(
+            components.get('segment_revenue_data', {}), 
+            all_financial_data.get('total_revenue', 0)
+        )
+        
         # Prepare standardized prompt data
         prompt_data = prepare_standardized_prompt_data(
             ticker, components, analyses, all_financial_data, 
             target_price, current_price_str, dcf_calculation_details, startup_calculation_details
         )
+        
+        # Add segment revenue data for product portfolio catalyst prompt
+        prompt_data['SEGMENT_REVENUE_DATA'] = segment_revenue_table
+        
+        # Add technical analysis details
+        technical_analysis_details = ""
+        if 'technical' in analyses:
+            tech_data = analyses['technical']
+            technical_analysis_details = f"""
+        
+        **TECHNICAL ANALYSIS DETAILS:**
+        - Current Trend: {tech_data.get('trend', 'N/A')}
+        - RSI (14-day): {tech_data.get('rsi_14', 'N/A')}
+        - Moving Averages: MA20: {tech_data.get('ma_20', 'N/A')}, MA50: {tech_data.get('ma_50', 'N/A')}, MA200: {tech_data.get('ma_200', 'N/A')}
+        - MACD Signal: Line: {tech_data.get('macd_line', 'N/A')}, Signal: {tech_data.get('macd_signal', 'N/A')}
+        - Volume Trend: {tech_data.get('volume_trend', 'N/A')}
+        - Support/Resistance: Support: {tech_data.get('support_level', 'N/A')}, Resistance: {tech_data.get('resistance_level', 'N/A')}
+        - Technical Recommendation: {tech_data.get('recommendation', 'N/A')}
+        - Technical Target Price: ${tech_data.get('predicted_price', 0) or 0:.2f}
+        - Momentum Indicators: {tech_data.get('momentum_analysis', 'N/A')}
+        """
+        
+        # Add comparable analysis details
+        comparable_analysis_details = ""
+        if 'comparable' in analyses:
+            comp_data = analyses['comparable']
+            peer_tickers = comp_data.get('peer_tickers', [])
+            target_multiples = comp_data.get('target_multiples', {})
+            comparable_analysis_details = f"""
+        
+        **COMPARABLE COMPANY ANALYSIS DETAILS:**
+        - Peer Companies: {', '.join(peer_tickers[:5]) if peer_tickers else 'N/A'}
+        - Target P/E Multiple: {target_multiples.get('pe', 'N/A')}x
+        - Target P/S Multiple: {target_multiples.get('ps', 'N/A')}x
+        - Target P/B Multiple: {target_multiples.get('pb', 'N/A')}x
+        - Target EV/EBITDA Multiple: {target_multiples.get('ev_ebitda', 'N/A')}x
+        - Comparable Recommendation: {comp_data.get('recommendation', 'N/A')}
+        - Comparable Target Price: ${comp_data.get('predicted_price', 0) or 0:.2f}
+        - Peer Valuation Premium/Discount: {comp_data.get('valuation_premium', 'N/A')}
+        - Industry Multiple Range: {comp_data.get('industry_multiple_range', 'N/A')}
+        """
+        
+        # Add analyst consensus details
+        analyst_consensus_details = ""
+        if 'analyst_consensus' in analyses:
+            analyst_data = analyses['analyst_consensus']
+            analyst_consensus_details = f"""
+        
+        **ANALYST CONSENSUS DETAILS:**
+        - Consensus Target Price: ${analyst_data.get('predicted_price', 0) or 0:.2f}
+        - Target Price High: ${analyst_data.get('target_high', 0) or 0:.2f}
+        - Target Price Low: ${analyst_data.get('target_low', 0) or 0:.2f}
+        - Number of Analysts: {analyst_data.get('num_analysts', 0)}
+        - Consensus Recommendation: {analyst_data.get('recommendation', 'N/A')}
+        - Buy Ratings: {analyst_data.get('buy_ratings', 0)}
+        - Hold Ratings: {analyst_data.get('hold_ratings', 0)}
+        - Sell Ratings: {analyst_data.get('sell_ratings', 0)}
+        - Recent Estimate Revisions: {analyst_data.get('estimate_revisions', 'N/A')}
+        - Earnings Surprise History: {analyst_data.get('earnings_surprises', 'N/A')}
+        """
+        
+        # Add the analysis details to prompt data
+        prompt_data['technical_analysis_details'] = technical_analysis_details
+        prompt_data['comparable_analysis_details'] = comparable_analysis_details
+        prompt_data['analyst_consensus_details'] = analyst_consensus_details
+        prompt_data['previous_output'] = previous_output or ""
         
         # Load and format the appropriate prompt template
         prompt = prompt_loader.format_prompt(prompt_type, **prompt_data)
@@ -2413,164 +2560,6 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         if return_prompt:
             return fallback_response, None
         return fallback_response
-        
-        prompt = f"""
-        Generate an AI-generated investment analysis for {ticker}. Use neutral, machine-like language:
-        
-        **IMPORTANT DISCLAIMER: This analysis is generated by artificial intelligence and may contain errors, inaccuracies, or outdated information. This content should not be considered professional financial advice. Users should conduct their own research and consult qualified financial advisors before making investment decisions.**
-        
-        SECURITY: {ticker} - {components.get('company_type', 'Unknown')} classification
-        COMPUTED RECOMMENDATION: {final_rec.get('recommendation', 'Hold')}
-        ALGORITHMIC TARGET PRICE: ${target_price:.2f}
-        CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
-        
-        CRITICAL FORMATTING REQUIREMENTS:
-        - Use proper spacing between all words and numbers
-        - Format all prices as: $XXX.XX (with dollar sign and two decimal places)
-        - Format all percentages as: XX.X% (with percent sign)
-        - Use line breaks between sections
-        - Do not concatenate numbers or text without spaces
-        
-        CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. If target price is below current price, recommendation must be "Sell" unless you provide specific justification for "Hold". If target price is above current price, recommendation should be "Buy" unless risks outweigh upside.
-        
-        COMPREHENSIVE FINANCIAL ANALYSIS:
-        - Current valuation metrics: Market cap ${current_metrics.get('market_cap', 0):,.0f}, P/E {current_metrics.get('pe_ratio', 'N/A')}, P/S {current_metrics.get('ps_ratio', 'N/A')}, P/B {current_metrics.get('pb_ratio', 'N/A')}
-        - Growth performance: Revenue growth {growth_analysis.get('revenue_growth', 0):.1%} annual, {growth_analysis.get('historical_revenue_growth', 0):.1f}% historical trend
-        - Profitability assessment: ROE {profitability.get('roe', 0):.1%}, Operating margin {profitability.get('operating_margin', 0):.1%}, Net margin {profitability.get('net_margin', 0):.1%}
-        - Financial position: Debt-to-equity {financial_health.get('debt_to_equity', 0):.2f}, Current ratio {financial_health.get('current_ratio', 0):.2f}, Free cash flow ${financial_health.get('free_cash_flow', 0):,.0f}
-        - Earnings quality: Net income growth {growth_analysis.get('net_income_growth', 0):.1f}%, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%
-        
-        DATA PROCESSING METHODOLOGY:
-        • Financial statement parsing: Income statement, balance sheet, cash flow data extraction and ratio calculations (P/E, debt-to-equity, ROE)
-        • Technical pattern recognition: Price movement analysis, support/resistance identification, moving average calculations, RSI computations, volume trend analysis
-        • Valuation model execution: DCF calculations, comparable company multiple analysis, precedent transaction evaluation for fair value determination
-        • Industry data correlation: Market size analysis, growth rate calculations, competitive dynamics assessment using Porter's Five Forces framework
-        • Qualitative factor scoring: Management track record evaluation, corporate governance assessment, brand strength measurement, litigation risk analysis
-        • Event impact modeling: Earnings release effects, M&A probability assessment, product launch impact, regulatory decision consequences
-        
-        CROSS-METHOD VALIDATION RESULTS:
-        - Computed average target: ${cross_analysis.get('average_target', 0):.2f}
-        - Consensus strength metric: {cross_analysis.get('consensus_strength', 'Medium')}
-        - Method agreement coefficient: {cross_analysis.get('method_agreement', 'Mixed')}
-        
-        POSITIVE FACTORS IDENTIFIED: {', '.join(components['strengths'][:5])}
-        RISK FACTORS DETECTED: {', '.join(components['risks'][:5])}
-        
-        NEWS SENTIMENT INTEGRATION:
-        - Recent developments impact: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
-        - Sentiment analysis: {components['market_sentiment'].get('sentiment_rating', 'Neutral')} rating from {components['market_sentiment'].get('news_count', 0)} articles
-        - News-driven catalyst probability assessment
-        
-        INDUSTRY CONTEXT VARIABLES:
-        - Industry outlook classification: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')}
-        - Competitive position score: {components.get('industry_analysis', {}).get('competitive_position', 'Average')}
-        - Regulatory risk level: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')}
-        
-        Generate analysis with these sections (use proper formatting and spacing):
-        
-        **COMPREHENSIVE FINANCIAL FOUNDATION**
-        - Market positioning: Market cap ${current_metrics.get('market_cap', 0):,.0f} with valuation ratios P/E {current_metrics.get('pe_ratio', 'N/A')}, P/S {current_metrics.get('ps_ratio', 'N/A')}, P/B {current_metrics.get('pb_ratio', 'N/A')}
-        - Growth trajectory analysis: Revenue growth {growth_analysis.get('revenue_growth', 0):.1%} annual vs {growth_analysis.get('historical_revenue_growth', 0):.1f}% historical, indicating {"accelerating" if growth_analysis.get('revenue_growth', 0) > growth_analysis.get('historical_revenue_growth', 0) else "decelerating"} trend
-        - Profitability profile: ROE {profitability.get('roe', 0):.1%}, Operating efficiency {profitability.get('operating_margin', 0):.1%}, Net profitability {profitability.get('net_margin', 0):.1%}
-        - Balance sheet strength: Debt management {financial_health.get('debt_to_equity', 0):.2f} debt-to-equity, Liquidity {financial_health.get('current_ratio', 0):.2f} current ratio
-        - Cash generation capability: Free cash flow ${financial_health.get('free_cash_flow', 0):,.0f}, Operating CF growth {growth_analysis.get('operating_cf_growth', 0):.1f}%, Earnings quality {growth_analysis.get('net_income_growth', 0):.1f}%
-        
-        Interpret the comprehensive financial data to explain the company's fundamental position. Describe what growth trends and profitability metrics reveal about operational performance and competitive positioning. Explain how balance sheet strength and cash generation support or constrain future growth opportunities and financial flexibility.
-        
-        **ALGORITHMIC ASSESSMENT SUMMARY**
-        - Current market price: {current_price_str} (use this exact figure)
-        - Target price vs current price variance: Calculate percentage difference between ${target_price:.2f} and {current_price_str}
-        - Computed investment probability with catalyst identification and quantified impact estimates
-        - Primary value drivers (2-3 factors) with supporting data correlations
-        - Risk-adjusted assessment with probability-weighted scenario modeling
-        
-        For each assessment metric above, provide a clear explanation of what the computed probabilities indicate about investment potential. Explain the methodology behind probability calculations (e.g., based on historical patterns, peer analysis, etc.). Describe how the value drivers were identified and what the risk-adjusted assessment means for expected returns. CRITICAL: Explain why target price differs from current price and how this affects the recommendation.
-        
-        **NEWS CATALYST & SENTIMENT ANALYSIS**
-        - Recent news developments impact assessment: {components['market_sentiment'].get('sentiment_score', 0):.2f} sentiment score from {components['market_sentiment'].get('news_count', 0)} articles
-        - Key developments driving market perception: {', '.join(components['market_sentiment'].get('key_developments', [])[:3])}
-        - News source analysis and credibility: {', '.join([f"{article.get('source', 'Unknown')} (Score: {article.get('sentiment_score', 0):.2f})" for article in components['market_sentiment'].get('recent_news', [])[:3]])}
-        - Article references for validation: {', '.join([f"{article.get('title', 'No title')[:35]}... - {article.get('url', 'No URL')}" for article in components['market_sentiment'].get('recent_news', [])[:3]])}
-        - News flow momentum analysis with catalyst timing probability (explain how news cycles affect stock performance)
-        - Media coverage quality assessment with credibility and reach metrics
-        
-        Interpret the news sentiment data to explain market perception trends and momentum factors. Describe what recent developments indicate about business trajectory and market confidence. Reference specific news articles and sources to validate analysis claims. Explain how news flow patterns affect investment timing and provide assessment of catalyst sustainability.
-        
-        **COMPREHENSIVE INDUSTRY ANALYSIS**
-        - Industry classification and outlook: {components.get('industry_analysis', {}).get('industry_outlook', 'Neutral')} with specific growth/decline drivers
-        - Market positioning assessment: {components.get('industry_analysis', {}).get('competitive_position', 'Average')} with competitive moat analysis
-        - Porter's Five Forces comprehensive scoring (provide specific scores 1-5 for each force with detailed justification):
-          • Supplier Power: Score and explanation of supplier concentration and switching costs
-          • Buyer Power: Score and explanation of customer concentration and price sensitivity  
-          • Competitive Rivalry: Score and explanation of market concentration and differentiation
-          • Threat of Substitutes: Score and explanation of alternative solutions and switching barriers
-          • Barriers to Entry: Score and explanation of capital requirements and regulatory hurdles
-        - Regulatory environment analysis: {components.get('industry_analysis', {}).get('regulatory_risk', 'Medium')} risk with specific policy implications
-        - ESG positioning evaluation: {components.get('industry_analysis', {}).get('esg_score', 5.0)}/10 with sustainability competitive advantages/disadvantages
-        - Market catalysts identification: {', '.join(components.get('industry_analysis', {}).get('market_catalysts', [])[:3])}
-        
-        Interpret the comprehensive industry analysis to explain the company's strategic positioning within its sector. Describe what each Porter's Five Forces score reveals about competitive dynamics and provide specific reasoning for each score (explain how forces interact to create or erode competitive advantages). Explain how regulatory trends and ESG factors affect long-term industry attractiveness and company positioning. Describe what market catalysts mean for sector-wide opportunities or threats.
-        
-        **BUSINESS MODEL & COMPETITIVE ANALYSIS**
-        - Revenue stream analysis with market position quantification
-        - Competitive advantage/disadvantage assessment with sustainable moat evaluation
-        - Management execution track record with strategic initiative success rates
-        
-        Interpret the business model data to explain the company's operational strengths and strategic positioning. Describe what competitive advantages reveal about long-term sustainability and market defensibility. Explain how management execution history affects confidence in strategic direction and value creation capability.
-        
-        **PRODUCT PORTFOLIO & COMPETITIVE ANALYSIS**
-        - Product portfolio assessment: {components.get('product_portfolio', {}).get('product_breadth', 'N/A')} breadth with {components.get('product_portfolio', {}).get('innovation_level', 'N/A')} innovation level
-        - Core product offerings: {', '.join(components.get('product_portfolio', {}).get('core_products', [])[:3])}
-        - Competitive differentiation strategy: {components.get('competitive_differentiation', {}).get('differentiation_strategy', 'N/A')}
-        - Brand positioning strength: {components.get('competitive_differentiation', {}).get('brand_strength', 'N/A')} with {components.get('competitive_differentiation', {}).get('switching_costs', 'N/A')} switching costs
-        - Technology moat assessment: {components.get('competitive_differentiation', {}).get('technology_moat', 'N/A')}
-        - Key competitive threats: {', '.join(components.get('competitive_differentiation', {}).get('competitive_threats', [])[:2])}
-        
-        Explain how the product portfolio supports balanced investment assessment through diversification analysis, innovation pipeline evaluation, and market positioning strength. Describe what competitive differentiation reveals about sustainable advantages and defensive capabilities. Explain how brand strength and switching costs create customer retention benefits while acknowledging competitive vulnerabilities and market positioning challenges.
-        
-        **VALUATION MODEL RECONCILIATION**
-        - Multi-method valuation synthesis (DCF, comparable, precedent transaction outputs)
-        - Fair value calculation with methodology weighting and sensitivity analysis
-        - Scenario probability modeling with key variable assumption testing
-        - Current valuation vs fair value analysis (premium/discount explanation using {current_price_str})
-        
-        Interpret the valuation model results to explain fair value determination. Describe how different methodologies compare and what the sensitivity analysis reveals about valuation confidence and key risk factors. CRITICAL: Explain whether current market price of {current_price_str} represents overvaluation or undervaluation and provide specific reasoning.
-        
-        **RISK-RETURN COMPUTATION**
-        - Primary risk factors with quantified potential impact calculations (explain calculation methodology)
-        - Mitigation factor analysis with management track record and strategic initiative assessment
-        - Expected value calculation with risk-reward optimization metrics
-        - Probability-weighted return scenarios (bull/base/bear cases with probabilities)
-        
-        Explain what the risk-return analysis indicates about investment attractiveness. Describe how identified risks affect expected outcomes and provide methodology for impact calculations. Explain what mitigation factors suggest about downside protection and how probability weights were determined.
-        
-        **ALGORITHMIC OUTPUT RECOMMENDATION**
-        - Computed recommendation with confidence level (1-5 scale) based on data convergence
-        - Target price with 12-month probability distribution and milestone trigger identification
-        - Position sizing calculation (portfolio percentage) with risk parameter optimization
-        - Recommendation logic: If target < current price, explain why not "Sell"; if target > current price, explain risk factors preventing "Buy"
-        
-        Explain what the algorithmic recommendation means for practical investment decisions. Describe how the confidence level should be interpreted and what the position sizing calculation suggests about appropriate portfolio allocation. CRITICAL: Provide clear logical reasoning for the recommendation given the target price vs current price relationship using {current_price_str}.
-        
-        VALIDATION REQUIREMENTS:
-        - All probabilities must include methodology explanation
-        - Porter's Five Forces scores must be justified
-        - Target price vs current price discrepancy must be addressed using {current_price_str}
-        - Recommendation must be logically consistent with price targets
-        - Risk factors and positive factors must be balanced and reconciled
-        - Use proper number formatting with spaces between words and numbers
-        """
-        
-        llm_response = llm_manager.generate_response(prompt)
-        
-        if not llm_response or len(llm_response.strip()) < 100:
-            return generate_balanced_thesis(ticker, components)
-        
-        return llm_response
-        
-    except Exception as e:
-        st.warning(f"LLM enhancement failed, using template: {str(e)}")
-        return generate_balanced_thesis(ticker, components)
 
 def generate_bull_case(ticker, components):
     """Generate bullish investment thesis (template fallback)"""

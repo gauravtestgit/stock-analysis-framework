@@ -49,9 +49,16 @@ class AnalysisService:
         orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer())
         orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer())
         
-        # Register qualitative analyzers
-        orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider))
-        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles))
+        # Initialize LLM manager for qualitative analyzers
+        from ..implementations.llm_providers.llm_manager import LLMManager
+        try:
+            llm_manager = LLMManager(use_plugin_system=True)
+        except Exception:
+            llm_manager = LLMManager()  # Fallback to legacy
+        
+        # Register qualitative analyzers with LLM support
+        orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider, llm_manager))
+        orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, max_articles=self.max_news_articles))
         orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
         orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
@@ -60,6 +67,10 @@ class AnalysisService:
         # Register SEC-based analyzer
         sec_provider = SECEdgarProvider()
         orchestrator.register_analyzer(AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(sec_provider))
+        
+        # Import and register industry analysis
+        from ..implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
+        orchestrator.register_analyzer(AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(self.data_provider))
         
         return orchestrator
     
@@ -131,7 +142,7 @@ class AnalysisService:
             
             # Register qualitative analyzers with shared LLM manager
             orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider, llm_manager))
-            orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles))
+            orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, max_articles=self.max_news_articles))
             orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider, llm_manager))
             orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
             orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
@@ -140,6 +151,10 @@ class AnalysisService:
             # Register SEC-based analyzer
             sec_provider = SECEdgarProvider()
             orchestrator.register_analyzer(AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(sec_provider))
+            
+            # Import and register industry analysis
+            from ..implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
+            orchestrator.register_analyzer(AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(self.data_provider))
             
             return orchestrator
         else:
@@ -164,6 +179,9 @@ class AnalysisService:
             llm_manager = LLMManager(use_plugin_system=True)
             llm_manager.set_primary_provider(llm_provider, llm_model)
         
+        # Import industry analyzer
+        from ..implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
+        
         # Analyzer mapping with LLM manager support
         analyzer_map = {
             'dcf': (AnalysisType.DCF, DCFAnalyzer()),
@@ -171,12 +189,13 @@ class AnalysisService:
             'comparable': (AnalysisType.COMPARABLE, ComparableAnalyzer()),
             'startup': (AnalysisType.STARTUP, StartupAnalyzer()),
             'ai_insights': (AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(self.data_provider, llm_manager) if llm_manager else AIInsightsAnalyzer(self.data_provider)),
-            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles) if llm_manager else NewsSentimentAnalyzer(self.data_provider, debug_mode=self.debug_mode, enable_web_scraping=True, max_articles=self.max_news_articles)),
+            'news_sentiment': (AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager, debug_mode=self.debug_mode, max_articles=self.max_news_articles) if llm_manager else NewsSentimentAnalyzer(self.data_provider, debug_mode=self.debug_mode, max_articles=self.max_news_articles)),
             'business_model': (AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider, llm_manager) if llm_manager else BusinessModelAnalyzer(self.data_provider)),
             'competitive_position': (AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider)),
             'management_quality': (AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider)),
             'analyst_consensus': (AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(self.data_provider)),
-            'financial_health': (AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(SECEdgarProvider()))
+            'financial_health': (AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(SECEdgarProvider())),
+            'industry_analysis': (AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(self.data_provider))
         }
         
         # Register only requested analyzers
@@ -204,10 +223,13 @@ class AnalysisService:
             'competitive_position': {'name': 'Competitive Position', 'applicable_to': ['all']},
             'management_quality': {'name': 'Management Quality', 'applicable_to': ['all']},
             'financial_health': {'name': 'Financial Health', 'applicable_to': ['all except ETF']},
-            'analyst_consensus': {'name': 'Analyst Consensus', 'applicable_to': ['all']}
+            'analyst_consensus': {'name': 'Analyst Consensus', 'applicable_to': ['all']},
+            'industry_analysis': {'name': 'Industry Analysis', 'applicable_to': ['all']}
         }
         
-        for analyzer_type in self.orchestrator.analyzers.keys():
+        # Get available analyzer types from the full setup
+        full_orchestrator = self._setup_orchestrator()
+        for analyzer_type in full_orchestrator.analyzers.keys():
             key = analyzer_type.value
             info = analyzer_info.get(key, {'name': key.title(), 'applicable_to': ['all']})
             

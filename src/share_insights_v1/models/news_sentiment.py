@@ -31,6 +31,7 @@ class NewsItem:
     source: str
     url: Optional[str] = None
     sentiment: Optional[str] = None
+    enhanced_facts: Optional[Dict] = None
 
 @dataclass
 class SentimentTrend:

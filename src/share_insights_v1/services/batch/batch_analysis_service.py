@@ -37,12 +37,45 @@ class BatchAnalysisService:
     
     def _register_analyzers(self):
         """Register all available analyzers"""
+        # Initialize LLM manager for qualitative analyzers
+        from ...implementations.llm_providers.llm_manager import LLMManager
+        try:
+            llm_manager = LLMManager(use_plugin_system=True)
+        except Exception:
+            llm_manager = LLMManager()  # Fallback to legacy
+        
+        # Register quantitative analyzers
         self.orchestrator.register_analyzer(AnalysisType.DCF, DCFAnalyzer(self.config))
         self.orchestrator.register_analyzer(AnalysisType.TECHNICAL, TechnicalAnalyzer())
         self.orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer(self.config))
         self.orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer(self.config))
         self.orchestrator.register_analyzer(AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(self.data_provider))
-        # self.orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(data_provider=self.data_provider))
+        
+        # Register qualitative analyzers with LLM support
+        self.orchestrator.register_analyzer(AnalysisType.AI_INSIGHTS, AIInsightsAnalyzer(data_provider=self.data_provider, llm_manager=llm_manager))
+        
+        # Import and register news sentiment analyzer
+        from ...implementations.analyzers.news_sentiment_analyzer import NewsSentimentAnalyzer
+        self.orchestrator.register_analyzer(AnalysisType.NEWS_SENTIMENT, NewsSentimentAnalyzer(self.data_provider, llm_manager))
+        
+        # Import and register additional qualitative analyzers
+        from ...implementations.analyzers.business_model_analyzer import BusinessModelAnalyzer
+        from ...implementations.analyzers.competitive_position_analyzer import CompetitivePositionAnalyzer
+        from ...implementations.analyzers.management_quality_analyzer import ManagementQualityAnalyzer
+        
+        self.orchestrator.register_analyzer(AnalysisType.BUSINESS_MODEL, BusinessModelAnalyzer(self.data_provider, llm_manager))
+        self.orchestrator.register_analyzer(AnalysisType.COMPETITIVE_POSITION, CompetitivePositionAnalyzer(self.data_provider))
+        self.orchestrator.register_analyzer(AnalysisType.MANAGEMENT_QUALITY, ManagementQualityAnalyzer(self.data_provider))
+        
+        # Import and register SEC-based analyzer
+        from ...implementations.analyzers.financial_health_analyzer import FinancialHealthAnalyzer
+        from ...implementations.data_providers.sec_edgar_provider import SECEdgarProvider
+        sec_provider = SECEdgarProvider()
+        self.orchestrator.register_analyzer(AnalysisType.FINANCIAL_HEALTH, FinancialHealthAnalyzer(sec_provider))
+        
+        # Import and register industry analysis
+        from ...implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
+        self.orchestrator.register_analyzer(AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(self.data_provider))
     
     def process_csv(self, input_csv_path: str, output_csv_path: str, max_stocks: int = None):
         """Process stocks from CSV and save results to CSV"""

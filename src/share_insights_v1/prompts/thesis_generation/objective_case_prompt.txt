@@ -12,11 +12,17 @@ Generate an AI-generated OBJECTIVE investment analysis for {ticker}. Use neutral
 
 SECURITY: {ticker} - {company_type} classification
 ANALYSIS TYPE: Objective Financial Assessment
+BUSINESS SUMMARY: {business_summary}
+
+**PREVIOUS ANALYSIS OUTPUT (if chaining enabled):**
+{previous_output}
+If available, Utilize the previous prompt output where relevant for current analysis. 
+Compare against the algorithmic target price
 
 ALGORITHMIC TARGET PRICE: ${target_price:.2f}
 CURRENT MARKET PRICE: {current_price_str} (use this exact price - do not obtain from other sources)
 
-OBJECTIVE FOCUS: Evaluate financial health objectively based on provided metrics. Identify strengths and weaknesses without predetermined bias. Reach recommendation based on evidence, not forced 'balance'. Clearly distinguish between facts and analytical interpretations.
+OBJECTIVE FOCUS: Evaluate financial health objectively based on provided metrics, technical analysis patterns, comparable company valuations, and analyst consensus data. Identify strengths and weaknesses without predetermined bias. Reach recommendation based on evidence, not forced 'balance'. Clearly distinguish between facts and analytical interpretations. Incorporate technical indicators, peer valuation multiples, and analyst estimate trends into objective assessment.
 
 CRITICAL REQUIREMENT: Use the provided current market price of {current_price_str}. Explain target vs current price relationship and provide balanced recommendation rationale.
 
@@ -33,12 +39,13 @@ COMPREHENSIVE FINANCIAL FOUNDATION:
 - Cash Flow: Operating cash flow ${latest_operating_cf:,.0f}, Capital expenditures ${latest_capital_expenditures:,.0f}
 - Company profile: Industry {industry}, Sector {sector}{segment_info}
 - Historical performance: Net income growth {net_income_growth:.1f}%, Operating CF growth {operating_cf_growth:.1f}%
-{dcf_calculation_details}{startup_calculation_details}
+{dcf_calculation_details}{startup_calculation_details}{technical_analysis_details}{comparable_analysis_details}{analyst_consensus_details}
 
 DATA PROCESSING METHODOLOGY:
 • Financial statement analysis: Income statement, balance sheet, cash flow examination with ratio calculations
-• Technical pattern recognition: Price movements, volume analysis, indicator calculations
-• Valuation model execution: DCF, comparable company, precedent transaction analysis
+• Technical pattern recognition: Price movements, volume analysis, momentum indicators, support/resistance levels, moving averages
+• Valuation model execution: DCF, comparable company multiples, precedent transaction analysis with peer benchmarking
+• Analyst consensus integration: Price targets, estimate revisions, upgrade/downgrade trends, earnings surprises
 • Industry dynamics assessment: Porter's Five Forces, competitive positioning, market analysis
 • Qualitative factor evaluation: Management quality, governance, brand strength, litigation risks
 • Event impact modeling: Earnings, M&A, product launches, regulatory decisions
@@ -55,6 +62,8 @@ NEWS SENTIMENT DATA:
 - Recent developments: {key_developments}
 - Sentiment rating: {sentiment_rating} from {news_count} articles
 - News sources with URLs: {news_sources_with_urls}
+- Enhanced fact blocks from news analysis: {enhanced_news_facts}
+- Enhanced fact blocks from news analysis: {enhanced_news_facts}
 
 INDUSTRY CONTEXT:
 - Industry outlook: {industry_outlook}

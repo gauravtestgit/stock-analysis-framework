@@ -15,7 +15,7 @@ from ...utils.prompt_formatter import PromptFormatter
 class NewsSentimentAnalyzer(IAnalyzer):
     """Enhanced news sentiment analyzer with recent developments tracking"""
     
-    def __init__(self, data_provider: IDataProvider, llm_manager=None, debug_mode: bool = False, enable_web_scraping: bool = False, max_articles: int = 5):
+    def __init__(self, data_provider: IDataProvider, llm_manager=None, debug_mode: bool = False, enable_web_scraping: bool = True, max_articles: int = 5):
         self.data_provider = data_provider
         self.llm_manager = llm_manager or LLMManager()
         self.debug_mode = debug_mode
@@ -36,21 +36,32 @@ class NewsSentimentAnalyzer(IAnalyzer):
             # Generate sentiment report
             report = self._analyze_news_sentiment(ticker, news_data)
             
+            # Debug: Print what enhanced facts are being returned
+            recent_news_with_facts = [{
+                'title': item.title,
+                'summary': item.summary,
+                'date': item.date,
+                'source': item.source,
+                'url': getattr(item, 'url', ''),
+                'sentiment': getattr(item, 'sentiment', 'neutral'),
+                'sentiment_score': item.sentiment_score,
+                'enhanced_facts': getattr(item, 'enhanced_facts', None)
+            } for item in report.recent_news]
+            
+            # Debug logging
+            for news_item in recent_news_with_facts:
+                if news_item['enhanced_facts']:
+                    print(f"✅ DEBUG: News item '{news_item['title'][:30]}...' has enhanced facts: {news_item['enhanced_facts']}")
+                else:
+                    print(f"❌ DEBUG: News item '{news_item['title'][:30]}...' has NO enhanced facts")
+            
             return {
                 'method': 'News Sentiment Analysis',
                 'applicable': True,
                 'overall_sentiment_score': report.overall_sentiment_score,
                 'sentiment_rating': report.sentiment_rating.value,
                 'news_count': len(report.recent_news),
-                'recent_news': [{
-                    'title': item.title,
-                    'summary': item.summary,
-                    'date': item.date,
-                    'source': item.source,
-                    'url': getattr(item, 'url', ''),
-                    'sentiment': getattr(item, 'sentiment', 'neutral'),
-                    'sentiment_score': item.sentiment_score
-                } for item in report.recent_news],
+                'recent_news': recent_news_with_facts,
                 'key_developments': report.key_developments,
                 'sentiment_drivers': report.sentiment_drivers,
                 'risk_factors': report.risk_factors,
@@ -241,7 +252,8 @@ class NewsSentimentAnalyzer(IAnalyzer):
                 date=news['date'],
                 source=news['source'],
                 url=news.get('url', ''),
-                sentiment=news.get('sentiment', 'neutral')
+                sentiment=news.get('sentiment', 'neutral'),
+                enhanced_facts=sentiment_result.get('enhanced_facts')  # Include enhanced facts directly in constructor
             )
             
             news_items.append(news_item)
@@ -271,55 +283,51 @@ class NewsSentimentAnalyzer(IAnalyzer):
         )
     
     def _analyze_text_sentiment(self, title: str, summary: str, ticker: str = None) -> Dict[str, float]:
-        """Analyze stock-specific sentiment from text using fast rule-based approach with optional LLM"""
+        """Analyze stock-specific sentiment from text using enhanced fact extraction"""
         
-        # Use LLM analysis by default when web scraping is enabled
+        # Use enhanced fact extraction when web scraping is enabled
         if self.enable_web_scraping:
             try:
                 # Get provider name for formatting
                 provider_name = PromptFormatter.get_provider_name_from_llm_manager(self.llm_manager)
                 
                 if ticker:
-                    # Create universal prompt for ticker-specific sentiment
-                    news_info = {
-                        'ticker': ticker,
-                        'title': title,
-                        'summary': summary,
-                        'context': f"This article appeared in {ticker}'s news feed, meaning it relates to {ticker}."
-                    }
-                    
-                    base_prompt = f"""TASK: Score sentiment for {ticker}.
+                    # Enhanced fact extraction prompt
+                    fact_extraction_prompt = f"""🎯 OBJECTIVE: Extract institutional-grade "Fact Blocks" from the following news article to feed into a financial modeling engine for {ticker}.
 
+ARTICLE DATA:
 Title: {title}
-Summary: {summary}
+Content: {summary}
+URL: Available in source data
 
-IMPORTANT: This article appeared in {ticker}'s news feed, meaning it relates to {ticker}.
+FOR THIS ARTICLE:
+1. **The Lead Fact**: What is the specific event? (e.g., $50M contract win, Q3 earnings beat of 5%, CEO departure).
+2. **Quantitative Evidence**: Quote exact numbers, dollar amounts, or percentages from the article.
+3. **The "Why it Matters" (Mechanism)**: How does this specifically change {ticker}'s business? (e.g., "Expands gross margin by reducing supply chain lag").
+4. **Verbatim Quote**: One high-impact quote for attribution (if available in content).
+5. **Sentiment Score**: Rate impact on {ticker} from -1.0 (very negative) to +1.0 (very positive).
 
-If title contains "keep an eye on" or "research further" → {ticker} is likely the recommended stock → Score +0.7
-If title contains "attractive" or "undervalued" → {ticker} is likely positive → Score +0.6  
-If {ticker} explicitly mentioned positively → Score +0.4
-If neutral about {ticker} → Score 0.0
-If warns against {ticker} → Score -0.5
-
-Note: Summary may be truncated, but title indicates {ticker} relevance.
+🚫 RESTRAINT: Do not provide an "opinion" or "summary." Provide only raw, structured data blocks.
 
 Return JSON:"""
                     
                     schema = {
+                        "lead_fact": "Specific event description",
+                        "quantitative_evidence": "Exact numbers/amounts from article",
+                        "business_mechanism": "How this changes the business",
+                        "verbatim_quote": "Direct quote from article (if available)",
                         "sentiment_score": 0.0,
                         "confidence": 0.8
                     }
                     
-                    prompt = base_prompt + "\n" + PromptFormatter._format_json_schema(schema)
+                    prompt = fact_extraction_prompt + "\n" + PromptFormatter._format_json_schema(schema)
                     prompt = PromptFormatter.format_json_prompt(prompt, provider_name)
                 else:
-                    # Generic sentiment analysis
+                    # Generic sentiment analysis for non-ticker specific
                     base_prompt = f"""Analyze the sentiment of this financial news and respond with ONLY valid JSON:
 
 Title: {title}
 Summary: {summary}
-
-CRITICAL: Return ONLY the JSON object below, no explanations or additional text:
 
 Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
                     
@@ -336,19 +344,37 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
                 result = json.loads(json_str)
                 
                 score = result.get('sentiment_score', 0.0)
-                if self.debug_mode and ('keep an eye on' in title.lower() or 'research further' in title.lower()):
-                    print(f"DEBUG: '{title[:50]}...' → Score: {score}")
-                    print(f"  Summary length: {len(summary)} chars")
-                    print(f"  Contains '{ticker}': {'Yes' if ticker.lower() in summary.lower() else 'No'}")
+                
+                # Debug: Print what we got from LLM
+                if self.debug_mode or ticker:  # Always debug for ticker-specific analysis
+                    print(f"🔍 DEBUG: LLM response for '{title[:50]}...': {result}")
+                
+                # Store enhanced fact data for thesis generation
+                if ticker and 'lead_fact' in result:
+                    # Store structured facts in the news item for later use
+                    enhanced_facts = {
+                        'lead_fact': result.get('lead_fact', ''),
+                        'quantitative_evidence': result.get('quantitative_evidence', ''),
+                        'business_mechanism': result.get('business_mechanism', ''),
+                        'verbatim_quote': result.get('verbatim_quote', '')
+                    }
+                    print(f"✅ DEBUG: Enhanced facts extracted for '{title[:30]}...': {enhanced_facts}")
+                    
+                    return {
+                        'score': score,
+                        'confidence': result.get('confidence', 0.5),
+                        'enhanced_facts': enhanced_facts  # Return the structured facts
+                    }
                 
                 return {
                     'score': score,
-                    'confidence': result.get('confidence', 0.5)
+                    'confidence': result.get('confidence', 0.5),
+                    'enhanced_facts': result if ticker and 'lead_fact' in result else None
                 }
                 
             except Exception as e:
                 if self.debug_mode:
-                    print(f"LLM sentiment analysis error for '{title[:30]}...': {e}")
+                    print(f"Enhanced sentiment analysis error for '{title[:30]}...': {e}")
                 return self._get_fallback_sentiment(title, summary, ticker)
         
         # Fallback to rule-based when web scraping disabled
