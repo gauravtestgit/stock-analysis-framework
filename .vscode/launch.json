@@ -14,7 +14,7 @@
             "name": "Debug Test",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.share_insights_v1.tests.test_orchestrator_comprehensive",
+            "module": "src.share_insights_v1.dashboard.pages.thesis_generation_full",
             // "module": "simple_test",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

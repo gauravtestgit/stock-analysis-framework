@@ -3,7 +3,7 @@ import yaml
 import importlib
 from typing import Dict, Any, List, Optional, Type
 from ...interfaces.llm_provider import ILLMProvider
-
+from ...utils.debug_printer import debug_print
 class LLMPluginManager:
     """Plugin manager for LLM providers with configuration-driven loading"""
     
@@ -11,14 +11,14 @@ class LLMPluginManager:
         self.config_path = config_path
         self.config = None
         self.registry = {}
-        print(f"[PLUGIN_DEBUG] Initializing LLM Plugin Manager with config: {config_path}")
+        debug_print(f"[PLUGIN_DEBUG] Initializing LLM Plugin Manager with config: {config_path}")
         
         try:
             self._load_config()
             self._register_plugins()
-            print(f"[PLUGIN_DEBUG] Successfully registered {len(self.registry)} providers")
+            debug_print(f"[PLUGIN_DEBUG] Successfully registered {len(self.registry)} providers")
         except Exception as e:
-            print(f"[PLUGIN_DEBUG] Plugin manager initialization failed: {e}")
+            debug_print(f"[PLUGIN_DEBUG] Plugin manager initialization failed: {e}")
             # Don't raise - allow fallback to legacy system
     
     def _load_config(self):
@@ -36,13 +36,13 @@ class LLMPluginManager:
                 if os.path.exists(path):
                     with open(path, 'r') as f:
                         self.config = yaml.safe_load(f)
-                    print(f"[PLUGIN_DEBUG] Loaded config from: {path}")
+                    debug_print(f"[PLUGIN_DEBUG] Loaded config from: {path}")
                     return
             
             raise FileNotFoundError(f"Config file not found in any of: {config_paths}")
             
         except Exception as e:
-            print(f"[PLUGIN_DEBUG] Failed to load config: {e}")
+            debug_print(f"[PLUGIN_DEBUG] Failed to load config: {e}")
             raise
     
     def _register_plugins(self):
@@ -54,7 +54,7 @@ class LLMPluginManager:
             try:
                 self._register_plugin(provider_config)
             except Exception as e:
-                print(f"[PLUGIN_DEBUG] Failed to register {provider_config.get('name', 'unknown')}: {e}")
+                debug_print(f"[PLUGIN_DEBUG] Failed to register {provider_config.get('name', 'unknown')}: {e}")
                 # Continue with other providers
     
     def _register_plugin(self, provider_config: Dict[str, Any]):
@@ -87,10 +87,10 @@ class LLMPluginManager:
                 'class': provider_class,
                 'config': provider_config
             }
-            print(f"[PLUGIN_DEBUG] Registered provider: {name} ({class_name})")
+            debug_print(f"[PLUGIN_DEBUG] Registered provider: {name} ({class_name})")
             
         except Exception as e:
-            print(f"[PLUGIN_DEBUG] Failed to load {name}: {e}")
+            debug_print(f"[PLUGIN_DEBUG] Failed to load {name}: {e}")
             raise
     
     def create_provider(self, name: str, model: str = None) -> ILLMProvider:
@@ -105,15 +105,15 @@ class LLMPluginManager:
         # Use provided model or default
         model_name = model or config['default_model']
         
-        print(f"[PLUGIN_DEBUG] Creating {name} provider with model: {model_name}")
+        debug_print(f"[PLUGIN_DEBUG] Creating {name} provider with model: {model_name}")
         
         try:
             # Create provider instance
             provider = provider_class(model_name)
-            print(f"[PLUGIN_DEBUG] Successfully created {name} provider")
+            debug_print(f"[PLUGIN_DEBUG] Successfully created {name} provider")
             return provider
         except Exception as e:
-            print(f"[PLUGIN_DEBUG] Failed to create {name} provider: {e}")
+            debug_print(f"[PLUGIN_DEBUG] Failed to create {name} provider: {e}")
             raise
     
     def get_available_providers(self) -> List[str]:
@@ -164,7 +164,7 @@ class LLMPluginManager:
         if config and 'api_key_env' in config:
             env_var = config['api_key_env']
             return bool(os.getenv(env_var))
-        print('Using fallback for llm api keys')
+        debug_print('Using fallback for llm api keys')
         # Fallback to hardcoded mapping for backward compatibility
         api_key_map = {
             'groq': 'GROQ_API_KEY',

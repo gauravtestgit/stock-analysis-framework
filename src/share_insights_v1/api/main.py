@@ -8,6 +8,7 @@ from .batch_models import BatchJobResponse, BatchResultsResponse
 from .service import AnalysisService
 from .batch_service import BatchAnalysisService
 from ..services.storage.thesis_storage_service import ThesisStorageService
+from .historical_analysis import router as historical_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,9 @@ app.add_middleware(
 analysis_service = AnalysisService(save_to_db=True)  # Default: save to database
 batch_service = BatchAnalysisService()  # Uses flag in constructor
 thesis_service = ThesisStorageService()
+
+# Include routers
+app.include_router(historical_router, prefix="/api", tags=["historical"])
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -206,6 +210,16 @@ async def get_thesis_history(ticker: str, limit: int = 10):
         return {"ticker": ticker.upper(), "history": history}
     except Exception as e:
         logger.error(f"Failed to get thesis history for {ticker}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze/watchlist")
+async def analyze_watchlist(tickers: List[str], created_by: str = "dashboard"):
+    """Analyze multiple stocks as a batch job"""
+    try:
+        result = await analysis_service.analyze_watchlist(tickers, created_by)
+        return result
+    except Exception as e:
+        logger.error(f"Watchlist analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

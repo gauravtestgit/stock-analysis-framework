@@ -9,6 +9,8 @@ from ...models.company import CompanyType, Company
 from ...models.analysis_result import AnalysisResult, AnalysisType
 from ..recommendation.recommendation_service import RecommendationService
 from ..comparison.analyst_comparison_service import AnalystComparisonService
+from ...utils.debug_printer import debug_print
+from datetime import datetime
 
 class AnalysisOrchestrator:
     """Orchestrates multiple analyzers based on company type"""
@@ -21,6 +23,7 @@ class AnalysisOrchestrator:
         self.comparison_service = AnalystComparisonService(data_provider)
         self.analyzers: Dict[AnalysisType, IAnalyzer] = {}
         self.debug_mode = debug_mode
+        self.time_calculations = {}
     
     def register_analyzer(self, analysis_type: AnalysisType, analyzer: IAnalyzer):
         """Register an analyzer for a specific analysis type"""
@@ -28,12 +31,23 @@ class AnalysisOrchestrator:
     
     def analyze_stock(self, ticker: str) -> Dict[str, Any]:
         """Run comprehensive analysis for a stock"""
-        start_time = time.time()
+        overall_start_time = datetime.now()
         try:
             # Get financial data
+            start_time = datetime.now()
             financial_metrics = self.data_provider.get_financial_metrics(ticker)
+            end_time = datetime.now()
+            time_taken = (end_time - start_time).total_seconds()
+            # debug_print(f"[Analysis_Orchestrator]: {ticker}: Time Taken for Financial Metrics: {time_taken}")
+            self.time_calculations['financial_metrics'] = time_taken
+
+            start_time = datetime.now()
             price_data = self.data_provider.get_price_data(ticker)
-            
+            end_time = datetime.now()
+            time_taken = (end_time - start_time).total_seconds()
+            # debug_print(f"[Analysis_Orchestrator]: {ticker}: Time Taken for Price Data: {time_taken}")
+            self.time_calculations['price_data'] = time_taken
+
             if 'error' in financial_metrics:
                 return {'error': f"Failed to get financial data: {financial_metrics['error']}"}
             
@@ -164,10 +178,14 @@ class AnalysisOrchestrator:
                     }
             
             # Add execution timing
-            execution_time = time.time() - start_time
+            execution_time = (datetime.now() - start_time).total_seconds()
             results['execution_time_seconds'] = round(execution_time, 2)
             results['analyses_count'] = len(results['analyses'])
+            debug_print(f"[Analysis_Orchestrator]: {ticker}: Time Taken for Overall Analysis: {execution_time}")
+            debug_print(f"[Analysis_Orchestrator]: Key Transaction Times:\n")
             
+            for transactions in self.time_calculations.keys():
+                debug_print(f"[Analysis_Orchestrator]: {transactions}: {self.time_calculations[transactions]}")
             return results
             
         except Exception as e:
@@ -190,8 +208,12 @@ class AnalysisOrchestrator:
             
             # Run analysis
             # print(f"🔄 Starting {analysis_type.value} for {ticker}")
+            start_time = datetime.now()
             result = analyzer.analyze(ticker, data)
-            
+            end_time = datetime.now()
+            total_time = (end_time - start_time).total_seconds()
+            # debug_print(f"[Analysis_Orchestrator]: {ticker}: Time Taken for {analysis_type.value}: {total_time}")
+            self.time_calculations[analysis_type.value] = total_time
             # # Check if result is valid
             # if not result or ('error' in result and result.get('applicable', True)):
             #     print(f"⚠️ WARNING: {analysis_type.value} returned invalid result for {ticker}: {result}")

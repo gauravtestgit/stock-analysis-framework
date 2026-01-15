@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, Optional
 from ...interfaces.sec_data_provider import SECDataProvider
 import time
-
+from ...utils.debug_printer import debug_print
 class SECEdgarProvider(SECDataProvider):
     """SEC EDGAR API data provider for financial filings"""
     
@@ -46,7 +46,7 @@ class SECEdgarProvider(SECDataProvider):
             return None
             
         except Exception as e:
-            print(f"Error fetching 10-K for {ticker}: {e}")
+            debug_print(f"Error fetching 10-K for {ticker}: {e}")
             return None
     
     def get_latest_10q(self, ticker: str) -> Optional[Dict[str, Any]]:
@@ -79,7 +79,7 @@ class SECEdgarProvider(SECDataProvider):
             return None
             
         except Exception as e:
-            print(f"Error fetching 10-Q for {ticker}: {e}")
+            debug_print(f"Error fetching 10-Q for {ticker}: {e}")
             return None
     
     def get_filing_facts(self, ticker: str) -> Optional[Dict[str, Any]]:
@@ -99,7 +99,7 @@ class SECEdgarProvider(SECDataProvider):
             return response.json()
             
         except Exception as e:
-            print(f"Error fetching facts for {ticker}: {e}")
+            debug_print(f"Error fetching facts for {ticker}: {e}")
             return None
     
     def _get_cik(self, ticker: str) -> Optional[int]:
@@ -111,7 +111,7 @@ class SECEdgarProvider(SECDataProvider):
             time.sleep(self.rate_limit_delay)
             
             if response.status_code != 200:
-                print(f"Failed to fetch tickers: {response.status_code}")
+                debug_print(f"Failed to fetch tickers: {response.status_code}")
                 return None
             
             data = response.json()
@@ -124,7 +124,7 @@ class SECEdgarProvider(SECDataProvider):
             return None
             
         except Exception as e:
-            print(f"Error getting CIK for {ticker}: {e}")
+            debug_print(f"Error getting CIK for {ticker}: {e}")
             return None
     
     def get_management_data(self, ticker: str) -> Dict[str, Any]:
@@ -181,19 +181,19 @@ class SECEdgarProvider(SECDataProvider):
     def get_business_description(self, ticker: str) -> Optional[Dict[str, Any]]:
         """Get business description from latest 10-K filing"""
         try:
-            print(f"[SEC_DEBUG] Getting business description for {ticker}")
+            debug_print(f"[SEC_DEBUG] Getting business description for {ticker}")
             cik = self._get_cik(ticker)
             if not cik:
-                print(f"[SEC_DEBUG] No CIK found for {ticker}")
+                debug_print(f"[SEC_DEBUG] No CIK found for {ticker}")
                 return None
             
-            print(f"[SEC_DEBUG] Found CIK {cik} for {ticker}")
+            debug_print(f"[SEC_DEBUG] Found CIK {cik} for {ticker}")
             filing_data = self.get_latest_10k(ticker)
             if not filing_data:
-                print(f"[SEC_DEBUG] No 10-K filing found for {ticker}")
+                debug_print(f"[SEC_DEBUG] No 10-K filing found for {ticker}")
                 return None
             
-            print(f"[SEC_DEBUG] Found 10-K filing for {ticker}: {filing_data['accession_number']}")
+            debug_print(f"[SEC_DEBUG] Found 10-K filing for {ticker}: {filing_data['accession_number']}")
             
             # Construct URL to actual filing document - try multiple formats
             accession = filing_data['accession_number'].replace('-', '')
@@ -209,25 +209,25 @@ class SECEdgarProvider(SECDataProvider):
             content = None
             
             for doc_url in possible_urls:
-                print(f"[SEC_DEBUG] Trying URL: {doc_url}")
+                debug_print(f"[SEC_DEBUG] Trying URL: {doc_url}")
                 response = requests.get(doc_url, headers=self.headers)
                 time.sleep(self.rate_limit_delay)
                 
                 if response.status_code == 200:
                     content = response.text
-                    print(f"[SEC_DEBUG] Success with URL: {doc_url}")
+                    debug_print(f"[SEC_DEBUG] Success with URL: {doc_url}")
                     break
                 else:
-                    print(f"[SEC_DEBUG] Failed with status {response.status_code}: {doc_url}")
+                    debug_print(f"[SEC_DEBUG] Failed with status {response.status_code}: {doc_url}")
             
             if not content:
-                print(f"[SEC_DEBUG] All URL formats failed for {ticker}")
+                debug_print(f"[SEC_DEBUG] All URL formats failed for {ticker}")
                 return None
             
-            print(f"[SEC_DEBUG] Document fetched successfully, size: {len(content)} chars")
+            debug_print(f"[SEC_DEBUG] Document fetched successfully, size: {len(content)} chars")
             business_section = self._extract_business_section(content)
             
-            print(f"[SEC_DEBUG] Business section extracted: {len(business_section)} chars")
+            debug_print(f"[SEC_DEBUG] Business section extracted: {len(business_section)} chars")
             
             return {
                 'ticker': ticker,
@@ -237,9 +237,9 @@ class SECEdgarProvider(SECDataProvider):
             }
             
         except Exception as e:
-            print(f"[SEC_DEBUG] Error fetching business description for {ticker}: {e}")
+            debug_print(f"[SEC_DEBUG] Error fetching business description for {ticker}: {e}")
             import traceback
-            traceback.print_exc()
+            traceback.debug_print_exc()
             return None
     
     def _extract_business_section(self, content: str) -> str:
@@ -324,25 +324,25 @@ class SECEdgarProvider(SECDataProvider):
             
             segment_data = {}
             
-            print(f"[SEC_DEBUG] Looking for segment data in {ticker}...")
+            debug_print(f"[SEC_DEBUG] Looking for segment data in {ticker}...")
             
             # Extract segment revenue data
             for field_name in segment_revenue_fields:
                 if field_name in us_gaap:
-                    print(f"[SEC_DEBUG] Found field: {field_name}")
+                    debug_print(f"[SEC_DEBUG] Found field: {field_name}")
                     units = us_gaap[field_name].get('units', {})
                     if 'USD' in units:
-                        print(f"[SEC_DEBUG] USD data points: {len(units['USD'])}")
+                        debug_print(f"[SEC_DEBUG] USD data points: {len(units['USD'])}")
                         for i, data_point in enumerate(units['USD'][:3]):  # Check first 3
-                            print(f"[SEC_DEBUG] Data point {i}: keys = {list(data_point.keys())}")
+                            debug_print(f"[SEC_DEBUG] Data point {i}: keys = {list(data_point.keys())}")
                             if 'segment' in data_point:
-                                print(f"[SEC_DEBUG] Found segment: {data_point['segment']}")
+                                debug_print(f"[SEC_DEBUG] Found segment: {data_point['segment']}")
                             else:
-                                print(f"[SEC_DEBUG] No segment dimension found")
+                                debug_print(f"[SEC_DEBUG] No segment dimension found")
             
             # Check if any segment fields exist at all
             segment_field_names = [f for f in us_gaap.keys() if any(kw in f.lower() for kw in ['segment', 'reportable'])]
-            print(f"[SEC_DEBUG] All segment fields: {segment_field_names[:5]}...")  # Show first 5
+            debug_print(f"[SEC_DEBUG] All segment fields: {segment_field_names[:5]}...")  # Show first 5
             
             # Extract segment revenue data
             for field_name in segment_revenue_fields:
@@ -442,5 +442,5 @@ class SECEdgarProvider(SECDataProvider):
             }
             
         except Exception as e:
-            print(f"Error extracting segment data for {ticker}: {e}")
+            debug_print(f"Error extracting segment data for {ticker}: {e}")
             return None

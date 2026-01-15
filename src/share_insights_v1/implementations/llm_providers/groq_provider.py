@@ -5,7 +5,7 @@ from typing import Dict, Any
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
 from ...interfaces.llm_provider import ILLMProvider
-
+from ...utils.debug_printer import debug_print
 class GroqProvider(ILLMProvider):
     """Groq LLM provider with rate limiting"""
     
@@ -23,14 +23,14 @@ class GroqProvider(ILLMProvider):
             )
         except Exception as e:
             self.llm = None
-            print(f"Failed to initialize Groq: {e}")
+            debug_print(f"Failed to initialize Groq: {e}")
     
     def generate_response(self, prompt: str, **kwargs) -> str:
         """Generate response with rate limiting and retries"""
         if not self.llm:
             raise Exception("Groq provider not available")
         
-        print(f"[GROQ_DEBUG] Starting Groq request, attempt 1/{self.max_retries}")
+        debug_print(f"[GROQ_DEBUG] Starting Groq request, attempt 1/{self.max_retries}")
         
         for attempt in range(self.max_retries):
             try:
@@ -39,11 +39,11 @@ class GroqProvider(ILLMProvider):
                 time_since_last = current_time - self.last_request_time
                 if time_since_last < self.min_request_interval:
                     sleep_time = self.min_request_interval - time_since_last
-                    print(f"[GROQ_DEBUG] Rate limiting: sleeping {sleep_time:.2f}s")
+                    debug_print(f"[GROQ_DEBUG] Rate limiting: sleeping {sleep_time:.2f}s")
                     time.sleep(sleep_time)
                 
                 # Make request
-                print(f"[GROQ_DEBUG] Making API request to {self.model_name}")
+                debug_print(f"[GROQ_DEBUG] Making API request to {self.model_name}")
                 request_start = time.time()
                 prompt_template = ChatPromptTemplate.from_template("{prompt}")
                 chain = prompt_template | self.llm
@@ -51,25 +51,25 @@ class GroqProvider(ILLMProvider):
                 request_end = time.time()
                 self.last_request_time = time.time()
                 
-                print(f"[GROQ_DEBUG] Request successful in {request_end-request_start:.2f}s")
+                debug_print(f"[GROQ_DEBUG] Request successful in {request_end-request_start:.2f}s")
                 return response.content
                 
             except Exception as e:
-                print(f"[GROQ_DEBUG] Attempt {attempt+1} failed: {type(e).__name__}: {e}")
+                debug_print(f"[GROQ_DEBUG] Attempt {attempt+1} failed: {type(e).__name__}: {e}")
                 
                 # Check for rate limit specific errors
                 error_msg = str(e).lower()
                 if "rate limit" in error_msg or "429" in str(e):
                     if attempt < self.max_retries - 1:
                         wait_time = self._extract_wait_time(str(e))
-                        print(f"[GROQ_DEBUG] Rate limit detected, waiting {wait_time}s before retry {attempt + 2}")
+                        debug_print(f"[GROQ_DEBUG] Rate limit detected, waiting {wait_time}s before retry {attempt + 2}")
                         time.sleep(wait_time)
                         continue
                     else:
-                        print(f"[GROQ_DEBUG] Rate limit on final attempt, giving up")
+                        debug_print(f"[GROQ_DEBUG] Rate limit on final attempt, giving up")
                         raise e
                 else:
-                    print(f"[GROQ_DEBUG] Non-rate-limit error, giving up: {e}")
+                    debug_print(f"[GROQ_DEBUG] Non-rate-limit error, giving up: {e}")
                     raise e
         
         raise Exception(f"Failed after {self.max_retries} attempts")
@@ -119,5 +119,5 @@ class GroqProvider(ILLMProvider):
             )
             return True
         except Exception as e:
-            print(f"Failed to switch to model {model}: {e}")
+            debug_print(f"Failed to switch to model {model}: {e}")
             return False

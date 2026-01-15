@@ -86,7 +86,8 @@ class ComparableAnalyzer(IAnalyzer):
                 upside_downside = ((avg_fair_value - current_price) / current_price) * 100
             
             # Get live peer analysis
-            peer_analysis = self._get_peer_analysis(ticker, sector, industry)
+            peer_analysis = None
+            # peer_analysis = self._get_peer_analysis(ticker, sector, industry)
             
             # Generate recommendation
             recommendation = self._generate_recommendation(upside_downside)

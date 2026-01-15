@@ -8,7 +8,7 @@ from .openai_provider import OpenAIProvider
 from .xai_provider import XAIProvider
 from .plugin_manager import LLMPluginManager
 from .config_service import LLMConfigService
-
+from ...utils.debug_printer import debug_print
 class LLMManager:
     """Manages multiple LLM providers with fallback and plugin support"""
     
@@ -22,12 +22,12 @@ class LLMManager:
         
         self.use_plugin_system = use_plugin_system
         
-        print(f"[LLM_DEBUG] Initializing LLM Manager (plugin_system: {use_plugin_system})...")
+        debug_print(f"[LLM_DEBUG] Initializing LLM Manager (plugin_system: {use_plugin_system})...")
         
         # If providers are explicitly provided, use them
         if providers:
             self.providers = providers
-            print(f"[LLM_DEBUG] Using provided providers: {[p.get_provider_name() for p in providers]}")
+            debug_print(f"[LLM_DEBUG] Using provided providers: {[p.get_provider_name() for p in providers]}")
         elif use_plugin_system:
             self._setup_via_plugin_system()
         else:
@@ -36,13 +36,13 @@ class LLMManager:
     def _setup_via_plugin_system(self):
         """Setup providers using plugin system with fallback to legacy"""
         try:
-            print("[LLM_DEBUG] Attempting to use plugin system...")
+            debug_print("[LLM_DEBUG] Attempting to use plugin system...")
             self.plugin_manager = LLMPluginManager()
             
             if self.plugin_manager.is_available():
                 # Get available providers from plugin system
                 available_providers = self.plugin_manager.get_available_providers()
-                print(f"[LLM_DEBUG] Plugin system found providers: {available_providers}")
+                debug_print(f"[LLM_DEBUG] Plugin system found providers: {available_providers}")
                 
                 # Create providers that have API keys
                 for provider_name in available_providers:
@@ -50,77 +50,77 @@ class LLMManager:
                         provider = self.plugin_manager.create_provider(provider_name)
                         if provider.is_available():
                             self.providers.append(provider)
-                            print(f"[LLM_DEBUG] Added plugin provider: {provider.get_provider_name()}")
+                            debug_print(f"[LLM_DEBUG] Added plugin provider: {provider.get_provider_name()}")
                         else:
-                            print(f"[LLM_DEBUG] Plugin provider {provider_name} not available (missing API key)")
+                            debug_print(f"[LLM_DEBUG] Plugin provider {provider_name} not available (missing API key)")
                     except Exception as e:
-                        print(f"[LLM_DEBUG] Failed to create plugin provider {provider_name}: {e}")
+                        debug_print(f"[LLM_DEBUG] Failed to create plugin provider {provider_name}: {e}")
                 
                 if self.providers:
-                    print(f"[LLM_DEBUG] Plugin system setup successful with {len(self.providers)} providers")
+                    debug_print(f"[LLM_DEBUG] Plugin system setup successful with {len(self.providers)} providers")
                     return
             
-            print("[LLM_DEBUG] Plugin system not available, falling back to legacy")
+            debug_print("[LLM_DEBUG] Plugin system not available, falling back to legacy")
             
         except Exception as e:
-            print(f"[LLM_DEBUG] Plugin system failed: {e}, falling back to legacy")
+            debug_print(f"[LLM_DEBUG] Plugin system failed: {e}, falling back to legacy")
         
         # Fallback to legacy system
         self._setup_providers_legacy()
     
     def _setup_providers_legacy(self):
         """Setup default LLM provider (legacy method - Groq only)"""
-        print("[LLM_DEBUG] Using legacy provider setup...")
+        debug_print("[LLM_DEBUG] Using legacy provider setup...")
         
         # Add Groq provider (primary)
         try:
             groq = GroqProvider()
-            print(f"[LLM_DEBUG] Groq provider initialized, available: {groq.is_available()}")
+            debug_print(f"[LLM_DEBUG] Groq provider initialized, available: {groq.is_available()}")
             if groq.is_available():
                 self.providers.append(groq)
         except Exception as e:
-            print(f"[LLM_DEBUG] Groq provider failed: {e}")
+            debug_print(f"[LLM_DEBUG] Groq provider failed: {e}")
         
-        print(f"[LLM_DEBUG] Legacy setup complete: {len(self.providers)} providers")
+        debug_print(f"[LLM_DEBUG] Legacy setup complete: {len(self.providers)} providers")
         for provider in self.providers:
-            print(f"[LLM_DEBUG] - {provider.get_provider_name()}")
+            debug_print(f"[LLM_DEBUG] - {provider.get_provider_name()}")
     
     def register_provider(self, provider: ILLMProvider):
         """Register an additional LLM provider"""
         if provider.is_available():
             self.providers.append(provider)
-            print(f"[LLM_DEBUG] Registered provider: {provider.get_provider_name()}")
+            debug_print(f"[LLM_DEBUG] Registered provider: {provider.get_provider_name()}")
         else:
-            print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} not available, skipping registration")
+            debug_print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} not available, skipping registration")
     
     def generate_response(self, prompt: str, **kwargs) -> str:
         """Generate response using first available provider"""
         if not self.providers:
             raise Exception("No LLM providers available")
         
-        print(f"[LLM_DEBUG] Starting LLM call with {len(self.providers)} providers...")
+        debug_print(f"[LLM_DEBUG] Starting LLM call with {len(self.providers)} providers...")
         
         last_error = None
         for i, provider in enumerate(self.providers):
             try:
-                print(f"[LLM_DEBUG] Attempting provider {i+1}/{len(self.providers)}: {provider.get_provider_name()}")
+                debug_print(f"[LLM_DEBUG] Attempting provider {i+1}/{len(self.providers)}: {provider.get_provider_name()}")
                 start_time = time.time()
                 response = provider.generate_response(prompt, **kwargs)
                 end_time = time.time()
-                print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} succeeded in {end_time-start_time:.2f}s")
+                debug_print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} succeeded in {end_time-start_time:.2f}s")
                 return response
             except Exception as e:
                 last_error = e
-                print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} failed: {type(e).__name__}: {e}")
+                debug_print(f"[LLM_DEBUG] Provider {provider.get_provider_name()} failed: {type(e).__name__}: {e}")
                 if hasattr(e, 'response') and hasattr(e.response, 'status_code'):
-                    print(f"[LLM_DEBUG] HTTP Status: {e.response.status_code}")
+                    debug_print(f"[LLM_DEBUG] HTTP Status: {e.response.status_code}")
                 if hasattr(e, 'response') and hasattr(e.response, 'headers'):
                     rate_limit_headers = {k: v for k, v in e.response.headers.items() if 'rate' in k.lower() or 'limit' in k.lower()}
                     if rate_limit_headers:
-                        print(f"[LLM_DEBUG] Rate limit headers: {rate_limit_headers}")
+                        debug_print(f"[LLM_DEBUG] Rate limit headers: {rate_limit_headers}")
                 continue
         
-        print(f"[LLM_DEBUG] All providers failed. Last error: {type(last_error).__name__}: {last_error}")
+        debug_print(f"[LLM_DEBUG] All providers failed. Last error: {type(last_error).__name__}: {last_error}")
         raise Exception(f"All LLM providers failed. Last error: {last_error}")
     
     def get_available_providers(self) -> List[str]:
@@ -159,17 +159,17 @@ class LLMManager:
             if not provider.is_available():
                 raise Exception(f"Provider {base_name} not available (missing API key)")
             self.providers.insert(0, provider)
-            print(f"[LLM_DEBUG] Created and set new provider {provider.get_provider_name()} as primary")
+            debug_print(f"[LLM_DEBUG] Created and set new provider {provider.get_provider_name()} as primary")
         else:
             # Provider exists, optionally change model
             if model_name and hasattr(provider, 'set_current_model'):
                 provider.set_current_model(model_name)
-                print(f"[LLM_DEBUG] Changed model to {model_name} on provider {provider_name}")
+                debug_print(f"[LLM_DEBUG] Changed model to {model_name} on provider {provider_name}")
             
             # Move to primary position
             self.providers.remove(provider)
             self.providers.insert(0, provider)
-            print(f"[LLM_DEBUG] Set existing provider {provider_name} as primary")
+            debug_print(f"[LLM_DEBUG] Set existing provider {provider_name} as primary")
     
     def create_provider_by_name(self, provider_name: str, model_name: str = None) -> Optional[ILLMProvider]:
         """Create a new provider instance by name (plugin system method)"""
@@ -177,7 +177,7 @@ class LLMManager:
             try:
                 return self.plugin_manager.create_provider(provider_name, model_name)
             except Exception as e:
-                print(f"[LLM_DEBUG] Plugin provider creation failed: {e}")
+                debug_print(f"[LLM_DEBUG] Plugin provider creation failed: {e}")
         
         # Fallback to legacy creation
         return self._create_provider_legacy(provider_name, model_name)
@@ -198,7 +198,7 @@ class LLMManager:
                 else:
                     return provider_class()
             except Exception as e:
-                print(f"[LLM_DEBUG] Legacy provider creation failed: {e}")
+                debug_print(f"[LLM_DEBUG] Legacy provider creation failed: {e}")
         
         return None
     
@@ -234,7 +234,7 @@ class LLMManager:
             if provider:
                 new_providers.append(provider)
             else:
-                print(f"[LLM_DEBUG] Provider {name} not found, skipping")
+                debug_print(f"[LLM_DEBUG] Provider {name} not found, skipping")
         
         # Add any remaining providers not in the list
         for provider in self.providers:
@@ -242,7 +242,7 @@ class LLMManager:
                 new_providers.append(provider)
         
         self.providers = new_providers
-        print(f"[LLM_DEBUG] Updated provider priority: {[p.get_provider_name() for p in self.providers]}")
+        debug_print(f"[LLM_DEBUG] Updated provider priority: {[p.get_provider_name() for p in self.providers]}")
     
     def is_plugin_system_enabled(self) -> bool:
         """Check if plugin system is enabled"""

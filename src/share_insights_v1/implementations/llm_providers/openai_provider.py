@@ -3,7 +3,7 @@ from typing import Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from ...interfaces.llm_provider import ILLMProvider
-
+from ...utils.debug_printer import debug_print
 class OpenAIProvider(ILLMProvider):
     """OpenAI LLM provider using LangChain"""
     
@@ -11,7 +11,7 @@ class OpenAIProvider(ILLMProvider):
         self.model_name = model_name
         self.api_key = os.getenv('OPENAI_API_KEY')
         self.llm = None
-        print(f"[OPENAI_DEBUG] API key found: {bool(self.api_key)}")
+        debug_print(f"[OPENAI_DEBUG] API key found: {bool(self.api_key)}")
         if self.api_key:
             try:
                 self.llm = ChatOpenAI(
@@ -19,11 +19,11 @@ class OpenAIProvider(ILLMProvider):
                     temperature=0.1,
                     api_key=self.api_key
                 )
-                print(f"[OPENAI_DEBUG] LLM initialized successfully with model {model_name}")
+                debug_print(f"[OPENAI_DEBUG] LLM initialized successfully with model {model_name}")
             except Exception as e:
-                print(f"[OPENAI_DEBUG] Failed to initialize OpenAI: {e}")
+                debug_print(f"[OPENAI_DEBUG] Failed to initialize OpenAI: {e}")
         else:
-            print(f"[OPENAI_DEBUG] No API key found")
+            debug_print(f"[OPENAI_DEBUG] No API key found")
     
     def generate_response(self, prompt: str, **kwargs) -> str:
         """Generate response using OpenAI"""
@@ -48,7 +48,7 @@ class OpenAIProvider(ILLMProvider):
     def is_available(self) -> bool:
         """Check if OpenAI provider is available"""
         available = self.llm is not None and self.api_key is not None
-        print(f"[OPENAI_DEBUG] is_available: {available}, llm: {self.llm is not None}, api_key: {self.api_key is not None}")
+        debug_print(f"[OPENAI_DEBUG] is_available: {available}, llm: {self.llm is not None}, api_key: {self.api_key is not None}")
         return available
     
     def get_provider_name(self) -> str:
@@ -78,8 +78,8 @@ class OpenAIProvider(ILLMProvider):
                 temperature=0.1,
                 api_key=self.api_key
             )
-            print(f"[OPENAI_DEBUG] Switched to model {model}")
+            debug_print(f"[OPENAI_DEBUG] Switched to model {model}")
             return True
         except Exception as e:
-            print(f"Failed to switch to model {model}: {e}")
+            debug_print(f"Failed to switch to model {model}: {e}")
             return False

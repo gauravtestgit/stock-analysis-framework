@@ -71,6 +71,11 @@ class ThesisPromptLoader:
             raise ValueError(f"Missing required prompt parameter: {e}")
         except ValueError as e:
             print(f"ValueError in prompt formatting: {e}")
+            # Debug: Print problematic values
+            print("DEBUG: Checking for dict/list values in kwargs:")
+            for key, value in safe_kwargs.items():
+                if isinstance(value, (dict, list, tuple)):
+                    print(f"  {key}: {type(value)} = {value}")
             # Try simple string replacement as fallback
             result = template
             for key, value in safe_kwargs.items():
@@ -173,6 +178,19 @@ class ThesisPromptLoader:
         
         # Merge provided kwargs with defaults
         safe_kwargs = {**defaults, **kwargs}
+        
+        # Convert all values to strings to prevent template formatting errors
+        for key, value in safe_kwargs.items():
+            if isinstance(value, (list, tuple)):
+                # Convert lists/tuples to comma-separated strings
+                safe_kwargs[key] = ', '.join(str(item) for item in value)
+            elif isinstance(value, dict):
+                # Convert dicts to string representation
+                safe_kwargs[key] = str(value)
+            elif value is None:
+                safe_kwargs[key] = 'N/A'
+            else:
+                safe_kwargs[key] = str(value)
         
         return safe_kwargs
     

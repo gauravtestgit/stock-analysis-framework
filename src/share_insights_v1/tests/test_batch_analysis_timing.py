@@ -9,7 +9,7 @@ from ..services.batch.batch_analysis_service_quant import BatchAnalysisService
 
 def test_batch_analysis():
     """Test batch analysis service with sample CSV"""
-    
+    os.environ['DEBUG'] = 'true'
     # Initialize batch service
     batch_service = BatchAnalysisService(save_to_db=True, enable_detailed_news_analysis=False)
     
@@ -27,9 +27,7 @@ def test_batch_analysis():
     batch_service.process_csv(
         input_csv_path=input_csv,
         output_csv_path=output_csv,
-        # max_stocks=5,  # Limit for testing
-        exchange="NASDAQ",  # Specify exchange for batch job
-        created_by="test_user"  # Specify who ran it
+        # max_stocks=10  # Limit for testing
     )
     
     print(f"Results saved to {output_csv}")

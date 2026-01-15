@@ -2186,9 +2186,9 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'average_target': cross_analysis.get('average_target', 0),
         'consensus_strength': cross_analysis.get('consensus_strength', 'Medium'),
         'method_agreement': cross_analysis.get('method_agreement', 'Mixed'),
-        'strengths': ', '.join(components['strengths'][:5]),
-        'risks': ', '.join(components['risks'][:5]),
-        'key_developments': ', '.join(components['market_sentiment'].get('key_developments', [])),
+        'strengths': ', '.join([str(s) for s in components['strengths'][:5]]),
+        'risks': ', '.join([str(r) for r in components['risks'][:5]]),
+        'key_developments': ', '.join([str(d) for d in components['market_sentiment'].get('key_developments', [])]),
         'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
         'news_count': components['market_sentiment'].get('news_count', 0),
         'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')}) - Facts: {article.get('enhanced_facts', {}).get('lead_fact', 'No structured facts')}" for article in components['market_sentiment'].get('recent_news', [])]),
@@ -2196,8 +2196,8 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
         'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
         'esg_score': components.get('industry_analysis', {}).get('esg_score', 5.0),
-        'business_segments': ', '.join([seg.get('segment_name', 'N/A') for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
-        'revenue_breakdown': ', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+        'business_segments': ', '.join([seg.get('segment_name', 'N/A') if isinstance(seg, dict) else str(seg) for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
+        'revenue_breakdown': ', '.join([f"{seg.get('segment_name', 'N/A')} ({seg.get('revenue_percentage', 0):.1f}%)" if isinstance(seg, dict) else str(seg) for seg in components.get('segment_revenue_data', {}).get('primary_segments', [])]),
         'data_source': components.get('segment_revenue_data', {}).get('data_source', 'N/A'),
         'revenue_diversification': components.get('segment_revenue_data', {}).get('revenue_diversification', 'N/A'),
         'TOTAL_REVENUE': f"${financial_metrics.get('total_revenue', 0):,.0f}" if financial_metrics.get('total_revenue') else "$0",
@@ -2221,13 +2221,18 @@ def generate_segment_revenue_table(segment_data, total_revenue):
     table_rows = []
     
     for seg in segments:
-        segment_name = seg.get('segment_name', 'Unknown')
-        percentage = seg.get('revenue_percentage', 0)
-        revenue_amount = (percentage / 100) * total_revenue if total_revenue else 0
-        revenue_millions = revenue_amount / 1_000_000  # Convert to millions
-        growth_trend = seg.get('growth_trend', 'Unknown')
-        
-        table_rows.append(f"| {segment_name} | ${revenue_millions:,.0f} | {percentage:.1f}% | {growth_trend} | Core | Medium |")
+        # Ensure seg is a dictionary, not a string
+        if isinstance(seg, dict):
+            segment_name = seg.get('segment_name', 'Unknown')
+            percentage = seg.get('revenue_percentage', 0)
+            revenue_amount = (percentage / 100) * total_revenue if total_revenue else 0
+            revenue_millions = revenue_amount / 1_000_000  # Convert to millions
+            growth_trend = seg.get('growth_trend', 'Unknown')
+            
+            table_rows.append(f"| {segment_name} | ${revenue_millions:,.0f} | {percentage:.1f}% | {growth_trend} | Core | Medium |")
+        else:
+            # Handle case where seg is not a dictionary
+            table_rows.append(f"| {str(seg)} | $0 | 0.0% | Unknown | Core | Medium |")
     
     return "\n".join(table_rows)
 
@@ -2271,7 +2276,7 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         growth_analysis = financial_perf.get('growth_analysis', {})
         profitability = financial_perf.get('profitability_trends', {})
         financial_health = financial_perf.get('financial_health', {})
-        
+        print('[GEN-INV-THESIS]: retrieved basic metrics')
         # Extract comprehensive financial metrics from analysis data
         financial_metrics = components.get('financial_metrics', {})
         
@@ -2351,7 +2356,7 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'return_on_equity': financial_metrics.get('return_on_equity', 'N/A'),
             'business_summary': financial_metrics.get('business_summary', 'No business summary available')
         }
-        
+        print('[GEN-INV-THESIS]: Combined all financial data')
         # Convert display name back to prompt type dynamically
         prompt_type = thesis_type.lower().replace(' ', '_')
         
@@ -2361,7 +2366,14 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         if segment_data and segment_data.get('primary_segments'):
             try:
                 segments = segment_data['primary_segments']
-                segment_breakdown = ", ".join([f"{seg['segment_name']}: {seg['revenue_percentage']:.1f}% ({seg['growth_trend']})" for seg in segments[:3]])
+                # Ensure all segments are properly formatted as strings
+                segment_list = []
+                for seg in segments[:3]:
+                    if isinstance(seg, dict) and 'segment_name' in seg:
+                        segment_list.append(f"{seg['segment_name']}: {seg.get('revenue_percentage', 0):.1f}% ({seg.get('growth_trend', 'Unknown')})")
+                    else:
+                        segment_list.append(str(seg))
+                segment_breakdown = ", ".join(segment_list)
                 segment_info = f"\n- Revenue segments: {segment_breakdown}"
                 segment_info += f"\n- Largest segment: {segment_data.get('largest_segment', 'N/A')}"
                 segment_info += f"\n- Fastest growing: {segment_data.get('fastest_growing_segment', 'N/A')}"

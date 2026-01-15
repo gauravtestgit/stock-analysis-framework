@@ -124,13 +124,33 @@ class Position(Base):
     portfolio = relationship("Portfolio", back_populates="positions")
     trades = relationship("Trade", back_populates="position")
 
+class BatchJob(Base):
+    """Batch analysis job tracking"""
+    __tablename__ = "batch_jobs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String(200))  # e.g., "NASDAQ Analysis 2024-01-15"
+    exchange = Column(String(50), index=True)  # NASDAQ, NYSE, ASX, etc.
+    status = Column(String(20), default="pending", index=True)  # pending, running, completed, failed
+    total_stocks = Column(Integer, default=0)
+    completed_stocks = Column(Integer, default=0)
+    failed_stocks = Column(Integer, default=0)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
+    created_by = Column(String(100))  # user who initiated
+    input_file = Column(String(500))  # path to input CSV
+    output_file = Column(String(500))  # path to output CSV
+    
+    # Relationships
+    analyses = relationship("AnalysisHistory", back_populates="batch_job")
+
 class AnalysisHistory(Base):
     """Historical analysis results for tracking changes over time"""
     __tablename__ = "analysis_history"
     
     id = Column(Integer, primary_key=True, index=True)
-    ticker = Column(String(10), nullable=False)
-    analysis_date = Column(DateTime, default=datetime.utcnow)
+    ticker = Column(String(10), nullable=False, index=True)
+    analysis_date = Column(DateTime, default=datetime.utcnow, index=True)
     analysis_type = Column(String(50))  # dcf, technical, ai_insights
     recommendation = Column(String(20))  # Buy, Hold, Sell
     target_price = Column(Float)
@@ -139,9 +159,11 @@ class AnalysisHistory(Base):
     raw_data = Column(JSON)  # Full analysis result
     scenario_context_id = Column(Integer, ForeignKey("scenarios.id"))
     batch_analysis_id = Column(UUID(as_uuid=True), index=True)  # UUID for grouping analysis methods per stock
+    batch_job_id = Column(UUID(as_uuid=True), ForeignKey("batch_jobs.id"), index=True)  # Link to batch job
     
     # Relationships
     scenario_context = relationship("Scenario")
+    batch_job = relationship("BatchJob", back_populates="analyses")
     theses = relationship("InvestmentThesis", primaryjoin="AnalysisHistory.batch_analysis_id == InvestmentThesis.batch_analysis_id", foreign_keys="[InvestmentThesis.batch_analysis_id]", back_populates="analysis_data")
 
 class StrategyPerformance(Base):

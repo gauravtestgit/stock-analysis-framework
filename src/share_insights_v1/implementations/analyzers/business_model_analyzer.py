@@ -10,6 +10,7 @@ from ...models.company import CompanyType
 import numpy as np
 import json
 from ...implementations.llm_providers.llm_manager import LLMManager
+from ...utils.debug_printer import debug_print
 
 class BusinessModelAnalyzer(IAnalyzer):
     """Analyzer for business model and revenue stream analysis"""
@@ -48,16 +49,16 @@ class BusinessModelAnalyzer(IAnalyzer):
             company_info = data.get('company_info', {})
             financial_metrics = data.get('financial_metrics', {})
             
-            print(f"[BM_DEBUG] Analyzing {ticker}: sector={company_info.get('sector')}, industry={company_info.get('industry')}")
+            debug_print(f"[BM_DEBUG] Analyzing {ticker}: sector={company_info.get('sector')}, industry={company_info.get('industry')}")
             
             # Get business model report
             report = self.analyze_business_model(ticker, company_info, financial_metrics)
             
             if not report:
-                print(f"[BM_DEBUG] No report generated for {ticker}")
+                debug_print(f"[BM_DEBUG] No report generated for {ticker}")
                 return {'error': 'Could not analyze business model'}
             
-            print(f"[BM_DEBUG] Generated report for {ticker}: type={report.business_model_type.value}")
+            debug_print(f"[BM_DEBUG] Generated report for {ticker}: type={report.business_model_type.value}")
             
             # Convert to standardized format
             result = {
@@ -90,11 +91,11 @@ class BusinessModelAnalyzer(IAnalyzer):
             if hasattr(report, 'sec_edgar_data') and report.sec_edgar_data:
                 result['sec_edgar_data'] = report.sec_edgar_data
             
-            print(f"[BM_DEBUG] Returning result for {ticker}: {result.get('business_model_type')}")
+            debug_print(f"[BM_DEBUG] Returning result for {ticker}: {result.get('business_model_type')}")
             return result
             
         except Exception as e:
-            print(f"[BM_DEBUG] Error analyzing {ticker}: {str(e)}")
+            debug_print(f"[BM_DEBUG] Error analyzing {ticker}: {str(e)}")
             import traceback
             traceback.print_exc()
             return {'error': str(e)}
@@ -122,7 +123,7 @@ class BusinessModelAnalyzer(IAnalyzer):
                 ticker, business_model_type, financial_metrics
             )
         except Exception as e:
-            print(f"[BM_DEBUG] Revenue stream analysis failed for {ticker}: {e}")
+            debug_print(f"[BM_DEBUG] Revenue stream analysis failed for {ticker}: {e}")
             return None
         
         # Assess revenue quality
@@ -299,22 +300,22 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
                                financial_metrics: Dict[str, Any]) -> RevenueStreamAnalysis:
         """Analyze revenue stream characteristics using SEC Edgar data first, then LLM fallback"""
         
-        print(f"[BM_DEBUG] Analyzing revenue streams for {ticker}")
+        debug_print(f"[BM_DEBUG] Analyzing revenue streams for {ticker}")
         
         # Try SEC Edgar data first
         sec_result = self._analyze_revenue_streams_from_sec(ticker)
         if sec_result:
-            print(f"[BM_DEBUG] Using SEC Edgar revenue stream data for {ticker}")
+            debug_print(f"[BM_DEBUG] Using SEC Edgar revenue stream data for {ticker}")
             return sec_result
         
         # Fallback to LLM analysis
         llm_result = self._analyze_revenue_streams_from_llm(ticker, business_model_type, financial_metrics)
         if llm_result:
-            print(f"[BM_DEBUG] Using LLM revenue stream data for {ticker}")
+            debug_print(f"[BM_DEBUG] Using LLM revenue stream data for {ticker}")
             return llm_result
         
         # Last resort: return default analysis for pre-revenue companies
-        print(f"[BM_DEBUG] Returning default analysis for pre-revenue company {ticker}")
+        debug_print(f"[BM_DEBUG] Returning default analysis for pre-revenue company {ticker}")
         return RevenueStreamAnalysis(
             primary_stream=RevenueStreamType.MIXED,
             secondary_streams=[],
@@ -330,11 +331,11 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
             
             facts = self.sec_provider.get_filing_facts(ticker)
             if not facts or 'facts' not in facts:
-                print(f"[BM_DEBUG] No SEC facts data for {ticker}")
+                debug_print(f"[BM_DEBUG] No SEC facts data for {ticker}")
                 return None
             
             us_gaap = facts['facts'].get('us-gaap', {})
-            print(f"[BM_DEBUG] SEC XBRL fields available for {ticker}: {len(us_gaap)} total fields")
+            debug_print(f"[BM_DEBUG] SEC XBRL fields available for {ticker}: {len(us_gaap)} total fields")
             
             # Generic revenue field detection
             revenue_keywords = {
@@ -359,7 +360,7 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
                    not any(exclude in field_lower for exclude in ['expense', 'cost', 'loss', 'tax', 'deferred']):
                     potential_revenue_fields.append(field_name)
             
-            print(f"[BM_DEBUG] Potential revenue fields for {ticker}: {potential_revenue_fields[:10]}")
+            debug_print(f"[BM_DEBUG] Potential revenue fields for {ticker}: {potential_revenue_fields[:10]}")
             
             # Find revenue components
             revenue_components = {}
@@ -383,13 +384,13 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
                         
                         revenue_components[stream_type] = revenue_components.get(stream_type, 0) + value
                         total_revenue += value
-                        print(f"[BM_DEBUG] Found {field_name}: ${value:,.0f} -> {stream_type.value}")
+                        debug_print(f"[BM_DEBUG] Found {field_name}: ${value:,.0f} -> {stream_type.value}")
             
             if not revenue_components:
-                print(f"[BM_DEBUG] No revenue components found in SEC data for {ticker}")
+                debug_print(f"[BM_DEBUG] No revenue components found in SEC data for {ticker}")
                 # Check if this is a pre-revenue company by looking at available fields
                 all_fields = list(us_gaap.keys())
-                print(f"[BM_DEBUG] Available XBRL fields: {all_fields[:5]}...")
+                debug_print(f"[BM_DEBUG] Available XBRL fields: {all_fields[:5]}...")
                 return None
             
             # Determine primary stream (largest component)
@@ -399,7 +400,7 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
             # Calculate recurring percentage based on stream types
             recurring_percentage = self._calculate_recurring_from_streams(revenue_components, total_revenue)
             
-            print(f"[BM_DEBUG] SEC revenue analysis for {ticker}: Primary={primary_stream.value}, Components={len(revenue_components)}, Total=${total_revenue:,.0f}, Recurring={recurring_percentage:.2f}")
+            debug_print(f"[BM_DEBUG] SEC revenue analysis for {ticker}: Primary={primary_stream.value}, Components={len(revenue_components)}, Total=${total_revenue:,.0f}, Recurring={recurring_percentage:.2f}")
             
             return RevenueStreamAnalysis(
                 primary_stream=primary_stream,
@@ -409,7 +410,7 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
             )
             
         except Exception as e:
-            print(f"[BM_DEBUG] SEC revenue stream analysis failed for {ticker}: {e}")
+            debug_print(f"[BM_DEBUG] SEC revenue stream analysis failed for {ticker}: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -466,7 +467,7 @@ Respond with JSON:
                 primary_stream = RevenueStreamType(result['primary_stream'])
                 secondary_streams = [RevenueStreamType(s) for s in result.get('secondary_streams', [])]
                 
-                print(f"[BM_DEBUG] LLM revenue streams: Primary={primary_stream.value}, Recurring={result.get('recurring_percentage', 0):.2f}")
+                debug_print(f"[BM_DEBUG] LLM revenue streams: Primary={primary_stream.value}, Recurring={result.get('recurring_percentage', 0):.2f}")
                 
                 return RevenueStreamAnalysis(
                     primary_stream=primary_stream,
@@ -478,7 +479,7 @@ Respond with JSON:
             return None
             
         except Exception as e:
-            print(f"[BM_DEBUG] LLM revenue stream analysis failed: {e}")
+            debug_print(f"[BM_DEBUG] LLM revenue stream analysis failed: {e}")
             return None
     
     def _calculate_recurring_from_streams(self, revenue_components: Dict, total_revenue: float) -> float:
@@ -576,9 +577,9 @@ Respond with JSON:
         
         # Revenue growth factor
         revenue_growth = financial_metrics.get('revenue_growth', 0)
-        if revenue_growth > 0.15:
+        if revenue_growth is not None and revenue_growth > 0.15:
             score += 2
-        elif revenue_growth > 0.05:
+        elif revenue_growth is not None and revenue_growth > 0.05:
             score += 1
         factors += 1
         
@@ -623,9 +624,9 @@ Respond with JSON:
             if self.sec_provider:
                 try:
                     sec_business_data = self.sec_provider.get_business_description(ticker)
-                    print(f"[BM_DEBUG] SEC business data for {ticker}: {'Found' if sec_business_data else 'Not found'}")
+                    debug_print(f"[BM_DEBUG] SEC business data for {ticker}: {'Found' if sec_business_data else 'Not found'}")
                 except Exception as e:
-                    print(f"[BM_DEBUG] SEC business data error for {ticker}: {e}")
+                    debug_print(f"[BM_DEBUG] SEC business data error for {ticker}: {e}")
             
             # Use injected LLM manager if available, otherwise create new one
             llm_manager = self.llm_manager or LLMManager()
@@ -686,20 +687,20 @@ Respond with ONLY valid JSON:
 """
             
             response = llm_manager.generate_response(prompt)
-            print(f"[BM_DEBUG] LLM response for {ticker}: {response[:100]}...")
+            debug_print(f"[BM_DEBUG] LLM response for {ticker}: {response[:100]}...")
             
             json_str = self._extract_json_from_response(response)
             if json_str:
                 import json
                 result = json.loads(json_str)
-                print(f"[BM_DEBUG] Parsed JSON for {ticker}: {result}")
+                debug_print(f"[BM_DEBUG] Parsed JSON for {ticker}: {result}")
                 return result
             else:
-                print(f"[BM_DEBUG] No JSON found for {ticker}, using fallback")
+                debug_print(f"[BM_DEBUG] No JSON found for {ticker}, using fallback")
                 return self._get_fallback_product_analysis(sector, industry)
             
         except Exception as e:
-            print(f"[BM_DEBUG] Error in product analysis for {ticker}: {e}")
+            debug_print(f"[BM_DEBUG] Error in product analysis for {ticker}: {e}")
             return self._get_fallback_product_analysis(sector, industry)
     
     def _analyze_competitive_differentiation(self, ticker: str, company_info: Dict[str, Any], product_analysis: Dict[str, Any], financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
@@ -747,7 +748,7 @@ Analyze competitive positioning and respond with JSON:
         import re
         import json
         
-        print(f"[BM_DEBUG] Raw LLM response: {response[:200]}...")
+        debug_print(f"[BM_DEBUG] Raw LLM response: {response[:200]}...")
         
         # Try to find JSON in markdown code blocks
         json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
@@ -757,7 +758,7 @@ Analyze competitive positioning and respond with JSON:
                 json.loads(json_str)  # Validate
                 return json_str
             except json.JSONDecodeError as e:
-                print(f"[BM_DEBUG] Invalid JSON in code block: {e}")
+                debug_print(f"[BM_DEBUG] Invalid JSON in code block: {e}")
         
         # Try to find JSON object in the text
         json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
@@ -767,7 +768,7 @@ Analyze competitive positioning and respond with JSON:
                 json.loads(json_str)  # Validate
                 return json_str
             except json.JSONDecodeError as e:
-                print(f"[BM_DEBUG] Invalid JSON object: {e}")
+                debug_print(f"[BM_DEBUG] Invalid JSON object: {e}")
         
         # Try to extract and fix common JSON issues
         lines = response.split('\n')
@@ -792,9 +793,9 @@ Analyze competitive positioning and respond with JSON:
                 json.loads(json_str)
                 return json_str
             except json.JSONDecodeError as e:
-                print(f"[BM_DEBUG] Failed to fix JSON: {e}")
+                debug_print(f"[BM_DEBUG] Failed to fix JSON: {e}")
         
-        print(f"[BM_DEBUG] No valid JSON found in response")
+        debug_print(f"[BM_DEBUG] No valid JSON found in response")
         return None
     
     def _get_fallback_product_analysis(self, sector: str, industry: str) -> Dict[str, Any]:
@@ -850,14 +851,14 @@ Analyze competitive positioning and respond with JSON:
                 if sec_data and sec_data.get('segment_data'):
                     processed_data = self._process_sec_segment_data(sec_data['segment_data'])
                     if processed_data:
-                        print(f"[BM_DEBUG] Using SEC segment data for {ticker}")
+                        debug_print(f"[BM_DEBUG] Using SEC segment data for {ticker}")
                         return processed_data
                     else:
-                        print(f"[BM_DEBUG] SEC data not segment-specific for {ticker}, using LLM")
+                        debug_print(f"[BM_DEBUG] SEC data not segment-specific for {ticker}, using LLM")
                 else:
-                    print(f"[BM_DEBUG] No SEC segment data for {ticker}, using LLM")
+                    debug_print(f"[BM_DEBUG] No SEC segment data for {ticker}, using LLM")
             except Exception as e:
-                print(f"[BM_DEBUG] SEC segment data failed for {ticker}: {e}")
+                debug_print(f"[BM_DEBUG] SEC segment data failed for {ticker}: {e}")
         
         # Fallback to LLM analysis
         try:
@@ -905,13 +906,13 @@ Respond with JSON containing segment breakdown:
             if json_str:
                 import json
                 result = json.loads(json_str)
-                print(f"[BM_DEBUG] Segment revenue data for {ticker}: {result}")
+                debug_print(f"[BM_DEBUG] Segment revenue data for {ticker}: {result}")
                 return result
             else:
                 return self._get_fallback_segment_data(sector, industry, product_analysis)
                 
         except Exception as e:
-            print(f"[BM_DEBUG] Error extracting segment data for {ticker}: {e}")
+            debug_print(f"[BM_DEBUG] Error extracting segment data for {ticker}: {e}")
             return self._get_fallback_segment_data(sector, industry, product_analysis)
     
     def _collect_sec_edgar_data(self, ticker: str) -> Dict[str, Any]:

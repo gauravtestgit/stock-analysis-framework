@@ -11,6 +11,7 @@ import os
 from datetime import datetime, timedelta
 from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.prompt_formatter import PromptFormatter
+from ...utils.debug_printer import debug_print
 
 class NewsSentimentAnalyzer(IAnalyzer):
     """Enhanced news sentiment analyzer with recent developments tracking"""
@@ -36,7 +37,7 @@ class NewsSentimentAnalyzer(IAnalyzer):
             # Generate sentiment report
             report = self._analyze_news_sentiment(ticker, news_data)
             
-            # Debug: Print what enhanced facts are being returned
+            # Debug: debug_print what enhanced facts are being returned
             recent_news_with_facts = [{
                 'title': item.title,
                 'summary': item.summary,
@@ -51,9 +52,9 @@ class NewsSentimentAnalyzer(IAnalyzer):
             # Debug logging
             for news_item in recent_news_with_facts:
                 if news_item['enhanced_facts']:
-                    print(f"✅ DEBUG: News item '{news_item['title'][:30]}...' has enhanced facts: {news_item['enhanced_facts']}")
+                    debug_print(f"✅ DEBUG: News item '{news_item['title'][:30]}...' has enhanced facts: {news_item['enhanced_facts']}")
                 else:
-                    print(f"❌ DEBUG: News item '{news_item['title'][:30]}...' has NO enhanced facts")
+                    debug_print(f"❌ DEBUG: News item '{news_item['title'][:30]}...' has NO enhanced facts")
             
             return {
                 'method': 'News Sentiment Analysis',
@@ -88,7 +89,7 @@ class NewsSentimentAnalyzer(IAnalyzer):
             news_data = stock.news
             
             if not news_data:
-                print(f"No news found for {ticker}")
+                debug_print(f"No news found for {ticker}")
                 return None
             
 
@@ -124,7 +125,7 @@ class NewsSentimentAnalyzer(IAnalyzer):
                 if self.enable_web_scraping and url:
                     full_content = self._fetch_article_content(url)
                     if self.debug_mode and full_content and 'keep an eye on' in content.get('title', '').lower():
-                        print(f"DEBUG: Scraped {len(full_content)} chars for '{content.get('title', '')[:50]}...'")
+                        debug_print(f"DEBUG: Scraped {len(full_content)} chars for '{content.get('title', '')[:50]}...'")
                 
                 processed_news.append({
                     'title': content.get('title', 'No title'),
@@ -139,9 +140,9 @@ class NewsSentimentAnalyzer(IAnalyzer):
             return processed_news
             
         except Exception as e:
-            print(f"Error fetching news for {ticker}: {e}")
+            debug_print(f"Error fetching news for {ticker}: {e}")
             import traceback
-            traceback.print_exc()
+            traceback.debug_print_exc()
             return None
     
     def _fetch_article_content(self, url: str) -> Optional[str]:
@@ -174,20 +175,20 @@ class NewsSentimentAnalyzer(IAnalyzer):
                         text = article.get_text(strip=True)
                         if len(text) > 200:  # Ensure we got substantial content
                             if self.debug_mode:
-                                print(f"DEBUG: Found article content via selector '{selector}', length: {len(text)}")
-                            return self._extract_ticker_relevant_content(text, ticker) if ticker else text[:3000]
+                                debug_print(f"DEBUG: Found article content via selector '{selector}', length: {len(text)}")
+                            return text[:3000]
                 
                 # Fallback: get all paragraph text
                 paragraphs = soup.find_all('p')
                 if paragraphs:
                     text = ' '.join([p.get_text(strip=True) for p in paragraphs])
                     if text:
-                        return self._extract_ticker_relevant_content(text, ticker) if ticker else text[:3000]
+                        return text[:3000]
                     return None
                     
         except Exception as e:
             if self.debug_mode and ('keep an eye on' in url or 'research further' in url):
-                print(f"Error fetching article content from {url}: {e}")
+                debug_print(f"Error fetching article content from {url}: {e}")
         
         return None
     
@@ -345,9 +346,9 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
                 
                 score = result.get('sentiment_score', 0.0)
                 
-                # Debug: Print what we got from LLM
+                # Debug: debug_print what we got from LLM
                 if self.debug_mode or ticker:  # Always debug for ticker-specific analysis
-                    print(f"🔍 DEBUG: LLM response for '{title[:50]}...': {result}")
+                    debug_print(f"🔍 DEBUG: LLM response for '{title[:50]}...': {result}")
                 
                 # Store enhanced fact data for thesis generation
                 if ticker and 'lead_fact' in result:
@@ -358,7 +359,7 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
                         'business_mechanism': result.get('business_mechanism', ''),
                         'verbatim_quote': result.get('verbatim_quote', '')
                     }
-                    print(f"✅ DEBUG: Enhanced facts extracted for '{title[:30]}...': {enhanced_facts}")
+                    debug_print(f"✅ DEBUG: Enhanced facts extracted for '{title[:30]}...': {enhanced_facts}")
                     
                     return {
                         'score': score,
@@ -374,7 +375,7 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
                 
             except Exception as e:
                 if self.debug_mode:
-                    print(f"Enhanced sentiment analysis error for '{title[:30]}...': {e}")
+                    debug_print(f"Enhanced sentiment analysis error for '{title[:30]}...': {e}")
                 return self._get_fallback_sentiment(title, summary, ticker)
         
         # Fallback to rule-based when web scraping disabled
@@ -611,7 +612,7 @@ Provide ONLY a JSON array of bullet points:"""
                 return self._generate_fallback_summary(report)
                 
         except Exception as e:
-            print(f"Summary generation error: {e}")
+            debug_print(f"Summary generation error: {e}")
             return self._generate_fallback_summary(report)
     
     def _generate_fallback_summary(self, report: NewsSentimentReport) -> List[str]:

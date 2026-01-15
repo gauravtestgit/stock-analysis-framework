@@ -3,113 +3,28 @@ from typing import Dict, Any
 from ...interfaces.data_provider import IDataProvider
 from ...models.financial_metrics import FinancialMetrics
 from ...utils.rate_limit_tracker import rate_tracker
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class YahooFinanceProvider(IDataProvider):
-    """Yahoo Finance data provider implementation"""
-    def get_revenue_trend(self, stock: yf.Ticker, info: Dict = None) -> Dict:
-        """Get revenue trend from yfinance - optimized with parallel DataFrame fetching"""
-        
-        # Parallel DataFrame fetching
-        def fetch_dataframe(attr_name):
-            return getattr(stock, attr_name)
-        
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            # Submit all DataFrame fetch operations in parallel
-            future_to_attr = {
-                executor.submit(fetch_dataframe, 'quarterly_income_stmt'): 'quarterly_income',
-                executor.submit(fetch_dataframe, 'income_stmt'): 'annual_income',
-                executor.submit(fetch_dataframe, 'cashflow'): 'cashflow',
-                executor.submit(fetch_dataframe, 'quarterly_financials'): 'quarterly_financials',
-                executor.submit(fetch_dataframe, 'financials'): 'annual_financials'
-            }
-            
-            # Collect results as they complete
-            dataframes = {}
-            for future in as_completed(future_to_attr):
-                attr_name = future_to_attr[future]
-                try:
-                    dataframes[attr_name] = future.result()
-                except Exception as e:
-                    print(f"Error fetching {attr_name}: {e}")
-                    dataframes[attr_name] = None
-        
-        # Extract DataFrames
-        quarterly_income = dataframes.get('quarterly_income')
-        annual_income = dataframes.get('annual_income')
-        cashflow = dataframes.get('cashflow')
-        quarterly_financials = dataframes.get('quarterly_financials')
-        annual_financials = dataframes.get('annual_financials')
-        
-        # Extract revenue data (serialize DataFrames to dicts for JSON compatibility)
-        def serialize_dataframe(df):
-            if df is None or df.empty:
-                return {}
-            df_dict = df.to_dict()
-            serialized = {}
-            for row_key, row_data in df_dict.items():
-                serialized[str(row_key)] = {str(col_key): (str(value) if hasattr(value, 'strftime') else value) for col_key, value in row_data.items()}
-            return serialized
-        
-        revenue_data = {
-            'quarterly_income_stmt': serialize_dataframe(quarterly_income),
-            'annual_income_stmt': serialize_dataframe(annual_income),
-            'quarterly_financial_stmt': serialize_dataframe(quarterly_financials),
-            'annual_financial_stmt': serialize_dataframe(annual_financials),
-            'cashflow': serialize_dataframe(cashflow)
-        }
-    
-        # Annual revenue
-        if annual_income is not None and not annual_income.empty and 'Total Revenue' in annual_income.index:
-            annual_revenue = annual_income.loc['Total Revenue'].dropna()
-            revenue_data['annual_revenue'] = {str(k): v for k, v in annual_revenue.to_dict().items()}
-            
-            # Calculate growth rates
-            revenue_values = annual_revenue.values
-            if len(revenue_values) >= 2:
-                recent_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
-                revenue_data['recent_annual_growth'] = recent_growth
-        
-        # Quarterly revenue
-        if quarterly_income is not None and not quarterly_income.empty and 'Total Revenue' in quarterly_income.index:
-            quarterly_revenue = quarterly_income.loc['Total Revenue'].dropna()
-            revenue_data['quarterly_revenue'] = {str(k): v for k, v in quarterly_revenue.to_dict().items()}
-            
-            # Calculate QoQ growth
-            revenue_values = quarterly_revenue.values
-            if len(revenue_values) >= 2:
-                qoq_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
-                revenue_data['recent_quarterly_growth'] = qoq_growth
-        
-        # Method 3: From info (current metrics) - use passed info parameter
-        if info is None:
-            info = stock.info
-        revenue_data['current_revenue'] = info.get('totalRevenue', 0)
-        revenue_data['revenue_growth'] = info.get('revenueGrowth', 0)
-        revenue_data['quarterly_revenue_growth'] = info.get('quarterlyRevenueGrowth', 0)
-        
-        return revenue_data
+    """Yahoo Finance data provider implementation - optimized to reduce API calls"""
     
     def get_financial_metrics(self, ticker: str) -> Dict[str, Any]:
-        """Get financial metrics from Yahoo Finance"""
+        """Get financial metrics from Yahoo Finance - single API call approach"""
         try:
             rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
-            info = stock.info
-            revenue_data = self.get_revenue_trend(stock, info)
-            cashflow = stock.cashflow
+            info = stock.info  # Single info call
             
+            # Get revenue trend data with shared info
+            revenue_data = self._get_revenue_trend(stock, info)
+            
+            # Get cashflow data
+            cashflow = stock.cashflow
             fcf = 0
             if not cashflow.empty and 'Free Cash Flow' in cashflow.index:
                 fcf_data = cashflow.loc['Free Cash Flow'].dropna()
                 if len(fcf_data) > 0:
                     fcf = fcf_data.iloc[0]
 
-            # Debug: Print available price fields for ETFs
-            price_fields = ['currentPrice', 'regularMarketPrice', 'navPrice', 'previousClose', 'ask', 'bid', 'open']
-            available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
-            # print(f"Yahoo Provider - Available price fields for {ticker}: {available_prices}")
-            
             return {
                 'market_cap': info.get('marketCap', 0),
                 'sector': info.get('sector', ''),
@@ -128,7 +43,7 @@ class YahooFinanceProvider(IDataProvider):
                 'quarterly_revenue_growth': revenue_data.get('quarterly_revenue_growth'),
                 'calculated_annual_growth': revenue_data.get('recent_annual_growth', 0),
                 'calculated_quarterly_growth': revenue_data.get('recent_quarterly_growth', 0),
-                'revenue_data_statements': revenue_data,  # Include full revenue trend data
+                'revenue_data_statements': revenue_data,
                 'free_cash_flow': fcf,
                 'total_debt': info.get('totalDebt', 0) or 0,
                 'total_cash': info.get('totalCash', 0) or 0,
@@ -157,6 +72,62 @@ class YahooFinanceProvider(IDataProvider):
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)
             return {'error': str(e)}
+    
+    def _get_revenue_trend(self, stock: yf.Ticker, info: Dict) -> Dict:
+        """Get revenue trend from yfinance - uses passed info to avoid duplicate API call"""
+        # Method 1: From income statement (quarterly and annual)
+        quarterly_income = stock.quarterly_income_stmt
+        annual_income = stock.income_stmt
+        cashflow = stock.cashflow
+        quarterly_financials = stock.quarterly_financials
+        annual_financials = stock.financials
+        
+        # Extract revenue data (serialize DataFrames to dicts for JSON compatibility)
+        def serialize_dataframe(df):
+            if df.empty:
+                return {}
+            df_dict = df.to_dict()
+            serialized = {}
+            for row_key, row_data in df_dict.items():
+                serialized[str(row_key)] = {str(col_key): (str(value) if hasattr(value, 'strftime') else value) for col_key, value in row_data.items()}
+            return serialized
+        
+        revenue_data = {
+            'quarterly_income_stmt': serialize_dataframe(quarterly_income),
+            'annual_income_stmt': serialize_dataframe(annual_income),
+            'quarterly_financial_stmt': serialize_dataframe(quarterly_financials),
+            'annual_financial_stmt': serialize_dataframe(annual_financials),
+            'cashflow': serialize_dataframe(cashflow)
+        }
+    
+        # Annual revenue
+        if not annual_income.empty and 'Total Revenue' in annual_income.index:
+            annual_revenue = annual_income.loc['Total Revenue'].dropna()
+            revenue_data['annual_revenue'] = {str(k): v for k, v in annual_revenue.to_dict().items()}
+            
+            # Calculate growth rates
+            revenue_values = annual_revenue.values
+            if len(revenue_values) >= 2:
+                recent_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
+                revenue_data['recent_annual_growth'] = recent_growth
+        
+        # Quarterly revenue
+        if not quarterly_income.empty and 'Total Revenue' in quarterly_income.index:
+            quarterly_revenue = quarterly_income.loc['Total Revenue'].dropna()
+            revenue_data['quarterly_revenue'] = {str(k): v for k, v in quarterly_revenue.to_dict().items()}
+            
+            # Calculate QoQ growth
+            revenue_values = quarterly_revenue.values
+            if len(revenue_values) >= 2:
+                qoq_growth = (revenue_values[0] - revenue_values[1]) / revenue_values[1] * 100
+                revenue_data['recent_quarterly_growth'] = qoq_growth
+        
+        # Use passed info instead of calling stock.info again
+        revenue_data['current_revenue'] = info.get('totalRevenue', 0)
+        revenue_data['revenue_growth'] = info.get('revenueGrowth', 0)
+        revenue_data['quarterly_revenue_growth'] = info.get('quarterlyRevenueGrowth', 0)
+        
+        return revenue_data
     
     def get_price_data(self, ticker: str) -> Dict[str, Any]:
         """Get price and technical data"""

@@ -281,3 +281,88 @@ class AnalysisService:
             }
         except Exception as e:
             return {'error': str(e)}
+    
+    async def analyze_watchlist(self, tickers: List[str], created_by: str = "dashboard") -> Dict[str, Any]:
+        """Analyze multiple stocks as a batch job"""
+        import uuid
+        from datetime import datetime
+        from ..models.database import SessionLocal
+        from ..models.strategy_models import BatchJob
+        
+        # Create batch job
+        batch_job_id = None
+        if self.save_to_db:
+            db = SessionLocal()
+            try:
+                batch_job = BatchJob(
+                    name=f"Watchlist Analysis {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+                    exchange="Watchlist",
+                    status="running",
+                    total_stocks=len(tickers),
+                    completed_stocks=0,
+                    failed_stocks=0,
+                    created_by=created_by
+                )
+                db.add(batch_job)
+                db.commit()
+                db.refresh(batch_job)
+                batch_job_id = batch_job.id
+            finally:
+                db.close()
+        
+        # Analyze each ticker
+        results = []
+        completed = 0
+        failed = 0
+        
+        for ticker in tickers:
+            try:
+                orchestrator = self._setup_orchestrator()
+                result = orchestrator.analyze_stock(ticker)
+                
+                if 'error' not in result and self.save_to_db and self.storage_service:
+                    batch_analysis_id = self.storage_service.store_comprehensive_analysis(
+                        ticker, result, batch_job_id=batch_job_id
+                    )
+                    result['batch_analysis_id'] = batch_analysis_id
+                    completed += 1
+                else:
+                    failed += 1
+                
+                results.append({'ticker': ticker, 'result': result})
+                
+                # Update progress
+                if self.save_to_db and batch_job_id:
+                    db = SessionLocal()
+                    try:
+                        batch_job = db.query(BatchJob).filter(BatchJob.id == batch_job_id).first()
+                        if batch_job:
+                            batch_job.completed_stocks = completed
+                            batch_job.failed_stocks = failed
+                            db.commit()
+                    finally:
+                        db.close()
+            
+            except Exception as e:
+                failed += 1
+                results.append({'ticker': ticker, 'error': str(e)})
+        
+        # Complete batch job
+        if self.save_to_db and batch_job_id:
+            db = SessionLocal()
+            try:
+                batch_job = db.query(BatchJob).filter(BatchJob.id == batch_job_id).first()
+                if batch_job:
+                    batch_job.status = "completed"
+                    batch_job.completed_at = datetime.now()
+                    db.commit()
+            finally:
+                db.close()
+        
+        return {
+            'batch_job_id': str(batch_job_id) if batch_job_id else None,
+            'total': len(tickers),
+            'completed': completed,
+            'failed': failed,
+            'results': results
+        }

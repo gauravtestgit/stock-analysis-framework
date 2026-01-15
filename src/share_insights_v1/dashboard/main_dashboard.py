@@ -46,6 +46,14 @@ def render_main_dashboard():
         # Original Dashboard
         if st.button("📈 File-based Dashboard", use_container_width=True, help="Original file-based analysis dashboard"):
             st.switch_page("pages/file_dashboard.py")
+        
+        # Thesis Generation
+        if st.button("📝 Thesis Generation", use_container_width=True, help="Generate professional investment theses"):
+            st.switch_page("pages/thesis_generation_full.py")
+        
+        # Historical Analysis
+        if st.button("📊 Historical Analysis", use_container_width=True, help="Track analysis evolution and performance over time"):
+            st.switch_page("pages/historical_analysis.py")
     
     with col2:
         st.subheader("⚙️ System Information")
@@ -63,6 +71,8 @@ def render_main_dashboard():
         features = [
             "📊 **Database Dashboard** - Real-time PostgreSQL analysis results",
             "📈 **File Dashboard** - CSV-based analysis viewing",
+            "📝 **Thesis Generation** - AI-powered investment thesis creation",
+            "📊 **Historical Analysis** - Track analysis evolution over time",
         ]
         
         if st.session_state.user_role == "admin":

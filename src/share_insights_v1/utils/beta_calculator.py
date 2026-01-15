@@ -25,6 +25,7 @@ class BetaCalculator:
         
         # Method 1: Try yfinance info beta
         beta = self.get_yfinance_beta()
+        debug_print(f"  yfinance beta: {beta}")
         if beta is not None and self.is_valid_beta(beta):
             debug_print(f"✓ Using yfinance beta: {beta:.3f}")
             return beta
