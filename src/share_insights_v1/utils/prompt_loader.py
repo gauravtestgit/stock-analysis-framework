@@ -122,6 +122,10 @@ class ThesisPromptLoader:
             'latest_gross_profit': 0,
             'latest_operating_cf': 0,
             'latest_capital_expenditures': 0,
+            'trailing_eps': 'N/A',
+            'forward_eps': 'N/A',
+            'shares_outstanding': 0,
+            'float_shares': 0,
             'industry': 'N/A',
             'sector': 'N/A',
             'segment_info': '',
@@ -179,7 +183,7 @@ class ThesisPromptLoader:
         # Merge provided kwargs with defaults
         safe_kwargs = {**defaults, **kwargs}
         
-        # Convert all values to strings to prevent template formatting errors
+        # Convert non-numeric values to strings, keep numbers as numbers for format specifiers
         for key, value in safe_kwargs.items():
             if isinstance(value, (list, tuple)):
                 # Convert lists/tuples to comma-separated strings
@@ -189,6 +193,9 @@ class ThesisPromptLoader:
                 safe_kwargs[key] = str(value)
             elif value is None:
                 safe_kwargs[key] = 'N/A'
+            elif isinstance(value, (int, float)):
+                # Keep numeric values as numbers for format specifiers like :.2f, :,.0f
+                safe_kwargs[key] = value
             else:
                 safe_kwargs[key] = str(value)
         

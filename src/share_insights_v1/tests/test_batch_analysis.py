@@ -14,7 +14,7 @@ def test_batch_analysis():
     batch_service = BatchAnalysisService(save_to_db=True, enable_detailed_news_analysis=False)
     
     # Define paths
-    filename = "single"
+    filename = "nzx"
     input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"  # Assuming this exists in the root directory
     output_csv_dir = "./src/share_insights_v1/resources/stock_analyses/"
     date = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -28,8 +28,8 @@ def test_batch_analysis():
         input_csv_path=input_csv,
         output_csv_path=output_csv,
         # max_stocks=5,  # Limit for testing
-        exchange="NASDAQ",  # Specify exchange for batch job
-        created_by="test_user"  # Specify who ran it
+        exchange=filename.upper(),  # Specify exchange for batch job
+        created_by="batch_user"  # Specify who ran it
     )
     
     print(f"Results saved to {output_csv}")

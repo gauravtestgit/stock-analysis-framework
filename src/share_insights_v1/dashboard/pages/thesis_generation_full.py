@@ -324,63 +324,68 @@ def show_thesis_generation():
         # Batch thesis generation section
         successful_stocks = {ticker: data for ticker, data in st.session_state.batch_results.items() if 'error' not in data}
         if successful_stocks:
-            st.markdown("---")
-            st.subheader("🎯 Generate Thesis from Batch Results")
+            batch_thesis_fragment(successful_stocks, thesis_options, selected_provider_name, selected_model)
+
+@st.fragment
+def batch_thesis_fragment(successful_stocks, thesis_options, selected_provider_name, selected_model):
+    """Fragment for batch thesis generation to prevent full page refresh"""
+    st.markdown("---")
+    st.subheader("🎯 Generate Thesis from Batch Results")
+    
+    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+    with col1:
+        selected_stock = st.selectbox(
+            "Select Stock:",
+            options=list(successful_stocks.keys()),
+            key="batch_thesis_stock_selector"
+        )
+    with col2:
+        batch_thesis_type = st.selectbox(
+            "Thesis Type:", 
+            thesis_options,
+            key="batch_thesis_type_selector"
+        )
+    with col3:
+        batch_prompt_chaining = st.checkbox("Prompt Chaining", help="Use output from previous prompt as input to next prompt", key="batch_prompt_chaining")
+    with col4:
+        generate_thesis_button = st.button("🚀 Generate Thesis", key="batch_thesis_generate")
+    
+    # Handle batch thesis generation
+    if generate_thesis_button:
+        if not selected_provider_name or not selected_model:
+            st.error("Please select LLM provider and model first")
+        elif selected_stock and selected_stock in successful_stocks:
+            st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
             
-            col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
-            with col1:
-                selected_stock = st.selectbox(
-                    "Select Stock:",
-                    options=list(successful_stocks.keys()),
-                    key="batch_thesis_stock_selector"
+            # Handle prompt chaining for batch
+            if batch_prompt_chaining:
+                # Initialize stock-specific prompt outputs if not exists
+                if 'stock_prompt_outputs' not in st.session_state:
+                    st.session_state.stock_prompt_outputs = {}
+                
+                # Get previous output for this specific stock
+                previous_output = st.session_state.stock_prompt_outputs.get(selected_stock, '')
+                
+                thesis_response = generate_investment_thesis(
+                    selected_stock,
+                    successful_stocks[selected_stock],
+                    batch_thesis_type,
+                    st.session_state.thesis_llm_manager,
+                    show_prompt=True,
+                    return_response=True,
+                    previous_output=previous_output
                 )
-            with col2:
-                batch_thesis_type = st.selectbox(
-                    "Thesis Type:", 
-                    thesis_options,
-                    key="batch_thesis_type_selector"
+                if thesis_response:
+                    st.session_state.stock_prompt_outputs[selected_stock] = thesis_response
+                    st.success(f"✅ Thesis generated and stored for {selected_stock} chaining ({len(thesis_response)} characters)")
+            else:
+                generate_investment_thesis(
+                    selected_stock,
+                    successful_stocks[selected_stock],
+                    batch_thesis_type,
+                    st.session_state.thesis_llm_manager,
+                    show_prompt=True
                 )
-            with col3:
-                batch_prompt_chaining = st.checkbox("Prompt Chaining", help="Use output from previous prompt as input to next prompt", key="batch_prompt_chaining")
-            with col4:
-                generate_thesis_button = st.button("🚀 Generate Thesis", key="batch_thesis_generate")
-            
-            # Handle batch thesis generation
-            if generate_thesis_button:
-                if not selected_provider_name or not selected_model:
-                    st.error("Please select LLM provider and model first")
-                elif selected_stock and selected_stock in successful_stocks:
-                    st.info(f"Using LLM: {selected_provider_name} with {selected_model}")
-                    
-                    # Handle prompt chaining for batch
-                    if batch_prompt_chaining:
-                        # Initialize stock-specific prompt outputs if not exists
-                        if 'stock_prompt_outputs' not in st.session_state:
-                            st.session_state.stock_prompt_outputs = {}
-                        
-                        # Get previous output for this specific stock
-                        previous_output = st.session_state.stock_prompt_outputs.get(selected_stock, '')
-                        
-                        thesis_response = generate_investment_thesis(
-                            selected_stock,
-                            successful_stocks[selected_stock],
-                            batch_thesis_type,
-                            st.session_state.thesis_llm_manager,
-                            show_prompt=True,
-                            return_response=True,
-                            previous_output=previous_output
-                        )
-                        if thesis_response:
-                            st.session_state.stock_prompt_outputs[selected_stock] = thesis_response
-                            st.success(f"✅ Thesis generated and stored for {selected_stock} chaining ({len(thesis_response)} characters)")
-                    else:
-                        generate_investment_thesis(
-                            selected_stock,
-                            successful_stocks[selected_stock],
-                            batch_thesis_type,
-                            st.session_state.thesis_llm_manager,
-                            show_prompt=True
-                        )
 
 def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None, max_news_articles=5):
     """Analyze all stocks in watchlist with selected analyzers in parallel"""
@@ -476,6 +481,14 @@ def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None,
             
             # Debug: Show what API actually returned
             print(f"🔍 DEBUG: API response keys for {ticker}: {list(data.keys())}")
+            
+            # Debug: Check financial_metrics content
+            if 'financial_metrics' in data:
+                fm = data['financial_metrics']
+                print(f"🔍 DEBUG: financial_metrics keys: {list(fm.keys()) if fm else 'None'}")
+                print(f"🔍 DEBUG: trailing_eps={fm.get('trailing_eps')} (type: {type(fm.get('trailing_eps'))}), forward_eps={fm.get('forward_eps')} (type: {type(fm.get('forward_eps'))}), shares_outstanding={fm.get('shares_outstanding')} (type: {type(fm.get('shares_outstanding'))}), float_shares={fm.get('float_shares')} (type: {type(fm.get('float_shares'))})")  
+            else:
+                print(f"⚠️ WARNING: No financial_metrics in API response for {ticker}")
             
             data['dashboard_timing'] = {
                 'total_request_time': round(stock_end - stock_start, 2),
@@ -2176,6 +2189,10 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'latest_gross_profit': financial_metrics.get('latest_gross_profit', 0),
         'latest_operating_cf': financial_metrics.get('latest_operating_cf', 0),
         'latest_capital_expenditures': financial_metrics.get('latest_capital_expenditures', 0),
+        'trailing_eps': financial_metrics.get('trailing_eps', 'N/A'),
+        'forward_eps': financial_metrics.get('forward_eps', 'N/A'),
+        'shares_outstanding': financial_metrics.get('shares_outstanding') or 0,
+        'float_shares': financial_metrics.get('float_shares') or 0,
         'industry': financial_metrics.get('industry', 'N/A'),
         'sector': financial_metrics.get('sector', 'N/A'),
         'segment_info': segment_info,
@@ -2344,6 +2361,10 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'free_cash_flow': financial_metrics.get('free_cash_flow', financial_health.get('free_cash_flow', 0)),
             'cash_per_share': financial_metrics.get('cash_per_share', financial_health.get('cash_per_share', 0)),
             'total_revenue': financial_metrics.get('total_revenue', growth_analysis.get('total_revenue', 0)),
+            'trailing_eps': financial_metrics.get('trailing_eps', 'N/A'),
+            'forward_eps': financial_metrics.get('forward_eps', 'N/A'),
+            'shares_outstanding': financial_metrics.get('shares_outstanding') or 0,
+            'float_shares': financial_metrics.get('float_shares') or 0,
             'industry': financial_metrics.get('industry', 'N/A'),
             'sector': financial_metrics.get('sector', 'N/A'),
             'beta': financial_metrics.get('beta', 'N/A'),

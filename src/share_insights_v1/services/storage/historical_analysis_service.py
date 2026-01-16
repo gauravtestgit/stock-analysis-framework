@@ -101,21 +101,21 @@ class HistoricalAnalysisService:
             from ...models.strategy_models import BatchJob
             
             if batch_job_id:
-                # Get specific batch job by ID
+                # Get specific batch job by ID (allow running jobs too)
                 latest_batch = db.query(BatchJob).filter(
                     BatchJob.id == batch_job_id,
-                    BatchJob.status == 'completed'
+                    BatchJob.status.in_(['completed', 'running'])
                 ).first()
             else:
                 # Get latest batch job
-                query = db.query(BatchJob).filter(BatchJob.status == 'completed')
+                query = db.query(BatchJob).filter(BatchJob.status.in_(['completed', 'running']))
                 if exchange:
                     query = query.filter(BatchJob.exchange == exchange)
                 
                 latest_batch = query.order_by(desc(BatchJob.completed_at)).first()
             
             if not latest_batch:
-                return {'error': 'No completed batch jobs found', 'total_analyses': 0}
+                return {'error': 'No batch jobs found', 'total_analyses': 0}
             
             # Get all analyses from this batch job
             analyses = db.query(AnalysisHistory)\
@@ -130,10 +130,11 @@ class HistoricalAnalysisService:
                 'batch_id': str(latest_batch.id),
                 'batch_name': latest_batch.name,
                 'exchange': latest_batch.exchange,
-                'date': latest_batch.completed_at.strftime('%Y-%m-%d %H:%M'),
+                'date': latest_batch.completed_at.strftime('%Y-%m-%d %H:%M') if latest_batch.completed_at else 'In Progress',
                 'stock_count': latest_batch.total_stocks,
                 'completed': latest_batch.completed_stocks,
-                'failed': latest_batch.failed_stocks
+                'failed': latest_batch.failed_stocks,
+                'status': latest_batch.status
             }
             
             # Exchange summary
@@ -161,16 +162,16 @@ class HistoricalAnalysisService:
         try:
             from ...models.strategy_models import BatchJob
             
-            # Get distinct exchanges from completed batch jobs
+            # Get distinct exchanges from completed batch jobs (and running for debugging)
             batches = db.query(BatchJob.exchange, func.count(BatchJob.id))\
-                       .filter(BatchJob.status == 'completed')\
+                       .filter(BatchJob.status.in_(['completed', 'running']), BatchJob.exchange.isnot(None))\
                        .group_by(BatchJob.exchange)\
                        .all()
             
             if not batches:
                 return {}
             
-            return {exchange: count for exchange, count in batches if exchange}
+            return {exchange: count for exchange, count in batches}
         finally:
             db.close()
     
@@ -180,7 +181,7 @@ class HistoricalAnalysisService:
         try:
             from ...models.strategy_models import BatchJob
             
-            query = db.query(BatchJob).filter(BatchJob.status == 'completed')
+            query = db.query(BatchJob).filter(BatchJob.status.in_(['completed', 'running']))
             if exchange:
                 query = query.filter(BatchJob.exchange == exchange)
             
@@ -190,7 +191,7 @@ class HistoricalAnalysisService:
                 'batch_id': str(batch.id),
                 'batch_name': batch.name,
                 'exchange': batch.exchange,
-                'completed_at': batch.completed_at.strftime('%Y-%m-%d %H:%M'),
+                'completed_at': batch.completed_at.strftime('%Y-%m-%d %H:%M') if batch.completed_at else 'In Progress',
                 'total_stocks': batch.total_stocks,
                 'completed_stocks': batch.completed_stocks,
                 'failed_stocks': batch.failed_stocks,
