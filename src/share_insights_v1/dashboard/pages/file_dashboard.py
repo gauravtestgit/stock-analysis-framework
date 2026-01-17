@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 # Import authentication
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
+from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 from src.share_insights_v1.dashboard.app import main as batch_dashboard
 from src.share_insights_v1.dashboard.detailed_analysis import show_detailed_analysis
 from src.share_insights_v1.dashboard.analyst_alignment import show_analyst_alignment
@@ -21,6 +22,9 @@ def main():
     
     # Navigation bar
     render_navigation()
+    
+    # Show disclaimer
+    show_disclaimer()
     
     # Initialize page selection in session state
     if 'current_page' not in st.session_state:

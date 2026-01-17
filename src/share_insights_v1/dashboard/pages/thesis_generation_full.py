@@ -19,6 +19,7 @@ from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMM
 from src.share_insights_v1.services.database.database_service import DatabaseService
 from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
+from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 import yaml
 
 def load_llm_config():
@@ -52,6 +53,7 @@ def show_thesis_generation():
         return
     
     st.title("📝 Investment Thesis Generator")
+    show_disclaimer()
     st.markdown("*Generate comprehensive investment theses with full analysis capabilities*")
     
     from watchlist_component import get_watchlist, show_watchlist_sidebar

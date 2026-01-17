@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from src.share_insights_v1.services.database.database_service import DatabaseService
 from src.share_insights_v1.models.database import SessionLocal
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
+from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 
 class EnhancedDatabaseDashboard:
     def __init__(self):
@@ -30,6 +31,7 @@ class EnhancedDatabaseDashboard:
         render_navigation()
         
         st.title("📊 Stock Analysis Database Dashboard")
+        show_disclaimer()
         st.markdown("*Database-driven analysis results from NASDAQ, NYSE, ASX, and NZX*")
         
         # Sidebar filters

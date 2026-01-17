@@ -6,6 +6,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from src.share_insights_v1.dashboard.login_page import check_authentication, logout, render_navigation
+from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 
 def render_main_dashboard():
     """Render the main dashboard with navigation"""
@@ -24,6 +25,9 @@ def render_main_dashboard():
     render_navigation()
     
     st.title("📊 Stock Analysis Framework")
+    
+    # Show disclaimer
+    show_disclaimer()
     st.markdown("*Comprehensive stock analysis with multiple valuation methods and database management*")
     
     # Main dashboard content
