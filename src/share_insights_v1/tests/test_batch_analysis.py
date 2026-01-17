@@ -7,14 +7,14 @@ from datetime import datetime
 
 from ..services.batch.batch_analysis_service_quant import BatchAnalysisService
 
-def test_batch_analysis():
+def test_batch_analysis(filename="single"):
     """Test batch analysis service with sample CSV"""
     
     # Initialize batch service
     batch_service = BatchAnalysisService(save_to_db=True, enable_detailed_news_analysis=False)
     
     # Define paths
-    filename = "nasdaq"
+    # filename = "nasdaq"
     input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"  # Assuming this exists in the root directory
     output_csv_dir = "./src/share_insights_v1/resources/stock_analyses/"
     date = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -43,4 +43,7 @@ def test_batch_analysis():
         print("No output file found")
 
 if __name__ == "__main__":
-    test_batch_analysis()
+    if len(sys.argv) == 2:
+        print("Running batch analysis on", sys.argv[1])
+        filename = sys.argv[1]
+    test_batch_analysis(filename)

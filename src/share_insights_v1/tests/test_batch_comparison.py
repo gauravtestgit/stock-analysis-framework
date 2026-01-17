@@ -6,14 +6,14 @@ from datetime import datetime
 
 from ..services.batch.batch_comparison_service import BatchComparisonService
 
-def test_batch_comparison():
+def test_batch_comparison(filename):
     """Test batch comparison service with sample CSV"""
     
     # Initialize comparison service
     comparison_service = BatchComparisonService()
     
     # Define paths
-    input_csv = "./src/share_insights_v1/resources/stock_analyses/nzx_20260113112027_analysis.csv"
+    input_csv = "./src/share_insights_v1/resources/stock_analyses/filename.csv"
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
     print("🚀 Testing Batch Comparison Service...")
@@ -78,5 +78,9 @@ def test_alignment_calculation():
     print("✅ All alignment calculation tests passed!")
 
 if __name__ == "__main__":
-    test_batch_comparison()
+    if len(sys.argv) != 2:
+        print("Usage: python test_batch_comparison.py <input_csv>")
+        sys.exit(1)
+    filename = sys.argv[1]
+    test_batch_comparison(filename)
     test_alignment_calculation()
