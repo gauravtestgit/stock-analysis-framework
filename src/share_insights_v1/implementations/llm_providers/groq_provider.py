@@ -3,7 +3,7 @@ import time
 import threading
 from typing import Dict, Any
 from langchain_groq import ChatGroq
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from ...interfaces.llm_provider import ILLMProvider
 from ...utils.debug_printer import debug_print
 class GroqProvider(ILLMProvider):
