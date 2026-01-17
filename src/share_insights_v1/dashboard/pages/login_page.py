@@ -7,7 +7,7 @@ class LoginManager:
         self.users = {
             "admin": {"password": self._hash_password("xyz123#"), "role": "admin"},
             "analyst": {"password": self._hash_password("analyst123"), "role": "analyst-user"},
-            "demo": {"password": self._hash_password("demo"), "role": "analyst-user"}
+            "demo": {"password": self._hash_password("demo123#"), "role": "analyst-user"}
         }
     
     def _hash_password(self, password):
@@ -72,17 +72,17 @@ def render_login_page():
         st.markdown("""
         **Admin User:**
         - Username: `admin`
-        - Password: `xyz123#`
+        - Password: `******`
         - Role: `admin`
         
         **Analyst User:**
         - Username: `analyst`
-        - Password: `analyst123`
+        - Password: `*******`
         - Role: `analyst-user`
         
         **Demo User:**
         - Username: `demo`
-        - Password: `demo`
+        - Password: `******`
         - Role: `analyst-user`
         """)
 
