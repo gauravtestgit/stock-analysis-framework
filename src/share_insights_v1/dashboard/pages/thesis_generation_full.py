@@ -963,12 +963,19 @@ def display_horizontal_stock_cards(results):
                 indicators = ['rsi_14', 'ma_20', 'ma_50', 'ma_200', 'macd_line', 'macd_signal']
                 indicators_html = ''.join([f"<p>• {indicator.upper()}: {analysis_data.get(indicator, 'N/A')}</p>" for indicator in indicators if analysis_data.get(indicator) is not None])
                 
+                # Format technical signals as key-value pairs
+                technical_signals = analysis_data.get('technical_signals', {})
+                if isinstance(technical_signals, dict):
+                    signals_html = ''.join([f"<p>• {k.replace('_', ' ').title()}: {v}</p>" for k, v in technical_signals.items()])
+                else:
+                    signals_html = f"<p>{technical_signals}</p>"
+                
                 tech_card = f"""
                 <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
                     <h5>📈 Technical</h5>
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
-                    <p><strong>Trend:</strong> {analysis_data.get('trend', 'N/A')}</p>
+                    <p><strong>MACD Trend:</strong> {analysis_data.get('trend', 'N/A')}</p>
                     <p><strong>Volume:</strong> {analysis_data.get('volume_trend', 'N/A')}</p>
                     <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
@@ -982,8 +989,14 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('tech_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4>Technical Indicators:</h4>
-                            {indicators_html}
+                            <div style="flex: 1;">
+                                <h4>Technical Indicators:</h4>
+                                {indicators_html}
+                            </div>
+                            <div style="flex: 1;">
+                                <h4>Technical Signals:</h4>
+                                {signals_html}
+                            </div>
                             <div style="flex: 1;">
                                 <h4>Price Chart (Last 30 Days):</h4>
                                 <div id="price_chart_{sanitized_ticker}" style="height: 400px; width: 100%; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
