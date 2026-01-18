@@ -509,11 +509,11 @@ def show_bullish_convergence_analysis(bulk_data):
             @st.fragment
             def table_filters():
                 # Additional filters for table
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3, col4, col5 = st.columns(5)
                 with col1:
                     ticker_filter = st.text_input("Filter by Ticker", "", key="ticker_filter")
                 with col2:
-                    method_count_options = [1, 2, 3, 4, 5]
+                    method_count_options = [1, 2, 3]
                     method_count_filter = st.multiselect(
                         "Method Count",
                         options=method_count_options,
@@ -521,8 +521,11 @@ def show_bullish_convergence_analysis(bulk_data):
                         key="method_count_filter"
                     )
                 with col3:
-                    our_upside_filter = st.number_input("Min Our Upside %", min_value=0, max_value=1000, value=0, key="our_upside_filter")
+                    methods_list_filter = st.text_input("Filter by Methods", "", key="methods_list_filter", 
+                                                       placeholder="e.g. dcf, technical")
                 with col4:
+                    our_upside_filter = st.number_input("Min Our Upside %", min_value=0, max_value=1000, value=0, key="our_upside_filter")
+                with col5:
                     analyst_upside_filter = st.number_input("Min Analyst Upside %", min_value=0, max_value=1000, value=0, key="analyst_upside_filter")
                 
                 # Apply table filters
@@ -531,6 +534,8 @@ def show_bullish_convergence_analysis(bulk_data):
                     table_df = table_df[table_df['ticker'].str.contains(ticker_filter.upper(), case=False, na=False)]
                 if method_count_filter:
                     table_df = table_df[table_df['converging_methods'].isin(method_count_filter)]
+                if methods_list_filter:
+                    table_df = table_df[table_df['methods_list'].str.contains(methods_list_filter, case=False, na=False)]
                 table_df = table_df[
                     (table_df['our_upside'] >= our_upside_filter) &
                     (table_df['analyst_upside'] >= analyst_upside_filter)
