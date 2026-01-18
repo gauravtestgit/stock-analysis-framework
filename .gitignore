@@ -13,7 +13,7 @@ src/resources/
 src/financial_analyst/output/
 src/financial_analyst/__pycache__
 src/financial_analyst/playground.py
-src/share_insights_v1/resources/
+src/share_insights_v1/resources/stock_analyses/
 src/share_insights_v1/__pycache__/
 src/share_insights_v1/config/__pycache__/
 src/share_insights_v1/implementations/__pycache__/
