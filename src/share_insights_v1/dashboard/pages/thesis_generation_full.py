@@ -657,6 +657,8 @@ def display_horizontal_stock_cards(results):
             <p><strong>P/B:</strong> {financial_metrics.get('pb_ratio', 'N/A')}</p>
             <p><strong>ROE:</strong> {financial_metrics.get('roe', 'N/A')}</p>
             <p><strong>Debt Ratio:</strong> {financial_metrics.get('debt_to_equity', 'N/A')}</p> 
+            <p><strong>Current Ratio:</strong> {financial_metrics.get('current_ratio', 'N/A')}</p> 
+            <p><strong>Quick Ratio:</strong> {financial_metrics.get('quick_ratio', 'N/A')}</p> 
             <p><strong>Type:</strong> {company_type}</p>
             <p><strong>Time:</strong> {analysis_time}s</p>
             <button onclick="showModal('history_{sanitized_ticker}')" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">📊 History</button>
@@ -1165,8 +1167,9 @@ def display_horizontal_stock_cards(results):
                 all_cards.append(comp_card)
             elif analysis_type == 'startup':
                 startup_metrics = analysis_data.get('startup_metrics', {})
+                risk_factors = startup_metrics.get('risk_factors', [])
                 metrics_html = ''.join([f"<p>• {k.replace('_', ' ').title()}: {v}</p>" for k, v in startup_metrics.items()]) if startup_metrics else "<p>No startup metrics available</p>"
-                
+                risk_html = ''.join([f"<p>• {risk}</p>" for risk in risk_factors]) if risk_factors else "<p>No risk factors listed</p>"
                 startup_card = f"""
                 <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
                     <h5>🚀 Startup</h5>
@@ -1185,8 +1188,14 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('startup_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4>Startup Metrics:</h4>
-                            {metrics_html}
+                            <p><strong>Cash Runway:</strong> {analysis_data.get('cash_runway_years', 0):.1f} years</p>
+                            <p><strong>Quarterly Burn:</strong> ${analysis_data.get('quarterly_burn_rate', 0):,.0f}</p>
+                            <p><strong>Growth Quality:</strong> {analysis_data.get('growth_quality', 'N/A')}</p>
+                            <p><strong>Risk Score:</strong> {analysis_data.get('risk_score', 0)}/100</p>
+                            <p><strong>Investment Type:</strong> {analysis_data.get('investment_type', 'N/A')}</p>
+                            <p><strong>Confidence Level:</strong> {analysis_data.get('confidence_level', 'N/A')}</p>
+                            <h4>Risk Factors:</h4>
+                            {risk_html}
                         </div>
                     </div>
                 </div>
