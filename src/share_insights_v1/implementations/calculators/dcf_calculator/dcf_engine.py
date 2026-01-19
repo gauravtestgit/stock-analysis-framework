@@ -58,29 +58,30 @@ class DCFEngine:
                 fcf_future, ebitda_future, wacc, ticker
             )
             
-            # 6. Apply terminal value caps
-            terminal_caps = self.terminal_calc.apply_terminal_caps(
-                terminal_data['average_terminal_value'], pv_fcf
-            )
-            
-            final_terminal_value = terminal_caps['adjusted_terminal_value']
+            # 6. Discount terminal value to present value
+            undiscounted_terminal_value = terminal_data['average_terminal_value']
             pv_terminal_value = self.fcf_projector.calculate_pv_terminal_value(
-                final_terminal_value, wacc, self.config.years
+                undiscounted_terminal_value, wacc, self.config.years
             )
             
-            # 7. Calculate enterprise and equity values
+            # 7. Calculate terminal ratio using discounted values
+            terminal_caps = self.terminal_calc.apply_terminal_caps(
+                pv_terminal_value, pv_fcf
+            )
+            
+            # 8. Calculate enterprise and equity values
             enterprise_value = pv_fcf + pv_terminal_value
             equity_data = self._calculate_equity_value(ticker, enterprise_value)
             
-            # 8. Apply risk adjustments for extreme cases
+            # 9. Apply risk adjustments for extreme cases
             risk_adjusted_equity = self._apply_risk_adjustments(
                 equity_data, terminal_caps, company_type, pv_fcf
             )
             
-            # 9. Determine confidence based on adjustments
+            # 10. Determine confidence based on adjustments
             confidence = self._calculate_confidence(terminal_caps)
             
-            # 10. Compile results
+            # 11. Compile results
             return self._compile_results(
                 ticker_symbol, ticker, wacc_data, fcf_cagr, ebitda_cagr,
                 fcf_future, ebitda_future, terminal_data, terminal_caps,
