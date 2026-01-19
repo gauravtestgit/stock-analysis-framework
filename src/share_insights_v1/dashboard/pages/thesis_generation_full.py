@@ -20,6 +20,15 @@ from src.share_insights_v1.services.database.database_service import DatabaseSer
 from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
+from src.share_insights_v1.utils.logging import (
+    log_page_view,
+    log_user_action,
+    log_batch_analysis_start,
+    log_batch_analysis_complete,
+    log_api_call,
+    log_api_response,
+    log_error
+)
 import yaml
 
 def load_llm_config():
@@ -55,6 +64,9 @@ def show_thesis_generation():
     st.title("📝 Investment Thesis Generator")
     show_disclaimer()
     st.markdown("*Generate comprehensive investment theses with full analysis capabilities*")
+    
+    # Log page view
+    log_page_view('thesis_generation', metadata={'mode': 'initial_load'})
     
     from watchlist_component import get_watchlist, show_watchlist_sidebar
     
@@ -214,6 +226,18 @@ def show_thesis_generation():
         )
         
         if st.button("Analyze All Watchlist Stocks"):
+            # Log batch analysis button click
+            log_user_action(
+                action='BATCH_ANALYSIS_CLICKED',
+                page='thesis_generation',
+                metadata={
+                    'stock_count': len(watchlist),
+                    'analyzers': batch_analyzers,
+                    'llm_provider': selected_provider_name,
+                    'llm_model': selected_model
+                }
+            )
+            
             if not selected_provider_name or not selected_model:
                 st.error("Please select LLM provider and model first")
             elif batch_analyzers:
@@ -409,6 +433,18 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
     
     # Parallel execution with balanced workers for performance and cost
     max_workers = min(len(watchlist), 4)  # Balanced for performance and cost
+    
+    # Log batch analysis start
+    log_batch_analysis_start(
+        watchlist=watchlist,
+        analyzers=selected_analyzers or [],
+        metadata={
+            'max_workers': max_workers,
+            'llm_provider': llm_provider,
+            'llm_model': llm_model,
+            'max_news_articles': max_news_articles
+        }
+    )
     status_text.text(f"Starting parallel analysis of {len(watchlist)} stocks with {max_workers} workers...")
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -431,6 +467,21 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
     
     batch_end = time.time()
     total_batch_time = batch_end - batch_start
+    
+    # Log batch analysis complete
+    successful = len([r for r in results.values() if 'error' not in r])
+    failed = len(results) - successful
+    
+    log_batch_analysis_complete(
+        stock_count=len(watchlist),
+        success_count=successful,
+        failed_count=failed,
+        duration=total_batch_time,
+        metadata={
+            'max_workers': max_workers,
+            'avg_time_per_stock': total_batch_time / len(watchlist) if watchlist else 0
+        }
+    )
     
     status_text.text(f"Parallel batch analysis complete! Total time: {total_batch_time:.2f}s")
     
@@ -461,6 +512,12 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
 
 def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None, llm_model=None, max_news_articles=5):
     """Analyze a single stock via API - helper function for parallel execution"""
+    from src.share_insights_v1.utils.logging import generate_request_id, set_request_id
+    
+    # Generate unique request ID for this ticker analysis
+    request_id = generate_request_id()
+    set_request_id(request_id)
+    
     try:
         stock_start = time.time()
         
@@ -475,10 +532,33 @@ def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None,
         if max_news_articles != 5:  # Only include if different from default
             request_data["max_news_articles"] = max_news_articles
         
-        response = requests.post(endpoint, json=request_data)
+        # Log API call with request ID
+        log_api_call(
+            endpoint=endpoint,
+            method='POST',
+            ticker=ticker,
+            metadata={
+                'request_id': request_id,
+                'analyzers': selected_analyzers,
+                'llm_provider': llm_provider,
+                'llm_model': llm_model
+            }
+        )
+        
+        # Send request ID in headers for API to use
+        headers = {'X-Request-ID': request_id}
+        response = requests.post(endpoint, json=request_data, headers=headers)
         stock_end = time.time()
         
         if response.status_code == 200:
+            # Log successful API response
+            log_api_response(
+                endpoint=endpoint,
+                status_code=response.status_code,
+                duration=stock_end - stock_start,
+                success=True,
+                metadata={'ticker': ticker, 'request_id': request_id}
+            )
             data = response.json()
             
             # Debug: Show what API actually returned
@@ -499,13 +579,29 @@ def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None,
             }
             # Ensure batch_analysis_id is available for thesis linking
             if 'batch_analysis_id' not in data:
-                print(f"⚠️ WARNING: No batch_analysis_id returned for {ticker}")
+                print(f"⚠️ WARNING: No batch_analysis_id returned for {ticker} (request_id: {request_id})")
             else:
-                print(f"✅ DEBUG: batch_analysis_id found for {ticker}: {data['batch_analysis_id']}")
+                print(f"✅ DEBUG: batch_analysis_id found for {ticker}: {data['batch_analysis_id']} (request_id: {request_id})")
             return ticker, data
         else:
+            # Log failed API response
+            log_api_response(
+                endpoint=endpoint,
+                status_code=response.status_code,
+                duration=stock_end - stock_start,
+                success=False,
+                error=response.text,
+                metadata={'ticker': ticker, 'request_id': request_id}
+            )
             return ticker, {"error": response.text}
     except Exception as e:
+        # Log error
+        log_error(
+            error_type='API_CALL_EXCEPTION',
+            error_message=str(e),
+            page='thesis_generation',
+            metadata={'ticker': ticker, 'endpoint': endpoint, 'request_id': request_id if 'request_id' in locals() else 'unknown'}
+        )
         return ticker, {"error": str(e)}
 
 def display_batch_results(results, batch_timing=None):

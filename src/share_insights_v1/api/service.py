@@ -1,7 +1,9 @@
 import asyncio
+import logging
 from typing import Dict, Any, List, Optional
 from ..services.orchestration.analysis_orchestrator import AnalysisOrchestrator
 from ..services.storage.analysis_storage_service import AnalysisStorageService
+from ..utils.logging import get_request_id, log_with_context, setup_logger
 from ..implementations.analyzers.dcf_analyzer import DCFAnalyzer
 from ..implementations.analyzers.technical_analyzer import TechnicalAnalyzer
 from ..implementations.analyzers.startup_analyzer import StartupAnalyzer
@@ -19,6 +21,9 @@ from ..implementations.data_providers.yahoo_provider import YahooFinanceProvider
 from ..implementations.classifier import CompanyClassifier
 from ..models.analysis_result import AnalysisType
 from .models import AnalyzerInfo
+
+# Use the same API logger as middleware
+logger = setup_logger(name='api', component='API', log_file='logs/api.log')
 
 class AnalysisService:
     """Service layer for stock analysis API"""
@@ -76,6 +81,9 @@ class AnalysisService:
     
     async def analyze_stock(self, ticker: str, enabled_analyzers: Optional[List[str]] = None, llm_provider: Optional[str] = None, llm_model: Optional[str] = None) -> Dict[str, Any]:
         """Run comprehensive stock analysis"""
+        request_id = get_request_id()
+        log_with_context(logger, 'info', f"Starting orchestrator analysis for {ticker}", request_id=request_id)
+        
         # Create selective orchestrator if specific analyzers requested
         if enabled_analyzers:
             orchestrator = self._create_selective_orchestrator(enabled_analyzers, llm_provider, llm_model)
@@ -85,6 +93,64 @@ class AnalysisService:
         # Run analysis in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, orchestrator.analyze_stock, ticker)
+        
+        # Log orchestrator response
+        if 'error' in result:
+            log_with_context(
+                logger, 'error',
+                f"Orchestrator analysis failed for {ticker}: {result.get('error')}",
+                request_id=request_id
+            )
+        else:
+            # Create serializable summary for logging
+            import json
+            
+            def make_serializable(obj):
+                """Convert non-serializable objects to strings"""
+                if hasattr(obj, '__dict__'):
+                    return str(obj)
+                elif hasattr(obj, 'value'):
+                    return obj.value
+                return str(obj)
+            
+            # Extract key metrics for summary log
+            recommendation = result.get('final_recommendation')
+            rec_value = getattr(recommendation, 'recommendation', 'N/A') if hasattr(recommendation, 'recommendation') else 'N/A'
+            target_price = getattr(recommendation, 'target_price', 0.0) if hasattr(recommendation, 'target_price') else 0.0
+            
+            # Log summary
+            log_with_context(
+                logger, 'info',
+                f"Orchestrator analysis completed for {ticker}",
+                request_id=request_id,
+                metadata={
+                    'ticker': ticker,
+                    'company_type': result.get('company_type'),
+                    'recommendation': str(rec_value),
+                    'target_price': float(target_price) if target_price else 0.0,
+                    'analyzers_run': list(result.get('analyses', {}).keys())
+                }
+            )
+            
+            # Log full response as separate entry
+            try:
+                import json
+                
+                # Use same serialization as test_orchestrator_comprehensive
+                full_response_json = json.dumps(result, indent=2, default=str)
+                
+                log_with_context(
+                    logger, 'info',
+                    f"Full orchestrator response for {ticker}",
+                    request_id=request_id,
+                    metadata={'full_response': full_response_json}
+                )
+            except Exception as e:
+                log_with_context(
+                    logger, 'warning',
+                    f"Could not serialize full response for {ticker}: {str(e)}",
+                    request_id=request_id
+                )
         
         # Convert final_recommendation object to dict if present
         if 'final_recommendation' in result and result['final_recommendation']:

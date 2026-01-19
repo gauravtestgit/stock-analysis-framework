@@ -159,7 +159,7 @@ Rank top 5 catalysts by total company impact:
 
 **#1 CATALYST: [Name] - [Segment]**
 - **Company Revenue Impact:** [X]% of total (affects [Y]% segment = [Z]% company impact)
-- **Explain how the above Company Revenue impact and its corresponding percentage is derived. Do not guess. 
+- **Explain and provide documented proof, including section where the stock is mentioned, so as to how the above Company Revenue impact and its corresponding percentage is derived. Do not guess. 
 - **Probability × Impact Score:** [Calculation]
 - **Strategic Significance:** [Why this matters most for company trajectory]
 

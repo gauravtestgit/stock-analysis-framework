@@ -10,6 +10,14 @@ from .batch_service import BatchAnalysisService
 from ..services.storage.thesis_storage_service import ThesisStorageService
 from .historical_analysis import router as historical_router
 
+# Import logging middleware
+try:
+    from ..utils.logging.api_middleware import LoggingMiddleware
+    LOGGING_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import LoggingMiddleware: {e}")
+    LOGGING_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,6 +37,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add Logging middleware (if available)
+if LOGGING_AVAILABLE:
+    app.add_middleware(LoggingMiddleware)
+    print("✅ Logging middleware enabled")
+else:
+    print("⚠️  Logging middleware not available")
 
 # Initialize services
 analysis_service = AnalysisService(save_to_db=True)  # Default: save to database

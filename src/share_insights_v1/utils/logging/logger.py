@@ -19,6 +19,21 @@ class UTCFormatter(logging.Formatter):
         if datefmt:
             return dt.strftime(datefmt)
         return dt.isoformat(timespec='milliseconds')
+    
+    def format(self, record):
+        """Format log record with optional context fields"""
+        # Format base message
+        result = super().format(record)
+        
+        # Add optional context fields on new lines
+        if hasattr(record, 'session_id') and record.session_id:
+            result += f"\n  session_id: {record.session_id}"
+        if hasattr(record, 'request_id') and record.request_id:
+            result += f"\n  request_id: {record.request_id}"
+        if hasattr(record, 'metadata') and record.metadata:
+            result += f"\n  metadata: {record.metadata}"
+        
+        return result
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging"""
