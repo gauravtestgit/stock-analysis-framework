@@ -636,7 +636,7 @@ def display_batch_results(results, batch_timing=None):
         summary_data = []
         for ticker, data in results.items():
             if 'error' not in data:
-                current_price = get_current_price(ticker)
+                current_price = data.get('financial_metrics', {}).get('current_price') or 0
                 final_rec = data.get('final_recommendation', {})
                 target_price = final_rec.get('target_price', 0) or 0
                 upside = ((target_price - current_price) / current_price) * 100 if current_price and target_price else None
@@ -714,9 +714,7 @@ def display_tabbed_batch_results(results):
                     st.session_state.selected_batch_stock = ticker
                     st.rerun()
     
-    # Display analysis in fragment to prevent full page refresh
-    @st.fragment
-    def display_selected_analysis():
+    with col_analysis:
         selected_ticker = st.session_state.selected_batch_stock
         
         # Safety check: if selected ticker not in results, reset to first available
@@ -732,7 +730,8 @@ def display_tabbed_batch_results(results):
         # Display basic info
         analyses = selected_data.get('analyses', {})
         financial_metrics = selected_data.get('financial_metrics', {})
-        current_price = financial_metrics.get('current_price') or get_current_price(selected_ticker)
+        # Use cached price from analysis data
+        current_price = financial_metrics.get('current_price') or 0
         final_rec = selected_data.get('final_recommendation', {})
         
         # Quick metrics row
@@ -846,9 +845,6 @@ def display_tabbed_batch_results(results):
         # Management Tab
         with tabs[12]:
             display_analyzer_tab(selected_ticker, analyses, 'management_quality', 'Management Quality')
-    
-    with col_analysis:
-        display_selected_analysis()
 
 def display_overview_tab(ticker, data, analyses):
     """Display overview tab with summary of all analyses"""
