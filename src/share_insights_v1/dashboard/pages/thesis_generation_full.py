@@ -718,6 +718,13 @@ def display_tabbed_batch_results(results):
     @st.fragment
     def display_selected_analysis():
         selected_ticker = st.session_state.selected_batch_stock
+        
+        # Safety check: if selected ticker not in results, reset to first available
+        if selected_ticker not in successful_results:
+            st.session_state.selected_batch_stock = list(successful_results.keys())[0]
+            st.rerun()
+            return
+        
         selected_data = successful_results[selected_ticker]
         
         st.markdown(f"### 📊 Analysis for {selected_ticker}")
@@ -1008,6 +1015,15 @@ def display_financial_charts_modal(ticker, revenue_data_statements, scale, label
         
         # Display charts
         col1, col2, col3 = st.columns(3)
+        
+        # Ensure all arrays have same length for charts
+        min_len = min(len(years), len(revenue_data), len(gross_income_data), len(net_income_data), len(operating_cf_data), len(free_cf_data))
+        years = years[:min_len]
+        revenue_data = revenue_data[:min_len]
+        gross_income_data = gross_income_data[:min_len]
+        net_income_data = net_income_data[:min_len]
+        operating_cf_data = operating_cf_data[:min_len]
+        free_cf_data = free_cf_data[:min_len]
         
         with col1:
             st.markdown("**Revenue Trend**")
@@ -1557,15 +1573,29 @@ def display_horizontal_stock_cards(results):
                         operating_cf_data.append(cf_data.get('Operating Cash Flow', 0) or 0)
                         free_cf_data.append(cf_data.get('Free Cash Flow', 0) or 0)
             
-            # Ensure all arrays have same length
-            while len(gross_income_data) < len(years):
+            # Ensure all arrays have same length - trim to shortest
+            min_length = min(len(years), len(revenue_data), len(gross_income_data) or len(years), 
+                           len(net_income_data) or len(years), len(operating_cf_data) or len(years), 
+                           len(free_cf_data) or len(years))
+            
+            years = years[:min_length]
+            revenue_data = revenue_data[:min_length]
+            
+            while len(gross_income_data) < min_length:
                 gross_income_data.append(0)
-            while len(net_income_data) < len(years):
+            gross_income_data = gross_income_data[:min_length]
+            
+            while len(net_income_data) < min_length:
                 net_income_data.append(0)
-            while len(operating_cf_data) < len(years):
+            net_income_data = net_income_data[:min_length]
+            
+            while len(operating_cf_data) < min_length:
                 operating_cf_data.append(0)
-            while len(free_cf_data) < len(years):
+            operating_cf_data = operating_cf_data[:min_length]
+            
+            while len(free_cf_data) < min_length:
                 free_cf_data.append(0)
+            free_cf_data = free_cf_data[:min_length]
             
             # Create chart bars
             max_val = max([abs(x) for x in revenue_data + gross_income_data + net_income_data + operating_cf_data + free_cf_data]) if revenue_data else 1
