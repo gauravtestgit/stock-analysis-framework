@@ -454,17 +454,31 @@ Focus on current trends, competitive dynamics, and future outlook for {industry}
         """Enhanced competitive position analysis"""
         
         market_cap = metrics.get('market_cap', 0)
+        revenue = metrics.get('total_revenue', 0)
         revenue_growth = metrics.get('yearly_revenue_growth', 0) or 0
+        
+        # Categorize company size
+        if market_cap > 200e9:
+            size_category = "Mega Cap (>$200B)"
+        elif market_cap > 10e9:
+            size_category = "Large Cap ($10B-$200B)"
+        elif market_cap > 2e9:
+            size_category = "Mid Cap ($2B-$10B)"
+        elif market_cap > 300e6:
+            size_category = "Small Cap ($300M-$2B)"
+        else:
+            size_category = "Micro Cap (<$300M)"
         
         # Include business model insights
         business_model_type = business_model_data.get('business_model_type', 'Unknown')
         competitive_moat = business_model_data.get('competitive_moat', 'Unknown')
         scalability_score = business_model_data.get('scalability_score', 5.0)
         
-        prompt = f"""Analyze enhanced competitive position for {ticker} in {industry}:
+        prompt = f"""Analyze competitive position for {ticker} in {industry}:
 
-Financial Metrics:
-- Market Cap: ${market_cap:,.0f}
+COMPANY SIZE CONTEXT (CRITICAL):
+- Market Cap: ${market_cap:,.0f} ({size_category})
+- Annual Revenue: ${revenue:,.0f}
 - Revenue Growth: {revenue_growth:.1%}
 
 Business Model:
@@ -472,7 +486,16 @@ Business Model:
 - Competitive Moat: {competitive_moat}
 - Scalability Score: {scalability_score}/10
 
-Provide enhanced competitive analysis in JSON format:
+IMPORTANT GUIDELINES:
+- Market Leader: Only for companies with >$10B market cap AND dominant market share (>20%)
+- Strong Player: Large companies ($2B-$10B+) with significant market presence
+- Average: Mid-sized companies with moderate market share
+- Weak: Struggling companies losing market share
+- Niche Player: Small/micro-cap companies (<$2B) serving specialized markets, regardless of moat strength
+
+For micro-cap and small-cap companies (<$2B), default to "Niche Player" unless they truly dominate their entire industry.
+
+Provide competitive analysis in JSON format:
 {{
     "position": "Market Leader/Strong Player/Average/Weak/Niche Player",
     "market_share_estimate": "High/Medium/Low/Unknown",
@@ -488,7 +511,7 @@ Provide enhanced competitive analysis in JSON format:
     "network_effects": "Strong/Moderate/Weak/None"
 }}
 
-Consider {industry} competitive landscape and {business_model_type} business model advantages."""
+Consider absolute company size, not just business model quality."""
         
         try:
             response = self.llm_manager.generate_response(prompt)
