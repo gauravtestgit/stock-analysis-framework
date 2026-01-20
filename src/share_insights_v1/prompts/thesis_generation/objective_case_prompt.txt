@@ -110,7 +110,7 @@ Use the segment revenue data to create a comprehensive table showing:
 - Total company revenue and aggregate metrics
 
 **VALUATION MODEL RECONCILIATION & CALCULATION VALIDATION (OBJECTIVE)**
-- Multi-method synthesis: Analyze DCF, comparable, and consensus outputs
+- Multi-method synthesis: Analyze DCF, comparable, technical, startup, AI Insights and consensus outputs
 - Balanced scenario modeling with probability weighting
 - Fair value vs current price: Explain valuation relationship and recommendation logic
 
