@@ -605,7 +605,7 @@ def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None,
         return ticker, {"error": str(e)}
 
 def display_batch_results(results, batch_timing=None):
-    """Display batch analysis results"""
+    """Display batch analysis results with tabbed interface"""
     st.subheader("📈 Batch Analysis Results")
     
     # Display batch timing if available
@@ -653,10 +653,691 @@ def display_batch_results(results, batch_timing=None):
             st.subheader("📊 Quick Summary")
             st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
     
-    # Horizontal scrollable stock analysis cards
-    st.subheader("🔍 Individual Stock Analysis")
-    with st.expander("Detailed Results"):
-        display_horizontal_stock_cards(results)
+    # Tabbed interface for detailed results
+    st.markdown("---")
+    st.subheader("🔍 Detailed Analysis by Stock")
+    display_tabbed_batch_results(results)
+
+def display_tabbed_batch_results(results):
+    """Display batch results with stock selector and analyzer tabs"""
+    
+    # Filter successful results
+    successful_results = {ticker: data for ticker, data in results.items() if 'error' not in data}
+    
+    if not successful_results:
+        st.warning("No successful analyses to display")
+        return
+    
+    # Initialize selected stock in session state
+    if 'selected_batch_stock' not in st.session_state:
+        st.session_state.selected_batch_stock = list(successful_results.keys())[0]
+    
+    # Create two columns: stock selector (left) and analyzer tabs (right)
+    col_stocks, col_analysis = st.columns([1, 3])
+    
+    with col_stocks:
+        st.markdown("### 🎯 Select Stock")
+        
+        # Stock selector buttons
+        for ticker in successful_results.keys():
+            data = successful_results[ticker]
+            final_rec = data.get('final_recommendation', {})
+            recommendation = final_rec.get('recommendation', 'N/A')
+            
+            is_selected = ticker == st.session_state.selected_batch_stock
+            
+            # Use custom HTML button for selected stock to get green outline
+            if is_selected:
+                button_html = f"""
+                <button style="
+                    width: 100%;
+                    padding: 0.5rem 1rem;
+                    background: #123d1c;
+                    color: white;
+                    border: 3px solid #123d1c;
+                    border-radius: 0.5rem;
+                    font-size: 1rem;
+                    cursor: default;
+                    margin-bottom: 0.5rem;
+                    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+                ">{ticker} - {recommendation}</button>
+                """
+                st.markdown(button_html, unsafe_allow_html=True)
+            else:
+                # Regular Streamlit button for non-selected stocks
+                if st.button(
+                    f"{ticker} - {recommendation}",
+                    key=f"stock_btn_{ticker}",
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.selected_batch_stock = ticker
+                    st.rerun()
+    
+    # Display analysis in fragment to prevent full page refresh
+    @st.fragment
+    def display_selected_analysis():
+        selected_ticker = st.session_state.selected_batch_stock
+        selected_data = successful_results[selected_ticker]
+        
+        st.markdown(f"### 📊 Analysis for {selected_ticker}")
+        
+        # Display basic info
+        analyses = selected_data.get('analyses', {})
+        financial_metrics = selected_data.get('financial_metrics', {})
+        current_price = financial_metrics.get('current_price') or get_current_price(selected_ticker)
+        final_rec = selected_data.get('final_recommendation', {})
+        
+        # Quick metrics row
+        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+        with metric_col1:
+            st.metric("Current Price", f"${current_price:.2f}" if current_price else "N/A")
+        with metric_col2:
+            target_price = final_rec.get('target_price', 0) or 0
+            st.metric("Target Price", f"${target_price:.2f}" if target_price else "N/A")
+        with metric_col3:
+            if current_price and target_price:
+                upside = ((target_price - current_price) / current_price) * 100
+                st.metric("Upside", f"{upside:+.1f}%")
+            else:
+                st.metric("Upside", "N/A")
+        with metric_col4:
+            st.metric("Recommendation", final_rec.get('recommendation', 'N/A'))
+        
+        st.markdown("---")
+        
+        # Inject CSS to make tabs horizontally scrollable with always-visible scrollbar
+        st.markdown("""
+        <style>
+        button[data-baseweb="tab"] {
+            flex-shrink: 0 !important;
+        }
+        div[data-baseweb="tab-list"] {
+            gap: 8px;
+            overflow-x: scroll !important;
+            overflow-y: hidden !important;
+            flex-wrap: nowrap !important;
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f0f0f0;
+        }
+        div[data-baseweb="tab-list"]::-webkit-scrollbar {
+            height: 14px;
+            display: block !important;
+        }
+        div[data-baseweb="tab-list"]::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 7px;
+        }
+        div[data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 7px;
+            border: 2px solid #f0f0f0;
+        }
+        div[data-baseweb="tab-list"]::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Create tabs for each analyzer
+        analyzer_names = [
+            "Overview", "DCF", "Technical", "Comparable", "Startup",
+            "AI Insights", "News", "Business Model", "Financial Health",
+            "Analyst Consensus", "Industry", "Competitive Position", "Management"
+        ]
+        
+        tabs = st.tabs(analyzer_names)
+        
+        # Overview Tab
+        with tabs[0]:
+            display_overview_tab(selected_ticker, selected_data, analyses)
+        
+        # DCF Tab
+        with tabs[1]:
+            display_analyzer_tab(selected_ticker, analyses, 'dcf', 'DCF Analysis')
+        
+        # Technical Tab
+        with tabs[2]:
+            display_analyzer_tab(selected_ticker, analyses, 'technical', 'Technical Analysis')
+        
+        # Comparable Tab
+        with tabs[3]:
+            display_analyzer_tab(selected_ticker, analyses, 'comparable', 'Comparable Analysis')
+        
+        # Startup Tab
+        with tabs[4]:
+            display_analyzer_tab(selected_ticker, analyses, 'startup', 'Startup Analysis')
+        
+        # AI Insights Tab
+        with tabs[5]:
+            display_analyzer_tab(selected_ticker, analyses, 'ai_insights', 'AI Insights')
+        
+        # News Tab
+        with tabs[6]:
+            display_analyzer_tab(selected_ticker, analyses, 'news_sentiment', 'News Sentiment')
+        
+        # Business Model Tab
+        with tabs[7]:
+            display_analyzer_tab(selected_ticker, analyses, 'business_model', 'Business Model')
+        
+        # Financial Health Tab
+        with tabs[8]:
+            display_analyzer_tab(selected_ticker, analyses, 'financial_health', 'Financial Health')
+        
+        # Analyst Consensus Tab
+        with tabs[9]:
+            display_analyzer_tab(selected_ticker, analyses, 'analyst_consensus', 'Analyst Consensus')
+        
+        # Industry Tab
+        with tabs[10]:
+            display_analyzer_tab(selected_ticker, analyses, 'industry_analysis', 'Industry Analysis')
+        
+        # Competitive Position Tab
+        with tabs[11]:
+            display_analyzer_tab(selected_ticker, analyses, 'competitive_position', 'Competitive Position')
+        
+        # Management Tab
+        with tabs[12]:
+            display_analyzer_tab(selected_ticker, analyses, 'management_quality', 'Management Quality')
+    
+    with col_analysis:
+        display_selected_analysis()
+
+def display_overview_tab(ticker, data, analyses):
+    """Display overview tab with summary of all analyses"""
+    
+    # Add CSS for smaller metric font size
+    st.markdown("""
+    <style>
+    [data-testid="stMetricLabel"] {
+        font-size: 0.7rem !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 0.9rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Business Summary
+    financial_metrics = data.get('financial_metrics', {})
+    business_summary = financial_metrics.get('business_summary', '')
+    if business_summary:
+        st.markdown("### 📋 Business Summary")
+        st.write(business_summary)
+        st.markdown("---")
+    
+    # Basic Info Cards
+    st.markdown("### 📊 Key Metrics")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        market_cap = financial_metrics.get('market_cap', 0) or 0
+        st.metric("Market Cap", f"${market_cap:,.0f}")
+        pe_ratio = financial_metrics.get('pe_ratio', 'N/A')
+        st.metric("P/E Ratio", pe_ratio)
+    
+    with col2:
+        industry = financial_metrics.get('industry', 'N/A')
+        st.metric("Industry", industry)
+        sector = financial_metrics.get('sector', 'N/A')
+        st.metric("Sector", sector)
+    
+    with col3:
+        roe = financial_metrics.get('roe', 0)
+        st.metric("ROE", f"{roe*100:.1f}%" if isinstance(roe, (int, float)) else roe)
+        debt_ratio = financial_metrics.get('debt_to_equity', 'N/A')
+        st.metric("Debt/Equity", debt_ratio)
+    
+    with col4:
+        revenue_growth = financial_metrics.get('revenue_growth', 0)
+        st.metric("Revenue Growth", f"{revenue_growth*100:.1f}%" if isinstance(revenue_growth, (int, float)) else revenue_growth)
+        current_ratio = financial_metrics.get('current_ratio', 'N/A')
+        st.metric("Current Ratio", current_ratio)
+    
+    st.markdown("---")
+    
+    # Financial Info with Charts
+    st.markdown("### 📊 Financial Information")
+    display_financial_info_with_charts(ticker, financial_metrics)
+    
+    st.markdown("---")
+    
+    # Company info
+    st.markdown("### 🏛️ Company Information")
+    st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
+    st.markdown(f"**Industry:** {industry}")
+    st.markdown(f"**Sector:** {sector}")
+    
+    st.markdown("---")
+    st.markdown("### 📈 Analysis Methods Run")
+    
+    # Create summary table of all analyses
+    analysis_summary = []
+    for analysis_type, analysis_data in analyses.items():
+        if isinstance(analysis_data, dict):
+            analysis_summary.append({
+                'Method': analysis_type.replace('_', ' ').title(),
+                'Recommendation': analysis_data.get('recommendation', 'N/A'),
+                'Target Price': f"${analysis_data.get('predicted_price', 0) or 0:.2f}",
+                'Confidence': analysis_data.get('confidence', 'N/A')
+            })
+    
+    if analysis_summary:
+        st.dataframe(pd.DataFrame(analysis_summary), use_container_width=True)
+    else:
+        st.info("No analysis data available")
+
+def display_financial_info_with_charts(ticker, financial_metrics):
+    """Display financial info card with revenue, income, and cash flow charts"""
+    try:
+        revenue_data_statements = financial_metrics.get('revenue_data_statements', {})
+        
+        # Extract latest values
+        latest_revenue = 0
+        latest_gross_income = 0
+        latest_net_income = 0
+        latest_op_cf = 0
+        latest_free_cf = 0
+        
+        annual_income = revenue_data_statements.get('annual_income_stmt', {})
+        if annual_income:
+            latest_year = list(annual_income.keys())[0]
+            annual_data = annual_income[latest_year]
+            latest_revenue = annual_data.get('Total Revenue', 0) or 0
+            latest_gross_income = annual_data.get('Gross Profit', 0) or 0
+            latest_net_income = annual_data.get('Net Income', 0) or 0
+        
+        cashflow_data = revenue_data_statements.get('cashflow', {})
+        if cashflow_data:
+            latest_cf_date = list(cashflow_data.keys())[0]
+            cf_data = cashflow_data[latest_cf_date]
+            latest_op_cf = cf_data.get('Operating Cash Flow', 0) or 0
+            latest_free_cf = cf_data.get('Free Cash Flow', 0) or 0
+        
+        # Display metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
+        scale = 1e9 if max(abs(latest_revenue), abs(latest_net_income)) >= 1e9 else 1e6
+        label = "B" if scale == 1e9 else "M"
+        
+        with col1:
+            st.metric("Revenue", f"${latest_revenue/scale:.1f}{label}")
+        with col2:
+            st.metric("Gross Income", f"${latest_gross_income/scale:.1f}{label}")
+        with col3:
+            st.metric("Net Income", f"${latest_net_income/scale:.1f}{label}")
+        with col4:
+            st.metric("Op Cash Flow", f"${latest_op_cf/scale:.1f}{label}")
+        with col5:
+            st.metric("Free Cash Flow", f"${latest_free_cf/scale:.1f}{label}")
+        
+        # Show charts button
+        if st.button("📈 View Financial Charts", key=f"charts_{ticker}"):
+            display_financial_charts_modal(ticker, revenue_data_statements, scale, label)
+    
+    except Exception as e:
+        st.error(f"Financial data unavailable: {str(e)}")
+
+def display_financial_charts_modal(ticker, revenue_data_statements, scale, label):
+    """Display financial charts in expander"""
+    with st.expander("📈 Financial Charts", expanded=True):
+        # Build chart data
+        revenue_data = []
+        gross_income_data = []
+        net_income_data = []
+        operating_cf_data = []
+        free_cf_data = []
+        years = []
+        
+        annual_revenue = revenue_data_statements.get('annual_revenue', {})
+        if annual_revenue:
+            for date_str, value in reversed(list(annual_revenue.items())):
+                years.append(date_str[:4])
+                revenue_data.append(value)
+        
+        annual_income = revenue_data_statements.get('annual_income_stmt', {})
+        if annual_income:
+            for date_str, data in reversed(list(annual_income.items())):
+                gross_income_data.append(data.get('Gross Profit', 0) or 0)
+                net_income_data.append(data.get('Net Income', 0) or 0)
+        
+        cashflow_data = revenue_data_statements.get('cashflow', {})
+        if cashflow_data:
+            for date_str, data in reversed(list(cashflow_data.items())):
+                operating_cf_data.append(data.get('Operating Cash Flow', 0) or 0)
+                free_cf_data.append(data.get('Free Cash Flow', 0) or 0)
+        
+        # Display charts
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**Revenue Trend**")
+            chart_data = pd.DataFrame({'Year': years, 'Revenue': [r/scale for r in revenue_data]})
+            st.bar_chart(chart_data.set_index('Year'))
+        
+        with col2:
+            st.markdown("**Income Trend**")
+            chart_data = pd.DataFrame({
+                'Year': years,
+                'Gross': [g/scale for g in gross_income_data],
+                'Net': [n/scale for n in net_income_data]
+            })
+            st.bar_chart(chart_data.set_index('Year'))
+        
+        with col3:
+            st.markdown("**Cash Flow Trend**")
+            chart_data = pd.DataFrame({
+                'Year': years,
+                'Operating': [o/scale for o in operating_cf_data],
+                'Free': [f/scale for f in free_cf_data]
+            })
+            st.bar_chart(chart_data.set_index('Year'))
+
+def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name):
+    """Display individual analyzer tab content"""
+    
+    if analyzer_key not in analyses:
+        st.info(f"{analyzer_name} was not run for this stock")
+        return
+    
+    analysis_data = analyses[analyzer_key]
+    
+    if not analysis_data or 'error' in analysis_data:
+        st.error(f"{analyzer_name} failed: {analysis_data.get('error', 'Unknown error')}")
+        return
+    
+    # Display common fields
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Recommendation", analysis_data.get('recommendation', 'N/A'))
+    with col2:
+        target = analysis_data.get('predicted_price', 0) or 0
+        st.metric("Target Price", f"${target:.2f}" if target else "N/A")
+    with col3:
+        st.metric("Confidence", analysis_data.get('confidence', 'N/A'))
+    
+    st.markdown("---")
+    
+    # Display analyzer-specific content
+    if analyzer_key == 'dcf':
+        display_dcf_details(analysis_data)
+    elif analyzer_key == 'technical':
+        display_technical_details(analysis_data, ticker)
+    elif analyzer_key == 'comparable':
+        display_comparable_details(analysis_data)
+    elif analyzer_key == 'ai_insights':
+        display_ai_insights_details(analysis_data)
+    elif analyzer_key == 'news_sentiment':
+        display_news_details(analysis_data)
+    elif analyzer_key == 'business_model':
+        display_business_model_details(analysis_data)
+    elif analyzer_key == 'analyst_consensus':
+        display_analyst_consensus_details(analysis_data)
+    elif analyzer_key == 'industry_analysis':
+        display_industry_analysis_details(analysis_data)
+    elif analyzer_key == 'startup':
+        display_startup_details(analysis_data)
+    else:
+        # Generic display for other analyzers
+        st.json(analysis_data)
+
+def display_dcf_details(data):
+    """Display DCF analysis details"""
+    st.markdown("### 💰 DCF Calculations")
+    
+    dcf_calcs = data.get('dcf_calculations', {})
+    params = data.get('parameters_used', {})
+    
+    if dcf_calcs or params:
+        dcf_html = ""
+        
+        if params:
+            dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
+            dcf_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Parameters Used</h6>'
+            for key, value in params.items():
+                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>{key}:</strong> {value}</p>'
+            dcf_html += '</div>'
+        
+        if dcf_calcs:
+            dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">'
+            dcf_html += '<h6 style="margin: 0 0 8px 0; color: #007acc;">DCF Calculations</h6>'
+            for key, value in dcf_calcs.items():
+                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>{key}:</strong> {value}</p>'
+            dcf_html += '</div>'
+        
+        st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{dcf_html}</div>', unsafe_allow_html=True)
+    else:
+        st.info("No DCF calculation details available")
+
+def display_technical_details(data, ticker=None):
+    """Display technical analysis details"""
+    st.markdown("### 📈 Technical Indicators")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write(f"**RSI (14):** {data.get('rsi_14', 'N/A')}")
+        st.write(f"**MACD:** {data.get('macd_line', 'N/A')}")
+    with col2:
+        st.write(f"**MA 20:** {data.get('ma_20', 'N/A')}")
+        st.write(f"**MA 50:** {data.get('ma_50', 'N/A')}")
+    with col3:
+        st.write(f"**Trend:** {data.get('trend', 'N/A')}")
+        st.write(f"**Volume:** {data.get('volume_trend', 'N/A')}")
+    
+    if ticker:
+        try:
+            import yfinance as yf
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period="6mo")
+            
+            if not hist.empty:
+                st.markdown("### 📊 Price Chart with Indicators")
+                
+                delta = hist['Close'].diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+                
+                exp1 = hist['Close'].ewm(span=12, adjust=False).mean()
+                exp2 = hist['Close'].ewm(span=26, adjust=False).mean()
+                macd = exp1 - exp2
+                signal = macd.ewm(span=9, adjust=False).mean()
+                
+                chart_data = pd.DataFrame({
+                    'Price': hist['Close'],
+                    'MA20': hist['Close'].rolling(window=20).mean(),
+                    'MA50': hist['Close'].rolling(window=50).mean()
+                })
+                st.line_chart(chart_data)
+                
+                st.markdown("**RSI (14)**")
+                st.line_chart(pd.DataFrame({'RSI': rsi}))
+                
+                st.markdown("**MACD**")
+                st.line_chart(pd.DataFrame({'MACD': macd, 'Signal': signal}))
+        except Exception as e:
+            st.warning(f"Could not load price chart: {str(e)}")
+    
+    signals = data.get('technical_signals', {})
+    if signals:
+        st.markdown("### 🚦 Signals")
+        st.json(signals)
+
+def display_comparable_details(data):
+    """Display comparable analysis details"""
+    st.markdown("### 📉 Valuation Multiples")
+    
+    multiples = data.get('target_multiples', {})
+    if multiples:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**P/E:** {multiples.get('pe', 'N/A')}x")
+            st.write(f"**P/S:** {multiples.get('ps', 'N/A')}x")
+        with col2:
+            st.write(f"**P/B:** {multiples.get('pb', 'N/A')}x")
+            st.write(f"**EV/EBITDA:** {multiples.get('ev_ebitda', 'N/A')}x")
+    
+    peers = data.get('peer_tickers', [])
+    if peers:
+        st.markdown("### 🏭 Peer Companies")
+        st.write(", ".join(peers[:10]))
+
+def display_ai_insights_details(data):
+    """Display AI insights details"""
+    st.markdown("### 🤖 AI Assessment")
+    
+    ai_insights = data.get('ai_insights', {})
+    
+    if ai_insights:
+        ai_html = ""
+        
+        # Assessment metrics
+        ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #17a2b8; background: #f8f9fa;">'
+        ai_html += '<h6 style="margin: 0 0 8px 0; color: #17a2b8;">Assessment Metrics</h6>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Market Position:</strong> {ai_insights.get("market_position", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Growth Prospects:</strong> {ai_insights.get("growth_prospects", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Competitive Advantage:</strong> {ai_insights.get("competitive_advantage", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Management Quality:</strong> {ai_insights.get("management_quality", "N/A")}</p>'
+        ai_html += '</div>'
+        
+        # Key strengths
+        strengths = ai_insights.get('key_strengths', [])
+        if strengths:
+            ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
+            ai_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Key Strengths</h6>'
+            for strength in strengths:
+                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {strength}</p>'
+            ai_html += '</div>'
+        
+        # Key risks
+        risks = ai_insights.get('key_risks', [])
+        if risks:
+            ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #dc3545; background: #f8f9fa;">'
+            ai_html += '<h6 style="margin: 0 0 8px 0; color: #dc3545;">Key Risks</h6>'
+            for risk in risks:
+                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {risk}</p>'
+            ai_html += '</div>'
+        
+        st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{ai_html}</div>', unsafe_allow_html=True)
+    else:
+        st.info("No AI insights available")
+
+def display_news_details(data):
+    """Display news sentiment details"""
+    st.markdown("### 📰 News Analysis")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Sentiment Score", f"{data.get('overall_sentiment_score', 0):.2f}")
+    with col2:
+        st.metric("Articles Analyzed", data.get('news_count', 0))
+    with col3:
+        st.metric("Recommendation", data.get('recommendation', 'N/A'))
+    
+    recent_news = data.get('recent_news', [])
+    if recent_news:
+        st.markdown("### 📰 Recent Articles")
+        news_html = ""
+        for i, article in enumerate(recent_news[:5], 1):
+            news_html += f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">
+                <h6 style="margin: 0 0 8px 0; color: #007acc;">Article {i}: {article.get('title', 'No title')}</h6>
+                <p style="margin: 5px 0; font-size: 0.9em;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Date:</strong> {article.get('date', 'N/A')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f}</p>
+                {f'<p style="margin: 5px 0; font-size: 0.85em;"><a href="{article["url"]}" target="_blank" style="color: #007acc;">🔗 Read Article</a></p>' if article.get('url') else ''}
+                {f'<p style="margin: 8px 0; font-size: 0.9em; color: #333;">{article["summary"][:200]}...</p>' if article.get('summary') else ''}
+            """
+            enhanced_facts = article.get('enhanced_facts')
+            if enhanced_facts and any(enhanced_facts.values()):
+                news_html += '<div style="background: #e8f4fd; padding: 10px; margin: 8px 0; border-radius: 5px;"><p style="margin: 0 0 5px 0; font-weight: bold; color: #0066cc;">🎯 Key Facts:</p>'
+                if enhanced_facts.get('lead_fact'):
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {enhanced_facts["lead_fact"]}</p>'
+                if enhanced_facts.get('quantitative_evidence'):
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {enhanced_facts["quantitative_evidence"]}</p>'
+                if enhanced_facts.get('verbatim_quote'):
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em; font-style: italic;">• "{enhanced_facts["verbatim_quote"]}"</p>'
+                news_html += '</div>'
+            news_html += '</div>'
+        
+        st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{news_html}</div>', unsafe_allow_html=True)
+
+def display_business_model_details(data):
+    """Display business model details in styled cards"""
+    st.markdown("### 🏢 Business Model")
+    
+    bm_html = '<div style="max-height: 500px; overflow-y: auto; padding: 10px;">'
+    
+    # Business model metrics card
+    bm_html += '<div style="border-left: 3px solid #6f42c1; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
+    bm_html += '<h4 style="margin-top: 0; color: #6f42c1;">📊 Business Model Metrics</h4>'
+    bm_html += f'<p><strong>Type:</strong> {data.get("business_model_type", "N/A")}</p>'
+    bm_html += f'<p><strong>Competitive Moat:</strong> {data.get("competitive_moat", "N/A")}</p>'
+    bm_html += f'<p><strong>Scalability Score:</strong> {data.get("scalability_score", "N/A")}/10</p>'
+    bm_html += '</div>'
+    
+    # Strengths card
+    strengths = data.get('strengths', [])
+    if strengths:
+        bm_html += '<div style="border-left: 3px solid #28a745; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
+        bm_html += '<h4 style="margin-top: 0; color: #28a745;">💪 Key Strengths</h4>'
+        bm_html += '<ul style="margin: 0; padding-left: 20px;">'
+        for strength in strengths:
+            bm_html += f'<li>{strength}</li>'
+        bm_html += '</ul></div>'
+    
+    # Risks card
+    risks = data.get('risks', [])
+    if risks:
+        bm_html += '<div style="border-left: 3px solid #dc3545; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
+        bm_html += '<h4 style="margin-top: 0; color: #dc3545;">⚠️ Key Risks</h4>'
+        bm_html += '<ul style="margin: 0; padding-left: 20px;">'
+        for risk in risks:
+            bm_html += f'<li>{risk}</li>'
+        bm_html += '</ul></div>'
+    
+    bm_html += '</div>'
+    st.markdown(bm_html, unsafe_allow_html=True)
+
+def display_analyst_consensus_details(data):
+    """Display analyst consensus details"""
+    st.markdown("### 👥 Analyst Ratings")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Consensus Target", f"${data.get('predicted_price', 0) or 0:.2f}")
+    with col2:
+        st.metric("High Target", f"${data.get('target_high', 0) or 0:.2f}")
+    with col3:
+        st.metric("Low Target", f"${data.get('target_low', 0) or 0:.2f}")
+    
+    st.write(f"**Number of Analysts:** {data.get('num_analysts', 0)}")
+
+def display_industry_analysis_details(data):
+    """Display industry analysis details"""
+    st.markdown("### 🏭 Industry Analysis")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write(f"**Outlook:** {data.get('industry_outlook', 'N/A')}")
+        st.write(f"**Competitive Position:** {data.get('competitive_position', 'N/A')}")
+    with col2:
+        st.write(f"**Regulatory Risk:** {data.get('regulatory_risk', 'N/A')}")
+        st.write(f"**ESG Score:** {data.get('esg_score', 0)}/10")
+    
+    porters = data.get('porters_five_forces', {})
+    if porters:
+        st.markdown("### 🛡️ Porter's Five Forces")
+        st.json(porters)
+
+def display_startup_details(data):
+    """Display startup analysis details"""
+    st.markdown("### 🚀 Startup Metrics")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write(f"**Stage:** {data.get('stage', 'N/A')}")
+        st.write(f"**Cash Runway:** {data.get('cash_runway_years', 0):.1f} years")
+    with col2:
+        st.write(f"**Risk Score:** {data.get('risk_score', 0)}/100")
+        st.write(f"**Growth Quality:** {data.get('growth_quality', 'N/A')}")
 
 def generate_batch_text_summary(results):
     """Generate text summary of batch analysis results for scrollable display"""
