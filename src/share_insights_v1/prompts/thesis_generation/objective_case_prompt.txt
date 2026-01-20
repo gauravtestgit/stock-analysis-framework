@@ -131,6 +131,26 @@ If Startup calculations are provided above, analyze and validate:
 - Stage-based valuation multiple reasonableness
 - Risk score components and their weighting logic
 
+If Technical Analysis is provided above, analyze and validate:
+- RSI levels and overbought/oversold interpretation (RSI <30 oversold, >70 overbought)
+- MACD crossover signals and histogram direction consistency
+- Moving average alignment and trend confirmation (MA20, MA50, MA200)
+- Support/resistance level identification and price proximity
+- Volume trend analysis and its correlation with price movements
+- Stochastic oscillator readings and momentum confirmation
+- Technical signal consensus (bullish vs bearish signal count)
+- Distance from 52-week high/low and its significance
+
+If Comparable Analysis is provided above, analyze and validate:
+- P/E multiple reasonableness vs industry average and growth rate (PEG ratio logic)
+- P/S multiple appropriateness for sector and profitability profile
+- P/B multiple justification based on ROE and asset quality
+- EV/EBITDA multiple comparison to peer group and historical ranges
+- Quality adjustment factor logic and its impact on target multiples
+- Fair value calculation methodology and weighting of different multiples
+- Sector-specific multiple selection rationale
+- Peer group selection appropriateness and comparability
+
 **RISK-RETURN ASSESSMENT (OBJECTIVE)**
 - Balanced risk-return calculations with scenario probabilities
 - Risk mitigation factors and residual risk assessment
