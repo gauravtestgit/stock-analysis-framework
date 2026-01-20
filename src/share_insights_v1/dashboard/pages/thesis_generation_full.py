@@ -1430,7 +1430,7 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0):.2f}</p>
+                            <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                             <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
                             <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
                             <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
@@ -1878,7 +1878,7 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
                             <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
                             <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                         </div>
-                        <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0):.2f}</p>
+                        <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                         <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
                         <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
                         <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
