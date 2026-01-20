@@ -958,8 +958,12 @@ def display_financial_info_with_charts(ticker, financial_metrics):
         if cashflow_data:
             latest_cf_date = list(cashflow_data.keys())[0]
             cf_data = cashflow_data[latest_cf_date]
-            latest_op_cf = cf_data.get('Operating Cash Flow', 0) or 0
-            latest_free_cf = cf_data.get('Free Cash Flow', 0) or 0
+            # Try multiple possible keys for operating cash flow
+            latest_op_cf = (cf_data.get('Operating Cash Flow', 0) or 
+                          cf_data.get('Total Cash From Operating Activities', 0) or 
+                          cf_data.get('OperatingCashFlow', 0) or 0)
+            latest_free_cf = (cf_data.get('Free Cash Flow', 0) or 
+                            cf_data.get('FreeCashFlow', 0) or 0)
         
         # Display metrics
         col1, col2, col3, col4, col5 = st.columns(5)
@@ -1010,8 +1014,14 @@ def display_financial_charts_modal(ticker, revenue_data_statements, scale, label
         cashflow_data = revenue_data_statements.get('cashflow', {})
         if cashflow_data:
             for date_str, data in reversed(list(cashflow_data.items())):
-                operating_cf_data.append(data.get('Operating Cash Flow', 0) or 0)
-                free_cf_data.append(data.get('Free Cash Flow', 0) or 0)
+                # Try multiple possible keys for operating cash flow
+                op_cf = (data.get('Operating Cash Flow', 0) or 
+                        data.get('Total Cash From Operating Activities', 0) or 
+                        data.get('OperatingCashFlow', 0) or 0)
+                free_cf = (data.get('Free Cash Flow', 0) or 
+                          data.get('FreeCashFlow', 0) or 0)
+                operating_cf_data.append(op_cf)
+                free_cf_data.append(free_cf)
         
         # Display charts
         col1, col2, col3 = st.columns(3)
@@ -3192,6 +3202,11 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'free_cash_flow': financial_metrics.get('free_cash_flow', financial_health.get('free_cash_flow', 0)),
             'cash_per_share': financial_metrics.get('cash_per_share', financial_health.get('cash_per_share', 0)),
             'total_revenue': financial_metrics.get('total_revenue', growth_analysis.get('total_revenue', 0)),
+            'latest_net_income': latest_net_income,
+            'latest_operating_income': latest_operating_income,
+            'latest_gross_profit': latest_gross_profit,
+            'latest_operating_cf': latest_operating_cf,
+            'latest_capital_expenditures': latest_capital_expenditures,
             'trailing_eps': financial_metrics.get('trailing_eps', 'N/A'),
             'forward_eps': financial_metrics.get('forward_eps', 'N/A'),
             'shares_outstanding': financial_metrics.get('shares_outstanding') or 0,
