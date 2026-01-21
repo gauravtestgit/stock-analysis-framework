@@ -1745,8 +1745,8 @@ def display_horizontal_stock_cards(results):
             if analysis_type == 'dcf':
                 params = analysis_data.get('parameters_used', {})
                 dcf_calcs = analysis_data.get('dcf_calculations', {})
-                params_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in params.items()]) if params else "<p>No parameters available</p>"
-                calcs_html = ''.join([f"<p>• {key}: {value}</p>" for key, value in dcf_calcs.items()]) if dcf_calcs else "<p>No calculations available</p>"
+                params_html = ''.join([f"<p style='color: #e0e0e0;'>• {key}: {value}</p>" for key, value in params.items()]) if params else "<p style='color: #e0e0e0;'>No parameters available</p>"
+                calcs_html = ''.join([f"<p style='color: #e0e0e0;'>• {key}: {value}</p>" for key, value in dcf_calcs.items()]) if dcf_calcs else "<p style='color: #e0e0e0;'>No calculations available</p>"
                 
                 dcf_card = f"""
                 <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
@@ -1766,9 +1766,9 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('dcf_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4>Parameters:</h4>
+                            <h4 style="color: #e0e0e0;">Parameters:</h4>
                             {params_html}
-                            <h4>Calculations:</h4>
+                            <h4 style="color: #e0e0e0;">Calculations:</h4>
                             {calcs_html}
                         </div>
                     </div>
@@ -1872,8 +1872,8 @@ def display_horizontal_stock_cards(results):
                 ai_insights = analysis_data.get('ai_insights', {})
                 strengths = ai_insights.get('key_strengths', [])
                 risks = ai_insights.get('key_risks', [])
-                strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
-                risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+                strengths_html = ''.join([f"<p style='color: #e0e0e0;'>• {strength}</p>" for strength in strengths]) if strengths else "<p style='color: #e0e0e0;'>No strengths listed</p>"
+                risks_html = ''.join([f"<p style='color: #e0e0e0;'>• {risk}</p>" for risk in risks]) if risks else "<p style='color: #e0e0e0;'>No risks listed</p>"
                 
                 ai_card = f"""
                 <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; margin-right: 10px; position: relative;">
@@ -1893,9 +1893,9 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('ai_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4>Key Strengths:</h4>
+                            <h4 style="color: #e0e0e0;">Key Strengths:</h4>
                             {strengths_html}
-                            <h4>Key Risks:</h4>
+                            <h4 style="color: #e0e0e0;">Key Risks:</h4>
                             {risks_html}
                         </div>
                     </div>
@@ -1939,7 +1939,7 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('news_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4>Recent Articles:</h4>
+                            <h4 style="color: #e0e0e0;">Recent Articles:</h4>
                             {news_html}
                         </div>
                     </div>
