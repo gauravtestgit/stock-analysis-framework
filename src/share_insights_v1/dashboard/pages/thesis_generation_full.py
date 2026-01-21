@@ -1117,14 +1117,14 @@ def display_dcf_details(data):
             dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
             dcf_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Parameters Used</h6>'
             for key, value in params.items():
-                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>{key}:</strong> {value}</p>'
+                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
             dcf_html += '</div>'
         
         if dcf_calcs:
             dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">'
             dcf_html += '<h6 style="margin: 0 0 8px 0; color: #007acc;">DCF Calculations</h6>'
             for key, value in dcf_calcs.items():
-                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>{key}:</strong> {value}</p>'
+                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
             dcf_html += '</div>'
         
         st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{dcf_html}</div>', unsafe_allow_html=True)
@@ -1264,19 +1264,19 @@ def display_news_details(data):
         for i, article in enumerate(recent_news[:5], 1):
             news_html += f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">
                 <h6 style="margin: 0 0 8px 0; color: #007acc;">Article {i}: {article.get('title', 'No title')}</h6>
-                <p style="margin: 5px 0; font-size: 0.9em;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Date:</strong> {article.get('date', 'N/A')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f}</p>
-                {f'<p style="margin: 5px 0; font-size: 0.85em;"><a href="{article["url"]}" target="_blank" style="color: #007acc;">🔗 Read Article</a></p>' if article.get('url') else ''}
-                {f'<p style="margin: 8px 0; font-size: 0.9em; color: #333;">{article["summary"][:200]}...</p>' if article.get('summary') else ''}
+                <p style="margin: 5px 0; font-size: 0.9em; color: #000;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Date:</strong> {article.get('date', 'N/A')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f}</p>
+                {f'<p style="margin: 5px 0; font-size: 0.85em; color: #000;"><a href="{article["url"]}" target="_blank" style="color: #007acc;">🔗 Read Article</a></p>' if article.get('url') else ''}
+                {f'<p style="margin: 8px 0; font-size: 0.9em; color: #000;">{article["summary"][:200]}...</p>' if article.get('summary') else ''}
             """
             enhanced_facts = article.get('enhanced_facts')
             if enhanced_facts and any(enhanced_facts.values()):
                 news_html += '<div style="background: #e8f4fd; padding: 10px; margin: 8px 0; border-radius: 5px;"><p style="margin: 0 0 5px 0; font-weight: bold; color: #0066cc;">🎯 Key Facts:</p>'
                 if enhanced_facts.get('lead_fact'):
-                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {enhanced_facts["lead_fact"]}</p>'
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {enhanced_facts["lead_fact"]}</p>'
                 if enhanced_facts.get('quantitative_evidence'):
-                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {enhanced_facts["quantitative_evidence"]}</p>'
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {enhanced_facts["quantitative_evidence"]}</p>'
                 if enhanced_facts.get('verbatim_quote'):
-                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em; font-style: italic;">• "{enhanced_facts["verbatim_quote"]}"</p>'
+                    news_html += f'<p style="margin: 3px 0; font-size: 0.9em; font-style: italic; color: #000;">• "{enhanced_facts["verbatim_quote"]}"</p>'
                 news_html += '</div>'
             news_html += '</div>'
         
@@ -1291,9 +1291,9 @@ def display_business_model_details(data):
     # Business model metrics card
     bm_html += '<div style="border-left: 3px solid #6f42c1; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
     bm_html += '<h4 style="margin-top: 0; color: #6f42c1;">📊 Business Model Metrics</h4>'
-    bm_html += f'<p><strong>Type:</strong> {data.get("business_model_type", "N/A")}</p>'
-    bm_html += f'<p><strong>Competitive Moat:</strong> {data.get("competitive_moat", "N/A")}</p>'
-    bm_html += f'<p><strong>Scalability Score:</strong> {data.get("scalability_score", "N/A")}/10</p>'
+    bm_html += f'<p style="color: #000;"><strong>Type:</strong> {data.get("business_model_type", "N/A")}</p>'
+    bm_html += f'<p style="color: #000;"><strong>Competitive Moat:</strong> {data.get("competitive_moat", "N/A")}</p>'
+    bm_html += f'<p style="color: #000;"><strong>Scalability Score:</strong> {data.get("scalability_score", "N/A")}/10</p>'
     bm_html += '</div>'
     
     # Strengths card
@@ -1301,9 +1301,9 @@ def display_business_model_details(data):
     if strengths:
         bm_html += '<div style="border-left: 3px solid #28a745; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
         bm_html += '<h4 style="margin-top: 0; color: #28a745;">💪 Key Strengths</h4>'
-        bm_html += '<ul style="margin: 0; padding-left: 20px;">'
+        bm_html += '<ul style="margin: 0; padding-left: 20px; color: #000;">'
         for strength in strengths:
-            bm_html += f'<li>{strength}</li>'
+            bm_html += f'<li style="color: #000;">{strength}</li>'
         bm_html += '</ul></div>'
     
     # Risks card
@@ -1311,9 +1311,9 @@ def display_business_model_details(data):
     if risks:
         bm_html += '<div style="border-left: 3px solid #dc3545; background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 5px;">'
         bm_html += '<h4 style="margin-top: 0; color: #dc3545;">⚠️ Key Risks</h4>'
-        bm_html += '<ul style="margin: 0; padding-left: 20px;">'
+        bm_html += '<ul style="margin: 0; padding-left: 20px; color: #000;">'
         for risk in risks:
-            bm_html += f'<li>{risk}</li>'
+            bm_html += f'<li style="color: #000;">{risk}</li>'
         bm_html += '</ul></div>'
     
     bm_html += '</div>'
