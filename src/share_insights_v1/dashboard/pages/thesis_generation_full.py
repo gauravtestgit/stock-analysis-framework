@@ -1757,7 +1757,7 @@ def display_horizontal_stock_cards(results):
                     <button onclick="showModal('dcf_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="dcf_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                        <div id="dcf_{sanitized_ticker}_content" style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
+                        <div id="dcf_{sanitized_ticker}_content" style="background-color: #1e1e1e !important; color: #e0e0e0 !important; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0; color: #e0e0e0;">💰 {ticker} DCF Analysis Details</h3>
                                 <div>
@@ -1884,7 +1884,7 @@ def display_horizontal_stock_cards(results):
                     <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                        <div id="ai_{sanitized_ticker}_content" style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
+                        <div id="ai_{sanitized_ticker}_content" style="background-color: #1e1e1e !important; color: #e0e0e0 !important; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0;">🤖 {ticker} AI Insights Details</h3>
                                 <div>
@@ -1930,7 +1930,7 @@ def display_horizontal_stock_cards(results):
                     <button onclick="showModal('news_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="news_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                        <div id="news_{sanitized_ticker}_content" style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
+                        <div id="news_{sanitized_ticker}_content" style="background-color: #1e1e1e !important; color: #e0e0e0 !important; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0;">📰 {ticker} News Sentiment Details</h3>
                                 <div>
@@ -2046,7 +2046,7 @@ def display_horizontal_stock_cards(results):
                     <button onclick="showModal('bm_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="bm_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                        <div id="bm_{sanitized_ticker}_content" style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
+                        <div id="bm_{sanitized_ticker}_content" style="background-color: #1e1e1e !important; color: #e0e0e0 !important; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0; color: #e0e0e0;">🏢 {ticker} Business Model Details</h3>
                                 <div>
