@@ -1217,10 +1217,10 @@ def display_ai_insights_details(data):
         # Assessment metrics
         ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #17a2b8; background: #f8f9fa;">'
         ai_html += '<h6 style="margin: 0 0 8px 0; color: #17a2b8;">Assessment Metrics</h6>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Market Position:</strong> {ai_insights.get("market_position", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Growth Prospects:</strong> {ai_insights.get("growth_prospects", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Competitive Advantage:</strong> {ai_insights.get("competitive_advantage", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• <strong>Management Quality:</strong> {ai_insights.get("management_quality", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Market Position:</strong> {ai_insights.get("market_position", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Growth Prospects:</strong> {ai_insights.get("growth_prospects", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Competitive Advantage:</strong> {ai_insights.get("competitive_advantage", "N/A")}</p>'
+        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Management Quality:</strong> {ai_insights.get("management_quality", "N/A")}</p>'
         ai_html += '</div>'
         
         # Key strengths
@@ -1229,7 +1229,7 @@ def display_ai_insights_details(data):
             ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
             ai_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Key Strengths</h6>'
             for strength in strengths:
-                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {strength}</p>'
+                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {strength}</p>'
             ai_html += '</div>'
         
         # Key risks
@@ -1238,7 +1238,7 @@ def display_ai_insights_details(data):
             ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #dc3545; background: #f8f9fa;">'
             ai_html += '<h6 style="margin: 0 0 8px 0; color: #dc3545;">Key Risks</h6>'
             for risk in risks:
-                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em;">• {risk}</p>'
+                ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {risk}</p>'
             ai_html += '</div>'
         
         st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{ai_html}</div>', unsafe_allow_html=True)
@@ -1887,10 +1887,7 @@ def display_horizontal_stock_cards(results):
                     <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                        <div id="ai_{sanitized_ticker}_content" style="background-color: #1e1e1e !important; color: #000000 !important; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: light;">
-                            <style>
-                            #ai_{sanitized_ticker}_content * {{ color: #000000 !important; }}
-                            </style>
+                        <div id="ai_{sanitized_ticker}_content" style="background-color: #ffffff; color: #000000; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <h3 style="margin: 0;">🤖 {ticker} AI Insights Details</h3>
                                 <div>
