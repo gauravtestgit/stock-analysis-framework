@@ -1762,16 +1762,16 @@ def display_horizontal_stock_cards(results):
                             #dcf_{sanitized_ticker}_content * {{ color: #000000 !important; }}
                             </style>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #e0e0e0;">💰 {ticker} DCF Analysis Details</h3>
+                                <h3 style="margin: 0;">💰 {ticker} DCF Analysis Details</h3>
                                 <div>
                                     <button id="dcf_{sanitized_ticker}_maximize" onclick="maximizeModal('dcf_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
                                     <button id="dcf_{sanitized_ticker}_restore" onclick="restoreModal('dcf_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
                                     <span onclick="closeModal('dcf_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4 style="color: #e0e0e0;">Parameters:</h4>
+                            <h4>Parameters:</h4>
                             {params_html}
-                            <h4 style="color: #e0e0e0;">Calculations:</h4>
+                            <h4>Calculations:</h4>
                             {calcs_html}
                         </div>
                     </div>
@@ -1899,9 +1899,9 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('ai_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4 style="color: #e0e0e0;">Key Strengths:</h4>
+                            <h4>Key Strengths:</h4>
                             {strengths_html}
-                            <h4 style="color: #e0e0e0;">Key Risks:</h4>
+                            <h4>Key Risks:</h4>
                             {risks_html}
                         </div>
                     </div>
@@ -1949,7 +1949,7 @@ def display_horizontal_stock_cards(results):
                                     <span onclick="closeModal('news_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                                 </div>
                             </div>
-                            <h4 style="color: #e0e0e0;">Recent Articles:</h4>
+                            <h4>Recent Articles:</h4>
                             {news_html}
                         </div>
                     </div>
@@ -2061,7 +2061,7 @@ def display_horizontal_stock_cards(results):
                             #bm_{sanitized_ticker}_content * {{ color: #000000 !important; }}
                             </style>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #e0e0e0;">🏢 {ticker} Business Model Details</h3>
+                                <h3 style="margin: 0;">🏢 {ticker} Business Model Details</h3>
                                 <div>
                                     <button id="bm_{sanitized_ticker}_maximize" onclick="maximizeModal('bm_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
                                     <button id="bm_{sanitized_ticker}_restore" onclick="restoreModal('bm_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
@@ -2069,9 +2069,9 @@ def display_horizontal_stock_cards(results):
                                 </div>
                             </div>
                             {product_html}
-                            <h4 style="color: #e0e0e0;">Strengths:</h4>
+                            <h4>Strengths:</h4>
                             {strengths_html}
-                            <h4 style="color: #e0e0e0;">Risks:</h4>
+                            <h4>Risks:</h4>
                             {risks_html}
                         </div>
                     </div>
