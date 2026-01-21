@@ -1905,17 +1905,17 @@ def display_horizontal_stock_cards(results):
             elif analysis_type == 'news_sentiment':
                 recent_news = analysis_data.get('recent_news', [])
                 news_html = ''.join([
-                    f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">
-                    <h6><a href="{article.get('url', '#')}" target="_blank" style="color: #007acc; text-decoration: none;">{article.get('title', 'No title')}</a></h6>
-                    <p style="margin: 5px 0;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f} | <strong>Date:</strong> {article.get('date', 'NA')}</p>
-                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">{article.get('summary', 'No summary available')[:200]}...</p>
-                    {f'''<div style="background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 5px;">
-                        <h6 style="color: #0066cc; margin: 0 0 8px 0;">🎯 Extracted Fact Block:</h6>
-                        <p style="margin: 3px 0;"><strong>Lead Fact:</strong> {article.get('enhanced_facts', {}).get('lead_fact', 'Not extracted')}</p>
-                        <p style="margin: 3px 0;"><strong>Quantitative:</strong> {article.get('enhanced_facts', {}).get('quantitative_evidence', 'Not extracted')}</p>
-                        <p style="margin: 3px 0;"><strong>Business Impact:</strong> {article.get('enhanced_facts', {}).get('business_mechanism', 'Not extracted')}</p>
-                        {f'<p style="margin: 3px 0;"><strong>Quote:</strong> "{article.get("enhanced_facts", {}).get("verbatim_quote", "")}"</p>' if article.get('enhanced_facts', {}).get('verbatim_quote') and article.get('enhanced_facts', {}).get('verbatim_quote') not in ['None available in the provided content', 'None available', 'None'] else ''}
-                    </div>''' if article.get('enhanced_facts') else '<p style="color: #999; font-style: italic;">No structured facts extracted (web scraping may be disabled)</p>'}
+                    f"""<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #4da6ff; background: #2a2a2a;">
+                    <h6><a href="{article.get('url', '#')}" target="_blank" style="color: #4da6ff; text-decoration: none;">{article.get('title', 'No title')}</a></h6>
+                    <p style="margin: 5px 0; color: #e0e0e0;"><strong>Source:</strong> {article.get('source', 'Unknown')} | <strong>Sentiment:</strong> {article.get('sentiment_score', 0):.2f} | <strong>Date:</strong> {article.get('date', 'NA')}</p>
+                    <p style="margin: 5px 0; font-size: 0.9em; color: #b0b0b0;">{article.get('summary', 'No summary available')[:200]}...</p>
+                    {f'''<div style="background: #1a3a4a; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                        <h6 style="color: #4da6ff; margin: 0 0 8px 0;">🎯 Extracted Fact Block:</h6>
+                        <p style="margin: 3px 0; color: #e0e0e0;"><strong>Lead Fact:</strong> {article.get('enhanced_facts', {}).get('lead_fact', 'Not extracted')}</p>
+                        <p style="margin: 3px 0; color: #e0e0e0;"><strong>Quantitative:</strong> {article.get('enhanced_facts', {}).get('quantitative_evidence', 'Not extracted')}</p>
+                        <p style="margin: 3px 0; color: #e0e0e0;"><strong>Business Impact:</strong> {article.get('enhanced_facts', {}).get('business_mechanism', 'Not extracted')}</p>
+                        {f'<p style="margin: 3px 0; color: #e0e0e0;"><strong>Quote:</strong> "{article.get("enhanced_facts", {}).get("verbatim_quote", "")}"</p>' if article.get('enhanced_facts', {}).get('verbatim_quote') and article.get('enhanced_facts', {}).get('verbatim_quote') not in ['None available in the provided content', 'None available', 'None'] else ''}
+                    </div>''' if article.get('enhanced_facts') else '<p style="color: #888; font-style: italic;">No structured facts extracted (web scraping may be disabled)</p>'}
                     </div>"""
                     for article in recent_news
                 ]) if recent_news else "<p>No recent news available</p>"
@@ -1926,7 +1926,7 @@ def display_horizontal_stock_cards(results):
                     <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                     <p><strong>Score:</strong> {analysis_data.get('overall_sentiment_score', 0) or 0:.2f}</p>
                     <p><strong>Count:</strong> {analysis_data.get('news_count', 0)}</p>
-                    <p><strong>Facts:</strong> {len([a for a in recent_news if a.get('enhanced_facts')])}/{len(recent_news)}</p>
+                    <p style="color: #e0e0e0;"><strong>Facts:</strong> {len([a for a in recent_news if a.get('enhanced_facts')])}/{len(recent_news)}</p>
                     <button onclick="showModal('news_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                     
                     <div id="news_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -2021,8 +2021,8 @@ def display_horizontal_stock_cards(results):
                 product_portfolio = analysis_data.get('product_portfolio', {})
                 competitive_diff = analysis_data.get('competitive_differentiation', {})
                 
-                strengths_html = ''.join([f"<p>• {strength}</p>" for strength in strengths]) if strengths else "<p>No strengths listed</p>"
-                risks_html = ''.join([f"<p>• {risk}</p>" for risk in risks]) if risks else "<p>No risks listed</p>"
+                strengths_html = ''.join([f"<p style='color: #e0e0e0;'>• {strength}</p>" for strength in strengths]) if strengths else "<p style='color: #e0e0e0;'>No strengths listed</p>"
+                risks_html = ''.join([f"<p style='color: #e0e0e0;'>• {risk}</p>" for risk in risks]) if risks else "<p style='color: #e0e0e0;'>No risks listed</p>"
                 
                 # Product portfolio summary
                 product_html = f"""
@@ -2048,7 +2048,7 @@ def display_horizontal_stock_cards(results):
                     <div id="bm_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
                         <div id="bm_{sanitized_ticker}_content" style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto; transition: all 0.3s ease; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3 style="margin: 0;">🏢 {ticker} Business Model Details</h3>
+                                <h3 style="margin: 0; color: #e0e0e0;">🏢 {ticker} Business Model Details</h3>
                                 <div>
                                     <button id="bm_{sanitized_ticker}_maximize" onclick="maximizeModal('bm_{sanitized_ticker}')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px;">⛶</button>
                                     <button id="bm_{sanitized_ticker}_restore" onclick="restoreModal('bm_{sanitized_ticker}')" style="background: #ffc107; color: black; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px; cursor: pointer; margin-right: 5px; display: none;">❐</button>
@@ -2056,9 +2056,9 @@ def display_horizontal_stock_cards(results):
                                 </div>
                             </div>
                             {product_html}
-                            <h4>Strengths:</h4>
+                            <h4 style="color: #e0e0e0;">Strengths:</h4>
                             {strengths_html}
-                            <h4>Risks:</h4>
+                            <h4 style="color: #e0e0e0;">Risks:</h4>
                             {risks_html}
                         </div>
                     </div>
