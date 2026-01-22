@@ -6,7 +6,7 @@ llm_providers:
     description: "Fast inference with Llama models"
     icon: "🚀"
     api_key_env: "GROQ_API_KEY"
-    default_model: "llama-3.1-8b-instant"
+    default_model: "openai/gpt-oss-20b"
     models:
       - name: "llama-3.3-70b-versatile"
         display_name: "Llama 3.3 70B (Best)"

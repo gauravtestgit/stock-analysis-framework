@@ -610,20 +610,3 @@ def show_top_performers(bulk_data):
                         top_picks[['ticker', 'recommendation', 'upside_potential', 'confidence', 'target_price']],
                         use_container_width=True
                     )
-    
-    # Group by thesis type
-    thesis_df = pd.DataFrame(thesis_data)
-    thesis_df['date'] = pd.to_datetime(thesis_df['date'])
-    
-    thesis_types = thesis_df['thesis_type'].unique()
-    
-    for thesis_type in thesis_types:
-        st.write(f"**{thesis_type.replace('_', ' ').title()}**")
-        
-        type_theses = thesis_df[thesis_df['thesis_type'] == thesis_type].sort_values('date', ascending=False)
-        
-        for _, thesis in type_theses.head(3).iterrows():  # Show last 3 of each type
-            with st.expander(f"{thesis['date'].strftime('%Y-%m-%d')} - {thesis['llm_provider']} {thesis['llm_model']}"):
-                st.write(thesis['content_preview'])
-                if thesis['batch_analysis_id']:
-                    st.caption(f"Analysis ID: {thesis['batch_analysis_id']}")
