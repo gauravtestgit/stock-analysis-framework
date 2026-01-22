@@ -958,6 +958,7 @@ def display_financial_info_with_charts(ticker, financial_metrics):
             # Try multiple possible keys for operating cash flow
             latest_op_cf = (cf_data.get('Operating Cash Flow', 0) or 
                           cf_data.get('Total Cash From Operating Activities', 0) or 
+                          cf_data.get('Cash Flowsfromusedin Operating Activities Direct', 0) or 
                           cf_data.get('OperatingCashFlow', 0) or 0)
             latest_free_cf = (cf_data.get('Free Cash Flow', 0) or 
                             cf_data.get('FreeCashFlow', 0) or 0)
@@ -988,7 +989,7 @@ def display_financial_info_with_charts(ticker, financial_metrics):
 def display_financial_charts_modal(ticker, revenue_data_statements, scale, label):
     """Display financial charts in expander"""
     with st.expander("📈 Financial Charts", expanded=True):
-        # Build chart data
+        # Build chart data - use a common date list to ensure alignment
         revenue_data = []
         gross_income_data = []
         net_income_data = []
@@ -996,41 +997,42 @@ def display_financial_charts_modal(ticker, revenue_data_statements, scale, label
         free_cf_data = []
         years = []
         
+        # Get all available dates from all sources
         annual_revenue = revenue_data_statements.get('annual_revenue', {})
-        if annual_revenue:
-            for date_str, value in reversed(list(annual_revenue.items())):
-                years.append(date_str[:4])
-                revenue_data.append(value)
-        
         annual_income = revenue_data_statements.get('annual_income_stmt', {})
-        if annual_income:
-            for date_str, data in reversed(list(annual_income.items())):
-                gross_income_data.append(data.get('Gross Profit', 0) or 0)
-                net_income_data.append(data.get('Net Income', 0) or 0)
-        
         cashflow_data = revenue_data_statements.get('cashflow', {})
-        if cashflow_data:
-            for date_str, data in reversed(list(cashflow_data.items())):
-                # Try multiple possible keys for operating cash flow
-                op_cf = (data.get('Operating Cash Flow', 0) or 
-                        data.get('Total Cash From Operating Activities', 0) or 
-                        data.get('OperatingCashFlow', 0) or 0)
-                free_cf = (data.get('Free Cash Flow', 0) or 
-                          data.get('FreeCashFlow', 0) or 0)
-                operating_cf_data.append(op_cf)
-                free_cf_data.append(free_cf)
+        
+        # Use the dates from annual_revenue as the primary source
+        if annual_revenue:
+            for date_str in reversed(sorted(annual_revenue.keys())):
+                years.append(date_str[:4])
+                revenue_data.append(annual_revenue.get(date_str, 0))
+                
+                # Get corresponding data from other sources using the same date
+                if annual_income and date_str in annual_income:
+                    income_data = annual_income[date_str]
+                    gross_income_data.append(income_data.get('Gross Profit', 0) or 0)
+                    net_income_data.append(income_data.get('Net Income', 0) or 0)
+                else:
+                    gross_income_data.append(0)
+                    net_income_data.append(0)
+                
+                if cashflow_data and date_str in cashflow_data:
+                    cf_data = cashflow_data[date_str]
+                    op_cf = (cf_data.get('Operating Cash Flow', 0) or 
+                            cf_data.get('Total Cash From Operating Activities', 0) or 
+                            cf_data.get('Cash Flowsfromusedin Operating Activities Direct', 0) or 
+                            cf_data.get('OperatingCashFlow', 0) or 0)
+                    free_cf = (cf_data.get('Free Cash Flow', 0) or 
+                              cf_data.get('FreeCashFlow', 0) or 0)
+                    operating_cf_data.append(op_cf)
+                    free_cf_data.append(free_cf)
+                else:
+                    operating_cf_data.append(0)
+                    free_cf_data.append(0)
         
         # Display charts
         col1, col2, col3 = st.columns(3)
-        
-        # Ensure all arrays have same length for charts
-        min_len = min(len(years), len(revenue_data), len(gross_income_data), len(net_income_data), len(operating_cf_data), len(free_cf_data))
-        years = years[:min_len]
-        revenue_data = revenue_data[:min_len]
-        gross_income_data = gross_income_data[:min_len]
-        net_income_data = net_income_data[:min_len]
-        operating_cf_data = operating_cf_data[:min_len]
-        free_cf_data = free_cf_data[:min_len]
         
         with col1:
             st.markdown("**Revenue Trend**")
@@ -1978,8 +1980,15 @@ def extract_financial_performance_data(ticker, financial_metrics):
         
         if not cashflow.empty and len(cashflow.columns) >= 2:
             # Calculate cash flow growth
-            latest_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[0]] if 'Operating Cash Flow' in cashflow.index else 0
-            previous_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[1]] if 'Operating Cash Flow' in cashflow.index else 0
+            latest_operating_cf = 0
+            previous_operating_cf = 0
+            
+            if 'Operating Cash Flow' in cashflow.index:
+                latest_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[0]]
+                previous_operating_cf = cashflow.loc['Operating Cash Flow', cashflow.columns[1]] if len(cashflow.columns) > 1 else 0
+            elif 'Cash Flowsfromusedin Operating Activities Direct' in cashflow.index:
+                latest_operating_cf = cashflow.loc['Cash Flowsfromusedin Operating Activities Direct', cashflow.columns[0]]
+                previous_operating_cf = cashflow.loc['Cash Flowsfromusedin Operating Activities Direct', cashflow.columns[1]] if len(cashflow.columns) > 1 else 0
             
             if previous_operating_cf and previous_operating_cf != 0:
                 operating_cf_growth = ((latest_operating_cf - previous_operating_cf) / previous_operating_cf) * 100
@@ -2324,7 +2333,9 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         if cashflow_data:
             latest_cf_date = list(cashflow_data.keys())[0]  # Most recent date
             cf_data = cashflow_data[latest_cf_date]
-            latest_operating_cf = cf_data.get('Operating Cash Flow', 0) or 0
+            latest_operating_cf = (cf_data.get('Operating Cash Flow') or 
+                                 cf_data.get('Cash Flowsfromusedin Operating Activities Direct') or 
+                                 cf_data.get('Operating Cash Flow') or 0)
             latest_capital_expenditures = abs(cf_data.get('Capital Expenditures', 0) or 0)  # Make positive for display
         
         # Combine all financial data for comprehensive prompt
