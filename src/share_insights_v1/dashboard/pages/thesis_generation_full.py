@@ -20,6 +20,7 @@ from src.share_insights_v1.services.database.database_service import DatabaseSer
 from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
+from src.share_insights_v1.utils.formatters import format_currency, get_scale_and_label
 from src.share_insights_v1.utils.logging import (
     log_page_view,
     log_user_action,
@@ -965,28 +966,26 @@ def display_financial_info_with_charts(ticker, financial_metrics):
         
         # Display metrics
         col1, col2, col3, col4, col5 = st.columns(5)
-        scale = 1e9 if max(abs(latest_revenue), abs(latest_net_income)) >= 1e9 else 1e6
-        label = "B" if scale == 1e9 else "M"
         
         with col1:
-            st.metric("Revenue", f"${latest_revenue/scale:.1f}{label}")
+            st.metric("Revenue", format_currency(latest_revenue))
         with col2:
-            st.metric("Gross Income", f"${latest_gross_income/scale:.1f}{label}")
+            st.metric("Gross Income", format_currency(latest_gross_income))
         with col3:
-            st.metric("Net Income", f"${latest_net_income/scale:.1f}{label}")
+            st.metric("Net Income", format_currency(latest_net_income))
         with col4:
-            st.metric("Op Cash Flow", f"${latest_op_cf/scale:.1f}{label}")
+            st.metric("Op Cash Flow", format_currency(latest_op_cf))
         with col5:
-            st.metric("Free Cash Flow", f"${latest_free_cf/scale:.1f}{label}")
+            st.metric("Free Cash Flow", format_currency(latest_free_cf))
         
         # Show charts button
         if st.button("📈 View Financial Charts", key=f"charts_{ticker}"):
-            display_financial_charts_modal(ticker, revenue_data_statements, scale, label)
+            display_financial_charts_modal(ticker, revenue_data_statements)
     
     except Exception as e:
         st.error(f"Financial data unavailable: {str(e)}")
 
-def display_financial_charts_modal(ticker, revenue_data_statements, scale, label):
+def display_financial_charts_modal(ticker, revenue_data_statements):
     """Display financial charts in expander"""
     with st.expander("📈 Financial Charts", expanded=True):
         # Build chart data - use a common date list to ensure alignment
@@ -1031,29 +1030,39 @@ def display_financial_charts_modal(ticker, revenue_data_statements, scale, label
                     operating_cf_data.append(0)
                     free_cf_data.append(0)
         
+        # Determine individual scales for each chart
+        rev_max = max([abs(v) for v in revenue_data]) if revenue_data else 0
+        rev_scale, rev_label = get_scale_and_label(rev_max)
+        
+        income_max = max([abs(v) for v in gross_income_data + net_income_data]) if (gross_income_data or net_income_data) else 0
+        income_scale, income_label = get_scale_and_label(income_max)
+        
+        cf_max = max([abs(v) for v in operating_cf_data + free_cf_data]) if (operating_cf_data or free_cf_data) else 0
+        cf_scale, cf_label = get_scale_and_label(cf_max)
+        
         # Display charts
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("**Revenue Trend**")
-            chart_data = pd.DataFrame({'Year': years, 'Revenue': [r/scale for r in revenue_data]})
+            st.markdown(f"**Revenue Trend ({rev_label})**")
+            chart_data = pd.DataFrame({'Year': years, 'Revenue': [r/rev_scale for r in revenue_data]})
             st.bar_chart(chart_data.set_index('Year'))
         
         with col2:
-            st.markdown("**Income Trend**")
+            st.markdown(f"**Income Trend ({income_label})**")
             chart_data = pd.DataFrame({
                 'Year': years,
-                'Gross': [g/scale for g in gross_income_data],
-                'Net': [n/scale for n in net_income_data]
+                'Gross': [g/income_scale for g in gross_income_data],
+                'Net': [n/income_scale for n in net_income_data]
             })
             st.bar_chart(chart_data.set_index('Year'))
         
         with col3:
-            st.markdown("**Cash Flow Trend**")
+            st.markdown(f"**Cash Flow Trend ({cf_label})**")
             chart_data = pd.DataFrame({
                 'Year': years,
-                'Operating': [o/scale for o in operating_cf_data],
-                'Free': [f/scale for f in free_cf_data]
+                'Operating': [o/cf_scale for o in operating_cf_data],
+                'Free': [f/cf_scale for f in free_cf_data]
             })
             st.bar_chart(chart_data.set_index('Year'))
 
