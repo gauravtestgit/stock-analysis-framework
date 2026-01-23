@@ -121,6 +121,17 @@ class TechnicalAnalyzer(IAnalyzer):
             stoch_k = stoch_data['STOCHk_14_3_3'].iloc[-1] if 'STOCHk_14_3_3' in stoch_data.columns else None
             stoch_d = stoch_data['STOCHd_14_3_3'].iloc[-1] if 'STOCHd_14_3_3' in stoch_data.columns else None
             
+            # ADX (Average Directional Index) - Trend Strength
+            adx_data = pd_ta.adx(df['High'], df['Low'], df['Close'], length=14)
+            adx = adx_data['ADX_14'].iloc[-1] if 'ADX_14' in adx_data.columns else None
+            di_plus = adx_data['DMP_14'].iloc[-1] if 'DMP_14' in adx_data.columns else None
+            di_minus = adx_data['DMN_14'].iloc[-1] if 'DMN_14' in adx_data.columns else None
+            
+            # ATR (Average True Range) - Volatility
+            atr_data = pd_ta.atr(df['High'], df['Low'], df['Close'], length=14)
+            atr = atr_data.iloc[-1] if not atr_data.isna().iloc[-1] else None
+            atr_percent = (atr / current_price * 100) if atr else None
+            
             # Calculate range position and enhanced recommendation
             range_pos = ((current_price - low_52w) / (high_52w - low_52w)) * 100 if high_52w != low_52w else 50
             
@@ -133,7 +144,9 @@ class TechnicalAnalyzer(IAnalyzer):
                 'bb_upper': bb_upper, 'bb_lower': bb_lower, 'bb_middle': bb_middle,
                 'stoch_k': stoch_k, 'stoch_d': stoch_d,
                 'range_pos': range_pos,
-                'ma_trend': ma_trend
+                'ma_trend': ma_trend,
+                'adx': adx, 'di_plus': di_plus, 'di_minus': di_minus,
+                'atr': atr, 'atr_percent': atr_percent
             })
             
             recommendation = technical_signals['recommendation']
@@ -171,6 +184,11 @@ class TechnicalAnalyzer(IAnalyzer):
                 'bb_lower': bb_lower,
                 'stoch_k': stoch_k,
                 'stoch_d': stoch_d,
+                'adx': adx,
+                'di_plus': di_plus,
+                'di_minus': di_minus,
+                'atr': atr,
+                'atr_percent': atr_percent,
                 'technical_signals': technical_signals,
                 'chart_data': chart_data
             }
@@ -253,6 +271,30 @@ class TechnicalAnalyzer(IAnalyzer):
         elif indicators['range_pos'] > 80:
             signals['bearish'] += 1
             signals['signals'].append("Near 52-week high")
+        
+        # ADX Signals (Trend Strength)
+        if indicators.get('adx') is not None:
+            adx = indicators['adx']
+            di_plus = indicators.get('di_plus')
+            di_minus = indicators.get('di_minus')
+            
+            if adx > 25:  # Strong trend
+                if di_plus and di_minus and di_plus > di_minus:
+                    signals['bullish'] += 2
+                    signals['signals'].append(f"Strong uptrend (ADX {adx:.1f})")
+                elif di_plus and di_minus and di_minus > di_plus:
+                    signals['bearish'] += 2
+                    signals['signals'].append(f"Strong downtrend (ADX {adx:.1f})")
+            elif adx < 20:  # Weak trend / ranging
+                signals['signals'].append(f"Weak trend/ranging (ADX {adx:.1f})")
+        
+        # ATR Signals (Volatility context)
+        if indicators.get('atr_percent') is not None:
+            atr_pct = indicators['atr_percent']
+            if atr_pct > 5:  # High volatility
+                signals['signals'].append(f"High volatility (ATR {atr_pct:.1f}%)")
+            elif atr_pct < 2:  # Low volatility
+                signals['signals'].append(f"Low volatility (ATR {atr_pct:.1f}%)")
         
         # Generate recommendation based on signal strength
         net_signal = signals['bullish'] - signals['bearish']

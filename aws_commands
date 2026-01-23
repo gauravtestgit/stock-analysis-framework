@@ -1,0 +1,8 @@
+# Find EC2 public IP
+aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,PublicIpAddress,State.Name,Tags[?Key=='Name'].Value|[0]]" --output table
+
+# SSH into EC2 (replace with your IP and key)
+ssh -i /path/to/your-key.pem ubuntu@YOUR_PUBLIC_IP
+
+mkdir -p /opt/share-insights-app/finance-app/.streamlit
+nano /opt/share-insights-app/finance-app/.streamlit/config.toml

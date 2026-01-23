@@ -8,6 +8,11 @@ llm_providers:
     api_key_env: "GROQ_API_KEY"
     default_model: "openai/gpt-oss-20b"
     models:
+      - name: "openai/gpt-oss-20b"
+        display_name: "GPT OSS 20B"
+        description: "Open source GPT model with 20B parameters"
+        context_length: 8192
+        cost_per_1k_tokens: 0.0003
       - name: "llama-3.3-70b-versatile"
         display_name: "Llama 3.3 70B (Best)"
         description: "Most capable model, slower but higher quality"
@@ -23,11 +28,7 @@ llm_providers:
         description: "Good balance of speed and quality"
         context_length: 32768
         cost_per_1k_tokens: 0.0005
-      - name: "openai/gpt-oss-20b"
-        display_name: "GPT OSS 20B"
-        description: "Open source GPT model with 20B parameters"
-        context_length: 8192
-        cost_per_1k_tokens: 0.0003
+      
 
   - name: "openai"
     display_name: "OpenAI"

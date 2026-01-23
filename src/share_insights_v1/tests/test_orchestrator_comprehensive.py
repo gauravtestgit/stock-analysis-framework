@@ -114,7 +114,7 @@ def test_comprehensive_analysis(ticker: str, save_to_db: bool = False):
 
 def test_all_comprehensive(save_to_db: bool = False):
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['RMC.AX', 'COG.AX', 'RPL.AX']
+    test_tickers = ['LXRX', 'CHRS']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")
