@@ -182,6 +182,7 @@ class TechnicalAnalyzer(IAnalyzer):
                 'macd_histogram': macd_histogram,
                 'bb_upper': bb_upper,
                 'bb_lower': bb_lower,
+                'bb_middle': bb_middle,
                 'stoch_k': stoch_k,
                 'stoch_d': stoch_d,
                 'adx': adx,

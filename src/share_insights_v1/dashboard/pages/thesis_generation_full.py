@@ -1148,22 +1148,28 @@ def display_technical_details(data, ticker=None):
     """Display technical analysis details"""
     st.markdown("### 📈 Technical Indicators")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.write(f"**RSI (14):** {data.get('rsi_14', 'N/A')}")
         st.write(f"**MACD:** {data.get('macd_line', 'N/A')}")
     with col2:
         st.write(f"**MA 20:** {data.get('ma_20', 'N/A')}")
         st.write(f"**MA 50:** {data.get('ma_50', 'N/A')}")
+        st.write(f"**MA 200:** {data.get('ma_200', 'N/A')}")
     with col3:
+        st.write(f"**BB Upper:** ${data.get('bb_upper', 0) or 0:.2f}")
+        st.write(f"**BB Lower:** ${data.get('bb_lower', 0) or 0:.2f}")
+        st.write(f"**BB Middle:** ${data.get('bb_middle', 0) or 0:.2f}")
+    with col4:
+        st.write(f"**ADX:** {data.get('adx', 'N/A')}")
+        st.write(f"**ATR %:** {data.get('atr_percent', 'N/A')}%")
         st.write(f"**Trend:** {data.get('trend', 'N/A')}")
-        st.write(f"**Volume:** {data.get('volume_trend', 'N/A')}")
     
     if ticker:
         try:
             import yfinance as yf
             stock = yf.Ticker(ticker)
-            hist = stock.history(period="6mo")
+            hist = stock.history(period="2y")
             
             if not hist.empty:
                 st.markdown("### 📊 Price Chart with Indicators")
@@ -1182,7 +1188,8 @@ def display_technical_details(data, ticker=None):
                 chart_data = pd.DataFrame({
                     'Price': hist['Close'],
                     'MA20': hist['Close'].rolling(window=20).mean(),
-                    'MA50': hist['Close'].rolling(window=50).mean()
+                    'MA50': hist['Close'].rolling(window=50).mean(),
+                    'MA200': hist['Close'].rolling(window=200).mean()
                 })
                 st.line_chart(chart_data)
                 
@@ -1624,6 +1631,11 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
                 <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                 <p><strong>Trend:</strong> {analysis_data.get('trend', 'N/A')}</p>
                 <p><strong>RSI:</strong> {analysis_data.get('rsi_14', 'N/A')}</p>
+                <p><strong>MA 200:</strong> ${analysis_data.get('ma_200', 0) or 0:.2f}</p>
+                <p><strong>BB Upper:</strong> ${analysis_data.get('bb_upper', 0) or 0:.2f}</p>
+                <p><strong>BB Lower:</strong> ${analysis_data.get('bb_lower', 0) or 0:.2f}</p>
+                <p><strong>ADX:</strong> {analysis_data.get('adx', 'N/A')}</p>
+                <p><strong>ATR %:</strong> {analysis_data.get('atr_percent', 'N/A')}%</p>
                 <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
