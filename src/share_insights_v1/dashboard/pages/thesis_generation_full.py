@@ -978,8 +978,10 @@ def display_financial_info_with_charts(ticker, financial_metrics):
         with col5:
             st.metric("Free Cash Flow", format_currency(latest_free_cf))
         
-        # Show charts button
-        if st.button("📈 View Financial Charts", key=f"charts_{ticker}"):
+        # Show charts button with unique key based on context
+        import hashlib
+        context_hash = hashlib.md5(str(id(revenue_data_statements)).encode()).hexdigest()[:8]
+        if st.button("📈 View Financial Charts", key=f"charts_{ticker}_{context_hash}"):
             display_financial_charts_modal(ticker, revenue_data_statements)
     
     except Exception as e:
