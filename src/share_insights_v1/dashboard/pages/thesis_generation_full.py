@@ -706,10 +706,12 @@ def display_tabbed_batch_results(results):
                 """
                 st.markdown(button_html, unsafe_allow_html=True)
             else:
-                # Regular Streamlit button for non-selected stocks
+                # Regular Streamlit button for non-selected stocks - add timestamp to ensure uniqueness
+                import time
+                button_key = f"stock_btn_{ticker}_{int(time.time() * 1000)}"
                 if st.button(
                     f"{ticker} - {recommendation}",
-                    key=f"stock_btn_{ticker}",
+                    key=button_key,
                     use_container_width=True,
                     type="secondary"
                 ):
@@ -1173,6 +1175,15 @@ def display_technical_details(data, ticker=None):
             
             if not hist.empty:
                 st.markdown("### 📊 Price Chart with Indicators")
+                st.caption("ℹ️ Click legend items to show/hide indicators")
+                
+                # Calculate indicators
+                sma_20 = hist['Close'].rolling(window=20).mean()
+                std_20 = hist['Close'].rolling(window=20).std()
+                bb_upper = sma_20 + (std_20 * 2)
+                bb_lower = sma_20 - (std_20 * 2)
+                ma_50 = hist['Close'].rolling(window=50).mean()
+                ma_200 = hist['Close'].rolling(window=200).mean()
                 
                 delta = hist['Close'].diff()
                 gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
@@ -1185,19 +1196,43 @@ def display_technical_details(data, ticker=None):
                 macd = exp1 - exp2
                 signal = macd.ewm(span=9, adjust=False).mean()
                 
-                chart_data = pd.DataFrame({
-                    'Price': hist['Close'],
-                    'MA20': hist['Close'].rolling(window=20).mean(),
-                    'MA50': hist['Close'].rolling(window=50).mean(),
-                    'MA200': hist['Close'].rolling(window=200).mean()
-                })
-                st.line_chart(chart_data)
+                # Create interactive Plotly chart
+                import plotly.graph_objects as go
+                from plotly.subplots import make_subplots
                 
-                st.markdown("**RSI (14)**")
-                st.line_chart(pd.DataFrame({'RSI': rsi}))
+                fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                                    row_heights=[0.4, 0.15, 0.225, 0.225],
+                                    subplot_titles=('Price with Indicators', 'Volume', 'RSI (14)', 'MACD'))
                 
-                st.markdown("**MACD**")
-                st.line_chart(pd.DataFrame({'MACD': macd, 'Signal': signal}))
+                # Price and indicators
+                fig.add_trace(go.Scatter(x=hist.index, y=hist['Close'], name='Price', line=dict(color='blue', width=2)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=bb_upper, name='BB Upper', line=dict(color='gray', width=1, dash='dot')), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=sma_20, name='BB Middle (MA20)', line=dict(color='orange', width=1)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=bb_lower, name='BB Lower', line=dict(color='gray', width=1, dash='dot')), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=ma_50, name='MA50', line=dict(color='green', width=1.5)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=ma_200, name='MA200', line=dict(color='red', width=1.5)), row=1, col=1)
+                
+                # Volume bars
+                colors = ['red' if hist['Close'].iloc[i] < hist['Open'].iloc[i] else 'green' for i in range(len(hist))]
+                fig.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume', marker_color=colors, showlegend=True), row=2, col=1)
+                
+                # RSI
+                fig.add_trace(go.Scatter(x=hist.index, y=rsi, name='RSI', line=dict(color='purple', width=1.5)), row=3, col=1)
+                fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=3, col=1)
+                fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=3, col=1)
+                
+                # MACD
+                fig.add_trace(go.Scatter(x=hist.index, y=macd, name='MACD', line=dict(color='blue', width=1.5)), row=4, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=signal, name='Signal', line=dict(color='red', width=1.5)), row=4, col=1)
+                
+                fig.update_layout(height=900, showlegend=True, hovermode='x unified',
+                                  legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+                fig.update_yaxes(title_text="Price ($)", row=1, col=1)
+                fig.update_yaxes(title_text="Volume", row=2, col=1)
+                fig.update_yaxes(title_text="RSI", row=3, col=1)
+                fig.update_yaxes(title_text="MACD", row=4, col=1)
+                
+                st.plotly_chart(fig, use_container_width=True)
         except Exception as e:
             st.warning(f"Could not load price chart: {str(e)}")
     
