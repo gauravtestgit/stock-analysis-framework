@@ -151,7 +151,7 @@ Formula: (Forward EPS - Trailing EPS) × Current P/E
 
 **FINAL VALUE CALCULATION:**
 - Base Value from Forward EPS: $[Amount] per share (calculated above)
-- Additional Value from News Catalysts: $[Amount if evidence exists, else $0.00]
+- Additional Value from News Catalysts: $[Amount if evidence exists, else use EPS improvement calculation above]
 - **Total Value Contribution:** $[Sum] per share
 - **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Y]%
 
