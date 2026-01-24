@@ -1152,6 +1152,7 @@ def display_technical_details(data, ticker=None):
     with col1:
         st.write(f"**RSI (14):** {data.get('rsi_14', 'N/A')}")
         st.write(f"**MACD:** {data.get('macd_line', 'N/A')}")
+        st.write(f"{data.get('volume_trend', 'N/A')}")
     with col2:
         st.write(f"**MA 20:** {data.get('ma_20', 'N/A')}")
         st.write(f"**MA 50:** {data.get('ma_50', 'N/A')}")
@@ -1198,7 +1199,7 @@ def display_technical_details(data, ticker=None):
                 import plotly.graph_objects as go
                 from plotly.subplots import make_subplots
                 
-                fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.08,
                                     row_heights=[0.4, 0.15, 0.225, 0.225],
                                     subplot_titles=('Price with Indicators', 'Volume', 'RSI (14)', 'MACD'))
                 
@@ -1212,7 +1213,7 @@ def display_technical_details(data, ticker=None):
                 
                 # Volume bars
                 colors = ['red' if hist['Close'].iloc[i] < hist['Open'].iloc[i] else 'green' for i in range(len(hist))]
-                fig.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume', marker_color=colors, showlegend=True), row=2, col=1)
+                fig.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume', marker_color=colors), row=2, col=1)
                 
                 # RSI
                 fig.add_trace(go.Scatter(x=hist.index, y=rsi, name='RSI', line=dict(color='purple', width=1.5)), row=3, col=1)
@@ -1223,8 +1224,13 @@ def display_technical_details(data, ticker=None):
                 fig.add_trace(go.Scatter(x=hist.index, y=macd, name='MACD', line=dict(color='blue', width=1.5)), row=4, col=1)
                 fig.add_trace(go.Scatter(x=hist.index, y=signal, name='Signal', line=dict(color='red', width=1.5)), row=4, col=1)
                 
-                fig.update_layout(height=900, showlegend=True, hovermode='x unified',
-                                  legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+                # Update layout with single legend on the right
+                fig.update_layout(
+                    height=900, 
+                    hovermode='x unified',
+                    showlegend=True,
+                    legend=dict(yanchor="top", y=1, xanchor="left", x=-0.5, bgcolor="rgba(255,255,255,0.9)", bordercolor="#ddd", borderwidth=1)
+                )
                 fig.update_yaxes(title_text="Price ($)", row=1, col=1)
                 fig.update_yaxes(title_text="Volume", row=2, col=1)
                 fig.update_yaxes(title_text="RSI", row=3, col=1)
