@@ -167,8 +167,9 @@ Formula: Total Price Gap - (Revenue Growth Value + Margin Expansion Value)
 - Margin Expansion Contribution: $[From Step 2]
 - **Value Contribution (RESIDUAL):** $[Price Gap] - $[Revenue] - $[Margin] = $[Amount] per share
 - **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Z]%
-- Implied P/E: Calculate: Target Price / Current EPS.
-- Multiple Expansion Required: Calculate: (Implied P/E / Current P/E) - 1
+- Implied P/E at Target: Calculate: Target Price / Forward EPS = ${target_price:.2f} / {forward_eps}
+- Current P/E: {pe_ratio}
+- Multiple Expansion Required: Calculate: (Implied P/E / Current P/E - 1) × 100 = [X]%
 Hard Stop: If the Required Expansion is > 20% and news sentiment is "Neutral," the Achievability Verdict MUST be "CHALLENGING" or "UNLIKELY."
 Mandatory: You must assign the entire remaining balance to this component. This captures:
 - P/E multiple expansion from [Current P/E] to [Implied P/E]
@@ -348,7 +349,7 @@ Based on {sentiment_rating} sentiment and {key_developments}:
 - **Value Contribution (PLUG):** $[Gap] - $[Revenue] - $[Margin] = $[Amount] per share
 - **Percentage of Gap:** [Z]%
 - **Confidence:** [H/M/L]
-- **Implied P/E at Target:** [Calculate: Target Price / (Current EPS + Margin Impact)]
+- **Implied P/E at Target:** [Calculate: Target Price / Forward EPS = ${target_price:.2f} / {forward_eps}]
 - **P/E Expansion:** From {pe_ratio} to [Implied P/E] = [X]% increase
 - **Key Drivers:** Market sentiment ({sentiment_rating}), risk premium reduction, sector rotation
 
