@@ -20,6 +20,7 @@ from src.share_insights_v1.services.database.database_service import DatabaseSer
 from src.share_insights_v1.implementations.llm_providers.config_service import LLMConfigService
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
+from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
 from src.share_insights_v1.utils.formatters import format_currency, get_scale_and_label
 from src.share_insights_v1.utils.logging import (
     log_page_view,
@@ -52,6 +53,14 @@ def get_provider_models(providers_config, provider_name):
 
 def show_thesis_generation():
     """Show thesis generation page with full detailed analysis functionality"""
+    
+    # Check authentication
+    if not check_authentication():
+        st.switch_page("pages/login_page.py")
+        return
+    
+    # Navigation bar
+    render_navigation()
     
     # Check for show_history query parameter
     query_params = st.query_params
