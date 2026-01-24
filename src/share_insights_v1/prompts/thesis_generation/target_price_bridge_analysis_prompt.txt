@@ -390,7 +390,7 @@ The ${target_price:.2f} target price requires [X]% upside from {current_price_st
 - **[Z]% from Multiple Re-rating** (sentiment and valuation multiple expansion)
 
 **ACHIEVABILITY ASSESSMENT:**
-- **Overall Feasibility:** [ACHIEVABLE / CHALLENGING / UNLIKELY]
+- **Overall Feasibility:** if target price or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
 - **Confidence Level:** [High/Medium/Low] based on evidence quality
 - **Critical Dependencies:** [2-3 factors that MUST occur for target to be reached]
 - **Timeline Realism:** [Whether catalyst timelines support target achievement]
