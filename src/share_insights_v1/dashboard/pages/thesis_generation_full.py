@@ -790,8 +790,8 @@ def display_tabbed_batch_results(results):
         # Create tabs for each analyzer
         analyzer_names = [
             "Overview", "DCF", "Technical", "Comparable", "Startup",
-            "AI Insights", "News", "Business Model", "Financial Health",
-            "Analyst Consensus", "Industry", "Competitive Position", "Management"
+            "AI Insights", "Analyst Consensus", "News", "Business Model", "Financial Health",
+             "Industry", "Competitive Position", "Management"
         ]
         
         tabs = st.tabs(analyzer_names)
@@ -820,21 +820,22 @@ def display_tabbed_batch_results(results):
         with tabs[5]:
             display_analyzer_tab(selected_ticker, analyses, 'ai_insights', 'AI Insights')
         
-        # News Tab
+        # Analyst Consensus Tab
         with tabs[6]:
+            display_analyzer_tab(selected_ticker, analyses, 'analyst_consensus', 'Analyst Consensus')
+        # News Tab
+        with tabs[7]:
             display_analyzer_tab(selected_ticker, analyses, 'news_sentiment', 'News Sentiment')
         
         # Business Model Tab
-        with tabs[7]:
+        with tabs[8]:
             display_analyzer_tab(selected_ticker, analyses, 'business_model', 'Business Model')
         
         # Financial Health Tab
-        with tabs[8]:
+        with tabs[9]:
             display_analyzer_tab(selected_ticker, analyses, 'financial_health', 'Financial Health')
         
-        # Analyst Consensus Tab
-        with tabs[9]:
-            display_analyzer_tab(selected_ticker, analyses, 'analyst_consensus', 'Analyst Consensus')
+        
         
         # Industry Tab
         with tabs[10]:
@@ -873,7 +874,7 @@ def display_overview_tab(ticker, data, analyses):
     
     # Basic Info Cards
     st.markdown("### 📊 Key Metrics")
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         market_cap = financial_metrics.get('market_cap', 0) or 0
@@ -899,6 +900,52 @@ def display_overview_tab(ticker, data, analyses):
         current_ratio = financial_metrics.get('current_ratio', 'N/A')
         st.metric("Current Ratio", current_ratio)
     
+    with col5:
+        # Dividend information
+        dividend_info = financial_metrics.get('dividend_info', {})
+        div_yield = dividend_info.get('dividend_yield', 0) or 0
+        st.metric("Dividend Yield", f"{div_yield:.2f}%" if div_yield else "N/A")
+        payout_ratio = dividend_info.get('payout_ratio', 0) or 0
+        st.metric("Payout Ratio", f"{payout_ratio:.1f}%" if payout_ratio else "N/A")
+    
+    st.markdown("---")
+    
+    # Dividend Information Section
+    dividend_info = financial_metrics.get('dividend_info', {})
+    st.markdown("### 💰 Dividend Information")
+    if dividend_info and (dividend_info.get('dividend_yield') or dividend_info.get('last_dividend_amount')):
+        
+        div_col1, div_col2, div_col3, div_col4 = st.columns(4)
+        
+        with div_col1:
+            div_yield = dividend_info.get('dividend_yield', 0) or 0
+            st.metric("Current Yield", f"{div_yield:.2f}%" if div_yield else "N/A")
+            trailing_yield = dividend_info.get('trailing_annual_dividend_yield', 0) or 0
+            st.metric("Trailing Yield", f"{trailing_yield*100:.2f}%" if trailing_yield else "N/A")
+        
+        with div_col2:
+            div_rate = dividend_info.get('dividend_rate', 0) or 0
+            st.metric("Annual Rate", f"${div_rate:.2f}" if div_rate else "N/A")
+            last_amount = dividend_info.get('last_dividend_amount', 0) or 0
+            st.metric("Last Payment", f"${last_amount:.2f}" if last_amount else "N/A")
+        
+        with div_col3:
+            payout_ratio = dividend_info.get('payout_ratio', 0) or 0
+            st.metric("Payout Ratio", f"{payout_ratio:.1f}%" if payout_ratio else "N/A")
+            five_yr_avg = dividend_info.get('five_year_avg_dividend_yield', 0) or 0
+            st.metric("5Y Avg Yield", f"{five_yr_avg:.2f}%" if five_yr_avg else "N/A")
+        
+        with div_col4:
+            ex_div_date = dividend_info.get('ex_dividend_date')
+            if ex_div_date:
+                from datetime import datetime
+                if isinstance(ex_div_date, (int, float)):
+                    ex_div_date = datetime.fromtimestamp(ex_div_date).strftime('%Y-%m-%d')
+            st.metric("Ex-Dividend Date", ex_div_date if ex_div_date else "N/A")
+            last_date = dividend_info.get('last_dividend_date', 'N/A')
+            st.metric("Last Div Date", last_date if last_date != 'N/A' else "N/A")
+    else: 
+        st.write("No Dividend Information available.")
     st.markdown("---")
     
     # Financial Info with Charts
@@ -1722,6 +1769,30 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
             </div>
             """
             all_cards.append(ai_card)
+        elif analysis_type == 'analyst_consensus':
+            analyst_card = f"""
+            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; position: relative;">
+                <h5>👥 Analyst</h5>
+                <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
+                <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                <p><strong>Count:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                <button onclick="showModal('analyst_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
+                
+                <div id="analyst_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
+                            <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+                        </div>
+                        <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
+                        <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
+                        <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
+                        <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                    </div>
+                </div>
+            </div>
+            """
+            all_cards.append(analyst_card)
         
         elif analysis_type == 'news_sentiment':
             recent_news = analysis_data.get('recent_news', [])
@@ -1794,30 +1865,7 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
             """
             all_cards.append(comp_card)
         
-        elif analysis_type == 'analyst_consensus':
-            analyst_card = f"""
-            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; position: relative;">
-                <h5>👥 Analyst</h5>
-                <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
-                <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
-                <p><strong>Count:</strong> {analysis_data.get('num_analysts', 0)}</p>
-                <button onclick="showModal('analyst_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
-                
-                <div id="analyst_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
-                            <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
-                        </div>
-                        <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
-                        <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
-                        <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
-                        <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
-                    </div>
-                </div>
-            </div>
-            """
-            all_cards.append(analyst_card)
+        
     
     # Arrange cards in horizontal scroll
     cards_html = ''.join(all_cards)
@@ -2435,6 +2483,7 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
             'beta': financial_metrics.get('beta', 'N/A'),
             'dividend_yield': financial_metrics.get('dividend_yield', 'N/A'),
             'payout_ratio': financial_metrics.get('payout_ratio', 'N/A'),
+            'dividend_info': financial_metrics.get('dividend_info', {}),
             'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
             'price_to_sales_ttm': financial_metrics.get('price_to_sales_ttm', 'N/A'),
             'price_to_book_mrq': financial_metrics.get('price_to_book_mrq', 'N/A'),
@@ -2647,7 +2696,10 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         return llm_response
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         st.warning(f"LLM enhancement failed, using template: {str(e)}")
+        st.error(f"Error details: {error_details}")
         if thesis_type == "Bull Case":
             fallback_response = generate_bull_case(ticker, components)
         elif thesis_type == "Bear Case":

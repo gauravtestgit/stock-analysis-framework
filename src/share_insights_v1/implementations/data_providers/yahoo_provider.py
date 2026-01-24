@@ -105,6 +105,25 @@ class YahooFinanceProvider(IDataProvider):
                 if len(fcf_data) > 0:
                     fcf = fcf_data.iloc[0]
 
+            # Extract dividend information
+            dividends = stock.dividends
+            dividend_info = {
+                'dividend_yield': info.get('dividendYield', 0),
+                'dividend_rate': info.get('dividendRate', 0),
+                'payout_ratio': info.get('payoutRatio', 0),
+                'ex_dividend_date': info.get('exDividendDate'),
+                'five_year_avg_dividend_yield': info.get('fiveYearAvgDividendYield', 0),
+                'trailing_annual_dividend_rate': info.get('trailingAnnualDividendRate', 0),
+                'trailing_annual_dividend_yield': info.get('trailingAnnualDividendYield', 0)
+            }
+            
+            # Get recent dividend history
+            if not dividends.empty:
+                recent_dividends = dividends.tail(12)  # Last 12 dividend payments
+                dividend_info['recent_dividends'] = {str(k): v for k, v in recent_dividends.to_dict().items()}
+                dividend_info['last_dividend_amount'] = dividends.iloc[-1] if len(dividends) > 0 else 0
+                dividend_info['last_dividend_date'] = str(dividends.index[-1]) if len(dividends) > 0 else None
+
             # Debug: Print available price fields for ETFs
             price_fields = ['currentPrice', 'regularMarketPrice', 'navPrice', 'previousClose', 'ask', 'bid', 'open']
             available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
@@ -150,6 +169,7 @@ class YahooFinanceProvider(IDataProvider):
                 'earnings_growth': info.get('earningsGrowth'),
                 'dividend_yield': info.get('dividendYield'),
                 'payout_ratio': info.get('payoutRatio'),
+                'dividend_info': dividend_info,  # Include full dividend data
                 'profit_margin': info.get('profitMargins', 0) * 100,
                 'quick_ratio': info.get('quickRatio', 0),
                 'book_value_per_share': info.get('bookValue', 0),
