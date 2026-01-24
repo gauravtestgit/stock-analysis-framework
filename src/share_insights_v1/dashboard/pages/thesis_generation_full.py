@@ -1102,12 +1102,12 @@ def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name):
         display_comparable_details(analysis_data)
     elif analyzer_key == 'ai_insights':
         display_ai_insights_details(analysis_data)
+    elif analyzer_key == 'analyst_consensus':
+        display_analyst_consensus_details(analysis_data)
     elif analyzer_key == 'news_sentiment':
         display_news_details(analysis_data)
     elif analyzer_key == 'business_model':
-        display_business_model_details(analysis_data)
-    elif analyzer_key == 'analyst_consensus':
-        display_analyst_consensus_details(analysis_data)
+        display_business_model_details(analysis_data)    
     elif analyzer_key == 'industry_analysis':
         display_industry_analysis_details(analysis_data)
     elif analyzer_key == 'startup':
