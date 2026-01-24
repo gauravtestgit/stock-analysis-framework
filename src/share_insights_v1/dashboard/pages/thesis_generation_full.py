@@ -706,12 +706,10 @@ def display_tabbed_batch_results(results):
                 """
                 st.markdown(button_html, unsafe_allow_html=True)
             else:
-                # Regular Streamlit button for non-selected stocks - add timestamp to ensure uniqueness
-                import time
-                button_key = f"stock_btn_{ticker}_{int(time.time() * 1000)}"
+                # Regular Streamlit button for non-selected stocks
                 if st.button(
                     f"{ticker} - {recommendation}",
-                    key=button_key,
+                    key=f"stock_btn_{ticker}",
                     use_container_width=True,
                     type="secondary"
                 ):
