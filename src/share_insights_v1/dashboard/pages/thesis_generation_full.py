@@ -343,11 +343,16 @@ def show_thesis_generation():
                         show_prompt=True
                     )
     
-    # Display persisted batch results if available
+    # Display persisted batch results if available (only if not just displayed)
     if 'batch_results' in st.session_state and 'batch_timing' in st.session_state:
-        st.markdown("---")
-        st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
-        display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
+        # Check if we just ran a batch analysis (results would already be displayed)
+        if 'batch_just_completed' not in st.session_state or not st.session_state.batch_just_completed:
+            st.markdown("---")
+            st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
+            display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
+        else:
+            # Clear the flag after checking
+            st.session_state.batch_just_completed = False
         
         # Batch thesis generation section
         successful_stocks = {ticker: data for ticker, data in st.session_state.batch_results.items() if 'error' not in data}
@@ -509,6 +514,9 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
         else:
             print(f"  {ticker}: ERROR - {data['error']}")
     print("")
+    
+    # Set flag to indicate batch just completed
+    st.session_state.batch_just_completed = True
     
     display_batch_results(results, batch_timing)
 
