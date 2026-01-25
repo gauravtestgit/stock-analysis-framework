@@ -49,6 +49,7 @@ class AnalystConsensusAnalyzer(IAnalyzer):
             # Determine confidence based on number of analysts
             confidence = self._determine_confidence(num_analysts)
             
+            # Return ONLY analyst opinions (forward metrics come from financial_metrics)
             return {
                 'method': 'Professional Analyst Consensus',
                 'applicable': True,
@@ -56,12 +57,16 @@ class AnalystConsensusAnalyzer(IAnalyzer):
                 'predicted_price': target_mean,
                 'target_high': target_high,
                 'target_low': target_low,
+                'target_median_price': analyst_data.get('target_median_price', 0),
                 'upside_downside_pct': upside_pct,
                 'recommendation': recommendation,
                 'recommendation_mean': recommendation_mean,
                 'num_analysts': num_analysts,
                 'confidence': confidence,
-                'analysis_type': 'analyst_consensus'
+                'analysis_type': 'analyst_consensus',
+                # Analyst growth projections
+                'earnings_growth': analyst_data.get('earnings_growth', 0),
+                'revenue_growth': analyst_data.get('revenue_growth', 0)
             }
             
         except Exception as e:

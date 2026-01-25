@@ -965,6 +965,46 @@ def display_overview_tab(ticker, data, analyses):
         st.write("No Dividend Information available.")
     st.markdown("---")
     
+    # Forward-Looking Metrics Section
+    st.markdown("### 🔮 Forward-Looking Metrics")
+    
+    # Get forward metrics from financial_metrics (not analyst_consensus)
+    forward_pe = financial_metrics.get('forward_pe', 0) or 0
+    forward_eps = financial_metrics.get('forward_eps', 0) or 0
+    current_year_eps = financial_metrics.get('current_year_eps', 0) or 0
+    earnings_quarterly_growth = financial_metrics.get('earnings_quarterly_growth', 0) or 0
+    earnings_date = financial_metrics.get('earnings_date', 'N/A')
+    
+    # Get analyst data for target median and coverage
+    target_median = 0
+    analyst_count = 0
+    if 'analyst_consensus' in analyses:
+        analyst_data = analyses['analyst_consensus']
+        target_median = analyst_data.get('target_median_price', 0) or 0
+        analyst_count = analyst_data.get('num_analysts', 0) or 0
+    
+    fwd_col1, fwd_col2, fwd_col3, fwd_col4 = st.columns(4)
+    
+    with fwd_col1:
+        st.metric("Forward P/E", f"{forward_pe:.2f}" if forward_pe else "N/A")
+        st.metric("Forward EPS", f"${forward_eps:.2f}" if forward_eps else "N/A")
+    
+    with fwd_col2:
+        st.metric("Current Year EPS", f"${current_year_eps:.2f}" if current_year_eps else "N/A")
+        st.metric("Qtrly Earnings Growth", f"{earnings_quarterly_growth*100:.1f}%" if earnings_quarterly_growth else "N/A")
+    
+    with fwd_col3:
+        st.metric("Next Earnings", earnings_date if earnings_date and earnings_date != 'N/A' else "N/A")
+        st.metric("Target Median", f"${target_median:.2f}" if target_median else "N/A")
+    
+    with fwd_col4:
+        div_yield = financial_metrics.get('dividend_yield', 0) or 0
+        st.metric("Dividend Yield", f"{div_yield:.2f}%" if div_yield else "N/A")
+        st.metric("Analyst Coverage", f"{analyst_count}" if analyst_count else "N/A")
+    
+    st.caption("ℹ️ Forward metrics from Yahoo Finance. Some metrics (Next Year EPS, LT Growth Rate, EPS Revisions) not available via API.")
+    st.markdown("---")
+    
     # Financial Info with Charts
     st.markdown("### 📊 Financial Information")
     display_financial_info_with_charts(ticker, financial_metrics)
@@ -2278,49 +2318,108 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         except (ValueError, TypeError, KeyError):
             segment_info = "\n- Segment data: Formatting error"
     
-    # Standardized data dictionary
+    # Extract analyst consensus data
+    analyst_data = analyses.get('analyst_consensus', {}) if analyses else {}
+    analyst_consensus_target = f"${analyst_data.get('predicted_price', 0) or 0:.2f}"
+    analyst_target_high = f"${analyst_data.get('target_high', 0) or 0:.2f}"
+    analyst_target_low = f"${analyst_data.get('target_low', 0) or 0:.2f}"
+    analyst_target_mean = analyst_data.get('target_price', 0) or 0
+    target_median_price = analyst_data.get('target_median_price', 0) or 0
+    analyst_count = analyst_data.get('analyst_count', 0) or 0
+    
+    # Forward-looking metrics
+    forward_pe = analyst_data.get('forward_pe', 0) or financial_metrics.get('forward_pe', 0) or 0
+    current_year_eps = analyst_data.get('current_year_eps', 0) or 0
+    next_year_eps = analyst_data.get('next_year_eps', 0) or 0
+    next_quarter_eps = analyst_data.get('next_quarter_eps', 0) or 0
+    long_term_growth_rate = analyst_data.get('long_term_growth_rate', 0) or 0
+    earnings_quarterly_growth = analyst_data.get('earnings_quarterly_growth', 0) or financial_metrics.get('earnings_quarterly_growth', 0) or 0
+    eps_revisions_up = analyst_data.get('eps_revisions_up', 0) or 0
+    eps_revisions_down = analyst_data.get('eps_revisions_down', 0) or 0
+    earnings_surprise = analyst_data.get('earnings_surprise', 0) or 0
+    earnings_surprise_pct = analyst_data.get('earnings_surprise_pct', 0) or 0
+    earnings_date = analyst_data.get('earnings_date', 'N/A') or 'N/A'
+    forward_dividend_rate = analyst_data.get('forward_dividend_rate', 0) or financial_metrics.get('dividend_rate', 0) or 0
+    forward_dividend_yield = analyst_data.get('forward_dividend_yield', 0) or financial_metrics.get('dividend_yield', 0) or 0
+    
+    # Helper function to format numeric values
+    def fmt_num(val, default='N/A'):
+        if val is None or val == 'N/A':
+            return default
+        if isinstance(val, (int, float)):
+            return f"{val:.2f}" if isinstance(val, float) else str(val)
+        return str(val)
+    
+    # Helper function to format large numbers with commas
+    def fmt_large(val, default='0'):
+        if val is None or val == 'N/A' or val == 0:
+            return default
+        if isinstance(val, (int, float)):
+            return f"{val:,.0f}"
+        return str(val)
+    
+    # Standardized data dictionary with proper formatting
     return {
         'ticker': ticker,
         'company_type': components.get('company_type', 'Unknown'),
         'target_price': target_price,
         'current_price_str': current_price_str,
-        'market_cap': financial_metrics.get('market_cap', 0),
-        'enterprise_value': financial_metrics.get('enterprise_value', 0),
-        'beta': financial_metrics.get('beta', 'N/A'),
-        'pe_ratio': financial_metrics.get('pe_ratio', 'N/A'),
-        'ps_ratio': financial_metrics.get('ps_ratio', 'N/A'),
-        'pb_ratio': financial_metrics.get('pb_ratio', 'N/A'),
-        'ev_ebitda_multiple': financial_metrics.get('ev_ebitda_multiple', 'N/A'),
-        'gross_margin': financial_metrics.get('gross_margin', 0) * 100 if isinstance(financial_metrics.get('gross_margin', 0), (int, float)) else 0,
-        'operating_margin': financial_metrics.get('operating_margin', 0) * 100 if isinstance(financial_metrics.get('operating_margin', 0), (int, float)) else 0,
-        'net_margin': financial_metrics.get('net_margin', 0) * 100 if isinstance(financial_metrics.get('net_margin', 0), (int, float)) else 0,
-        'roe': financial_metrics.get('roe', 0) * 100 if isinstance(financial_metrics.get('roe', 0), (int, float)) else 0,
-        'roa': financial_metrics.get('roa', 0) * 100 if isinstance(financial_metrics.get('roa', 0), (int, float)) else 0,
-        'revenue_growth': financial_metrics.get('revenue_growth', 0) * 100 if isinstance(financial_metrics.get('revenue_growth', 0), (int, float)) else 0,
-        'earnings_growth': financial_metrics.get('earnings_growth', 0) * 100 if isinstance(financial_metrics.get('earnings_growth', 0), (int, float)) else 0,
-        'debt_to_equity': financial_metrics.get('debt_to_equity', 'N/A'),
-        'current_ratio': financial_metrics.get('current_ratio', 'N/A'),
-        'quick_ratio': financial_metrics.get('quick_ratio', 'N/A'),
-        'free_cash_flow': financial_metrics.get('free_cash_flow', 0),
-        'cash_per_share': financial_metrics.get('cash_per_share', 'N/A'),
-        'book_value_per_share': financial_metrics.get('book_value_per_share', 'N/A'),
-        'dividend_yield': financial_metrics.get('dividend_yield', 'N/A'),
-        'payout_ratio': financial_metrics.get('payout_ratio', 'N/A'),
-        'total_revenue': financial_metrics.get('total_revenue', 0),
-        'latest_net_income': financial_metrics.get('latest_net_income', 0),
-        'latest_operating_income': financial_metrics.get('latest_operating_income', 0),
-        'latest_gross_profit': financial_metrics.get('latest_gross_profit', 0),
-        'latest_operating_cf': financial_metrics.get('latest_operating_cf', 0),
-        'latest_capital_expenditures': financial_metrics.get('latest_capital_expenditures', 0),
-        'trailing_eps': financial_metrics.get('trailing_eps', 'N/A'),
-        'forward_eps': financial_metrics.get('forward_eps', 'N/A'),
-        'shares_outstanding': financial_metrics.get('shares_outstanding') or 0,
-        'float_shares': financial_metrics.get('float_shares') or 0,
+        'analyst_consensus_target': analyst_consensus_target,
+        'analyst_target_high': analyst_target_high,
+        'analyst_target_low': analyst_target_low,
+        'analyst_target_mean': fmt_num(analyst_target_mean),
+        'target_median_price': fmt_num(target_median_price),
+        'analyst_count': analyst_count,
+        'forward_pe': fmt_num(forward_pe),
+        'current_year_eps': fmt_num(current_year_eps),
+        'next_year_eps': fmt_num(next_year_eps),
+        'next_quarter_eps': fmt_num(next_quarter_eps),
+        'long_term_growth_rate': fmt_num(long_term_growth_rate * 100 if isinstance(long_term_growth_rate, (int, float)) else 0),
+        'earnings_quarterly_growth': fmt_num(earnings_quarterly_growth * 100 if isinstance(earnings_quarterly_growth, (int, float)) else 0),
+        'eps_revisions_up': eps_revisions_up,
+        'eps_revisions_down': eps_revisions_down,
+        'earnings_surprise': fmt_num(earnings_surprise),
+        'earnings_surprise_pct': fmt_num(earnings_surprise_pct * 100 if isinstance(earnings_surprise_pct, (int, float)) else 0),
+        'earnings_date': earnings_date,
+        'forward_dividend_rate': fmt_num(forward_dividend_rate),
+        'forward_dividend_yield': fmt_num(forward_dividend_yield),
+        'market_cap': fmt_large(financial_metrics.get('market_cap', 0)),
+        'enterprise_value': fmt_large(financial_metrics.get('enterprise_value', 0)),
+        'beta': fmt_num(financial_metrics.get('beta')),
+        'pe_ratio': fmt_num(financial_metrics.get('pe_ratio')),
+        'ps_ratio': fmt_num(financial_metrics.get('ps_ratio')),
+        'pb_ratio': fmt_num(financial_metrics.get('pb_ratio')),
+        'ev_ebitda_multiple': fmt_num(financial_metrics.get('ev_ebitda_multiple')),
+        'gross_margin': fmt_num(financial_metrics.get('gross_margin', 0) * 100 if isinstance(financial_metrics.get('gross_margin', 0), (int, float)) else 0),
+        'operating_margin': fmt_num(financial_metrics.get('operating_margin', 0) * 100 if isinstance(financial_metrics.get('operating_margin', 0), (int, float)) else 0),
+        'net_margin': fmt_num(financial_metrics.get('net_margin', 0) * 100 if isinstance(financial_metrics.get('net_margin', 0), (int, float)) else 0),
+        'roe': fmt_num(financial_metrics.get('roe', 0) * 100 if isinstance(financial_metrics.get('roe', 0), (int, float)) else 0),
+        'roa': fmt_num(financial_metrics.get('roa', 0) * 100 if isinstance(financial_metrics.get('roa', 0), (int, float)) else 0),
+        'revenue_growth': fmt_num(financial_metrics.get('revenue_growth', 0) * 100 if isinstance(financial_metrics.get('revenue_growth', 0), (int, float)) else 0),
+        'earnings_growth': fmt_num(financial_metrics.get('earnings_growth', 0) * 100 if isinstance(financial_metrics.get('earnings_growth', 0), (int, float)) else 0),
+        'debt_to_equity': fmt_num(financial_metrics.get('debt_to_equity')),
+        'current_ratio': fmt_num(financial_metrics.get('current_ratio')),
+        'quick_ratio': fmt_num(financial_metrics.get('quick_ratio')),
+        'free_cash_flow': fmt_large(financial_metrics.get('free_cash_flow', 0)),
+        'cash_per_share': fmt_num(financial_metrics.get('cash_per_share')),
+        'book_value_per_share': fmt_num(financial_metrics.get('book_value_per_share')),
+        'dividend_yield': fmt_num(financial_metrics.get('dividend_yield')),
+        'payout_ratio': fmt_num(financial_metrics.get('payout_ratio')),
+        'total_revenue': fmt_large(financial_metrics.get('total_revenue', 0)),
+        'latest_net_income': fmt_large(financial_metrics.get('latest_net_income', 0)),
+        'latest_operating_income': fmt_large(financial_metrics.get('latest_operating_income', 0)),
+        'latest_gross_profit': fmt_large(financial_metrics.get('latest_gross_profit', 0)),
+        'latest_operating_cf': fmt_large(financial_metrics.get('latest_operating_cf', 0)),
+        'latest_capital_expenditures': fmt_large(financial_metrics.get('latest_capital_expenditures', 0)),
+        'trailing_eps': fmt_num(financial_metrics.get('trailing_eps')),
+        'forward_eps': fmt_num(financial_metrics.get('forward_eps')),
+        'shares_outstanding': fmt_large(financial_metrics.get('shares_outstanding')),
+        'float_shares': fmt_large(financial_metrics.get('float_shares')),
         'industry': financial_metrics.get('industry', 'N/A'),
         'sector': financial_metrics.get('sector', 'N/A'),
         'segment_info': segment_info,
-        'net_income_growth': growth_analysis.get('net_income_growth', 0),
-        'operating_cf_growth': growth_analysis.get('operating_cf_growth', 0),
+        'net_income_growth': fmt_num(growth_analysis.get('net_income_growth', 0)),
+        'operating_cf_growth': fmt_num(growth_analysis.get('operating_cf_growth', 0)),
         'dcf_calculation_details': dcf_calculation_details,
         'startup_calculation_details': startup_calculation_details,
         'average_target': cross_analysis.get('average_target', 0),

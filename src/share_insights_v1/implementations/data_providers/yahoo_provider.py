@@ -129,6 +129,21 @@ class YahooFinanceProvider(IDataProvider):
             available_prices = {field: info.get(field) for field in price_fields if info.get(field)}
             # print(f"Yahoo Provider - Available price fields for {ticker}: {available_prices}")
             
+            # Forward-looking financial metrics (not analyst opinions)
+            forward_metrics = {
+                'forward_pe': info.get('forwardPE', 0),
+                'forward_eps': info.get('forwardEps', 0) or info.get('epsForward', 0),
+                'current_year_eps': info.get('epsCurrentYear', 0),
+                'earnings_quarterly_growth': info.get('earningsQuarterlyGrowth', 0),
+                'earnings_timestamp': info.get('earningsTimestamp'),
+                'earnings_date': None
+            }
+            
+            # Convert earnings timestamp to readable date
+            if forward_metrics['earnings_timestamp']:
+                from datetime import datetime
+                forward_metrics['earnings_date'] = datetime.fromtimestamp(forward_metrics['earnings_timestamp']).strftime('%Y-%m-%d')
+            
             return {
                 'market_cap': info.get('marketCap', 0),
                 'sector': info.get('sector', ''),
@@ -175,7 +190,9 @@ class YahooFinanceProvider(IDataProvider):
                 'book_value_per_share': info.get('bookValue', 0),
                 'cash_per_share': info.get('totalCashPerShare', 0),                
                 'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
-                'fifty_two_week_low': info.get('fiftyTwoWeekLow')
+                'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+                # Add forward metrics to financial_metrics
+                **forward_metrics
             }
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)
@@ -212,32 +229,27 @@ class YahooFinanceProvider(IDataProvider):
             return {'error': str(e)}
     
     def get_professional_analyst_data(self, ticker: str) -> Dict:
-        """Fetch analyst data from multiple sources"""
+        """Fetch ONLY analyst opinions and price targets (not financial metrics)"""
         data = {}
         try:
             rate_tracker.track_request(ticker)
             stock = yf.Ticker(ticker)
             info = stock.info
             
-            # Price targets
+            # Price targets (analyst opinions)
             data['target_price'] = info.get('targetMeanPrice', 0)
             data['target_high'] = info.get('targetHighPrice', 0)
             data['target_low'] = info.get('targetLowPrice', 0)
+            data['target_median_price'] = info.get('targetMedianPrice', 0)
             
-            # Recommendations
+            # Analyst recommendations
             data['recommendation'] = info.get('recommendationMean')
             data['recommendation_key'] = info.get('recommendationKey')
+            data['analyst_count'] = info.get('numberOfAnalystOpinions', 0)
             
-            # Estimates
-            data['forward_eps'] = info.get('forwardEps', 0)
-            data['eps_current_year'] = info.get('trailingEps', 0)
-            
-            # Growth estimates
+            # Growth estimates (analyst projections)
             data['earnings_growth'] = info.get('earningsGrowth', 0)
             data['revenue_growth'] = info.get('revenueGrowth', 0)
-            
-            # Analyst count
-            data['analyst_count'] = info.get('numberOfAnalystOpinions', 0)       
             
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)
