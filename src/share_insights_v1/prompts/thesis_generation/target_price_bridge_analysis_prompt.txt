@@ -723,7 +723,7 @@ Based on the dual analysis:
 
 **FINAL VERDICT:**
 CRITICAL SPACING RULE:
-SPACING: maintain at least one space between workds and numbers
+SPACING: maintain at least one space between words and numbers
 NO SMASHING: You must include exactly one space before and after every numerical value and symbol (e.g., $100.00 +$ 50.00 = $ 150.00 ).
 BOLDING SEPARATION: Never allow a bolding asterisk (**) to touch a number or a word without a space (e.g., use ** $ 190.00 ** instead of $190.00).
 FORCE NEWLINES: If a sentence contains more than two numerical calculations, you must break it into a bulleted list to prevent text wrapping/smashing.
