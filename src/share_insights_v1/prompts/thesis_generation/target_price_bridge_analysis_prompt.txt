@@ -153,39 +153,60 @@ Note: This represents the value of growth if margins and multiples stay exactly 
 
 **3. MARGIN EXPANSION COMPONENT (The Efficiency Driver)**
 
+**PRIMARY METHOD: Forward EPS Analysis (MANDATORY)**
+
 Formula: (Forward EPS - Trailing EPS) × Current P/E
 
 **Step-by-Step Calculation:**
-- Current Net Margin: {net_margin}%
-- Current Revenue: ${total_revenue}
-- Current Net Income: ${latest_net_income}
-- Current EPS (Trailing): {trailing_eps}
-- Forward EPS (Analyst Estimates): {forward_eps}
-- Shares Outstanding: {shares_outstanding}
-- Current P/E: {pe_ratio}
+- Trailing EPS (Historical): {trailing_eps}
+- Forward EPS (Analyst Consensus): {forward_eps}
+- Current P/E Ratio: {pe_ratio}
+- EPS Improvement: {forward_eps} - {trailing_eps} = $[Calculate]
+- **Base Value Contribution:** [EPS Improvement] × {pe_ratio} = $[Amount] per share
 
-**CALCULATE EPS-BASED MARGIN CONTRIBUTION (MANDATORY):**
-- EPS Improvement: Forward EPS - Trailing EPS = {forward_eps} - {trailing_eps} = $[Calculate]
-- **Value Contribution (Base):** [EPS Improvement] × {pe_ratio} = $[Amount] per share
+**INTERPRETATION:**
+Forward EPS already incorporates analyst expectations for BOTH:
+1. Revenue growth impact on earnings
+2. Margin expansion from operational improvements
 
-**MARGIN EXPANSION ANALYSIS:**
-- The Forward EPS improvement captures BOTH revenue growth AND margin expansion
-- To isolate margin expansion: Subtract the revenue growth component
-- Revenue Growth Component already accounts for earnings growth at current margins
-- Remaining EPS improvement = Margin expansion effect
+Since the Revenue Growth Component (Step 2) already captured volume growth at current margins, the remaining EPS improvement represents margin expansion effects.
 
-**ENHANCED MARGIN ANALYSIS (if news evidence exists):**
-- Search news for additional margin expansion catalysts ("efficiency," "cost-cutting," "margin expansion")
-- If News Evidence Found with specific margin targets: Calculate incremental value
-- If NO News Evidence Found: Use ONLY the base EPS improvement calculation above
+**MARGIN CONTEXT (Historical Trends):**
+- Current Margins: Gross {gross_margin}%, Operating {operating_margin}%, Net {net_margin}%
+- Historical Performance: Net income growth {net_income_growth}%
+- Margin Trajectory: [Analyze if margins are expanding, stable, or contracting based on historical data]
+
+**SUPPLEMENTARY EVIDENCE SOURCES (Optional Enhancement):**
+
+1. **Management Guidance** (if mentioned in news):
+   - Search {news_sources_with_urls} for explicit margin targets from management
+   - Example: "Management targets 200 bps margin expansion"
+   - If found: Quote exact text with URL and calculate incremental value
+   - If not found: State "No management margin guidance in available news"
+
+2. **Operational Efficiency Initiatives** (if mentioned in news):
+   - Search for cost reduction programs, automation, restructuring
+   - Example: "$50M cost savings program announced"
+   - If found: Calculate impact on margins and per-share value
+   - If not found: State "No specific efficiency initiatives in available news"
+
+3. **Industry Benchmarking** (from provided data):
+   - Compare current margins to industry standards
+   - Identify if there's room for margin expansion to peer levels
+   - Competitive position: {competitive_position}
 
 **FINAL VALUE CALCULATION:**
-- Base Value from Forward EPS: $[Amount] per share (calculated above)
-- Additional Value from News Catalysts: $[Amount if evidence exists, else use EPS improvement calculation above]
-- **Total Value Contribution:** $[Sum] per share
+- Base Value from Forward EPS: $[Amount] per share (MANDATORY - always use this)
+- Additional Value from News Catalysts: $[Amount if specific evidence exists, else $0.00]
+- **Total Margin Expansion Value:** $[Sum] per share
 - **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Y]%
+- **Confidence Level:** [High if Forward EPS reliable, Medium if limited analyst coverage, Low if no Forward EPS]
 
-Note: Forward EPS ({forward_eps}) already incorporates analyst expectations for margin improvements. The difference between Forward EPS and Trailing EPS, multiplied by the P/E ratio, gives the per-share value contribution. This method avoids the circular logic of calculating margins on target revenue.
+**IMPORTANT NOTES:**
+- Do NOT say "no evidence found" if you have Forward EPS data - that IS the evidence
+- News articles rarely discuss margin expansion explicitly - this is normal
+- The Forward EPS method is the professional standard for margin analysis
+- Only mark as "no evidence" if Forward EPS is unavailable (N/A or 0)
 
 **4. MULTIPLE RE-RATING & MARKET SENTIMENT (The Residual/Plug)**
 
