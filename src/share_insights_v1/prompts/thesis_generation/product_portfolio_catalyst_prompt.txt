@@ -32,22 +32,22 @@ FORMATTING COMMAND: Render all financial values as: $USD [Value]. Render all per
 **COMPANY PROFILE:**
 Security: {ticker} | Classification: {company_type}
 Current Price: {current_price_str} 
-Market Cap: ${market_cap:,.0f} | Enterprise Value: ${enterprise_value:,.0f}
+Market Cap: ${market_cap} | Enterprise Value: ${enterprise_value}
 Business Summary: {business_summary}
 
 **COMPREHENSIVE FINANCIAL FOUNDATION:**
-- Market metrics: Market cap ${market_cap:,.0f}, Enterprise value ${enterprise_value:,.0f}, Beta {beta}
+- Market metrics: Market cap ${market_cap}, Enterprise value ${enterprise_value}, Beta {beta}
 - Valuation ratios: P/E {pe_ratio}, P/S {ps_ratio}, P/B {pb_ratio}, EV/EBITDA {ev_ebitda_multiple}
-- Profitability metrics: Gross margin {gross_margin:.1f}%, Operating margin {operating_margin:.1f}%, Net margin {net_margin:.1f}%
-- Return metrics: ROE {roe:.1f}%, ROA {roa:.1f}%
-- Growth metrics: Revenue growth {revenue_growth:.1f}%, Earnings growth {earnings_growth:.1f}%
+- Profitability metrics: Gross margin {gross_margin}%, Operating margin {operating_margin}%, Net margin {net_margin}%
+- Return metrics: ROE {roe}%, ROA {roa}%
+- Growth metrics: Revenue growth {revenue_growth}%, Earnings growth {earnings_growth}%
 - Financial health: Debt/Equity {debt_to_equity}, Current ratio {current_ratio}, Quick ratio {quick_ratio}
 - Cash metrics: Free cash flow ${free_cash_flow:,.0f}, Cash per share ${cash_per_share}, Book value per share ${book_value_per_share}
 - Dividend metrics: Dividend yield {dividend_yield}, Payout ratio {payout_ratio}
-- Revenue & Income: Total revenue ${total_revenue:,.0f}, Net income ${latest_net_income:,.0f}, Operating income ${latest_operating_income:,.0f}, Gross profit ${latest_gross_profit:,.0f}
-- Cash Flow: Operating cash flow ${latest_operating_cf:,.0f}, Capital expenditures ${latest_capital_expenditures:,.0f}
+- Revenue & Income: Total revenue ${total_revenue}, Net income ${latest_net_income}, Operating income ${latest_operating_income}, Gross profit ${latest_gross_profit}
+- Cash Flow: Operating cash flow ${latest_operating_cf}, Capital expenditures ${latest_capital_expenditures}
 - Company profile: Industry {industry}, Sector {sector}{segment_info}
-- Historical performance: Net income growth {net_income_growth:.1f}%, Operating CF growth {operating_cf_growth:.1f}%
+- Historical performance: Net income growth {net_income_growth}%, Operating CF growth {operating_cf_growth}%
 {dcf_calculation_details}{startup_calculation_details}
 
 **POSITIVE FACTORS:** {strengths}
@@ -198,9 +198,9 @@ Rank top 5 catalysts by total company impact:
 **B. FINANCIAL METRICS VALIDATION**
 
 **Current Metrics Support Catalyst Analysis:**
-- Revenue Growth {revenue_growth:.1f}%: [Consistent/Inconsistent] with identified growth catalysts
-- Margin Profile: {operating_margin:.1f}% operating margin [supports/challenges] catalyst assumptions
-- Cash Generation: ${free_cash_flow:,.0f} FCF [provides/limits] investment capacity for growth catalysts
+- Revenue Growth {revenue_growth}%: [Consistent/Inconsistent] with identified growth catalysts
+- Margin Profile: {operating_margin}% operating margin [supports/challenges] catalyst assumptions
+- Cash Generation: ${free_cash_flow} FCF [provides/limits] investment capacity for growth catalysts
 - Balance Sheet: {debt_to_equity} D/E ratio [enables/constrains] strategic flexibility
 
 **Catalyst Probability Weighting:**

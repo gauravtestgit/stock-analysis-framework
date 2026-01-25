@@ -238,7 +238,22 @@ Variance: [Must be $0.00 - if not, recalculate]
 
 ═══════════════════════════════════════════════════════════
 
-## **II. REVENUE GROWTH CATALYSTS**
+## **II. QUALITATIVE CATALYST ANALYSIS (LLM-Enhanced)**
+
+**PURPOSE:** Enhance quantitative bridge calculations with qualitative context from news, business segments, industry dynamics, and competitive positioning.
+
+**A. REVENUE GROWTH CATALYSTS (Qualitative Context)**
+
+**Data Sources:** {enhanced_news_facts}, {business_segments}, {revenue_breakdown}, {industry_outlook}, {key_developments}
+
+**Analysis Framework:**
+1. **Product/Service Launches:** Identify new offerings from news that drive incremental revenue
+2. **Market Expansions:** Geographic or customer segment expansions mentioned in news
+3. **Segment Dynamics:** Which business segments are driving growth based on {revenue_breakdown}
+4. **Industry Tailwinds:** Separate company-specific growth from industry-wide trends using {industry_outlook}
+5. **Contract Wins/Partnerships:** Specific deals or partnerships from {news_sources_with_urls}
+
+**Qualitative Assessment:**
 
 For each business segment from {segment_info}, identify specific revenue drivers:
 
@@ -263,7 +278,138 @@ For each business segment from {segment_info}, identify specific revenue drivers
 [Repeat for each segment]
 
 **TOTAL REVENUE CONTRIBUTION:** $[Sum all segments] per share ([X]% of total gap)
-"The sum of per-share impacts from all segments (Insurance + Digital + Other) must exactly equal the total Revenue Growth Component ($5.08) calculated in Section I."
+"The sum of per-share impacts from all segments (Insurance + Digital + Other) must exactly equal the total Revenue Growth Component calculated in Section I."
+
+**QUALITATIVE SYNTHESIS:**
+- **Growth Attribution:** [X]% company-specific vs [Y]% industry-driven (based on {industry_outlook})
+- **Segment Concentration:** [Identify if growth is concentrated in 1-2 segments or diversified]
+- **Catalyst Quality:** [Assess if catalysts are confirmed (from news) vs inferred (from trends)]
+- **Execution Complexity:** [Low/Medium/High - based on number of initiatives and dependencies]
+- **Competitive Context:** [How does growth compare to peers based on {competitive_position}]
+
+**KEY INSIGHTS:**
+[2-3 sentences synthesizing:
+1. Which segments/catalysts drive most growth
+2. Whether growth is sustainable or one-time
+3. Key dependencies for growth realization]
+
+═══════════════════════════════════════════════════════════
+
+**B. MARGIN EXPANSION DRIVERS (Qualitative Context)**
+
+**Data Sources:** {enhanced_news_facts}, {strengths}, {business_segments}, {news_sources_with_urls}
+
+**Analysis Framework:**
+1. **Cost Reduction Initiatives:** Specific programs mentioned in news (restructuring, automation, outsourcing)
+2. **Operational Efficiency:** Process improvements, technology adoption from {strengths}
+3. **Pricing Power:** Evidence of price increases or premium positioning from news
+4. **Segment Mix Shift:** Movement toward higher-margin segments based on {revenue_breakdown}
+5. **Scale Economies:** Volume-driven margin improvements as revenue grows
+
+**Qualitative Assessment:**
+
+**Margin Driver 1: [Specific Initiative from News/Strengths]**
+- **Evidence:** [Quote from {news_sources_with_urls} or reference {strengths}. If none: "No specific evidence in available data."]
+- **Mechanism:** [HOW this improves margins - lower COGS, reduced SG&A, better pricing, etc.]
+- **Timeline:** [From news or "Timeline not specified"]
+- **Margin Impact:** [Qualitative assessment: High/Medium/Low impact on gross/operating/net margins]
+- **Execution Risk:** [Low/Medium/High - complexity of implementation]
+- **Supporting Context:** [Historical margin trends from {net_income_growth}, {operating_margin}]
+
+**Margin Driver 2: [Segment Mix Shift or Scale Economies]**
+- **Evidence:** [From {business_segments} or {revenue_breakdown}]
+- **Mechanism:** [How segment mix or scale drives margin improvement]
+- **Impact Assessment:** [Quantify if possible, or provide qualitative view]
+
+**QUALITATIVE SYNTHESIS:**
+- **Margin Trajectory:** [Expanding/Stable/Contracting based on historical data]
+- **Primary Drivers:** [Rank top 2-3 margin improvement sources]
+- **News Support:** [Strong/Moderate/Weak - how much news validates margin expansion]
+- **Competitive Positioning:** [Are margins below/at/above industry based on {competitive_position}]
+- **Sustainability:** [Are margin improvements structural or temporary]
+
+**KEY INSIGHTS:**
+[2-3 sentences synthesizing:
+1. Most impactful margin drivers
+2. Whether Forward EPS margin expectations are realistic
+3. Key risks to margin expansion]
+
+═══════════════════════════════════════════════════════════
+
+**C. MULTIPLE RE-RATING JUSTIFICATION (Qualitative Context)**
+
+**Data Sources:** {key_developments}, {sentiment_rating}, {competitive_position}, {industry_outlook}, {strengths}
+
+**Analysis Framework:**
+1. **Quality Improvements:** Enhanced competitive position, market share gains from {competitive_position}
+2. **Strategic Pivots:** Business model changes, new markets from {key_developments}
+3. **Sentiment Shifts:** News momentum and sentiment from {sentiment_rating} and {news_count} articles
+4. **Risk Reduction:** Improved financial health, diversification from {strengths}
+5. **Sector Momentum:** Industry re-rating themes from {industry_outlook}
+
+**Qualitative Assessment:**
+
+**Re-rating Driver 1: [Growth Quality/Competitive Position]**
+- **Evidence:** [From {competitive_position}, {strengths}, or {key_developments}]
+- **Mechanism:** [WHY market should assign higher multiple - growth acceleration, quality improvement, risk reduction]
+- **Peer Comparison:** [How does current P/E {pe_ratio} compare to industry/peers]
+- **Historical Context:** [Is current multiple below/at/above historical average]
+- **Justification Strength:** [Strong/Moderate/Weak]
+
+**Re-rating Driver 2: [Sentiment/Sector Rotation]**
+- **Evidence:** [From {sentiment_rating}, {news_count}, {industry_outlook}]
+- **Mechanism:** [Market sentiment improvement, sector tailwinds]
+- **News Momentum:** [{sentiment_rating} sentiment from {news_count} articles]
+- **Timing:** [Near-term catalyst or gradual re-rating]
+
+**QUALITATIVE SYNTHESIS:**
+- **Multiple Expansion Feasibility:** [Realistic/Aggressive/Unlikely given current P/E {pe_ratio}]
+- **Primary Justification:** [Growth acceleration / Quality improvement / Risk reduction / Sector rotation]
+- **Market Sentiment:** [Current {sentiment_rating} supports/challenges multiple expansion]
+- **Competitive Positioning:** [{competitive_position} justifies premium/discount valuation]
+- **Key Dependencies:** [What must occur for multiple expansion to materialize]
+
+**KEY INSIGHTS:**
+[2-3 sentences synthesizing:
+1. Whether required P/E expansion is justified by fundamentals
+2. How much is sentiment-driven vs quality-driven
+3. Key risks to multiple expansion]
+
+═══════════════════════════════════════════════════════════
+
+**D. EXECUTION RISK ASSESSMENT (Qualitative Context)**
+
+**Data Sources:** {risks}, {enhanced_news_facts}, {regulatory_risk}, {competitive_position}
+
+**Risk Category 1: Revenue Growth Execution**
+- **Key Risks:** [From {risks} - identify threats to revenue catalysts]
+- **Probability:** [High/Medium/Low based on {competitive_position} and news]
+- **Mitigation Factors:** [From {strengths} - what protects against these risks]
+- **Impact on Bridge:** [Which revenue catalysts are most vulnerable]
+
+**Risk Category 2: Margin Expansion Execution**
+- **Key Risks:** [Cost inflation, competitive pressure, execution complexity]
+- **Probability:** [Assessment based on {risks} and industry context]
+- **Mitigation Factors:** [Pricing power, operational efficiency from {strengths}]
+- **Impact on Bridge:** [Likelihood of margin targets being missed]
+
+**Risk Category 3: Multiple Compression**
+- **Key Risks:** [Market sentiment reversal, sector rotation, competitive threats]
+- **Probability:** [Based on {sentiment_rating}, {regulatory_risk}, {competitive_position}]
+- **Mitigation Factors:** [Quality of business, competitive moats]
+- **Impact on Bridge:** [Downside if multiple contracts instead of expands]
+
+**OVERALL RISK PROFILE:**
+- **Execution Risk:** [Low/Medium/High - ability to deliver on catalysts]
+- **Market Risk:** [Low/Medium/High - external factors beyond company control]
+- **Competitive Risk:** [Low/Medium/High - threats from {competitive_position}]
+- **Regulatory Risk:** [{regulatory_risk} assessment]
+
+**KEY INSIGHTS:**
+[2-3 sentences identifying:
+1. Highest-probability risks to bridge achievement
+2. Which bridge component (Revenue/Margin/Multiple) has most risk
+3. Overall confidence in target achievability given risk profile]
 
 ═══════════════════════════════════════════════════════════
 

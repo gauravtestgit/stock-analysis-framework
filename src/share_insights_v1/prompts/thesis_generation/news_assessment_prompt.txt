@@ -121,13 +121,13 @@ If news indicates margin improvement:
 Formula: (Margin Change × Target Revenue / Shares Outstanding) × Current P/E
 
 **Step-by-Step:**
-- Current Net Margin: {net_margin:.1f}%
+- Current Net Margin: {net_margin}%
 - News-Indicated Margin Change: [Extract from business_mechanism]
-- Target Revenue: ${total_revenue:,.0f} + [Incremental from A]
-- Shares Outstanding: {shares_outstanding:,.0f}
+- Target Revenue: ${total_revenue} + [Incremental from A]
+- Shares Outstanding: {shares_outstanding}
 - Current P/E: {pe_ratio}
 - Incremental Net Income: [Margin Change] × [Target Revenue] × 0.80 (after 20% tax)
-- Per Share Earnings Impact: [Incremental Net Income] / {shares_outstanding:,.0f}
+- Per Share Earnings Impact: [Incremental Net Income] / {shares_outstanding}
 - **Share Price Impact:** [Per Share Earnings] × {pe_ratio} = $[Amount] per share
 
 If no margin impact in news: "No margin impact specified in news. Contribution = $0.00"
@@ -185,7 +185,7 @@ Justification: [Based on news specificity, company track record, market conditio
 
 **CURRENT STATE:**
 - Current Price: {current_price_str}
-- Quantitative Target: ${target_price:.2f}
+- Quantitative Target: ${target_price}
 - Required Upside: [Calculate: (target/current - 1) × 100]%
 - Price Gap: $[Calculate: target - current]
 
@@ -195,7 +195,7 @@ Justification: [Based on news specificity, company track record, market conditio
 - News-Implied Price: {current_price_str} + $[Impact] = $[Calculate]
 
 **GAP ANALYSIS:**
-- Target Price: ${target_price:.2f}
+- Target Price: ${target_price}
 - News-Implied Price: $[From above]
 - Unexplained Gap: $[Difference]
 - Unexplained Gap %: [X]% of total required upside
@@ -223,7 +223,79 @@ Justification: [Based on news specificity, company track record, market conditio
 
 **CONCLUSION:**
 
-[2-3 sentences providing direct assessment of whether the ${target_price:.2f} target is achievable based on the mathematical analysis of news catalysts. Be explicit about confidence level and key gaps that need to be filled for target achievement.]
+[2-3 sentences providing direct assessment of whether the ${target_price} target is achievable based on the mathematical analysis of news catalysts. Be explicit about confidence level and key gaps that need to be filled for target achievement.]
+
+═══════════════════════════════════════════════════════════
+
+## **V. STRUCTURED OUTPUT FOR TARGET PRICE BRIDGE INTEGRATION**
+
+═══════════════════════════════════════════════════════════
+
+**CATALYST ANALYSIS SUMMARY (For Downstream Chaining):**
+
+**A. NEWS-DRIVEN IMPACT COMPONENTS**
+
+- **Total Revenue Impact:** $[Amount] per share
+- **Total Margin Impact:** $[Amount] per share
+- **Total Multiple Impact:** $[Amount] per share
+- **Aggregate News Impact:** $[Sum of above] per share
+- **Probability-Weighted Impact:** $[Amount] per share
+
+**B. GAP ANALYSIS METRICS**
+
+- **Current Price:** {current_price_str}
+- **Target Price:** ${target_price}
+- **Price Gap:** $[Amount]
+- **News-Implied Price:** $[Amount]
+- **Unexplained Gap:** $[Amount]
+- **Unexplained Gap Percentage:** [X]% of total required upside
+
+**C. EVIDENCE QUALITY ASSESSMENT**
+
+- **Achievability Verdict:** [HIGHLY ACHIEVABLE / ACHIEVABLE / CHALLENGING / UNLIKELY]
+- **Evidence Quality:** [Strong / Moderate / Weak]
+- **Confidence Level:** [High / Medium / Low]
+- **Catalysts Identified:** [Count] total catalysts
+- **Catalysts with Quantitative Evidence:** [Count] with specific $ amounts
+- **Timeline Coverage:** [Near-term / Medium-term / Long-term]
+
+**D. KEY FINDINGS FOR VALIDATION**
+
+**Revenue Growth Validation:**
+- News-supported revenue impact: $[Amount] per share
+- This represents [X]% of the required price gap
+- Assessment: [News SUPPORTS / PARTIALLY SUPPORTS / DOES NOT SUPPORT expected revenue growth]
+
+**Margin Expansion Validation:**
+- News-supported margin impact: $[Amount] per share
+- This represents [Y]% of the required price gap
+- Assessment: [News SUPPORTS / PARTIALLY SUPPORTS / DOES NOT SUPPORT expected margin expansion]
+
+**Multiple Re-rating Validation:**
+- News-supported multiple impact: $[Amount] per share
+- Current sentiment: {sentiment_rating}
+- Assessment: [Sentiment SUPPORTS / NEUTRAL / CONTRADICTS expected multiple expansion]
+
+**E. CRITICAL DEPENDENCIES & RISKS**
+
+**Top 3 Dependencies:**
+1. [Most critical catalyst with $ impact and timeline]
+2. [Second most critical catalyst with $ impact and timeline]
+3. [Third most critical catalyst with $ impact and timeline]
+
+**Top 3 Risks:**
+1. [Most significant risk with potential $ impact]
+2. [Second most significant risk with potential $ impact]
+3. [Third most significant risk with potential $ impact]
+
+**F. RECOMMENDATION FOR TARGET PRICE BRIDGE**
+
+Based on news catalyst analysis:
+- **Use news-supported impacts:** [YES / PARTIAL / NO]
+- **Confidence in revenue component:** [High / Medium / Low]
+- **Confidence in margin component:** [High / Medium / Low]
+- **Confidence in multiple component:** [High / Medium / Low]
+- **Overall target achievability:** [HIGHLY ACHIEVABLE / ACHIEVABLE / CHALLENGING / UNLIKELY]
 
 ---
 
@@ -232,94 +304,5 @@ Justification: [Based on news specificity, company track record, market conditio
 - All news citations include exact quotes and URLs ✓
 - Evidence-Zero Rule applied (no unsupported assumptions) ✓
 - Three-component framework used consistently ✓
-- Probability-weighted impacts calculated ✓ulation/Market shift/Customer concentration]
-- **Timeline:** [CRITICAL: Extract actual timeline from news articles if mentioned. If no specific timeline in articles, use logical future dates from December 2024 onwards based on risk nature - Q1 2025, Q2 2025, H1 2025, H2 2025, 2025, 2026, etc.]
-- **Probability:** [Assessment with reasoning]
-- **Evidence Base:** [What signals suggest this risk]
-- **Revenue Impact:** Could decrease segment revenue by [X-Y]% = $[Amount] impact
-- **Defensive Moats:** [What protects against this risk]
-
-**Risk 2: [Specific Threat]**
-[Same structure]
-
-**SEGMENT CATALYST SCORE:** [Net positive/negative outlook with reasoning]
-
-═══════════════════════════════════════════════════════════
-
-## **III. PORTFOLIO-LEVEL CATALYST SYNTHESIS**
-
-**A. CROSS-SEGMENT CATALYST RANKING**
-
-Rank top 5 catalysts by total company impact:
-
-**#1 CATALYST: [Name] - [Segment]**
-- **Company Revenue Impact:** [X]% of total (affects [Y]% segment = [Z]% company impact)
-- **Probability × Impact Score:** [Calculation]
-- **Strategic Significance:** [Why this matters most for company trajectory]
-
-**#2 CATALYST: [Name] - [Segment]**
-[Continue ranking]
-
-**B. CATALYST CORRELATION ANALYSIS**
-- **Positive Momentum Themes:** [Are multiple positive catalysts related? Economic cycle, technology adoption, etc.]
-- **Risk Clustering:** [Are negative catalysts correlated? Could multiple hit simultaneously?]
-- **Diversification Benefit:** Portfolio [does/doesn't] provide catalyst risk diversification because [reason]
-
-═══════════════════════════════════════════════════════════
-
-## **IV. QUANTITATIVE INTEGRATION & INVESTMENT THESIS**
-
-**A. CATALYST-DRIVEN SCENARIO MODELING**
-
-**Base Case (Current Trajectory):**
-- Assumes [X] positive catalysts materialize, [Y] risks contained
-- Revenue Impact: [Current] → [Projected] = [Growth]%
-- Margin Impact: [Current] → [Projected] based on segment mix shift
-- Implied Valuation: $[Price] ([Premium/Discount] to current {current_price_str})
-
-**Bull Case (Positive Catalysts Converge):**
-- Top 3 positive catalysts materialize within 18 months
-- Revenue uplift: [X]% from catalyst realization
-- Multiple expansion from [Current P/E] to [Target P/E] due to [growth/quality improvement]
-- **Price Target:** $[Amount] ([X]% upside)
-
-**Bear Case (Risk Materialization):**
-- Key negative catalysts impact largest segments
-- Revenue decline: [X]% from risk realization  
-- Multiple compression due to [growth concerns/margin pressure]
-- **Downside Target:** $[Amount] ([X]% downside)
-
-**B. FINANCIAL METRICS VALIDATION**
-
-**Current Metrics Support Catalyst Analysis:**
-- Revenue Growth {revenue_growth:.1f}%: [Consistent/Inconsistent] with identified growth catalysts
-- Margin Profile: {operating_margin:.1f}% operating margin [supports/challenges] catalyst assumptions
-- Cash Generation: ${free_cash_flow:,.0f} FCF [provides/limits] investment capacity for growth catalysts
-- Balance Sheet: {debt_to_equity} D/E ratio [enables/constrains] strategic flexibility
-
-**Catalyst Probability Weighting:**
-- Positive catalysts probability-weighted impact: +[X]% revenue
-- Negative catalysts probability-weighted impact: -[Y]% revenue  
-- **Net Expected Impact:** [Z]% revenue change over 24 months
-
-═══════════════════════════════════════════════════════════
-
-## **V. INVESTMENT RECOMMENDATION**
-
-**OVERALL ASSESSMENT:**
-- **Portfolio Quality:** [Strong/Average/Weak] based on diversification and competitive positioning
-- **Catalyst Balance:** [Positive/Neutral/Negative] skew with [reasoning]
-- **Execution Risk:** [Low/Medium/High] based on management track record and complexity
-
-**PRICE TARGET RECONCILIATION:**
-- Catalyst-Adjusted Target: $[Amount] 
-- Current Price: {current_price_str}
-- **Recommendation:** [BUY/HOLD/SELL] with [X]% [upside/downside]
-
-**KEY CATALYSTS TO MONITOR:**
-1. [Most important positive catalyst with timeline]
-2. [Most important risk with timeline]  
-3. [Wildcard catalyst that could change everything]
-
-**INVESTMENT RATIONALE:**
-[2-3 sentences synthesizing portfolio analysis, catalyst assessment, and quantitative metrics into clear investment thesis]
+- Probability-weighted impacts calculated ✓
+- Structured output formatted for downstream chaining ✓
