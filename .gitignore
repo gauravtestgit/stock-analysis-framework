@@ -40,3 +40,4 @@ logs/
 __pycache__/
 .pyc
 .pyo
+src/share_insights_v1/tmp/

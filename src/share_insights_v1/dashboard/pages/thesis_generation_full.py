@@ -880,7 +880,13 @@ def display_overview_tab(ticker, data, analyses):
     }
     </style>
     """, unsafe_allow_html=True)
+    # Company info
+    st.markdown("### 🏛️ Company Information")
+    st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
+    st.markdown(f"**Industry:** {industry}")
+    st.markdown(f"**Sector:** {sector}")
     
+    st.markdown("---")
     # Business Summary
     financial_metrics = data.get('financial_metrics', {})
     business_summary = financial_metrics.get('business_summary', '')
@@ -1011,13 +1017,7 @@ def display_overview_tab(ticker, data, analyses):
     
     st.markdown("---")
     
-    # Company info
-    st.markdown("### 🏛️ Company Information")
-    st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
-    st.markdown(f"**Industry:** {industry}")
-    st.markdown(f"**Sector:** {sector}")
-    
-    st.markdown("---")
+   
     st.markdown("### 📈 Analysis Methods Run")
     
     # Create summary table of all analyses

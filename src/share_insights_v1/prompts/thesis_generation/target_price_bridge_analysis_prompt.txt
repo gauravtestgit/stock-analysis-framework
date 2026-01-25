@@ -699,7 +699,7 @@ The ${target_price} target price requires [X]% upside from {current_price_str}, 
 ═══════════════════════════════════════════════════════════
 
 **MODEL TARGET (${target_price}) ASSESSMENT:**
-- **Overall Feasibility:** if target price(s) or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
+- **Overall Feasibility:** if {target_price} or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
 - **Confidence Level:** [High/Medium/Low] based on evidence quality
 - **Critical Dependencies:** [2-3 factors that MUST occur]
 - **Timeline Realism:** [Whether catalyst timelines support target]
@@ -707,7 +707,7 @@ The ${target_price} target price requires [X]% upside from {current_price_str}, 
 - **Realistic Target (if needed):** $[Amount if feasibility is CHALLENGING/UNLIKELY]
 
 **ANALYST CONSENSUS TARGET ({analyst_consensus_target}) ASSESSMENT:**
-- **Overall Feasibility:** [ACHIEVABLE / CHALLENGING / UNLIKELY]
+- **Overall Feasibility:** if {analyst_consensus_target} price or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
 - **Confidence Level:** [High/Medium/Low] based on evidence quality
 - **Critical Dependencies:** [2-3 factors that MUST occur]
 - **Timeline Realism:** [Whether catalyst timelines support target]
