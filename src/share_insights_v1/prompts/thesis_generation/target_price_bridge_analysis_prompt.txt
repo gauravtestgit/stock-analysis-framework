@@ -25,7 +25,7 @@ if target price is not achievable, based on the available evidence, estimate the
 🚫 NO GENERALIZATIONS: If a segment's growth isn't explicitly mentioned in the news articles provided, do not say 'Industry trends suggest...' Instead, state 'Specific segment catalyst not found in provided news data' and rely on the provided base growth rate.
 ✅ THE EVIDENCE-ZERO RULE: If the provided news articles do not explicitly state a margin expansion target or a specific revenue acceleration figure, you must set the Value Contribution for that component to $0.00. You are forbidden from "assuming" or "estimating" improvements to bridge the gap. Any unexplained portion of the price gap must be pushed to the Multiple Re-rating (Residual).
 FORMATTING COMMAND: 
-✅ SPACING RULE: Always include a space before and after every numerical value and symbol
+✅ SPACING RULE: Critical: Ensure exactly one space before and after every numerical value and symbol
 ✅ CURRENCY: Use standard Markdown (e.g., $24.92). Never omit the "$" symbol.
 ✅ PERCENTAGES: Always use the "%" symbol (e.g., 20.3%).
 🚫 STOP SMASHING WORDS: Do NOT use LaTeX for stock prices or percentages. Use Markdown (e.g., $7.26).
@@ -395,6 +395,7 @@ The ${target_price:.2f} target price requires [X]% upside from {current_price_st
 - **Critical Dependencies:** [2-3 factors that MUST occur for target to be reached]
 - **Timeline Realism:** [Whether catalyst timelines support target achievement]
 - **Evidence Strength:** [Strong/Moderate/Weak - based on news and data quality]
+- **Realistic Target:** [if overall feasibility is CHALLENGING or UNLIKELY, provide the realistic target based on the available data.]
 
 **VERDICT:** [2-3 sentences stating whether the quantitatively-generated target price of ${target_price:.2f} is realistically achievable given the identified catalysts, their probabilities, and timelines. Be direct about feasibility concerns if the required assumptions appear aggressive or unsupported by evidence.]
 
