@@ -882,6 +882,8 @@ def display_overview_tab(ticker, data, analyses):
     """, unsafe_allow_html=True)
     # Company info
     st.markdown("### 🏛️ Company Information")
+    industry = financial_metrics.get('industry', 'N/A')
+    sector = financial_metrics.get('sector', 'N/A')
     st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
     st.markdown(f"**Industry:** {industry}")
     st.markdown(f"**Sector:** {sector}")
