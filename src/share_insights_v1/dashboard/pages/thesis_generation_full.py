@@ -881,6 +881,7 @@ def display_overview_tab(ticker, data, analyses):
     </style>
     """, unsafe_allow_html=True)
     # Company info
+    financial_metrics = data.get('financial_metrics', {})
     st.markdown("### 🏛️ Company Information")
     industry = financial_metrics.get('industry', 'N/A')
     sector = financial_metrics.get('sector', 'N/A')
@@ -890,7 +891,7 @@ def display_overview_tab(ticker, data, analyses):
     
     st.markdown("---")
     # Business Summary
-    financial_metrics = data.get('financial_metrics', {})
+    
     business_summary = financial_metrics.get('business_summary', '')
     if business_summary:
         st.markdown("### 📋 Business Summary")
