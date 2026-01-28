@@ -134,11 +134,15 @@ You will perform the bridge analysis for BOTH targets using the same methodology
 **2. REVENUE GROWTH COMPONENT (The Volume Driver)**
 Base Case Logic: Use the "Revenue Growth" rate provided in the COMPREHENSIVE FINANCIAL FOUNDATION (e.g., 20.3%) as the default baseline.
 
-Acceleration Audit: Search the news articles for evidence of revenue acceleration (e.g., "growth is expected to pick up," "new product launch," "market expansion").
+Acceleration Audit: Search the news articles for evidence of FORWARD-LOOKING revenue growth projections (e.g., "analysts expect growth of X%," "management guides to Y% growth," "projected revenue growth of Z%").
 
-Rule: > * If News Evidence Found: Add the acceleration percentage to the Base Case.
+Rule: 
+* If News Evidence Found with FORWARD-LOOKING growth rate: REPLACE the Base Case with the news-based forward growth rate. DO NOT add them together - the news rate is a forward projection that supersedes historical data.
+* If News Evidence Found with INCREMENTAL catalyst (e.g., "new product expected to add $X revenue"): Calculate the incremental % and ADD to Base Case.
+* If NO News Evidence Found: Use the Base Case only. Do NOT set to 0.00% unless the Foundation data itself shows 0% or negative growth.
 
-If NO News Evidence Found: Use the Base Case only. Do NOT set to 0.00% unless the Foundation data itself shows 0% or negative growth.
+IMPORTANT: Historical growth (backward-looking) and forward projections (forward-looking) should NOT be added together. Use forward projections when available, otherwise use historical growth.
+
 Formula: (Target Revenue / Current Revenue - 1) × Current Price
 
 **Step-by-Step Calculation:**

@@ -8,18 +8,25 @@ A comprehensive stock analysis framework with multiple valuation methods, analys
 
 #### 1. Analysis Orchestrator
 - **Location**: `src/share_insights_v1/services/orchestration/analysis_orchestrator.py`
-- **Purpose**: Central orchestrator managing 8+ specialized analyzers
+- **Purpose**: Central orchestrator managing 14 specialized analyzers
 - **Features**: Company type classification, analyzer registration, consensus scoring
 
-#### 2. Specialized Analyzers
-- **Fundamental Analysis**: Most comprehensive approach examining financial statements, key ratios (P/E, debt-to-equity, ROE), competitive position, management quality, and industry trends with financial modeling for intrinsic value estimation
-- **Technical Analysis**: Price pattern and trading data analysis using charts, support/resistance levels, moving averages, RSI indicators, and volume analysis to predict future movements based on historical patterns
-- **Valuation Analysis**: Intrinsic worth calculation using DCF models, comparable company analysis, and precedent transaction analysis to determine overvaluation/undervaluation relative to fair value
-- **Industry & Competitive Analysis**: Market context evaluation including size/growth rates, competitive dynamics (Porter's Five Forces), regulatory environment, and technological disruption assessment
-- **Qualitative Analysis**: Non-quantifiable factor assessment including management track record, corporate governance, brand strength, litigation risks, and reputational considerations
-- **Event-Driven Analysis**: Catalyst-focused evaluation of earnings releases, M&A activity, product launches, and regulatory decisions with significant price impact potential
-- **AI Insights**: LLM-powered business analysis combining multiple data sources for comprehensive assessment
-- **News Sentiment**: Real-time news impact assessment on stock recommendations
+#### 2. Specialized Analyzers (14 Total)
+- **Location**: `src/share_insights_v1/implementations/analyzers/`
+- **DCF Analyzer**: Discounted Cash Flow valuation with free cash flow projections, WACC calculation, and terminal value estimation
+- **Comparable Analyzer**: Peer company valuation using P/E, P/B, P/S multiples with sector-specific adjustments
+- **Technical Analyzer**: Price pattern analysis with RSI, MACD, Bollinger Bands, Stochastic, ADX indicators and trend identification
+- **AI Insights Analyzer**: LLM-powered business analysis combining financial metrics, market position, and growth prospects
+- **News Sentiment Analyzer**: Real-time news sentiment analysis with enhanced fact extraction for thesis generation
+- **Business Model Analyzer**: Revenue model, cost structure, and business sustainability assessment
+- **Competitive Position Analyzer**: Market share, competitive advantages, and Porter's Five Forces analysis
+- **Management Quality Analyzer**: Leadership assessment, governance structure, and insider ownership evaluation
+- **Financial Health Analyzer**: Balance sheet strength, liquidity ratios, and solvency analysis using SEC EDGAR data
+- **Analyst Consensus Analyzer**: Professional analyst price targets, recommendations, and consensus ratings
+- **Revenue Stream Analyzer**: Revenue diversification, segment analysis, and growth driver identification
+- **Industry Analysis Analyzer**: Sector trends, market dynamics, and competitive landscape evaluation
+- **Startup Analyzer**: Early-stage company analysis focusing on growth metrics and burn rate
+- **Peer Comparison Analyzer**: Direct peer benchmarking across financial and operational metrics
 
 #### 3. API Layer
 - **Location**: `src/share_insights_v1/api/`
@@ -95,9 +102,9 @@ batch_service = BatchAnalysisService(save_to_db=True)
 
 #### 1. LLM Provider Setup
 - **Location**: `src/share_insights_v1/implementations/llm_providers/`
-- **Providers**: OpenAI, Anthropic, Groq, Ollama support
-- **Configuration**: Environment-based provider selection with fallback chain
-- **Models**: GPT-4, Claude-3, Llama-3, Mixtral support
+- **Providers**: OpenAI (GPT-4), Groq (Llama-3, Mixtral), xAI (Grok)
+- **Configuration**: YAML-based provider selection (`config/llm_config.yaml`) with automatic fallback
+- **Models**: GPT-4, GPT-4o-mini, Llama-3.1, Llama-3.3, Mixtral-8x7b, Grok-beta
 
 #### 2. LLM Data Flow Architecture
 ```
@@ -112,21 +119,22 @@ Stock Analysis Request → LLM Provider Factory → Selected Provider → Model 
 ```python
 # Environment Variables Required
 OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
 GROQ_API_KEY=your_groq_key
+XAI_API_KEY=your_xai_key
 
-# Provider Selection (automatic fallback)
-# 1. OpenAI GPT-4 (primary)
-# 2. Anthropic Claude-3 (fallback)
-# 3. Groq Mixtral (fallback)
-# 4. Ollama Local (fallback)
+# Provider Selection (automatic fallback via llm_config.yaml)
+# 1. Groq Llama-3.3 (primary - fast and cost-effective)
+# 2. OpenAI GPT-4o-mini (fallback)
+# 3. xAI Grok-beta (fallback)
+# Configuration managed in: src/share_insights_v1/config/llm_config.yaml
 ```
 
 #### 4. LLM Integration Points
-- **AI Insights Analyzer**: `src/share_insights_v1/services/analyzers/ai_insights_analyzer.py`
-- **News Sentiment Analyzer**: Real-time news analysis with LLM processing
-- **Thesis Generation**: Professional investment thesis creation
-- **Qualitative Analysis**: Management and governance assessment
+- **AI Insights Analyzer**: `src/share_insights_v1/implementations/analyzers/ai_insights_analyzer.py`
+- **News Sentiment Analyzer**: `src/share_insights_v1/implementations/analyzers/news_sentiment_analyzer.py`
+- **Thesis Generation**: `src/share_insights_v1/dashboard/pages/thesis_generation_full.py`
+- **Business Model Analysis**: LLM-powered business model evaluation
+- **Management Quality**: LLM-assisted governance and leadership assessment
 
 ### Recent Financial Data Fixes (December 2024)
 
@@ -293,13 +301,30 @@ src/share_insights_v1/
 │   ├── analyzers/          # Individual analysis methods (including AI insights)
 │   └── batch/              # Batch processing services
 ├── implementations/
+│   ├── analyzers/          # 14 specialized analyzers
+│   │   ├── dcf_analyzer.py
+│   │   ├── comparable_analyzer.py
+│   │   ├── technical_analyzer.py
+│   │   ├── ai_insights_analyzer.py
+│   │   ├── news_sentiment_analyzer.py
+│   │   ├── business_model_analyzer.py
+│   │   ├── competitive_position_analyzer.py
+│   │   ├── management_quality_analyzer.py
+│   │   ├── financial_health_analyzer.py
+│   │   ├── analyst_consensus_analyzer.py
+│   │   ├── revenue_stream_analyzer.py
+│   │   ├── industry_analysis_analyzer.py
+│   │   ├── startup_analyzer.py
+│   │   └── peer_comparison_analyzer.py
 │   ├── llm_providers/      # LLM provider implementations
 │   │   ├── openai_provider.py      # OpenAI GPT integration
-│   │   ├── anthropic_provider.py   # Anthropic Claude integration
-│   │   ├── groq_provider.py        # Groq Mixtral integration
-│   │   └── ollama_provider.py      # Local Ollama integration
+│   │   ├── groq_provider.py        # Groq Llama/Mixtral integration
+│   │   ├── xai_provider.py         # xAI Grok integration
+│   │   └── llm_manager.py          # Provider management and fallback
 │   └── data_providers/
-│       └── yahoo_provider.py       # Yahoo Finance data (with JSON serialization fixes)
+│       ├── yahoo_provider.py       # Yahoo Finance data (with JSON serialization fixes)
+│       ├── sec_edgar_provider.py   # SEC EDGAR financial data
+│       └── yahoo_peer_provider.py  # Peer comparison data
 ├── dashboard/              # Streamlit dashboard components
 │   └── pages/
 │       ├── thesis_generation_full.py  # Professional thesis generation (with financial charts)
@@ -329,6 +354,15 @@ src/share_insights_v1/
 - **Recommendations**: Buy/Hold/Sell with confidence scores
 - **Alignment Scores**: Agreement with professional analysts
 - **Quality Grades**: Data reliability and analysis confidence
+
+## Known Limitations
+
+### News Data Freshness (yfinance API)
+- **Issue**: For small-cap stocks, yfinance may return stale/cached news that doesn't match Yahoo Finance website
+- **Cause**: yfinance library uses a different API endpoint than the website with slower update cycles
+- **Impact**: Small-cap stocks may show news from weeks/months ago instead of latest articles
+- **Workaround**: None available - this is a yfinance library limitation
+- **Note**: Large-cap stocks (AAPL, MSFT, etc.) typically have fresher news data
 
 ## Recent Updates & Fixes (December 2024)
 

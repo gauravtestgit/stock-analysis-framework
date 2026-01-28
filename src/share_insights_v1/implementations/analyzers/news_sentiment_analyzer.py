@@ -92,11 +92,20 @@ class NewsSentimentAnalyzer(IAnalyzer):
                 debug_print(f"No news found for {ticker}")
                 return None
             
-
+            # Sort news by date (newest first) before limiting
+            try:
+                news_data_sorted = sorted(
+                    news_data,
+                    key=lambda x: x.get('content', {}).get('pubDate', ''),
+                    reverse=True
+                )
+            except Exception as e:
+                debug_print(f"Warning: Could not sort news by date for {ticker}: {e}")
+                news_data_sorted = news_data  # Use unsorted if sorting fails
             
             processed_news = []
-            # Limit to configured number of articles for processing
-            for news_item in news_data[:self.max_articles]:
+            # Limit to configured number of articles for processing (now sorted by date)
+            for news_item in news_data_sorted[:self.max_articles]:
                 # Extract content from nested structure
                 content = news_item.get('content', {})
                 

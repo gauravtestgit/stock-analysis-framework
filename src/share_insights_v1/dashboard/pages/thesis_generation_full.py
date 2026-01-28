@@ -352,15 +352,14 @@ def show_thesis_generation():
                         show_prompt=True
                     )
     
-    # Display persisted batch results if available (only if not just displayed)
+    # Display persisted batch results if available
     if 'batch_results' in st.session_state and 'batch_timing' in st.session_state:
-        # Check if we just ran a batch analysis (results would already be displayed)
-        if 'batch_just_completed' not in st.session_state or not st.session_state.batch_just_completed:
-            st.markdown("---")
-            st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
-            display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
-        else:
-            # Clear the flag after checking
+        st.markdown("---")
+        st.subheader(f"📊 Previous Batch Analysis Results ({len(st.session_state.batch_watchlist)} stocks)")
+        display_batch_results(st.session_state.batch_results, st.session_state.batch_timing)
+        
+        # Clear the batch_just_completed flag after displaying
+        if 'batch_just_completed' in st.session_state:
             st.session_state.batch_just_completed = False
         
         # Batch thesis generation section
@@ -527,7 +526,12 @@ def analyze_watchlist_batch(watchlist, selected_analyzers=None, llm_manager=None
     # Set flag to indicate batch just completed
     st.session_state.batch_just_completed = True
     
-    display_batch_results(results, batch_timing)
+    # Don't call display_batch_results here - let the rerun handle it
+    # display_batch_results(results, batch_timing)
+    
+    # Clear progress indicators before rerun
+    progress_bar.empty()
+    status_text.empty()
 
 def analyze_single_stock_api(ticker, selected_analyzers=None, llm_provider=None, llm_model=None, max_news_articles=5):
     """Analyze a single stock via API - helper function for parallel execution"""
@@ -880,16 +884,10 @@ def display_overview_tab(ticker, data, analyses):
     }
     </style>
     """, unsafe_allow_html=True)
-    # Company info
-    financial_metrics = data.get('financial_metrics', {})
-    st.markdown("### 🏛️ Company Information")
-    industry = financial_metrics.get('industry', 'N/A')
-    sector = financial_metrics.get('sector', 'N/A')
-    st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
-    st.markdown(f"**Industry:** {industry}")
-    st.markdown(f"**Sector:** {sector}")
     
-    st.markdown("---")
+    financial_metrics = data.get('financial_metrics', {})
+    
+    
     # Business Summary
     
     business_summary = financial_metrics.get('business_summary', '')
@@ -898,6 +896,16 @@ def display_overview_tab(ticker, data, analyses):
         st.write(business_summary)
         st.markdown("---")
     
+    # Company info
+    
+    st.markdown("### 🏛️ Company Information")
+    industry = financial_metrics.get('industry', 'N/A')
+    sector = financial_metrics.get('sector', 'N/A')
+    st.markdown(f"**Company Type:** {data.get('company_type', 'N/A')}")
+    st.markdown(f"**Industry:** {industry}")
+    st.markdown(f"**Sector:** {sector}")
+    st.markdown("---")
+
     # Basic Info Cards
     st.markdown("### 📊 Key Metrics")
     col1, col2, col3, col4, col5 = st.columns(5)
