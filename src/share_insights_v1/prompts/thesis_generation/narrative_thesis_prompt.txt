@@ -1,0 +1,106 @@
+Generate a compelling investment analysis for {ticker} in a narrative style similar to professional equity research.
+
+**CONTEXT & CURRENT SITUATION**
+Write an opening paragraph that sets the stage:
+- What phase is the company in? Use company_type ({company_type}), profitability trends, and growth metrics to determine if "navigating transition from growth to profitability", "emerging from restructuring", "riding secular tailwinds", etc.
+- Recent price action: Current {current_price_str}
+- Market sentiment: Use technical analysis trend, RSI, and news sentiment ({sentiment_rating}) to describe momentum
+
+**FINANCIAL SNAPSHOT (As of Analysis Date)**
+Present key metrics in digestible format:
+- Current Price: {current_price_str}
+- Market Cap: {market_cap} | P/E: {pe_ratio}x | EV/EBITDA: {ev_ebitda_multiple}x
+- Valuation Assessment: Compare {pe_ratio}x P/E to {industry} average and {earnings_growth}% earnings growth - is this "cheap" or "expensive"?
+- Profitability: Net income {latest_net_income} | FCF {free_cash_flow} | Margins: Gross {gross_margin}%, Operating {operating_margin}%, Net {net_margin}%
+- Key Ratios: ROE {roe}% | ROA {roa}% | Debt/Equity {debt_to_equity} | Current Ratio {current_ratio}
+
+**KEY INVESTMENT DRIVERS** (3-5 compelling themes)
+Create memorable strategic themes from the analysis data:
+
+1. **[Business Model Theme]** - Synthesize from business_model_analyzer and revenue_stream_analyzer
+   - Core advantage: Use competitive_position_analyzer strengths
+   - Revenue diversification: {business_segments} generating {revenue_breakdown}
+   - Growth trajectory: {revenue_growth}% revenue growth, {earnings_growth}% earnings growth, {net_income_growth}% net income growth
+
+2. **[Competitive Moat]** - Synthesize from competitive_position_analyzer and industry_analysis_analyzer
+   - Market position: {competitive_position}
+   - Competitive advantages: {strengths}
+   - Industry dynamics: {industry_outlook}
+   - Porter's Five Forces insights from analysis
+
+3. **[Financial Story]** - Synthesize from financial_health_analyzer and cash flow data
+   - Cash generation: FCF {free_cash_flow}, Operating CF {latest_operating_cf}
+   - Capital allocation: Analyze dividend_yield ({dividend_yield}), payout_ratio ({payout_ratio}), debt trends
+   - Balance sheet: Cash vs debt position
+
+**RECENT CATALYSTS & NEWS FLOW**
+Synthesize news_sentiment_analyzer data into narrative:
+- Key developments: {key_developments}
+- Sentiment: {sentiment_rating} from {news_count} recent articles
+- What's moving the stock? Synthesize enhanced_news_facts into story: {enhanced_news_facts}
+- Reference specific sources with URLs: {news_sources_with_urls}
+- Connect news to price action
+
+**RISKS & BEAR CASE**
+Present the counter-argument using risk_factors from all analyzers:
+- Primary Risk Factors: {risks}
+- Competitive Threats: Use competitive_position_analyzer and industry_analysis_analyzer to identify disruption risks
+- Technical Momentum: Interpret trend and momentum indicators
+- Valuation Risk: At {pe_ratio}x P/E with {earnings_growth}% growth, what's priced in? Compare to {industry} peers
+- Financial Health Risks: Use financial_health_analyzer concerns
+
+**VALUATION & PRICE TARGET**
+Synthesize dcf_analyzer, comparable_analyzer, analyst_consensus_analyzer:
+- Algorithmic Target: {target_price} vs Current {current_price_str}
+- Method Consensus: {method_agreement} - {consensus_strength}
+- DCF Fair Value: Extract from dcf_analyzer with key assumptions (WACC, terminal growth, FCF CAGR)
+- Comparable Multiples: Extract from comparable_analyzer with peer benchmarks
+- Analyst Consensus: {analyst_count} analysts, target {target_median_price}, recommendation
+- Cross-Validation: Do all methods point same direction or diverge?
+
+**THE VERDICT: ANALYST CONSENSUS & RECOMMENDATION**
+Create table from analyst_consensus_analyzer data:
+| Rating | Count/Percentage |
+|--------|------------------|
+| Strong Buy/Buy | Calculate from recommendation_mean and analyst_count |
+| Hold | Calculate from recommendation_mean distribution |
+| Sell | Calculate from recommendation_mean distribution |
+| Average Target | {average_target} (represents upside) |
+
+Note: recommendation_mean scale: 1.0=Strong Buy, 2.0=Buy, 3.0=Hold, 4.0=Sell, 5.0=Strong Sell
+
+**SUMMARY: THE INVESTMENT THESIS IN ONE PARAGRAPH**
+Synthesize all analyzer outputs into clear, actionable takeaway:
+- Story Type: Use company_type, growth metrics, profitability to classify as "show me story", "turnaround play", "compounder", "value trap", "growth story", etc.
+- Current Setup: Use technical analysis and valuation to determine if "value entry point" or "falling knife"
+- Risk/Reward: Calculate from target_price vs current_price with probability weighting from method_agreement
+- Final Recommendation: Synthesize from all analyzers' recommendations with confidence based on consensus_strength
+
+**COMPREHENSIVE DATA PROVIDED IN ANALYSIS:**
+All data from 14 analyzers is available. Key data points:
+- Financial Metrics: market_cap, enterprise_value, pe_ratio, ps_ratio, pb_ratio, ev_ebitda_multiple, margins, growth rates, ratios
+- Technical Analysis: trend, momentum indicators, volume analysis
+- DCF Analysis: fair_value, wacc, terminal_growth_rate, fcf_cagr, quality_adjustments
+- Comparable Analysis: peer_multiples, sector_adjustments, fair_value_range
+- News Sentiment: overall_sentiment_score, sentiment_rating, enhanced_news_facts, key_developments
+- Business Model: revenue_model, cost_structure, competitive_advantages
+- Competitive Position: market_share, porter_five_forces, competitive_threats
+- Financial Health: liquidity_ratios, solvency_ratios, balance_sheet_strength
+- Analyst Consensus: target_mean_price, recommendation_mean, analyst_count
+- Revenue Streams: business_segments, revenue_breakdown, diversification_score
+- Industry Analysis: industry_outlook, sector_trends, regulatory_environment
+- Management Quality: governance_score, insider_ownership, management_effectiveness
+
+**CRITICAL GUIDELINES:**
+✅ Write in engaging narrative style like Gemini/professional equity research
+✅ Use specific numbers from analysis data throughout (don't say "strong growth" - say "23% revenue growth")
+✅ Create memorable strategic theme names ("Platform Flywheel", "Margin Expansion Story") from business model data
+✅ Balance bull case with clear bear case using risk_factors from analyzers
+✅ Provide actionable one-paragraph summary with clear recommendation
+✅ Reference specific news URLs from news_sentiment_analyzer
+✅ Use technical indicators to describe momentum
+✅ Compare valuation to industry peers using comparable_analyzer data
+❌ Don't use generic phrases - be specific with data
+❌ Don't list bullet points - write flowing paragraphs
+❌ Don't validate methodology - focus on investment insights
+❌ Don't force artificial balance - let analyzer consensus drive conclusion
