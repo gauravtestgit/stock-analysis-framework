@@ -224,8 +224,16 @@ Formula: Total Price Gap - (Revenue Growth Value + Margin Expansion Value)
 - **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Z]%
 - Implied P/E at Target: Calculate: Target Price / Forward EPS = ${target_price} / {forward_eps}
 - Current P/E: {pe_ratio}
-- Multiple Expansion Required: Calculate: (Implied P/E / Current P/E - 1) × 100 = [X]%
-Hard Stop: If the Required Expansion is > 20% and news sentiment is "Neutral," the Achievability Verdict MUST be "CHALLENGING" or "UNLIKELY."
+- Multiple Change Required: Calculate: (Implied P/E / Current P/E - 1) × 100 = [X]%
+  * Positive = Expansion needed
+  * Negative = Contraction needed
+
+**Achievability Rules:**
+- If Multiple EXPANSION > 20% AND sentiment is Neutral/Negative: Target is CHALLENGING
+- If Multiple CONTRACTION > 20% (i.e., < -20%) AND sentiment is Neutral/Positive: Target is CHALLENGING
+- If Multiple EXPANSION > 20% AND sentiment is Positive: Target is ACHIEVABLE (sentiment supports re-rating)
+- If Multiple CONTRACTION > 20% AND sentiment is Negative: Target is ACHIEVABLE (sentiment supports de-rating)
+- If Multiple change < ±20%: Target is REASONABLE regardless of sentiment
 Mandatory: You must assign the entire remaining balance to this component. This captures:
 - P/E multiple expansion from [Current P/E] to [Implied P/E]
 - Market sentiment improvement from {sentiment_rating}
