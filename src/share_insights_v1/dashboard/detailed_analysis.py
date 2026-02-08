@@ -1196,20 +1196,76 @@ def display_horizontal_stock_cards(results):
         # Technical Card with modal
         if 'technical' in analyses:
             tech_data = analyses['technical']
+            support_resistance = tech_data.get('support_resistance', {})
+            support_levels = support_resistance.get('support_levels', [])
+            resistance_levels = support_resistance.get('resistance_levels', [])
+            fibonacci = support_resistance.get('fibonacci', {})
+            pivots = support_resistance.get('pivot_points', {})
+            
+            # Format support/resistance for display
+            support_str = ', '.join([f'${s:.2f}' for s in support_levels[:2]]) if support_levels else 'N/A'
+            resistance_str = ', '.join([f'${r:.2f}' for r in resistance_levels[:2]]) if resistance_levels else 'N/A'
+            
             indicators = ['rsi_14', 'ma_20', 'ma_50', 'ma_200', 'macd_line', 'macd_signal']
             indicators_html = ''.join([f"<p>• {indicator.upper()}: {tech_data.get(indicator, 'N/A')}</p>" for indicator in indicators if tech_data.get(indicator) is not None])
+            
+            # Support/Resistance HTML for modal
+            sr_html = f"""
+            <div style="margin-top: 15px;">
+                <h4>📍 Support & Resistance Levels</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <h5 style="color: #28a745;">🟢 Support Levels</h5>
+                        {''.join([f'<p>• Level {i+1}: ${s:.2f}</p>' for i, s in enumerate(support_levels)]) if support_levels else '<p>No support levels calculated</p>'}
+                    </div>
+                    <div>
+                        <h5 style="color: #dc3545;">🔴 Resistance Levels</h5>
+                        {''.join([f'<p>• Level {i+1}: ${r:.2f}</p>' for i, r in enumerate(resistance_levels)]) if resistance_levels else '<p>No resistance levels calculated</p>'}
+                    </div>
+                </div>
+            </div>
+            """
+            
+            # Fibonacci HTML for modal
+            fib_html = ""
+            if fibonacci:
+                fib_html = f"""
+                <div style="margin-top: 15px;">
+                    <h4>📐 Fibonacci Retracement Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        {''.join([f'<p>• {level.replace("level_", "")}: ${value:.2f}</p>' for level, value in fibonacci.items()]) if fibonacci else '<p>No Fibonacci levels calculated</p>'}
+                    </div>
+                </div>
+                """
+            
+            # Pivot Points HTML for modal
+            pivot_html = ""
+            if pivots:
+                pivot_html = f"""
+                <div style="margin-top: 15px;">
+                    <h4>⚖️ Pivot Points</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <p><strong>Pivot:</strong> ${pivots.get('pivot', 0):.2f}</p>
+                        <p style="color: #dc3545;"><strong>R1:</strong> ${pivots.get('r1', 0):.2f}</p>
+                        <p style="color: #dc3545;"><strong>R2:</strong> ${pivots.get('r2', 0):.2f}</p>
+                        <p style="color: #28a745;"><strong>S1:</strong> ${pivots.get('s1', 0):.2f}</p>
+                        <p style="color: #28a745;"><strong>S2:</strong> ${pivots.get('s2', 0):.2f}</p>
+                    </div>
+                </div>
+                """
             
             tech_card = f"""
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px; background: #fff; position: relative;">
                 <h5>📈 Technical</h5>
                 <p><strong>Rec:</strong> {tech_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${tech_data.get('predicted_price', 0) or 0:.2f}</p>
-                <p><strong>MACD Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
-                <p><strong>Volume:</strong> {tech_data.get('volume_trend', 'N/A')}</p>                
+                <p><strong>Trend:</strong> {tech_data.get('trend', 'N/A')}</p>
+                <p><strong>Support:</strong> {support_str}</p>
+                <p><strong>Resistance:</strong> {resistance_str}</p>
                 <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="tech_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div id="tech_{sanitized_ticker}_content" style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90%; overflow-y: auto; transition: all 0.3s ease;">
+                    <div id="tech_{sanitized_ticker}_content" style="background-color: white; margin: 2% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 1000px; max-height: 90%; overflow-y: auto; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3 style="margin: 0;">📈 {ticker} Technical Analysis Details</h3>
                             <div>
@@ -1219,16 +1275,16 @@ def display_horizontal_stock_cards(results):
                             </div>
                         </div>
                         
-                        <div style="display: flex; gap: 20px;">
-                            <div style="flex: 1;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
                                 <h4>Technical Indicators:</h4>
                                 {indicators_html}
                             </div>
-                            <div style="flex: 1;">
+                            <div style="flex: 1; min-width: 250px;">
                                 <h4>Technical Signals:</h4>
                                 {tech_data.get('technical_signals', 'N/A')}
                             </div>
-                            <div style="flex: 1;">
+                            <div style="flex: 1; min-width: 300px;">
                                 <h4>Price Chart (Last 30 Days):</h4>
                                 <div id="price_chart_{sanitized_ticker}" style="height: 400px; width: 100%; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
                                     <div style="text-align: center; margin-top: 180px; color: #666;">📈 Loading price chart...</div>
@@ -1278,6 +1334,10 @@ def display_horizontal_stock_cards(results):
 
                             </div>                            
                         </div>
+                        
+                        {sr_html}
+                        {fib_html}
+                        {pivot_html}
                     </div>
                 </div>
             </div>

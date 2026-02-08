@@ -30,6 +30,9 @@ class TechnicalAnalyzer(IAnalyzer):
             high_52w = hist['High'].max()
             low_52w = hist['Low'].min()
             
+            # Calculate professional support/resistance levels
+            support_resistance = self._calculate_support_resistance(hist, current_price)
+            
             # Volume analysis
             avg_volume = hist['Volume'].mean()
             recent_volume = hist['Volume'].iloc[-10:].mean()
@@ -85,10 +88,11 @@ class TechnicalAnalyzer(IAnalyzer):
             else:
                 ma_trend = 'Insufficient Moving Averages Data'
 
-            if current_price < high_52w * 0.8:  # More than 20% below high
-                    price_targets['breakout_target'] = high_52w * 1.05  # 5% above resistance
-            if current_price > low_52w * 1.2:  # More than 20% above low
-                    price_targets['support_level'] = low_52w * 0.95  # 5% below support
+            # Add support/resistance to price targets
+            if support_resistance['resistance_levels']:
+                price_targets['breakout_target'] = support_resistance['resistance_levels'][0]
+            if support_resistance['support_levels']:
+                price_targets['support_level'] = support_resistance['support_levels'][0]
 
             
             # Calculate technical indicators
@@ -191,6 +195,7 @@ class TechnicalAnalyzer(IAnalyzer):
                 'atr': atr,
                 'atr_percent': atr_percent,
                 'technical_signals': technical_signals,
+                'support_resistance': support_resistance,
                 'chart_data': chart_data
             }
             
@@ -318,6 +323,181 @@ class TechnicalAnalyzer(IAnalyzer):
             'net_signal': net_signal,
             'signal_details': signals['signals']
         }
+    
+    def _calculate_support_resistance(self, hist: pd.DataFrame, current_price: float) -> Dict[str, Any]:
+        """Calculate professional support and resistance levels"""
+        try:
+            # 1. Swing highs/lows (local maxima/minima)
+            swing_highs = self._find_swing_points(hist['High'], find_peaks=True)
+            swing_lows = self._find_swing_points(hist['Low'], find_peaks=False)
+            
+            # 2. Volume profile (price levels with high volume)
+            volume_levels = self._calculate_volume_profile(hist)
+            
+            # 3. Fibonacci retracements
+            fibonacci = self._calculate_fibonacci_levels(hist)
+            
+            # 4. Pivot points
+            pivots = self._calculate_pivot_points(hist)
+            
+            # 5. Moving average support/resistance
+            ma_levels = self._get_ma_support_resistance(hist, current_price)
+            
+            # Combine and rank support levels
+            support_candidates = swing_lows + volume_levels['support'] + ma_levels['support']
+            support_levels = self._rank_levels(support_candidates, current_price, is_support=True)
+            
+            # Combine and rank resistance levels
+            resistance_candidates = swing_highs + volume_levels['resistance'] + ma_levels['resistance']
+            resistance_levels = self._rank_levels(resistance_candidates, current_price, is_support=False)
+            
+            return {
+                'support_levels': support_levels[:3],  # Top 3
+                'resistance_levels': resistance_levels[:3],  # Top 3
+                'fibonacci': fibonacci,
+                'pivot_points': pivots,
+                'volume_clusters': volume_levels['clusters'],
+                'swing_lows': swing_lows[:3],
+                'swing_highs': swing_highs[:3]
+            }
+        except Exception as e:
+            return {
+                'support_levels': [],
+                'resistance_levels': [],
+                'fibonacci': {},
+                'pivot_points': {},
+                'volume_clusters': [],
+                'swing_lows': [],
+                'swing_highs': []
+            }
+    
+    def _find_swing_points(self, series: pd.Series, find_peaks: bool = True, window: int = 5) -> list:
+        """Find swing highs or lows using rolling window"""
+        swings = []
+        for i in range(window, len(series) - window):
+            window_data = series.iloc[i-window:i+window+1]
+            center_value = series.iloc[i]
+            
+            if find_peaks:
+                if center_value == window_data.max():
+                    swings.append(float(center_value))
+            else:
+                if center_value == window_data.min():
+                    swings.append(float(center_value))
+        
+        # Return unique values sorted
+        return sorted(list(set(swings)), reverse=not find_peaks)[:5]
+    
+    def _calculate_volume_profile(self, hist: pd.DataFrame, num_bins: int = 20) -> Dict[str, list]:
+        """Calculate volume profile to find high-volume price levels"""
+        try:
+            # Create price bins
+            price_min, price_max = hist['Low'].min(), hist['High'].max()
+            bins = np.linspace(price_min, price_max, num_bins)
+            
+            # Aggregate volume by price bin
+            volume_by_price = {}
+            for _, row in hist.iterrows():
+                bin_idx = np.digitize(row['Close'], bins) - 1
+                if 0 <= bin_idx < len(bins) - 1:
+                    price_level = (bins[bin_idx] + bins[bin_idx + 1]) / 2
+                    volume_by_price[price_level] = volume_by_price.get(price_level, 0) + row['Volume']
+            
+            # Find top volume levels
+            sorted_levels = sorted(volume_by_price.items(), key=lambda x: x[1], reverse=True)
+            top_levels = [price for price, _ in sorted_levels[:5]]
+            
+            current_price = hist['Close'].iloc[-1]
+            support = [p for p in top_levels if p < current_price]
+            resistance = [p for p in top_levels if p > current_price]
+            
+            return {
+                'support': support[:2],
+                'resistance': resistance[:2],
+                'clusters': top_levels[:3]
+            }
+        except:
+            return {'support': [], 'resistance': [], 'clusters': []}
+    
+    def _calculate_fibonacci_levels(self, hist: pd.DataFrame, lookback: int = 50) -> Dict[str, float]:
+        """Calculate Fibonacci retracement levels from recent swing"""
+        try:
+            recent_data = hist.tail(lookback)
+            swing_high = recent_data['High'].max()
+            swing_low = recent_data['Low'].min()
+            diff = swing_high - swing_low
+            
+            return {
+                'level_0': float(swing_high),
+                'level_23.6': float(swing_high - 0.236 * diff),
+                'level_38.2': float(swing_high - 0.382 * diff),
+                'level_50.0': float(swing_high - 0.500 * diff),
+                'level_61.8': float(swing_high - 0.618 * diff),
+                'level_78.6': float(swing_high - 0.786 * diff),
+                'level_100': float(swing_low)
+            }
+        except:
+            return {}
+    
+    def _calculate_pivot_points(self, hist: pd.DataFrame) -> Dict[str, float]:
+        """Calculate standard pivot points from recent data"""
+        try:
+            recent = hist.tail(5)  # Last 5 days
+            high = recent['High'].max()
+            low = recent['Low'].min()
+            close = recent['Close'].iloc[-1]
+            
+            pivot = (high + low + close) / 3
+            r1 = 2 * pivot - low
+            r2 = pivot + (high - low)
+            s1 = 2 * pivot - high
+            s2 = pivot - (high - low)
+            
+            return {
+                'pivot': float(pivot),
+                'r1': float(r1),
+                'r2': float(r2),
+                's1': float(s1),
+                's2': float(s2)
+            }
+        except:
+            return {}
+    
+    def _get_ma_support_resistance(self, hist: pd.DataFrame, current_price: float) -> Dict[str, list]:
+        """Get moving averages as dynamic support/resistance"""
+        support = []
+        resistance = []
+        
+        for period in [20, 50, 200]:
+            if len(hist) >= period:
+                ma = hist['Close'].rolling(window=period).mean().iloc[-1]
+                if ma < current_price:
+                    support.append(float(ma))
+                elif ma > current_price:
+                    resistance.append(float(ma))
+        
+        return {'support': support, 'resistance': resistance}
+    
+    def _rank_levels(self, levels: list, current_price: float, is_support: bool, tolerance: float = 0.02) -> list:
+        """Rank and filter support/resistance levels by proximity and strength"""
+        if not levels:
+            return []
+        
+        # Remove duplicates within tolerance
+        unique_levels = []
+        for level in sorted(levels):
+            if not unique_levels or abs(level - unique_levels[-1]) / unique_levels[-1] > tolerance:
+                unique_levels.append(level)
+        
+        # Filter by position relative to current price
+        if is_support:
+            filtered = [l for l in unique_levels if l < current_price]
+            filtered.sort(reverse=True)  # Closest first
+        else:
+            filtered = [l for l in unique_levels if l > current_price]
+            filtered.sort()  # Closest first
+        
+        return filtered
     
     def is_applicable(self, company_type: str) -> bool:
         """Technical analysis applies to all company types"""

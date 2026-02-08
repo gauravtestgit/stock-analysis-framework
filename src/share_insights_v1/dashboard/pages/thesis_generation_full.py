@@ -1281,6 +1281,56 @@ def display_technical_details(data, ticker=None):
         st.write(f"**ATR %:** {data.get('atr_percent', 'N/A')}%")
         st.write(f"**Trend:** {data.get('trend', 'N/A')}")
     
+    # Support & Resistance Levels
+    support_resistance = data.get('support_resistance', {})
+    if support_resistance:
+        st.markdown("### 📍 Support & Resistance Levels")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**🟢 Support Levels**")
+            support_levels = support_resistance.get('support_levels', [])
+            if support_levels:
+                for i, level in enumerate(support_levels, 1):
+                    st.write(f"S{i}: ${level:.2f}")
+            else:
+                st.write("No support levels calculated")
+        
+        with col2:
+            st.markdown("**🔴 Resistance Levels**")
+            resistance_levels = support_resistance.get('resistance_levels', [])
+            if resistance_levels:
+                for i, level in enumerate(resistance_levels, 1):
+                    st.write(f"R{i}: ${level:.2f}")
+            else:
+                st.write("No resistance levels calculated")
+        
+        # Fibonacci Levels
+        fibonacci = support_resistance.get('fibonacci', {})
+        if fibonacci:
+            st.markdown("**📐 Fibonacci Retracement Levels**")
+            fib_col1, fib_col2, fib_col3 = st.columns(3)
+            fib_items = list(fibonacci.items())
+            for i, (level, value) in enumerate(fib_items):
+                col = [fib_col1, fib_col2, fib_col3][i % 3]
+                with col:
+                    level_name = level.replace('level_', '')
+                    st.write(f"{level_name}: ${value:.2f}")
+        
+        # Pivot Points
+        pivots = support_resistance.get('pivot_points', {})
+        if pivots:
+            st.markdown("**⚖️ Pivot Points**")
+            pivot_col1, pivot_col2, pivot_col3 = st.columns(3)
+            with pivot_col1:
+                st.write(f"Pivot: ${pivots.get('pivot', 0):.2f}")
+            with pivot_col2:
+                st.write(f"R1: ${pivots.get('r1', 0):.2f}")
+                st.write(f"R2: ${pivots.get('r2', 0):.2f}")
+            with pivot_col3:
+                st.write(f"S1: ${pivots.get('s1', 0):.2f}")
+                st.write(f"S2: ${pivots.get('s2', 0):.2f}")
+    
     if ticker:
         try:
             import yfinance as yf
