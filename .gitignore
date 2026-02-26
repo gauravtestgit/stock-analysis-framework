@@ -1,43 +1,41 @@
+# Environment and secrets
 .env
+.env.local
 venv/
-secrets/credential1.json
-secrets/credential2.json
-src/financial_analyst/__pycache__/playground.cpython-311.pyc
-src/financial_analyst/token.json
-src/financial_analyst/googledrive.py
-src/financial_analyst/stock_analysis.csv
-src/financial_analyst/util/__pycache__/debug_printer.cpython-311.pyc
-src/financial_analyst/__pycache__/dcf_yf.cpython-311.pyc
-src/financial_analyst/__pycache__/cagr_calculations.cpython-311.pyc
+secrets/
+*.pem
+*.key
+token.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Analysis outputs (may contain sensitive data)
 src/resources/
 src/financial_analyst/output/
-src/financial_analyst/__pycache__
-src/financial_analyst/playground.py
 src/share_insights_v1/resources/stock_analyses/
-src/share_insights_v1/__pycache__/
-src/share_insights_v1/config/__pycache__/
-src/share_insights_v1/implementations/__pycache__/
-src/share_insights_v1/implementations/analyzers/__pycache__/
-src/share_insights_v1/implementations/calculators/__pycache__/
-src/share_insights_v1/implementations/data_providers/__pycache__/
-src/share_insights_v1/interfaces/__pycache__/
-src/share_insights_v1/models/__pycache__/
-src/share_insights_v1/services/__pycache__/
-src/share_insights_v1/services/batch/__pycache__/
-src/share_insights_v1/services/comparison/__pycache__/
-src/share_insights_v1/services/orchestration/__pycache__/
-src/share_insights_v1/services/comparison/__pycache__/
-src/share_insights_v1/services/recommendation/__pycache__/
-src/share_insights_v1/api/__pycache__/
-/__pycache__
-src/share_insights_v1/dashboard/__pycache__/
-src/share_insights_v1/implementations/analyzers/__pycache__/
-src/share_insights_v1/implementations/data_providers/__pycache__/
-src/share_insights_v1/implementations/llm_providers/__pycache__/
-src/share_insights_v1/models/__pycache__/
-src/share_insights_v1/tests/__pycache__/
-logs/
-__pycache__/
-.pyc
-.pyo
 src/share_insights_v1/tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

@@ -6,17 +6,29 @@ Database migration script to update investment_theses table
 """
 
 import psycopg2
+import os
+from dotenv import load_dotenv
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from urllib.parse import urlparse
 
 def run_migration():
     """Execute the database migration"""
     
-    # Database connection parameters
+    # Load environment variables
+    load_dotenv()
+    
+    # Parse DATABASE_URL
+    db_url = os.getenv('DATABASE_URL')
+    if not db_url:
+        raise ValueError("DATABASE_URL environment variable not set")
+    
+    result = urlparse(db_url)
     conn_params = {
-        'host': 'localhost',
-        'database': 'strategy_framework',
-        'user': 'postgres',
-        'password': 'M3rcury1'
+        'host': result.hostname,
+        'database': result.path[1:],
+        'user': result.username,
+        'password': result.password,
+        'port': result.port or 5432
     }
     
     try:

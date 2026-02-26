@@ -2,13 +2,27 @@
 """Run database migration to add batch_job_id column"""
 
 import psycopg2
+import os
+from dotenv import load_dotenv
+from urllib.parse import urlparse
+
+# Load environment variables
+load_dotenv()
+
+# Parse DATABASE_URL
+db_url = os.getenv('DATABASE_URL')
+if not db_url:
+    raise ValueError("DATABASE_URL environment variable not set")
+
+result = urlparse(db_url)
 
 # Database connection
 conn = psycopg2.connect(
-    host="localhost",
-    database="strategy_framework",
-    user="postgres",
-    password="M3rcury1"
+    host=result.hostname,
+    database=result.path[1:],
+    user=result.username,
+    password=result.password,
+    port=result.port or 5432
 )
 
 try:

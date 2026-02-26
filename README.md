@@ -63,9 +63,10 @@ Stock Lists (CSV) → Batch Analysis → Method Comparison → Convergence Analy
 ## Database Storage Flow
 
 ### Database Architecture
-- **Database**: PostgreSQL (`postgresql://postgres:M3rcury1@localhost:5432/strategy_framework`)
+- **Database**: PostgreSQL (configure via `DATABASE_URL` environment variable)
 - **ORM**: SQLAlchemy with declarative models
 - **Tables**: `analysis_history`, `portfolios`, `positions`, `trades`, `scenarios`, etc.
+- **Example**: `postgresql://user:password@localhost:5432/strategy_framework`
 
 ### Storage Flow
 1. **Analysis Execution**:
@@ -116,8 +117,8 @@ Stock Analysis Request → LLM Provider Factory → Selected Provider → Model 
 ```
 
 #### 3. LLM Provider Configuration
-```python
-# Environment Variables Required
+```bash
+# Environment Variables Required (set in .env file)
 OPENAI_API_KEY=your_openai_key
 GROQ_API_KEY=your_groq_key
 XAI_API_KEY=your_xai_key
@@ -169,10 +170,16 @@ XAI_API_KEY=your_xai_key
 
 ### Environment Configuration
 ```bash
-# Create .env file with LLM provider keys
+# Copy .env.example to .env and configure:
+cp .env.example .env
+
+# Required: Database connection
+DATABASE_URL=postgresql://user:password@localhost:5432/strategy_framework
+
+# Required: At least one LLM provider API key
 OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
 GROQ_API_KEY=your_groq_api_key_here
+XAI_API_KEY=your_xai_api_key_here
 
 # Optional: Ollama for local LLM (no API key needed)
 # Install Ollama and pull models: ollama pull llama3
