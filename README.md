@@ -86,11 +86,13 @@ See **[SECURITY.md](SECURITY.md)** for security policy and best practices.
 
 ## 📝 License
 
-[Add your license here]
+MIT License - Copyright (c) 2024 Gaurav Singh
+
+See [LICENSE](LICENSE) file for full details.
 
 ## 🤝 Contributing
 
-[Add contributing guidelines or link to CONTRIBUTING.md]
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 ## Architecture Overview
 
