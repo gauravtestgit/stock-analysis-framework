@@ -50,6 +50,7 @@ python run_dashboard.py  # Dashboard on port 8501
 8. **Business Model** - Revenue and cost structure
 9. **Competitive Position** - Market positioning
 10. **Management Quality** - Leadership assessment
+### Below methods require more work
 11. **Financial Health** - Balance sheet analysis
 12. **Revenue Stream** - Revenue diversification
 13. **Industry Analysis** - Sector trends
