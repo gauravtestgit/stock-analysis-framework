@@ -1,6 +1,10 @@
 # Stock Analysis Framework
 
-A comprehensive stock analysis framework with 14 specialized analyzers, multi-method valuation, and interactive dashboard for investment decision making.
+A comprehensive stock analysis framework with 10 specialized analyzers, multi-method valuation, and interactive dashboard for investment decision making.
+
+## - DISCLAIMER
+
+This is a personal project to analyse stocks for investment. The outputs of this project are not intended as investment advice. Carry out your own research for stock investments.
 
 ## 📚 Documentation
 
