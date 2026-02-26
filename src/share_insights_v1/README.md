@@ -1,3 +1,15 @@
+## - DISCLAIMER
+
+This is a personal project to analyse stocks for investment. The outputs of this project are not intended as investment advice. Carry out your own research for stock investments.
+
+## - What does this project do
+
+The idea is to run basic quant analysis such as DCF, Technical against one or multiple stocks to derive a share price value. Compare the derived share value with value predicted by analysts on Yahoo Finance (available from yahoo finance api)
+
+Where 1 or more of the quant analysis matches, the stock may be considered for further analysis.
+
+*** NOT intended as investment advice ***
+
 # Share Insights v1 - SOLID Principles Implementation
 
 ## Architecture Overview

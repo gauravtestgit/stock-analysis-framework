@@ -1,6 +1,91 @@
 # Stock Analysis Framework
 
-A comprehensive stock analysis framework with multiple valuation methods, analyst alignment analysis, and interactive dashboard for investment decision making.
+A comprehensive stock analysis framework with 14 specialized analyzers, multi-method valuation, and interactive dashboard for investment decision making.
+
+## 📚 Documentation
+
+- **[USER_GUIDE.md](USER_GUIDE.md)** - How to use the dashboard (START HERE for users)
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system architecture and technical guide (for developers)
+- **[SECURITY.md](SECURITY.md)** - Security policy and best practices
+- **[MAKE_PUBLIC_CHECKLIST.md](MAKE_PUBLIC_CHECKLIST.md)** - Pre-publication checklist
+
+## 🚀 Quick Start
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+pip install -r requirements_dashboard.txt
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your API keys and database URL
+
+# 3. Create database
+python create_database.py
+
+# 4. Start services
+python run_api.py        # API on port 8000
+python run_dashboard.py  # Dashboard on port 8501
+```
+
+## ✨ Key Features
+
+- **14 Specialized Analyzers**: DCF, Technical, Comparable, AI Insights, News Sentiment, and more
+- **Multi-Method Valuation**: Weighted consensus from multiple analysis methods
+- **LLM Integration**: OpenAI, Groq, xAI for AI-powered insights
+- **Batch Processing**: Analyze 1000+ stocks in 10-15 minutes
+- **Interactive Dashboard**: Streamlit-based UI with real-time analysis
+- **Professional Integration**: Analyst consensus and news sentiment
+- **PostgreSQL Storage**: Comprehensive analysis history
+
+## 📊 Analysis Methods
+
+1. **DCF Analyzer** - Discounted cash flow valuation
+2. **Comparable Analyzer** - Peer company valuation
+3. **Technical Analyzer** - Price patterns and indicators
+4. **Startup Analyzer** - Early-stage company metrics
+5. **AI Insights Analyzer** - LLM-powered analysis
+6. **Analyst Consensus** - Professional price targets
+7. **News Sentiment** - Real-time news analysis
+8. **Business Model** - Revenue and cost structure
+9. **Competitive Position** - Market positioning
+10. **Management Quality** - Leadership assessment
+11. **Financial Health** - Balance sheet analysis
+12. **Revenue Stream** - Revenue diversification
+13. **Industry Analysis** - Sector trends
+14. **Peer Comparison** - Direct benchmarking
+
+## 🔧 Technology Stack
+
+- **Backend**: Python 3.8+, FastAPI
+- **Database**: PostgreSQL, SQLAlchemy
+- **LLM**: OpenAI (GPT-4), Groq (Llama-3), xAI (Grok)
+- **Data**: Yahoo Finance, SEC EDGAR
+- **Frontend**: Streamlit
+- **Processing**: Async/parallel with timeouts
+
+## 📖 For More Information
+
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for:
+- Complete system architecture
+- Detailed component documentation
+- Analysis flow diagrams
+- API reference
+- Configuration guide
+- Deployment instructions
+- Troubleshooting
+
+## 🔒 Security
+
+See **[SECURITY.md](SECURITY.md)** for security policy and best practices.
+
+## 📝 License
+
+[Add your license here]
+
+## 🤝 Contributing
+
+[Add contributing guidelines or link to CONTRIBUTING.md]
 
 ## Architecture Overview
 
