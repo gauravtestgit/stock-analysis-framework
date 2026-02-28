@@ -126,7 +126,7 @@ class BatchAnalysisService:
     def process_csv(self, input_csv_path: str, output_csv_path: str, max_stocks: int = None, exchange: str = None, created_by: str = "system"):
         """Process stocks from CSV using multiple threads"""
         
-        df = pd.read_csv(input_csv_path)
+        df = pd.read_csv(input_csv_path, keep_default_na=False, na_values=[''])
         
         if max_stocks:
             df = df.head(max_stocks)
@@ -153,10 +153,13 @@ class BatchAnalysisService:
         self.failed = 0
         
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = {
-                executor.submit(self._process_single_stock, row['Symbol'].strip().upper()): idx
-                for idx, row in df.iterrows()
-            }
+            futures = {}
+            for idx, row in df.iterrows():
+                symbol = row['Symbol']
+                if pd.isna(symbol) or not isinstance(symbol, str) or not symbol.strip():
+                    print(f"Skipping invalid symbol at row {idx}: {symbol}")
+                    continue
+                futures[executor.submit(self._process_single_stock, symbol.strip().upper())] = idx
             
             for future in as_completed(futures):
                 status, ticker, csv_row = future.result()
