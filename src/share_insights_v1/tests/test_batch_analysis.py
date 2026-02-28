@@ -2,34 +2,34 @@
 
 import sys
 import os
+import argparse
 from datetime import datetime
-# sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 from ..services.batch.batch_analysis_service_quant import BatchAnalysisService
 
-def test_batch_analysis(filename="single"):
+def test_batch_analysis(filename="single", max_workers=4):
     """Test batch analysis service with sample CSV"""
     
-    # Initialize batch service
-    batch_service = BatchAnalysisService(save_to_db=True, enable_detailed_news_analysis=False)
+    # Initialize batch service with thread count
+    batch_service = BatchAnalysisService(
+        save_to_db=True, 
+        enable_detailed_news_analysis=False,
+        max_workers=max_workers
+    )
     
     # Define paths
-    # filename = "nasdaq"
-    input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"  # Assuming this exists in the root directory
+    input_csv_dir = "./src/share_insights_v1/resources/stock_dump/"
     output_csv_dir = "./src/share_insights_v1/resources/stock_analyses/"
     date = datetime.now().strftime("%Y%m%d%H%M%S")
     input_csv = os.path.join(input_csv_dir, f"{filename}.csv")
     output_csv = os.path.join(output_csv_dir, f"{filename}_{date}_analysis.csv")
     
-    # Process first 10 stocks as test
-    print("Starting batch analysis...")
-    # batch_service.enable_detailed_news_analysis = False
+    print(f"Starting batch analysis with {max_workers} threads...")
     batch_service.process_csv(
         input_csv_path=input_csv,
         output_csv_path=output_csv,
-        # max_stocks=5,  # Limit for testing
-        exchange=filename.upper(),  # Specify exchange for batch job
-        created_by="batch_user"  # Specify who ran it
+        exchange=filename.upper(),
+        created_by="batch_user"
     )
     
     print(f"Results saved to {output_csv}")
@@ -43,7 +43,11 @@ def test_batch_analysis(filename="single"):
         print("No output file found")
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        print("Running batch analysis on", sys.argv[1])
-        filename = sys.argv[1]
-    test_batch_analysis(filename)
+    parser = argparse.ArgumentParser(description='Batch stock analysis')
+    parser.add_argument('filename', nargs='?', default='single', help='CSV filename (without .csv)')
+    parser.add_argument('--threads', '-t', type=int, default=4, help='Number of threads (default: 4)')
+    
+    args = parser.parse_args()
+    
+    print(f"Running batch analysis on {args.filename} with {args.threads} threads")
+    test_batch_analysis(args.filename, args.threads)

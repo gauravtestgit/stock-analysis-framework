@@ -3,6 +3,8 @@ import csv
 import logging
 import uuid
 from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 from ..orchestration.analysis_orchestrator import AnalysisOrchestrator
 from ..storage.analysis_storage_service import AnalysisStorageService
 from ...implementations.data_providers.yahoo_provider import YahooFinanceProvider
@@ -16,12 +18,12 @@ from ...implementations.analyzers.analyst_consensus_analyzer import AnalystConse
 from ...implementations.analyzers.ai_insights_analyzer import AIInsightsAnalyzer
 from ...models.analysis_result import AnalysisType
 from ...config.config import FinanceConfig
-from datetime import datetime
+from datetime import datetime, timezone
 
 class BatchAnalysisService:
     """Service to run batch analysis on multiple stocks from CSV"""
     
-    def __init__(self, save_to_db: bool = False, enable_detailed_news_analysis: bool  = True):
+    def __init__(self, save_to_db: bool = False, enable_detailed_news_analysis: bool = True, max_workers: int = 4):
         self.data_provider = YahooFinanceProvider()
         self.classifier = CompanyClassifier()
         self.quality_calculator = QualityScoreCalculator()
@@ -29,7 +31,13 @@ class BatchAnalysisService:
         self.save_to_db = save_to_db
         self.storage_service = AnalysisStorageService() if save_to_db else None
         self.failure_log_path = None
-        self.batch_job_id = None  # Track current batch job
+        self.batch_job_id = None
+        self.max_workers = max_workers
+        self.csv_lock = threading.Lock()
+        self.log_lock = threading.Lock()
+        self.progress_lock = threading.Lock()
+        self.completed = 0
+        self.failed = 0
         
         self.orchestrator = AnalysisOrchestrator(
             self.data_provider, self.classifier, self.quality_calculator
@@ -83,8 +91,40 @@ class BatchAnalysisService:
         # from ...implementations.analyzers.industry_analysis_analyzer import IndustryAnalysisAnalyzer
         # self.orchestrator.register_analyzer(AnalysisType.INDUSTRY_ANALYSIS, IndustryAnalysisAnalyzer(self.data_provider))
     
+    def _process_single_stock(self, ticker: str) -> tuple:
+        """Process a single stock (thread worker)"""
+        try:
+            analysis_result = self.orchestrator.analyze_stock(ticker)
+            
+            if 'error' not in analysis_result:
+                csv_row = self._extract_csv_data(ticker, analysis_result)
+                
+                if self.save_to_db and self.storage_service:
+                    try:
+                        batch_analysis_id = self.storage_service.store_comprehensive_analysis(
+                            ticker, analysis_result, batch_job_id=self.batch_job_id
+                        )
+                        return ('success', ticker, csv_row)
+                    except Exception as db_error:
+                        with self.log_lock:
+                            self._log_failure(ticker, "DB_STORAGE_ERROR", str(db_error))
+                        return ('failed', ticker, csv_row)
+                else:
+                    return ('success', ticker, csv_row)
+            else:
+                csv_row = self._create_error_row(ticker, analysis_result['error'])
+                with self.log_lock:
+                    self._log_failure(ticker, "ANALYSIS_ERROR", analysis_result['error'])
+                return ('failed', ticker, csv_row)
+                
+        except Exception as e:
+            csv_row = self._create_error_row(ticker, str(e))
+            with self.log_lock:
+                self._log_failure(ticker, "EXCEPTION", str(e))
+            return ('failed', ticker, csv_row)
+    
     def process_csv(self, input_csv_path: str, output_csv_path: str, max_stocks: int = None, exchange: str = None, created_by: str = "system"):
-        """Process stocks from CSV and save results to CSV"""
+        """Process stocks from CSV using multiple threads"""
         
         df = pd.read_csv(input_csv_path)
         
@@ -92,9 +132,8 @@ class BatchAnalysisService:
             df = df.head(max_stocks)
         
         total_stocks = len(df)
-        print(f"Processing {total_stocks} stocks...")
+        print(f"Processing {total_stocks} stocks with {self.max_workers} threads...")
         
-        # Create batch job if saving to DB
         if self.save_to_db and self.storage_service:
             self.batch_job_id = self._create_batch_job(
                 name=f"{exchange or 'Mixed'} Analysis {datetime.now().strftime('%Y-%m-%d %H:%M')}",
@@ -106,68 +145,43 @@ class BatchAnalysisService:
             )
             print(f"Batch job created: {self.batch_job_id}")
         
-        # Initialize CSV file with headers
         self._initialize_csv(output_csv_path)
-        
-        # Initialize failure log
         self._initialize_failure_log(output_csv_path)
         
         time_start = datetime.now()
-        count = 0
-        completed = 0
-        failed = 0
+        self.completed = 0
+        self.failed = 0
         
-        for idx, row in df.iterrows():
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {
+                executor.submit(self._process_single_stock, row['Symbol'].strip().upper()): idx
+                for idx, row in df.iterrows()
+            }
             
-            count += 1
-            try:
-
-                ticker = row['Symbol'].strip().upper()
-                if count >= 2:
-                    time_diff = datetime.now() - time_start
-                    time_per_stock = time_diff / (count - 1)
-                    time_remaining = time_per_stock * (total_stocks - count)
-                    print(f"Processing {ticker} ({idx+1}/{total_stocks}). ETA: {time_remaining}", end='\r', flush=True)
-                else:
-                    print(f"Processing {ticker} ({idx+1}/{total_stocks})...", end='\r', flush=True)
-            
-            
+            for future in as_completed(futures):
+                status, ticker, csv_row = future.result()
                 
-                analysis_result = self.orchestrator.analyze_stock(ticker)
+                with self.csv_lock:
+                    self._append_to_csv(csv_row, output_csv_path)
                 
-                if 'error' not in analysis_result:
-                    csv_row = self._extract_csv_data(ticker, analysis_result)
-                    # Store in database if enabled
-                    if self.save_to_db and self.storage_service:
-                        try:
-                            batch_analysis_id = self.storage_service.store_comprehensive_analysis(
-                                ticker, analysis_result, batch_job_id=self.batch_job_id
-                            )
-                            analysis_result['batch_analysis_id'] = batch_analysis_id
-                            completed += 1
-                        except Exception as db_error:
-                            self._log_failure(ticker, "DB_STORAGE_ERROR", str(db_error))
-                            failed += 1
+                with self.progress_lock:
+                    if status == 'success':
+                        self.completed += 1
                     else:
-                        completed += 1
-                else:
-                    csv_row = self._create_error_row(ticker, analysis_result['error'])
-                    self._log_failure(ticker, "ANALYSIS_ERROR", analysis_result['error'])
-                    failed += 1
+                        self.failed += 1
                     
-            except Exception as e:
-                csv_row = self._create_error_row(ticker, str(e))
-                self._log_failure(ticker, "EXCEPTION", str(e))
-                failed += 1
-            
-            # Write immediately to CSV
-            self._append_to_csv(csv_row, output_csv_path)
-            
-            # Update batch job progress
-            if self.save_to_db and self.batch_job_id:
-                self._update_batch_job_progress(completed, failed)
+                    count = self.completed + self.failed
+                    if count >= 2:
+                        time_diff = datetime.now() - time_start
+                        time_per_stock = time_diff / count
+                        time_remaining = time_per_stock * (total_stocks - count)
+                        print(f"Processed {ticker} ({count}/{total_stocks}). ETA: {time_remaining}", end='\r', flush=True)
+                    else:
+                        print(f"Processed {ticker} ({count}/{total_stocks})...", end='\r', flush=True)
+                    
+                    if self.save_to_db and self.batch_job_id:
+                        self._update_batch_job_progress(self.completed, self.failed)
         
-        # Complete batch job
         if self.save_to_db and self.batch_job_id:
             self._complete_batch_job()
         
@@ -340,7 +354,7 @@ class BatchAnalysisService:
             batch_job = db.query(BatchJob).filter(BatchJob.id == self.batch_job_id).first()
             if batch_job:
                 batch_job.status = "completed"
-                batch_job.completed_at = datetime.now()
+                batch_job.completed_at = datetime.now(timezone.utc)
                 db.commit()
         finally:
             db.close()
