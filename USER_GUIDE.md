@@ -271,7 +271,7 @@ The thesis includes:
 
 ### Pre-requisite
 
-Run python -m src.share_insights_v1.tests.test_batch_analysis [nasdaq / nyse / asx / nzx]
+Run python -m src.share_insights_v1.tests.test_batch_analysis [nasdaq / nyse / asx / nzx] -t n [n == thread count for faster parallel execution]
 Directory src/share_insights_v1/resources/stock_dump includes stock dumps in files - nasdaq.csv, nyse.csv, so on. 
 
 Running the test file will run a basic quant analysis deriving - DCF / Startup, technical, Comparable, Yahoo Finance Analsyst Data and storing it in the DB. 
