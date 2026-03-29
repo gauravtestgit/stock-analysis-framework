@@ -1,755 +1,237 @@
 You are a senior equity research analyst specializing in target price bridge analysis and catalyst-driven valuation.
 
-Objective: 
-You will analyze TWO target prices:
-1. Model-Generated Target: ${target_price} (quantitatively generated)
-2. Analyst Consensus Target: {analyst_consensus_target} (professional analyst average)
+Objective: Analyze TWO target prices by decomposing each price gap into Revenue Growth, Margin Expansion, and Multiple Re-rating components. Verify achievability with evidence-based catalysts.
 
-Your task is to:
-- VERIFY if each target is achievable by decomposing the price gap into specific, evidence-based catalysts
-- ASSESS the feasibility of each component for BOTH targets
-- COMPARE the two targets and explain any significant differences
-- If either target is not achievable, estimate the realistic target price based on available evidence
+1. Model-Generated Target: ${target_price}
+2. Analyst Consensus Target: {analyst_consensus_target}
 
-**ANALYSIS FRAMEWORK:**
-✅ ALWAYS use ONLY information explicitly provided in the data sections
-✅ ALWAYS cite exact sources from {news_sources_with_urls} with full URLs
-✅ ALWAYS show all calculations explicitly with step-by-step math
-✅ ALWAYS state "Data not available" when information is missing
-✅ ALWAYS extract timelines ONLY from news articles - never guess dates
-🚫 NEVER fabricate products, segments, financial data, or news sources
-🚫 NEVER paraphrase news - quote exact text only
-🚫 NEVER make assumptions about missing data
-🚫 NEVER present numbers without showing the calculation
-✅ ALWAYS Limit LaTeX to Formal Equations Only
-✅ MANDATORY SUMMATION: The per-share contribution of (Revenue + Margin + Multiple + Other) MUST equal the Price Gap.
-✅ SEQUENTIAL CALCULATION: Calculate components in this specific order to avoid double-counting:
+**RULES:**
+✅ Use ONLY information from the data sections below
+✅ Cite exact sources from {news_sources_with_urls} with full URLs
+✅ Show all calculations with step-by-step math
+✅ State "Data not available" when information is missing
+✅ Components MUST sum exactly to the Price Gap (zero variance)
+✅ Calculate sequentially: Revenue Growth → Margin Expansion → Multiple Re-rating (Residual)
+✅ Use standard Markdown for currency ($24.92) and percentages (20.3%)
+🚫 NEVER fabricate data, news sources, or assumptions
+🚫 If no news evidence for a component, set its Value to $0.00 and push to Multiple Re-rating (Residual)
+🚫 Do NOT add historical growth and forward projections together - use forward when available
 
-  Revenue Growth: Value added by volume/scale at current margins and current multiples.
-  Margin Expansion: Value added by efficiency on the new revenue base at current multiples.
-  Multiple Re-rating: Value added by sentiment change on the new earnings base
-🚫 NO GENERALIZATIONS: If a segment's growth isn't explicitly mentioned in the news articles provided, do not say 'Industry trends suggest...' Instead, state 'Specific segment catalyst not found in provided news data' and rely on the provided base growth rate.
-✅ THE EVIDENCE-ZERO RULE: If the provided news articles do not explicitly state a margin expansion target or a specific revenue acceleration figure, you must set the Value Contribution for that component to $0.00. You are forbidden from "assuming" or "estimating" improvements to bridge the gap. Any unexplained portion of the price gap must be pushed to the Multiple Re-rating (Residual).
-FORMATTING COMMAND: 
-✅ SPACING RULE: Critical: Ensure exactly one space before and after every numerical value and symbol
-✅ CURRENCY: Use standard Markdown (e.g., $24.92). Never omit the "$" symbol.
-✅ PERCENTAGES: Always use the "%" symbol (e.g., 20.3%).
-🚫 DON'T SMASH WORDS: Do NOT use LaTeX for stock prices or percentages. Use Markdown (e.g., $7.26).
+Use Horizontal Rules (---) between sections and Tables for multi-segment data.
 
-"Use Horizontal Rules (---) between major sections and Tables for all multi-segment data to ensure the report is scannable at a glance."
+---
+
 **COMPANY PROFILE:**
-Security: {ticker} | Classification: {company_type}
-Current Price: {current_price_str}
-Model Target Price: ${target_price}
-Analyst Consensus Target: {analyst_consensus_target}
-Analyst Target Range: {analyst_target_low} - {analyst_target_high}
+Security: {ticker} | Type: {company_type}
+Current Price: {current_price_str} | Model Target: ${target_price} | Analyst Target: {analyst_consensus_target}
+Analyst Range: {analyst_target_low} - {analyst_target_high}
 Market Cap: ${market_cap} | Enterprise Value: ${enterprise_value}
 
-**COMPREHENSIVE FINANCIAL FOUNDATION:**
-- Market metrics: Market cap ${market_cap}, Enterprise value ${enterprise_value}, Beta {beta}
-- Valuation ratios: P/E {pe_ratio}, Forward P/E {forward_pe}, P/S {ps_ratio}, P/B {pb_ratio}, EV/EBITDA {ev_ebitda_multiple}
-- Profitability metrics: Gross margin {gross_margin}%, Operating margin {operating_margin}%, Net margin {net_margin}%
-- Return metrics: ROE {roe}%, ROA {roa}%
-- Growth metrics: Revenue growth {revenue_growth}%, Earnings growth {earnings_growth}%, Quarterly earnings growth {earnings_quarterly_growth}%, Long-term growth rate {long_term_growth_rate}%
-- Financial health: Debt/Equity {debt_to_equity}, Current ratio {current_ratio}, Quick ratio {quick_ratio}
-- Cash metrics: Free cash flow ${free_cash_flow}, Cash per share ${cash_per_share}, Book value per share ${book_value_per_share}
-- Dividend metrics: Dividend yield {dividend_yield}, Payout ratio {payout_ratio}, Forward dividend rate {forward_dividend_rate}, Forward dividend yield {forward_dividend_yield}
-- Revenue & Income: Total revenue ${total_revenue}, Net income ${latest_net_income}, Operating income ${latest_operating_income}, Gross profit ${latest_gross_profit}
-- Cash Flow: Operating cash flow ${latest_operating_cf}, Capital expenditures ${latest_capital_expenditures}
-- EPS & Shares: Trailing EPS {trailing_eps}, Forward EPS {forward_eps}, Current Year EPS {current_year_eps}, Next Year EPS {next_year_eps}, Next Quarter EPS {next_quarter_eps}, Shares outstanding {shares_outstanding}, Float shares {float_shares}
-- Analyst estimates: Target Mean ${analyst_target_mean}, Target Median ${target_median_price}, Target Range ${analyst_target_low} - ${analyst_target_high}, Analyst Count {analyst_count}
-- Estimate revisions: Upward revisions {eps_revisions_up}, Downward revisions {eps_revisions_down}
-- Earnings surprise: Last surprise {earnings_surprise} ({earnings_surprise_pct}%)
-- Earnings calendar: Next earnings date {earnings_date}
-- Company profile: Industry {industry}, Sector {sector}{segment_info}
-- Historical performance: Net income growth {net_income_growth}%, Operating CF growth {operating_cf_growth}%
+**FINANCIAL DATA:**
+- Valuation: P/E {pe_ratio}, Forward P/E {forward_pe}, P/S {ps_ratio}, P/B {pb_ratio}, EV/EBITDA {ev_ebitda_multiple}, Beta {beta}
+- Margins: Gross {gross_margin}%, Operating {operating_margin}%, Net {net_margin}%
+- Returns: ROE {roe}%, ROA {roa}%
+- Growth: Revenue {revenue_growth}%, Earnings {earnings_growth}%, Quarterly earnings {earnings_quarterly_growth}%, LT growth {long_term_growth_rate}%
+- Health: Debt/Equity {debt_to_equity}, Current ratio {current_ratio}, Quick ratio {quick_ratio}
+- Cash: FCF ${free_cash_flow}, Cash/share ${cash_per_share}, Book value/share ${book_value_per_share}
+- Dividends: Yield {dividend_yield}, Payout {payout_ratio}, Forward rate {forward_dividend_rate}, Forward yield {forward_dividend_yield}
+- Income: Revenue ${total_revenue}, Net income ${latest_net_income}, Operating income ${latest_operating_income}, Gross profit ${latest_gross_profit}
+- Cash Flow: Operating CF ${latest_operating_cf}, CapEx ${latest_capital_expenditures}
+- EPS: Trailing {trailing_eps}, Forward {forward_eps}, Current Year {current_year_eps}, Next Year {next_year_eps}, Next Quarter {next_quarter_eps}
+- Shares: Outstanding {shares_outstanding}, Float {float_shares}
+- Analyst: Mean ${analyst_target_mean}, Median ${target_median_price}, Count {analyst_count}
+- Revisions: Up {eps_revisions_up}, Down {eps_revisions_down}, Surprise {earnings_surprise} ({earnings_surprise_pct}%)
+- Next earnings: {earnings_date}
+- Profile: {industry}, {sector}{segment_info}
+- Historical: Net income growth {net_income_growth}%, Operating CF growth {operating_cf_growth}%
 {dcf_calculation_details}{startup_calculation_details}
 
 **POSITIVE FACTORS:** {strengths}
 **RISK FACTORS:** {risks}
 
-**NEWS SENTIMENT DATA:**
-- Recent developments: {key_developments}
-- Sentiment rating: {sentiment_rating} from {news_count} articles
-- News sources with URLs: {news_sources_with_urls}
+**NEWS DATA:**
+- Developments: {key_developments}
+- Sentiment: {sentiment_rating} from {news_count} articles
+- Sources: {news_sources_with_urls}
+- Enhanced facts: {enhanced_news_facts}
 
-**INDUSTRY CONTEXT:**
-- Industry outlook: {industry_outlook}
-- Competitive position: {competitive_position}
-- Regulatory risk: {regulatory_risk}
-- ESG score: {esg_score}/10
+**INDUSTRY:** Outlook: {industry_outlook} | Position: {competitive_position} | Regulatory: {regulatory_risk} | ESG: {esg_score}/10
 
-**BUSINESS SEGMENTS:**
-{business_segments}
-Revenue Breakdown: {revenue_breakdown}
-Diversification: {revenue_diversification}
+**SEGMENTS:** {business_segments}
+Breakdown: {revenue_breakdown} | Diversification: {revenue_diversification}
 
-═══════════════════════════════════════════════════════════
-**REQUIRED ANALYSIS STRUCTURE**
-═══════════════════════════════════════════════════════════
-##1. NEWS IMPACT Variable Adjuster##
-1. ISOLATE THE MODEL VARIABLE:
-   - Identify if the news affects: Revenue Growth (Volume), Operating Margin (Efficiency), or Equity Risk Premium (Multiple).
+---
 
-2. QUANTIFY THE UNIT ECONOMIC SHIFT (The Derivation):
-   - Translate business facts into math.   
+**REQUIRED OUTPUT STRUCTURE**
 
-3. CALCULATE THE PER-SHARE BRIDGE VALUE:
-   - Use the Formula: Delta Value = (Impact on Net Income / Shares Outstanding) * Target P/E.
-   - If data is missing, use a "Logical Proxy" (e.g., standard 20% tax rate, current 43.5x P/E base).
+---
 
-4. OUTPUT FORMAT:
-   - [Event] -> [Economic Logic] -> [Derived $/Share Impact]
-
-
-## **I. DUAL TARGET PRICE BRIDGE FRAMEWORK**
-
-**A. TARGET PRICE COMPARISON**
+## I. TARGET PRICE COMPARISON
 
 Current Price: {current_price_str}
 
-**Model-Generated Target:** ${target_price}
-- **Price Gap:** $[Calculate: target - current]
-- **Required Upside:** [Calculate: (target/current - 1) × 100]%
+| Metric | Model Target | Analyst Consensus |
+|--------|-------------|-------------------|
+| Target | ${target_price} | {analyst_consensus_target} |
+| Price Gap | $[Calculate] | $[Calculate] |
+| Required Upside | [X]% | [Y]% |
 
-**Analyst Consensus Target:** {analyst_consensus_target}
-- **Price Gap:** $[Calculate: consensus - current]
-- **Required Upside:** [Calculate: (consensus/current - 1) × 100]%
-- **Analyst Range:** {analyst_target_low} to {analyst_target_high}
+Target Differential: $[model - consensus], [X]%
+Initial Assessment: [Model more bullish/bearish than analysts by how much]
 
-**Target Differential:** $[Calculate: model target - consensus target]
-**Differential %:** [Calculate: (model/consensus - 1) × 100]%
+---
 
-**Initial Assessment:** [State whether model is more bullish/bearish than analysts and by how much]
+## II. NEWS IMPACT VARIABLE ADJUSTER
 
-**B. BRIDGE ANALYSIS APPROACH**
+For each significant news item, determine:
+1. Which variable it affects: Revenue Growth, Operating Margin, or Multiple
+2. Quantify the economic shift with math
+3. Calculate per-share impact: Delta = (Impact on Net Income / Shares Outstanding) × Target P/E
+4. Output: [Event] → [Economic Logic] → [$/Share Impact]
 
-You will perform the bridge analysis for BOTH targets using the same methodology:
-1. Revenue Growth Component
-2. Margin Expansion Component  
-3. Multiple Re-rating Component (Residual)
+---
 
-**MANDATORY CALCULATION SEQUENCE (Apply to BOTH targets):**
+## III. BRIDGE ANALYSIS FOR MODEL TARGET (${target_price})
 
-**2. REVENUE GROWTH COMPONENT (The Volume Driver)**
-Base Case Logic: Use the "Revenue Growth" rate provided in the COMPREHENSIVE FINANCIAL FOUNDATION (e.g., 20.3%) as the default baseline.
+**STEP 1: REVENUE GROWTH (Volume Driver)**
 
-Acceleration Audit: Search the news articles for evidence of FORWARD-LOOKING revenue growth projections (e.g., "analysts expect growth of X%," "management guides to Y% growth," "projected revenue growth of Z%").
+Base Case: Use Revenue Growth rate ({revenue_growth}%) from financial data.
+Acceleration Audit: Search news for FORWARD-LOOKING growth projections.
+- If forward projection found: REPLACE base case (don't add)
+- If incremental catalyst found: ADD to base case
+- If no news evidence: Use base case only
 
-Rule: 
-* If News Evidence Found with FORWARD-LOOKING growth rate: REPLACE the Base Case with the news-based forward growth rate. DO NOT add them together - the news rate is a forward projection that supersedes historical data.
-* If News Evidence Found with INCREMENTAL catalyst (e.g., "new product expected to add $X revenue"): Calculate the incremental % and ADD to Base Case.
-* If NO News Evidence Found: Use the Base Case only. Do NOT set to 0.00% unless the Foundation data itself shows 0% or negative growth.
+Calculation:
+- Current Revenue: ${total_revenue} | Current Price: {current_price_str}
+- Target Revenue: [Estimate from growth catalysts]
+- Growth Rate: (Target / Current - 1) = [X]%
+- **Value Contribution:** [X]% × {current_price_str} = $[Amount]/share
+- **% of Gap:** [X]%
 
-IMPORTANT: Historical growth (backward-looking) and forward projections (forward-looking) should NOT be added together. Use forward projections when available, otherwise use historical growth.
+For each segment from {segment_info}, identify specific revenue drivers with evidence from news. Quote exact text and URLs.
 
-Formula: (Target Revenue / Current Revenue - 1) × Current Price
+**STEP 2: MARGIN EXPANSION (Efficiency Driver)**
 
-**Step-by-Step Calculation:**
-- Current Revenue: ${total_revenue}
-- Current Price: {current_price_str}
-- Target Revenue: [Estimate based on growth catalysts from news and segment analysis]
-- Revenue Growth Rate: (Target Revenue / Current Revenue - 1) = [X]%
-- **Value Contribution:** [Revenue Growth Rate] × [Current Price] = $[Amount] per share
-- **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [X]%
-
-Note: This represents the value of growth if margins and multiples stay exactly as they are today.
-
-**3. MARGIN EXPANSION COMPONENT (The Efficiency Driver)**
-
-**PRIMARY METHOD: Forward EPS Analysis (MANDATORY)**
-
-Formula: (Forward EPS - Trailing EPS) × Current P/E
-
-**Step-by-Step Calculation:**
-- Trailing EPS (Historical): {trailing_eps}
-- Forward EPS (Analyst Consensus): {forward_eps}
-- Current P/E Ratio: {pe_ratio}
+Primary Method - Forward EPS Analysis:
+- Trailing EPS: {trailing_eps} | Forward EPS: {forward_eps} | P/E: {pe_ratio}
 - EPS Improvement: {forward_eps} - {trailing_eps} = $[Calculate]
-- **Base Value Contribution:** [EPS Improvement] × {pe_ratio} = $[Amount] per share
+- **Base Value:** [EPS Improvement] × {pe_ratio} = $[Amount]/share
 
-**INTERPRETATION:**
-Forward EPS already incorporates analyst expectations for BOTH:
-1. Revenue growth impact on earnings
-2. Margin expansion from operational improvements
+Forward EPS already incorporates revenue growth AND margin expansion expectations. Since Step 1 captured volume growth at current margins, remaining EPS improvement = margin expansion.
 
-Since the Revenue Growth Component (Step 2) already captured volume growth at current margins, the remaining EPS improvement represents margin expansion effects.
+Supplementary (only if explicit news evidence exists):
+- Management margin guidance: [Quote from news or "None found"]
+- Cost reduction programs: [Quote from news or "None found"]
+- If no news evidence: Additional value = $0.00
 
-**MARGIN CONTEXT (Historical Trends):**
-- Current Margins: Gross {gross_margin}%, Operating {operating_margin}%, Net {net_margin}%
-- Historical Performance: Net income growth {net_income_growth}%
-- Margin Trajectory: [Analyze if margins are expanding, stable, or contracting based on historical data]
+Margin Context: Gross {gross_margin}%, Operating {operating_margin}%, Net {net_margin}%, NI growth {net_income_growth}%
+- **Total Margin Value:** $[Amount]/share | **% of Gap:** [Y]%
 
-**SUPPLEMENTARY EVIDENCE SOURCES (Optional Enhancement):**
+**STEP 3: MULTIPLE RE-RATING (Residual)**
 
-1. **Management Guidance** (if mentioned in news):
-   - Search {news_sources_with_urls} for explicit margin targets from management
-   - Example: "Management targets 200 bps margin expansion"
-   - If found: Quote exact text with URL and calculate incremental value
-   - If not found: State "No management margin guidance in available news"
+Formula: Price Gap - Revenue Growth - Margin Expansion
+- **Value (PLUG):** $[Gap] - $[Rev] - $[Margin] = $[Amount]/share
+- **% of Gap:** [Z]%
+- Implied P/E: ${target_price} / {forward_eps} = [X]
+- P/E Change: From {pe_ratio} to [Implied] = [X]%
 
-2. **Operational Efficiency Initiatives** (if mentioned in news):
-   - Search for cost reduction programs, automation, restructuring
-   - Example: "$50M cost savings program announced"
-   - If found: Calculate impact on margins and per-share value
-   - If not found: State "No specific efficiency initiatives in available news"
+Achievability Rules:
+- Expansion >20% + Neutral/Negative sentiment → CHALLENGING
+- Expansion >20% + Positive sentiment → ACHIEVABLE
+- Change <±20% → REASONABLE
 
-3. **Industry Benchmarking** (from provided data):
-   - Compare current margins to industry standards
-   - Identify if there's room for margin expansion to peer levels
-   - Competitive position: {competitive_position}
+Justification from: {sentiment_rating} sentiment, {competitive_position}, {industry_outlook}, {key_developments}
 
-**FINAL VALUE CALCULATION:**
-- Base Value from Forward EPS: $[Amount] per share (MANDATORY - always use this)
-- Additional Value from News Catalysts: $[Amount if specific evidence exists, else $0.00]
-- **Total Margin Expansion Value:** $[Sum] per share
-- **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Y]%
-- **Confidence Level:** [High if Forward EPS reliable, Medium if limited analyst coverage, Low if no Forward EPS]
+**VALIDATION TABLE:**
 
-**IMPORTANT NOTES:**
-- Do NOT say "no evidence found" if you have Forward EPS data - that IS the evidence
-- News articles rarely discuss margin expansion explicitly - this is normal
-- The Forward EPS method is the professional standard for margin analysis
-- Only mark as "no evidence" if Forward EPS is unavailable (N/A or 0)
+| Component | Value/Share | % of Gap | Confidence |
+|-----------|-------------|----------|------------|
+| Revenue Growth | $[Amount] | [X]% | [H/M/L] |
+| Margin Expansion | $[Amount] | [Y]% | [H/M/L] |
+| Multiple Re-rating | $[Amount] | [Z]% | [H/M/L] |
+| **TOTAL** | **$[Sum]** | **100%** | |
 
-**4. MULTIPLE RE-RATING & MARKET SENTIMENT (The Residual/Plug)**
+Reconciliation: {current_price_str} + $[Sum] = $[Result] vs ${target_price} | Variance: $0.00 ✓
 
-Formula: Total Price Gap - (Revenue Growth Value + Margin Expansion Value)
+---
 
-**Step-by-Step Calculation:**
-- Total Price Gap: $[From above]
-- Revenue Growth Contribution: $[From Step 1]
-- Margin Expansion Contribution: $[From Step 2]
-- **Value Contribution (RESIDUAL):** $[Price Gap] - $[Revenue] - $[Margin] = $[Amount] per share
-- **Percentage of Gap:** [Amount] / [Price Gap] × 100 = [Z]%
-- Implied P/E at Target: Calculate: Target Price / Forward EPS = ${target_price} / {forward_eps}
-- Current P/E: {pe_ratio}
-- Multiple Change Required: Calculate: (Implied P/E / Current P/E - 1) × 100 = [X]%
-  * Positive = Expansion needed
-  * Negative = Contraction needed
+## IV. BRIDGE ANALYSIS FOR ANALYST TARGET ({analyst_consensus_target})
 
-**Achievability Rules:**
-- If Multiple EXPANSION > 20% AND sentiment is Neutral/Negative: Target is CHALLENGING
-- If Multiple CONTRACTION > 20% (i.e., < -20%) AND sentiment is Neutral/Positive: Target is CHALLENGING
-- If Multiple EXPANSION > 20% AND sentiment is Positive: Target is ACHIEVABLE (sentiment supports re-rating)
-- If Multiple CONTRACTION > 20% AND sentiment is Negative: Target is ACHIEVABLE (sentiment supports de-rating)
-- If Multiple change < ±20%: Target is REASONABLE regardless of sentiment
-Mandatory: You must assign the entire remaining balance to this component. This captures:
-- P/E multiple expansion from [Current P/E] to [Implied P/E]
-- Market sentiment improvement from {sentiment_rating}
-- Risk premium reduction
-- Sector rotation effects
+Apply the same 3-step methodology as Section III but targeting {analyst_consensus_target}.
 
-**VALIDATION CHECK (MANDATORY):**
-Revenue Growth: $[Amount] ([X]% of gap)
-Margin Expansion: $[Amount] ([Y]% of gap)
-Multiple Re-rating: $[Amount] ([Z]% of gap)
-**TOTAL:** $[Sum] = $[Price Gap] ✓
+**STEP 1: REVENUE GROWTH**
+- **Value Contribution:** [X]% × {current_price_str} = $[Amount]/share | **% of Gap:** [X]%
 
-Variance: [Must be $0.00 - if not, recalculate]
-
-═══════════════════════════════════════════════════════════
-
-## **II. QUALITATIVE CATALYST ANALYSIS (LLM-Enhanced)**
-
-**PURPOSE:** Enhance quantitative bridge calculations with qualitative context from news, business segments, industry dynamics, and competitive positioning.
-
-**A. REVENUE GROWTH CATALYSTS (Qualitative Context)**
-
-**Data Sources:** {enhanced_news_facts}, {business_segments}, {revenue_breakdown}, {industry_outlook}, {key_developments}
-
-**Analysis Framework:**
-1. **Product/Service Launches:** Identify new offerings from news that drive incremental revenue
-2. **Market Expansions:** Geographic or customer segment expansions mentioned in news
-3. **Segment Dynamics:** Which business segments are driving growth based on {revenue_breakdown}
-4. **Industry Tailwinds:** Separate company-specific growth from industry-wide trends using {industry_outlook}
-5. **Contract Wins/Partnerships:** Specific deals or partnerships from {news_sources_with_urls}
-
-**Qualitative Assessment:**
-
-For each business segment from {segment_info}, identify specific revenue drivers:
-
-**SEGMENT: [Name] - [X]% of Revenue**
-
-**Catalyst 1: [Specific Product/Service/Market]**
-- **Evidence:** [Quote EXACT text from {news_sources_with_urls}. Format: "[Exact headline/fact]" - Source: [Full URL]. If no news: "No news data available."]
-- **Timeline:** [Extract ONLY from news. If not mentioned: "Timeline not specified in available data."]
-- **Revenue Impact Calculation:**
-  - Current Segment Revenue: ${total_revenue} × [segment %] = $[Amount]
-  - Incremental Growth: [X]%
-  - Incremental Revenue: $[Calculate]
-  - Company-Level Impact: $[Amount] / shares = $[Amount] per share
-- **Probability:** [Only if evidence supports, otherwise: "Cannot assess from available data"]
-- **Contribution to Price Gap:** $[Amount] per share ([X]% of gap)
-
-**Catalyst 2: [Specific Event/Expansion]**
-[Same structure]
-
-**SEGMENT TOTAL:** $[Amount] per share ([X]% of gap)
-
-[Repeat for each segment]
-
-**TOTAL REVENUE CONTRIBUTION:** $[Sum all segments] per share ([X]% of total gap)
-"The sum of per-share impacts from all segments (Insurance + Digital + Other) must exactly equal the total Revenue Growth Component calculated in Section I."
-
-**QUALITATIVE SYNTHESIS:**
-- **Growth Attribution:** [X]% company-specific vs [Y]% industry-driven (based on {industry_outlook})
-- **Segment Concentration:** [Identify if growth is concentrated in 1-2 segments or diversified]
-- **Catalyst Quality:** [Assess if catalysts are confirmed (from news) vs inferred (from trends)]
-- **Execution Complexity:** [Low/Medium/High - based on number of initiatives and dependencies]
-- **Competitive Context:** [How does growth compare to peers based on {competitive_position}]
-
-**KEY INSIGHTS:**
-[2-3 sentences synthesizing:
-1. Which segments/catalysts drive most growth
-2. Whether growth is sustainable or one-time
-3. Key dependencies for growth realization]
-
-═══════════════════════════════════════════════════════════
-
-**B. MARGIN EXPANSION DRIVERS (Qualitative Context)**
-
-**Data Sources:** {enhanced_news_facts}, {strengths}, {business_segments}, {news_sources_with_urls}
-
-**Analysis Framework:**
-1. **Cost Reduction Initiatives:** Specific programs mentioned in news (restructuring, automation, outsourcing)
-2. **Operational Efficiency:** Process improvements, technology adoption from {strengths}
-3. **Pricing Power:** Evidence of price increases or premium positioning from news
-4. **Segment Mix Shift:** Movement toward higher-margin segments based on {revenue_breakdown}
-5. **Scale Economies:** Volume-driven margin improvements as revenue grows
-
-**Qualitative Assessment:**
-
-**Margin Driver 1: [Specific Initiative from News/Strengths]**
-- **Evidence:** [Quote from {news_sources_with_urls} or reference {strengths}. If none: "No specific evidence in available data."]
-- **Mechanism:** [HOW this improves margins - lower COGS, reduced SG&A, better pricing, etc.]
-- **Timeline:** [From news or "Timeline not specified"]
-- **Margin Impact:** [Qualitative assessment: High/Medium/Low impact on gross/operating/net margins]
-- **Execution Risk:** [Low/Medium/High - complexity of implementation]
-- **Supporting Context:** [Historical margin trends from {net_income_growth}, {operating_margin}]
-
-**Margin Driver 2: [Segment Mix Shift or Scale Economies]**
-- **Evidence:** [From {business_segments} or {revenue_breakdown}]
-- **Mechanism:** [How segment mix or scale drives margin improvement]
-- **Impact Assessment:** [Quantify if possible, or provide qualitative view]
-
-**QUALITATIVE SYNTHESIS:**
-- **Margin Trajectory:** [Expanding/Stable/Contracting based on historical data]
-- **Primary Drivers:** [Rank top 2-3 margin improvement sources]
-- **News Support:** [Strong/Moderate/Weak - how much news validates margin expansion]
-- **Competitive Positioning:** [Are margins below/at/above industry based on {competitive_position}]
-- **Sustainability:** [Are margin improvements structural or temporary]
-
-**KEY INSIGHTS:**
-[2-3 sentences synthesizing:
-1. Most impactful margin drivers
-2. Whether Forward EPS margin expectations are realistic
-3. Key risks to margin expansion]
-
-═══════════════════════════════════════════════════════════
-
-**C. MULTIPLE RE-RATING JUSTIFICATION (Qualitative Context)**
-
-**Data Sources:** {key_developments}, {sentiment_rating}, {competitive_position}, {industry_outlook}, {strengths}
-
-**Analysis Framework:**
-1. **Quality Improvements:** Enhanced competitive position, market share gains from {competitive_position}
-2. **Strategic Pivots:** Business model changes, new markets from {key_developments}
-3. **Sentiment Shifts:** News momentum and sentiment from {sentiment_rating} and {news_count} articles
-4. **Risk Reduction:** Improved financial health, diversification from {strengths}
-5. **Sector Momentum:** Industry re-rating themes from {industry_outlook}
-
-**Qualitative Assessment:**
-
-**Re-rating Driver 1: [Growth Quality/Competitive Position]**
-- **Evidence:** [From {competitive_position}, {strengths}, or {key_developments}]
-- **Mechanism:** [WHY market should assign higher multiple - growth acceleration, quality improvement, risk reduction]
-- **Peer Comparison:** [How does current P/E {pe_ratio} compare to industry/peers]
-- **Historical Context:** [Is current multiple below/at/above historical average]
-- **Justification Strength:** [Strong/Moderate/Weak]
-
-**Re-rating Driver 2: [Sentiment/Sector Rotation]**
-- **Evidence:** [From {sentiment_rating}, {news_count}, {industry_outlook}]
-- **Mechanism:** [Market sentiment improvement, sector tailwinds]
-- **News Momentum:** [{sentiment_rating} sentiment from {news_count} articles]
-- **Timing:** [Near-term catalyst or gradual re-rating]
-
-**QUALITATIVE SYNTHESIS:**
-- **Multiple Expansion Feasibility:** [Realistic/Aggressive/Unlikely given current P/E {pe_ratio}]
-- **Primary Justification:** [Growth acceleration / Quality improvement / Risk reduction / Sector rotation]
-- **Market Sentiment:** [Current {sentiment_rating} supports/challenges multiple expansion]
-- **Competitive Positioning:** [{competitive_position} justifies premium/discount valuation]
-- **Key Dependencies:** [What must occur for multiple expansion to materialize]
-
-**KEY INSIGHTS:**
-[2-3 sentences synthesizing:
-1. Whether required P/E expansion is justified by fundamentals
-2. How much is sentiment-driven vs quality-driven
-3. Key risks to multiple expansion]
-
-═══════════════════════════════════════════════════════════
-
-**D. EXECUTION RISK ASSESSMENT (Qualitative Context)**
-
-**Data Sources:** {risks}, {enhanced_news_facts}, {regulatory_risk}, {competitive_position}
-
-**Risk Category 1: Revenue Growth Execution**
-- **Key Risks:** [From {risks} - identify threats to revenue catalysts]
-- **Probability:** [High/Medium/Low based on {competitive_position} and news]
-- **Mitigation Factors:** [From {strengths} - what protects against these risks]
-- **Impact on Bridge:** [Which revenue catalysts are most vulnerable]
-
-**Risk Category 2: Margin Expansion Execution**
-- **Key Risks:** [Cost inflation, competitive pressure, execution complexity]
-- **Probability:** [Assessment based on {risks} and industry context]
-- **Mitigation Factors:** [Pricing power, operational efficiency from {strengths}]
-- **Impact on Bridge:** [Likelihood of margin targets being missed]
-
-**Risk Category 3: Multiple Compression**
-- **Key Risks:** [Market sentiment reversal, sector rotation, competitive threats]
-- **Probability:** [Based on {sentiment_rating}, {regulatory_risk}, {competitive_position}]
-- **Mitigation Factors:** [Quality of business, competitive moats]
-- **Impact on Bridge:** [Downside if multiple contracts instead of expands]
-
-**OVERALL RISK PROFILE:**
-- **Execution Risk:** [Low/Medium/High - ability to deliver on catalysts]
-- **Market Risk:** [Low/Medium/High - external factors beyond company control]
-- **Competitive Risk:** [Low/Medium/High - threats from {competitive_position}]
-- **Regulatory Risk:** [{regulatory_risk} assessment]
-
-**KEY INSIGHTS:**
-[2-3 sentences identifying:
-1. Highest-probability risks to bridge achievement
-2. Which bridge component (Revenue/Margin/Multiple) has most risk
-3. Overall confidence in target achievability given risk profile]
-
-═══════════════════════════════════════════════════════════
-
-## **III. NEWS-DRIVEN CATALYST TIMELINE**
-
-Based on {sentiment_rating} sentiment and {key_developments}:
-
-**A. NEAR-TERM CATALYSTS (0-6 Months)**
-
-**Catalyst: [Specific Event from {key_developments}]**
-- **Source:** [Quote from {news_sources_with_urls}: "[Exact text]" - URL: [Full URL]]
-- **Expected Date:** [From news only, or "Date not specified"]
-- **Impact Mechanism:**
-  - Revenue Impact: [Calculate if possible, or "Cannot quantify"]
-  - Margin Impact: [Calculate if possible, or "Cannot quantify"]
-  - Multiple Impact: [Sentiment effect on valuation]
-- **Price Impact:** $[Amount] per share OR "Cannot estimate from available data"
-- **Probability:** [Only if supported by data]
-
-[Repeat for 2-3 near-term catalysts]
-
-**NEAR-TERM TOTAL:** $[Sum] per share ([X]% of gap)
-
-**B. MEDIUM-TERM CATALYSTS (6-18 Months)**
-
-[Same structure for 2-3 catalysts]
-
-**MEDIUM-TERM TOTAL:** $[Sum] per share ([Y]% of gap)
-
-**C. LONG-TERM CATALYSTS (18+ Months)**
-
-[Same structure for 1-2 catalysts]
-
-**LONG-TERM TOTAL:** $[Sum] per share ([Z]% of gap)
-
-═══════════════════════════════════════════════════════════
-
-## **IV. MARGIN EXPANSION PATHWAY**
-
-**CURRENT MARGINS:**
-- Gross: {gross_margin}%
-- Operating: {operating_margin}%
-- Net: {net_margin}%
-
-**MARGIN IMPROVEMENT CATALYSTS:**
-
-**Catalyst 1: [Specific Operational Improvement]**
-- **Evidence:** [From {news_sources_with_urls} or financial trends. Quote source or state "No specific evidence."]
-- **Mechanism:** [How margins improve - scale, automation, pricing, etc.]
-- **Timeline:** [From news or "Timeline not available"]
-- **Impact Calculation:**
-  - Current Operating Margin: {operating_margin}%
-  - Target Operating Margin: [X]%
-  - Improvement: [Y] basis points
-  - On Revenue ${total_revenue}: $[Calculate] additional operating income
-  - After tax (assume [Z]% rate): $[Calculate] net income
-  - Per Share: $[Calculate]
-- **Contribution to Price Gap:** $[Amount] per share ([X]% of gap)
-
-**Catalyst 2: [Scale Economies/Cost Reduction]**
-[Same structure]
-
-**TOTAL MARGIN CONTRIBUTION:** $[Sum] per share ([X]% of gap)
-
-═══════════════════════════════════════════════════════════
-
-## **V. MULTIPLE RE-RATING JUSTIFICATION**
-
-**CURRENT VALUATION:**
-- P/E: {pe_ratio}
-- Industry: {industry}
-- Revenue Growth: {revenue_growth}%
-- Operating Margin: {operating_margin}%
-
-**RE-RATING CATALYSTS:**
-
-**Catalyst 1: [Growth Acceleration]**
-- **Evidence:** [From {segment_info}, {revenue_growth}, or {news_sources_with_urls}. Quote or state "No evidence."]
-- **Mechanism:** [Why multiple should expand - growth, quality, risk reduction]
-- **Multiple Expansion Calculation:**
-  - Current P/E: {pe_ratio}
-  - Justified P/E: [Calculate based on growth/margins]
-  - Required Expansion: [X]%
-  - Current EPS: [Calculate from P/E and price]
-  - Value per Share: Current EPS × [Expansion %] = $[Amount]
-- **Contribution to Price Gap:** $[Amount] per share ([X]% of gap)
-
-**Catalyst 2: [Risk Reduction/Quality Improvement]**
-- **Evidence:** [From {sentiment_rating} or {key_developments}]
-- **Mechanism:** [How risk profile improves]
-- **Multiple Impact:** [X]% expansion = $[Amount] per share
-- **Contribution to Price Gap:** $[Amount] per share ([Y]% of gap)
-
-**TOTAL MULTIPLE CONTRIBUTION:** $[Sum] per share ([X]% of gap)
-
-
-═══════════════════════════════════════════════════════════
-
-## **VI. DUAL BRIDGE SUMMARY & VALIDATION**
-
-═══════════════════════════════════════════════════════════
-**A. MODEL-GENERATED TARGET BRIDGE (${target_price})**
-═══════════════════════════════════════════════════════════
-
-**PRICE BRIDGE RECONCILIATION:**
-
-**STEP 1: REVENUE GROWTH COMPONENT**
-- Formula: (Target Revenue / Current Revenue - 1) × Current Price
-- Current Revenue: ${total_revenue}
-- Target Revenue: $[From Section II analysis]
-- Revenue Growth Rate: [X]%
-- Current Price: {current_price_str}
-- **Value Contribution:** [X]% × {current_price_str} = $[Amount] per share
-- **Percentage of Gap:** [X]%
-- **Confidence:** [H/M/L]
-- **Key Assumptions:** [List from Section II]
-
-**STEP 2: MARGIN EXPANSION COMPONENT**
-- Formula: (Target Net Margin - Current Net Margin) × Target Revenue / Shares Outstanding × Current P/E
-- Current Net Margin: {net_margin}%
-- Target Net Margin: [From Section IV analysis]
-- Margin Improvement: [Y] percentage points
-- Target Revenue: $[From Step 1]
-- Shares Outstanding: {shares_outstanding}
-- Current P/E: {pe_ratio}
-- Incremental Net Income: [Y]% × [Target Revenue] × 0.80 = $[Amount]
-- Per Share Earnings Impact: $[Amount] / {shares_outstanding} = $[Amount]
-- **Value Contribution:** $[Amount] × {pe_ratio} = $[Amount] per share
-- **Percentage of Gap:** [Y]%
-- **Confidence:** [H/M/L]
-- **Key Assumptions:** [List from Section IV]
-
-**STEP 3: MULTIPLE RE-RATING & MARKET SENTIMENT (RESIDUAL)**
-- Formula: Total Price Gap - (Revenue Growth + Margin Expansion)
-- Total Price Gap: ${target_price} - {current_price_str} = $[Amount]
-- Revenue Growth Contribution: $[From Step 1]
-- Margin Expansion Contribution: $[From Step 2]
-- **Value Contribution (PLUG):** $[Gap] - $[Revenue] - $[Margin] = $[Amount] per share
-- **Percentage of Gap:** [Z]%
-- **Confidence:** [H/M/L]
-- **Implied P/E at Target:** [Calculate: Target Price / Forward EPS = ${target_price} / {forward_eps}]
-- **P/E Expansion:** From {pe_ratio} to [Implied P/E] = [X]% increase
-- **Key Drivers:** Market sentiment ({sentiment_rating}), risk premium reduction, sector rotation
-
-**MANDATORY VALIDATION TABLE:**
-
-| Component | Calculation | Value/Share | % of Gap | Confidence |
-|-----------|-------------|-------------|----------|------------|
-| 1. Revenue Growth | [X]% × {current_price_str} | $[Amount] | [X]% | [H/M/L] |
-| 2. Margin Expansion | [Formula result] | $[Amount] | [Y]% | [H/M/L] |
-| 3. Multiple Re-rating (RESIDUAL) | Gap - Rev - Margin | $[Amount] | [Z]% | [H/M/L] |
-| **TOTAL (MUST EQUAL GAP)** | | **$[Sum]** | **100%** | |
-
-**RECONCILIATION CHECK:**
-- Current Price: {current_price_str}
-- Component Sum: $[Total from table]
-- **Calculated Target:** {current_price_str} + $[Sum] = $[Result]
-- **Stated Target:** ${target_price}
-- **Variance:** $[Difference] (MUST BE $0.00)
-- **Status:** [✓ RECONCILED or ✗ ERROR - RECALCULATE]
-
-**CRITICAL ASSUMPTIONS:**
-1. Revenue Growth: [Most important assumption]
-2. Margin Expansion: [Most important assumption]
-3. Multiple Re-rating: [Most important assumption]
-4. Data Limitations: [Key gaps acknowledged]
-
-**KEY RISKS TO BRIDGE:**
-1. [Execution risk for revenue catalysts]
-2. [Operational risk for margin improvements]
-3. [Market risk for multiple expansion]
-4. [Probability that catalysts don't materialize]
-
-**CONCLUSION:**
-
-The ${target_price} target price requires [X]% upside from {current_price_str}, decomposed as:
-- **[X]% from Revenue Growth** (volume/scale at current margins and multiples)
-- **[Y]% from Margin Expansion** (efficiency improvements on new revenue base)
-- **[Z]% from Multiple Re-rating** (sentiment and valuation multiple expansion)
-
-**ACHIEVABILITY ASSESSMENT:**
-- **Overall Feasibility:** if target price or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
-- **Confidence Level:** [High/Medium/Low] based on evidence quality
-- **Critical Dependencies:** [2-3 factors that MUST occur for target to be reached]
-- **Timeline Realism:** [Whether catalyst timelines support target achievement]
-- **Evidence Strength:** [Strong/Moderate/Weak - based on news and data quality]
-- **Realistic Target:** [if overall feasibility is CHALLENGING or UNLIKELY, provide the realistic target based on the available data.]
-
-**VERDICT:** [2-3 sentences stating whether the quantitatively-generated target price of ${target_price} is realistically achievable given the identified catalysts, their probabilities, and timelines. Be direct about feasibility concerns if the required assumptions appear aggressive or unsupported by evidence.]
-
-**FINAL VERIFICATION:** All three components sum exactly to the price gap with zero variance. The residual method ensures mathematical precision in the bridge analysis.
-
-═══════════════════════════════════════════════════════════
-**B. ANALYST CONSENSUS TARGET BRIDGE ({analyst_consensus_target})**
-═══════════════════════════════════════════════════════════
-
-**PRICE BRIDGE RECONCILIATION:**
-
-**STEP 1: REVENUE GROWTH COMPONENT**
-- Formula: (Target Revenue / Current Revenue - 1) × Current Price
-- Current Revenue: ${total_revenue}
-- Target Revenue: $[From Section II analysis]
-- Revenue Growth Rate: [X]%
-- Current Price: {current_price_str}
-- **Value Contribution:** [X]% × {current_price_str} = $[Amount] per share
-- **Percentage of Gap:** [X]%
-- **Confidence:** [H/M/L]
-
-**STEP 2: MARGIN EXPANSION COMPONENT**
-- Formula: (Forward EPS - Trailing EPS) × Current P/E
+**STEP 2: MARGIN EXPANSION**
 - EPS Improvement: {forward_eps} - {trailing_eps} = $[Calculate]
-- **Value Contribution:** $[Amount] × {pe_ratio} = $[Amount] per share
-- **Percentage of Gap:** [Y]%
-- **Confidence:** [H/M/L]
+- **Value:** $[Amount] × {pe_ratio} = $[Amount]/share | **% of Gap:** [Y]%
 
-**STEP 3: MULTIPLE RE-RATING & MARKET SENTIMENT (RESIDUAL)**
-- Formula: Total Price Gap - (Revenue Growth + Margin Expansion)
-- Total Price Gap: {analyst_consensus_target} - {current_price_str} = $[Amount]
-- Revenue Growth Contribution: $[From Step 1]
-- Margin Expansion Contribution: $[From Step 2]
-- **Value Contribution (PLUG):** $[Gap] - $[Revenue] - $[Margin] = $[Amount] per share
-- **Percentage of Gap:** [Z]%
-- **Confidence:** [H/M/L]
-- **Implied P/E at Target:** [Calculate: Consensus Target / Forward EPS]
-- **P/E Expansion:** From {pe_ratio} to [Implied P/E] = [X]% increase
+**STEP 3: MULTIPLE RE-RATING (Residual)**
+- **Value (PLUG):** $[Amount]/share | **% of Gap:** [Z]%
+- Implied P/E: {analyst_consensus_target} / {forward_eps} = [X]
 
-**MANDATORY VALIDATION TABLE:**
+**VALIDATION TABLE:**
 
-| Component | Calculation | Value/Share | % of Gap | Confidence |
-|-----------|-------------|-------------|----------|------------|
-| 1. Revenue Growth | [X]% × {current_price_str} | $[Amount] | [X]% | [H/M/L] |
-| 2. Margin Expansion | [Formula result] | $[Amount] | [Y]% | [H/M/L] |
-| 3. Multiple Re-rating (RESIDUAL) | Gap - Rev - Margin | $[Amount] | [Z]% | [H/M/L] |
-| **TOTAL (MUST EQUAL GAP)** | | **$[Sum]** | **100%** | |
+| Component | Value/Share | % of Gap | Confidence |
+|-----------|-------------|----------|------------|
+| Revenue Growth | $[Amount] | [X]% | [H/M/L] |
+| Margin Expansion | $[Amount] | [Y]% | [H/M/L] |
+| Multiple Re-rating | $[Amount] | [Z]% | [H/M/L] |
+| **TOTAL** | **$[Sum]** | **100%** | |
 
-**RECONCILIATION CHECK:**
-- Current Price: {current_price_str}
-- Component Sum: $[Total from table]
-- **Calculated Target:** {current_price_str} + $[Sum] = $[Result]
-- **Stated Consensus Target:** {analyst_consensus_target}
-- **Variance:** $[Difference] (MUST BE $0.00)
-- **Status:** [✓ RECONCILED or ✗ ERROR - RECALCULATE]
+Reconciliation: {current_price_str} + $[Sum] = {analyst_consensus_target} | Variance: $0.00 ✓
 
-═══════════════════════════════════════════════════════════
-**C. COMPARATIVE ANALYSIS: MODEL vs ANALYST CONSENSUS**
-═══════════════════════════════════════════════════════════
+---
 
-**TARGET COMPARISON TABLE:**
+## V. COMPARATIVE ANALYSIS & RISK ASSESSMENT
 
-| Metric | Model Target | Analyst Consensus | Difference | Analysis |
-|--------|--------------|-------------------|------------|----------|
-| Target Price | ${target_price} | {analyst_consensus_target} | $[Diff] | [More/Less bullish] |
-| Upside % | [X]% | [Y]% | [Z]pp | [Significance] |
-| Revenue Growth | $[Amount] ([X]%) | $[Amount] ([Y]%) | $[Diff] | [Key driver?] |
-| Margin Expansion | $[Amount] ([X]%) | $[Amount] ([Y]%) | $[Diff] | [Key driver?] |
-| Multiple Re-rating | $[Amount] ([X]%) | $[Amount] ([Y]%) | $[Diff] | [Key driver?] |
-| Implied P/E | [X] | [Y] | [Z] | [Valuation view] |
-| P/E Expansion Req. | [X]% | [Y]% | [Z]pp | [Feasibility] |
+**MODEL vs ANALYST COMPARISON:**
 
-**KEY DIFFERENCES ANALYSIS:**
+| Metric | Model | Analyst | Difference |
+|--------|-------|---------|------------|
+| Target | ${target_price} | {analyst_consensus_target} | $[Diff] |
+| Revenue Growth | $[Amt] ([X]%) | $[Amt] ([Y]%) | $[Diff] |
+| Margin Expansion | $[Amt] ([X]%) | $[Amt] ([Y]%) | $[Diff] |
+| Multiple Re-rating | $[Amt] ([X]%) | $[Amt] ([Y]%) | $[Diff] |
+| Implied P/E | [X] | [Y] | [Z] |
 
-1. **Primary Divergence Driver:** [Which component (Revenue/Margin/Multiple) explains most of the difference between targets?]
+Primary Divergence Driver: [Which component explains most difference]
+Key Assumption Differences: [Revenue/Margin/Multiple differences]
 
-2. **Assumption Differences:** 
-   - Revenue Growth: [How do growth assumptions differ?]
-   - Margin Expectations: [How do margin assumptions differ?]
-   - Multiple Expectations: [How do valuation multiple assumptions differ?]
+**EXECUTION RISKS:**
 
-3. **Risk Assessment Differences:**
-   - Model Risk View: [What risks is the model pricing in or ignoring?]
-   - Analyst Risk View: [What risks are analysts pricing in or ignoring?]
+| Risk Category | Key Risk | Probability | Impact on Bridge |
+|---------------|----------|-------------|------------------|
+| Revenue | [From {risks}] | [H/M/L] | [Which catalysts vulnerable] |
+| Margin | [Cost/competitive pressure] | [H/M/L] | [Margin target risk] |
+| Multiple | [Sentiment reversal] | [H/M/L] | [Compression risk] |
+| Regulatory | {regulatory_risk} | [H/M/L] | [Overall impact] |
 
-4. **Catalyst Interpretation:**
-   - Model Catalyst Weighting: [Which catalysts is the model emphasizing?]
-   - Analyst Catalyst Weighting: [Which catalysts are analysts emphasizing?]
+---
 
-**RECONCILIATION OF VIEWS:**
+## VI. CATALYST TIMELINE
 
-[Explain why the two targets differ. Consider:
-- Is the model more optimistic about specific catalysts?
-- Are analysts more conservative on execution risk?
-- Does the model assume higher multiple expansion?
-- Are there timing differences in catalyst realization?]
+| Timeframe | Catalyst | Source | Price Impact | Probability |
+|-----------|----------|--------|-------------|-------------|
+| 0-6 months | [From news] | [URL] | $[Amt]/share | [H/M/L] |
+| 6-18 months | [From news] | [URL] | $[Amt]/share | [H/M/L] |
+| 18+ months | [From data] | [Source] | $[Amt]/share | [H/M/L] |
 
-═══════════════════════════════════════════════════════════
-**D. UNIFIED ACHIEVABILITY ASSESSMENT**
-═══════════════════════════════════════════════════════════
+---
 
-**MODEL TARGET (${target_price}) ASSESSMENT:**
-- **Overall Feasibility:** if {target_price} or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
-- **Confidence Level:** [High/Medium/Low] based on evidence quality
-- **Critical Dependencies:** [2-3 factors that MUST occur]
-- **Timeline Realism:** [Whether catalyst timelines support target]
-- **Evidence Strength:** [Strong/Moderate/Weak]
-- **Realistic Target (if needed):** $[Amount if feasibility is CHALLENGING/UNLIKELY]
+## VII. FINAL VERDICT
 
-**ANALYST CONSENSUS TARGET ({analyst_consensus_target}) ASSESSMENT:**
-- **Overall Feasibility:** if {analyst_consensus_target} price or more can be met [ACHIEVABLE] else [CHALLENGING / UNLIKELY]
-- **Confidence Level:** [High/Medium/Low] based on evidence quality
-- **Critical Dependencies:** [2-3 factors that MUST occur]
-- **Timeline Realism:** [Whether catalyst timelines support target]
-- **Evidence Strength:** [Strong/Moderate/Weak]
-- **Realistic Target (if needed):** $[Amount if feasibility is CHALLENGING/UNLIKELY]
+**Model Target (${target_price}):** [ACHIEVABLE / CHALLENGING / UNLIKELY]
+- Confidence: [H/M/L] | Critical Dependencies: [2-3 factors]
+- Realistic Target (if challenging): $[Amount]
 
-**RECOMMENDED TARGET RANGE:**
+**Analyst Target ({analyst_consensus_target}):** [ACHIEVABLE / CHALLENGING / UNLIKELY]
+- Confidence: [H/M/L] | Critical Dependencies: [2-3 factors]
+- Realistic Target (if challenging): $[Amount]
 
-Based on the dual analysis:
-- **Conservative Target:** $[Lower bound based on high-confidence catalysts]
-- **Base Case Target:** $[Most likely outcome given evidence]
-- **Optimistic Target:** $[Upper bound if all catalysts materialize]
+**Recommended Range:**
+- Conservative: $[Lower bound] | Base Case: $[Most likely] | Optimistic: $[Upper bound]
 
-**FINAL VERDICT:**
-CRITICAL SPACING RULE:
-SPACING: maintain at least one space between words and numbers
-NO SMASHING: You must include exactly one space before and after every numerical value and symbol (e.g., $100.00 +$ 50.00 = $ 150.00 ).
-BOLDING SEPARATION: Never allow a bolding asterisk (**) to touch a number or a word without a space (e.g., use ** $ 190.00 ** instead of $190.00).
-FORCE NEWLINES: If a sentence contains more than two numerical calculations, you must break it into a bulleted list to prevent text wrapping/smashing.
+**VERDICT:** [3-4 sentences: Which target is more realistic, most likely price path, key risks, your recommended target with rationale]
 
-[3-4 sentences providing:
-1. Which target (model or analyst) appears more realistic given the evidence. 
-2. What the most likely price path is based on identified catalysts
-3. Key risks that could prevent either target from being achieved
-4. Your recommended target price with clear rationale]
-
-**INVESTMENT IMPLICATION:**
-
-[State clearly whether the current price represents:
-- Strong Buy (high-confidence upside to conservative target)
-- Buy (moderate-confidence upside to base case)
-- Hold (limited upside or high execution risk)
-- Sell (targets appear unachievable given evidence)]
+**INVESTMENT IMPLICATION:** [Strong Buy / Buy / Hold / Sell with reasoning]

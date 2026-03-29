@@ -2358,6 +2358,10 @@ def extract_thesis_components(ticker, analysis_data, analyses):
 def prepare_standardized_prompt_data(ticker, components, analyses, financial_metrics, target_price, current_price_str, dcf_calculation_details, startup_calculation_details):
     """Prepare standardized prompt data for all thesis types"""
     
+    # Ensure market_sentiment is never None
+    if not components.get('market_sentiment'):
+        components['market_sentiment'] = {}
+    
     # Get cross-analysis data
     cross_analysis = components.get('cross_method_analysis', {})
     
@@ -2491,7 +2495,7 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
         'key_developments': ', '.join([str(d) for d in components['market_sentiment'].get('key_developments', [])]),
         'sentiment_rating': components['market_sentiment'].get('sentiment_rating', 'Neutral'),
         'news_count': components['market_sentiment'].get('news_count', 0),
-        'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')}) - Facts: {article.get('enhanced_facts', {}).get('lead_fact', 'No structured facts')}" for article in components['market_sentiment'].get('recent_news', [])]),
+        'news_sources_with_urls': ', '.join([f"{article.get('source', 'Unknown')}: {article.get('title', 'No title')[:40]}... ({article.get('url', 'No URL')}) - Facts: {(article.get('enhanced_facts') or {}).get('lead_fact', 'No structured facts')}" for article in components['market_sentiment'].get('recent_news', []) if article]),
         'industry_outlook': components.get('industry_analysis', {}).get('industry_outlook', 'Neutral'),
         'competitive_position': components.get('industry_analysis', {}).get('competitive_position', 'Average'),
         'regulatory_risk': components.get('industry_analysis', {}).get('regulatory_risk', 'Medium'),
@@ -2508,7 +2512,7 @@ def prepare_standardized_prompt_data(ticker, components, analyses, financial_met
             'quantitative_evidence': article.get('enhanced_facts', {}).get('quantitative_evidence', ''),
             'business_mechanism': article.get('enhanced_facts', {}).get('business_mechanism', ''),
             'verbatim_quote': article.get('enhanced_facts', {}).get('verbatim_quote', '')
-        } for article in components['market_sentiment'].get('recent_news', []) if article.get('enhanced_facts')], indent=2),
+        } for article in components['market_sentiment'].get('recent_news', []) if article and article.get('enhanced_facts')], indent=2),
         'business_summary': financial_metrics.get('business_summary', 'No business summary available'),
     }
 
@@ -2855,18 +2859,15 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         
         llm_response = llm_manager.generate_response(prompt)
         
-        # Fallback to appropriate template if LLM fails
+        # Show error if LLM returns empty/short response instead of silent fallback
         if not llm_response or len(llm_response.strip()) < 100:
-            if thesis_type == "Bull Case":
-                fallback_response = generate_bull_case(ticker, components)
-            elif thesis_type == "Bear Case":
-                fallback_response = generate_bear_case(ticker, components)
-            else:
-                fallback_response = generate_balanced_thesis(ticker, components)
-            
+            st.error(f"❌ LLM returned empty or insufficient response for {ticker} ({thesis_type})")
+            st.error(f"Response length: {len(llm_response.strip()) if llm_response else 0} chars")
+            st.error(f"Raw response: {repr(llm_response[:200]) if llm_response else 'None'}")
+            st.error(f"Prompt length: {len(prompt):,} chars (~{len(prompt)//4:,} tokens)")
             if return_prompt:
-                return fallback_response, prompt
-            return fallback_response
+                return None, prompt
+            return None
         
         if return_prompt:
             return llm_response, prompt
@@ -2875,18 +2876,12 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        st.warning(f"LLM enhancement failed, using template: {str(e)}")
+        st.error(f"❌ Thesis generation failed for {ticker} ({thesis_type}): {str(e)}")
         st.error(f"Error details: {error_details}")
-        if thesis_type == "Bull Case":
-            fallback_response = generate_bull_case(ticker, components)
-        elif thesis_type == "Bear Case":
-            fallback_response = generate_bear_case(ticker, components)
-        else:
-            fallback_response = generate_balanced_thesis(ticker, components)
         
         if return_prompt:
-            return fallback_response, None
-        return fallback_response
+            return None, None
+        return None
 
 def generate_bull_case(ticker, components):
     """Generate bullish investment thesis (template fallback)"""
