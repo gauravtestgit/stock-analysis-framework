@@ -20,7 +20,7 @@ class RateLimitTracker:
         if ticker:
             self.ticker_requests[ticker] += 1
         
-        if self.request_count % 10 == 0:
+        if self.request_count % 100 == 0:
             recent_rate = self._calculate_recent_rate()
             print(f"🔄 YFinance: {self.request_count} requests, Rate: {recent_rate:.1f}/min, Errors: {self.rate_limit_errors}")
     
@@ -53,11 +53,9 @@ class RateLimitTracker:
                 return True
         else:
             # Check for internal throttling patterns
-            throttle_patterns = ['no data found', 'possibly delisted', 'quote not found', 'connection', 'timeout']
-            if any(pattern in error_msg.lower() for pattern in throttle_patterns):
-                recent_rate = self._calculate_recent_rate()
-                print(f"🔍 YFinance Error ({ticker}) [Rate: {recent_rate:.1f}/min]: {error_msg}")
-            else:
+            # Only log unexpected errors, suppress common non-critical ones
+            suppressed_patterns = ['no data found', 'possibly delisted', 'quote not found', 'nonetype']
+            if not any(pattern in error_msg.lower() for pattern in suppressed_patterns):
                 print(f"🔍 YFinance Error ({ticker}): {error_msg}")
         
         return False
