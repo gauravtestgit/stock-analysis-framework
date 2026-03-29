@@ -160,6 +160,10 @@ class BatchAnalysisService:
                     print(f"Skipping invalid symbol at row {idx}: {symbol}")
                     continue
                 futures[executor.submit(self._process_single_stock, symbol.strip().upper())] = idx
+            futures = {
+                executor.submit(self._process_single_stock, row['Symbol'].strip().upper()): idx
+                for idx, row in df.iterrows()
+            }
             
             for future in as_completed(futures):
                 status, ticker, csv_row = future.result()
