@@ -160,10 +160,6 @@ class BatchAnalysisService:
                     print(f"Skipping invalid symbol at row {idx}: {symbol}")
                     continue
                 futures[executor.submit(self._process_single_stock, symbol.strip().upper())] = idx
-            futures = {
-                executor.submit(self._process_single_stock, row['Symbol'].strip().upper()): idx
-                for idx, row in df.iterrows()
-            }
             
             for future in as_completed(futures):
                 status, ticker, csv_row = future.result()
@@ -178,13 +174,13 @@ class BatchAnalysisService:
                         self.failed += 1
                     
                     count = self.completed + self.failed
-                    if count >= 2:
+                    if count >= 2 and count % 10 == 0:
                         time_diff = datetime.now() - time_start
                         time_per_stock = time_diff / count
                         time_remaining = time_per_stock * (total_stocks - count)
-                        print(f"Processed {ticker} ({count}/{total_stocks}). ETA: {time_remaining}", end='\r', flush=True)
-                    else:
-                        print(f"Processed {ticker} ({count}/{total_stocks})...", end='\r', flush=True)
+                        print(f"📊 Progress: {count}/{total_stocks} ({count*100//total_stocks}%) | Last: {ticker} | ETA: {time_remaining}")
+                    elif count == 1:
+                        print(f"📊 First stock processed: {ticker}")
                     
                     if self.save_to_db and self.batch_job_id:
                         self._update_batch_job_progress(self.completed, self.failed)
