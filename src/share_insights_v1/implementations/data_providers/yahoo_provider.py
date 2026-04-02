@@ -1,9 +1,15 @@
 import yfinance as yf
+import logging
 from typing import Dict, Any
 from ...interfaces.data_provider import IDataProvider
 from ...models.financial_metrics import FinancialMetrics
 from ...utils.rate_limit_tracker import rate_tracker
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Suppress noisy yfinance/urllib3 logs (HTTP 401, 404, delisted warnings)
+logging.getLogger('yfinance').setLevel(logging.CRITICAL)
+logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+logging.getLogger('peewee').setLevel(logging.CRITICAL)
 
 class YahooFinanceProvider(IDataProvider):
     """Yahoo Finance data provider implementation"""
@@ -253,7 +259,6 @@ class YahooFinanceProvider(IDataProvider):
             
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)
-            print(f"Error fetching data for {ticker}: {e}")
             data = {}
         
         return data
