@@ -1547,15 +1547,36 @@ def display_analyst_consensus_details(data):
     """Display analyst consensus details"""
     st.markdown("### 👥 Analyst Ratings")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Consensus Target", f"${data.get('predicted_price', 0) or 0:.2f}")
     with col2:
         st.metric("High Target", f"${data.get('target_high', 0) or 0:.2f}")
     with col3:
         st.metric("Low Target", f"${data.get('target_low', 0) or 0:.2f}")
+    with col4:
+        st.metric("Latest Rating", data.get('latest_rating_date', 'N/A'))
     
     st.write(f"**Number of Analysts:** {data.get('num_analysts', 0)}")
+    
+    # Recent ratings table
+    recent_ratings = data.get('recent_ratings', [])
+    if recent_ratings:
+        st.markdown("### 📋 Recent Analyst Actions")
+        ratings_data = []
+        for r in recent_ratings:
+            target_str = f"${r['current_price_target']:.2f}" if r.get('current_price_target') else 'N/A'
+            prior_str = f"${r['prior_price_target']:.2f}" if r.get('prior_price_target') else 'N/A'
+            ratings_data.append({
+                'Date': r.get('date', 'N/A'),
+                'Firm': r.get('firm', 'N/A'),
+                'Action': r.get('action', 'N/A'),
+                'Rating': r.get('to_grade', 'N/A'),
+                'PT Action': r.get('price_target_action', 'N/A'),
+                'Target': target_str,
+                'Prior Target': prior_str
+            })
+        st.dataframe(pd.DataFrame(ratings_data), use_container_width=True, hide_index=True)
 
 def display_industry_analysis_details(data):
     """Display industry analysis details"""
@@ -1888,24 +1909,36 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
             """
             all_cards.append(ai_card)
         elif analysis_type == 'analyst_consensus':
+            recent_ratings = analysis_data.get('recent_ratings', [])
+            ratings_html = ''.join([
+                f"<p>• <strong>{r.get('date', 'N/A')}</strong> - {r.get('firm', 'N/A')}: {r.get('to_grade', 'N/A')} "
+                f"{'| $' + f"{r['current_price_target']:.2f}" if r.get('current_price_target') else ''}"
+                f"{' (' + r.get('price_target_action', '') + ')' if r.get('price_target_action') and r.get('price_target_action') != 'N/A' else ''}</p>"
+                for r in recent_ratings[:5]
+            ]) if recent_ratings else "<p>No recent ratings</p>"
+            
             analyst_card = f"""
             <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; position: relative;">
                 <h5>👥 Analyst</h5>
                 <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                 <p><strong>Count:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                <p><strong>Latest:</strong> {analysis_data.get('latest_rating_date', 'N/A')}</p>
                 <button onclick="showModal('analyst_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="analyst_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-                    <div style="background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; max-height: 80%; overflow-y: auto;">
+                    <div style="background-color: #1e1e1e; color: #e0e0e0; margin: 5% auto; padding: 20px; border-radius: 10px; width: 80%; max-width: 700px; max-height: 80%; overflow-y: auto; -webkit-font-smoothing: antialiased; color-scheme: dark;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h3 style="margin: 0;">👥 {ticker} Analyst Consensus Details</h3>
+                            <h3 style="margin: 0; color: #e0e0e0;">👥 {ticker} Analyst Consensus Details</h3>
                             <span onclick="closeModal('analyst_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                         </div>
                         <p><strong>Consensus Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
                         <p><strong>High Target:</strong> ${analysis_data.get('target_high', 0) or 0:.2f}</p>
                         <p><strong>Low Target:</strong> ${analysis_data.get('target_low', 0) or 0:.2f}</p>
                         <p><strong>Number of Analysts:</strong> {analysis_data.get('num_analysts', 0)}</p>
+                        <p><strong>Latest Rating Date:</strong> {analysis_data.get('latest_rating_date', 'N/A')}</p>
+                        <h4>Recent Analyst Actions:</h4>
+                        {ratings_html}
                     </div>
                 </div>
             </div>
@@ -2826,6 +2859,16 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         analyst_consensus_details = ""
         if 'analyst_consensus' in analyses:
             analyst_data = analyses['analyst_consensus']
+            
+            # Format recent ratings for prompt
+            recent_ratings = analyst_data.get('recent_ratings', [])
+            ratings_text = '\n'.join([
+                f"        - {r.get('date', 'N/A')}: {r.get('firm', 'N/A')} - {r.get('to_grade', 'N/A')}"
+                f"{' | $' + f"{r['current_price_target']:.2f}" if r.get('current_price_target') else ''}"
+                f"{' (' + r.get('price_target_action', '') + ')' if r.get('price_target_action') and r.get('price_target_action') != 'N/A' else ''}"
+                for r in recent_ratings[:5]
+            ]) if recent_ratings else '        - No recent ratings available'
+            
             analyst_consensus_details = f"""
         
         **ANALYST CONSENSUS DETAILS:**
@@ -2834,11 +2877,9 @@ def generate_unified_thesis(ticker, components, thesis_type, llm_manager=None, r
         - Target Price Low: ${analyst_data.get('target_low', 0) or 0:.2f}
         - Number of Analysts: {analyst_data.get('num_analysts', 0)}
         - Consensus Recommendation: {analyst_data.get('recommendation', 'N/A')}
-        - Buy Ratings: {analyst_data.get('buy_ratings', 0)}
-        - Hold Ratings: {analyst_data.get('hold_ratings', 0)}
-        - Sell Ratings: {analyst_data.get('sell_ratings', 0)}
-        - Recent Estimate Revisions: {analyst_data.get('estimate_revisions', 'N/A')}
-        - Earnings Surprise History: {analyst_data.get('earnings_surprises', 'N/A')}
+        - Latest Rating Date: {analyst_data.get('latest_rating_date', 'N/A')}
+        - Recent Analyst Actions:
+{ratings_text}
         """
         
         # Add the analysis details to prompt data

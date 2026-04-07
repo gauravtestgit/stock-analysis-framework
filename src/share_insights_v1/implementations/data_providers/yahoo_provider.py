@@ -257,6 +257,28 @@ class YahooFinanceProvider(IDataProvider):
             data['earnings_growth'] = info.get('earningsGrowth', 0)
             data['revenue_growth'] = info.get('revenueGrowth', 0)
             
+            # Recent upgrades/downgrades with dated price targets
+            try:
+                upgrades_df = stock.upgrades_downgrades
+                if upgrades_df is not None and not upgrades_df.empty:
+                    recent = upgrades_df.head(10)
+                    data['recent_ratings'] = []
+                    for date_idx, row in recent.iterrows():
+                        data['recent_ratings'].append({
+                            'date': str(date_idx)[:10],
+                            'firm': row.get('Firm', 'N/A'),
+                            'to_grade': row.get('ToGrade', 'N/A'),
+                            'from_grade': row.get('FromGrade', 'N/A'),
+                            'action': row.get('Action', 'N/A'),
+                            'price_target_action': row.get('priceTargetAction', 'N/A'),
+                            'current_price_target': row.get('currentPriceTarget', None),
+                            'prior_price_target': row.get('priorPriceTarget', None)
+                        })
+                    # Latest rating date
+                    data['latest_rating_date'] = str(upgrades_df.index[0])[:10]
+            except Exception:
+                data['recent_ratings'] = []
+            
         except Exception as e:
             rate_tracker.check_rate_limit_error(str(e), ticker)
             data = {}
