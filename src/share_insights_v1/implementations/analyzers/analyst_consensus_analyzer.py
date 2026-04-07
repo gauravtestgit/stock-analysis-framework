@@ -66,7 +66,10 @@ class AnalystConsensusAnalyzer(IAnalyzer):
                 'analysis_type': 'analyst_consensus',
                 # Analyst growth projections
                 'earnings_growth': analyst_data.get('earnings_growth', 0),
-                'revenue_growth': analyst_data.get('revenue_growth', 0)
+                'revenue_growth': analyst_data.get('revenue_growth', 0),
+                # Recent analyst ratings with dates
+                'recent_ratings': analyst_data.get('recent_ratings', []),
+                'latest_rating_date': analyst_data.get('latest_rating_date', 'N/A')
             }
             
         except Exception as e:
