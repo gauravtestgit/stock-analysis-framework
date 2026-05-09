@@ -827,7 +827,7 @@ def display_tabbed_batch_results(results):
         
         # Technical Tab
         with tabs[2]:
-            display_analyzer_tab(selected_ticker, analyses, 'technical', 'Technical Analysis')
+            display_analyzer_tab(selected_ticker, analyses, 'technical', 'Technical Analysis', financial_metrics=financial_metrics)
         
         # Comparable Tab
         with tabs[3]:
@@ -1183,7 +1183,7 @@ def display_financial_charts_modal(ticker, revenue_data_statements):
             })
             st.bar_chart(chart_data.set_index('Year'))
 
-def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name):
+def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name, financial_metrics=None):
     """Display individual analyzer tab content"""
     
     if analyzer_key not in analyses:
@@ -1212,7 +1212,7 @@ def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name):
     if analyzer_key == 'dcf':
         display_dcf_details(analysis_data)
     elif analyzer_key == 'technical':
-        display_technical_details(analysis_data, ticker)
+        display_technical_details(analysis_data, ticker, financial_metrics=financial_metrics)
     elif analyzer_key == 'comparable':
         display_comparable_details(analysis_data)
     elif analyzer_key == 'ai_insights':
@@ -1259,9 +1259,17 @@ def display_dcf_details(data):
     else:
         st.info("No DCF calculation details available")
 
-def display_technical_details(data, ticker=None):
+def display_technical_details(data, ticker=None, financial_metrics=None):
     """Display technical analysis details"""
     st.markdown("### 📈 Technical Indicators")
+    
+    # Float and 30-day price data
+    float_shares = (financial_metrics or {}).get('float_shares', 0) or 0
+    shares_outstanding = (financial_metrics or {}).get('shares_outstanding', 0) or 0
+    float_pct = min((float_shares / shares_outstanding * 100), 100.0) if shares_outstanding > 0 else 0
+    price_30d_high = data.get('price_30d_high', 0) or 0
+    price_30d_low = data.get('price_30d_low', 0) or 0
+    price_30d_fluctuation = data.get('price_30d_fluctuation', 0) or 0
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -1281,6 +1289,20 @@ def display_technical_details(data, ticker=None):
         st.write(f"**ATR %:** {data.get('atr_percent', 'N/A')}%")
         st.write(f"**Trend:** {data.get('trend', 'N/A')}")
     
+    # 30-day range and float info
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write(f"**30d High:** ${price_30d_high:.2f}")
+        st.write(f"**30d Low:** ${price_30d_low:.2f}")
+        st.write(f"**30d Fluctuation:** {price_30d_fluctuation:.1f}%")
+    with col2:
+        st.write(f"**Float Shares:** {float_shares/1e6:.0f}M")
+        st.write(f"**Float %:** {float_pct:.1f}%")
+        st.write(f"**Shares Outstanding:** {shares_outstanding/1e6:.0f}M")
+    with col3:
+        st.write(f"**52w High:** ${data.get('high_52w', 0) or 0:.2f}")
+        st.write(f"**52w Low:** ${data.get('low_52w', 0) or 0:.2f}")
+        st.write(f"**Volatility (Ann):** {(data.get('volatility_annual', 0) or 0)*100:.1f}%")
     # Support & Resistance Levels
     support_resistance = data.get('support_resistance', {})
     if support_resistance:
@@ -1849,8 +1871,18 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
             indicators = ['rsi_14', 'ma_20', 'ma_50', 'ma_200', 'macd_line', 'macd_signal']
             indicators_html = ''.join([f"<p>• {indicator.upper()}: {analysis_data.get(indicator, 'N/A')}</p>" for indicator in indicators if analysis_data.get(indicator) is not None])
             
+            # Get float data from financial_metrics
+            float_shares = financial_metrics.get('float_shares', 0) or 0
+            shares_outstanding = financial_metrics.get('shares_outstanding', 0) or 0
+            float_pct = (float_shares / shares_outstanding * 100) if shares_outstanding > 0 else 0
+            
+            # 30-day price fluctuation
+            price_30d_high = analysis_data.get('price_30d_high', 0) or 0
+            price_30d_low = analysis_data.get('price_30d_low', 0) or 0
+            price_30d_fluctuation = analysis_data.get('price_30d_fluctuation', 0) or 0
+            
             tech_card = f"""
-            <div style="min-width: 180px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; position: relative;">
+            <div style="min-width: 200px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff; position: relative;">
                 <h5>📈 Technical</h5>
                 <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
@@ -1859,6 +1891,8 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
                 <p><strong>MA 200:</strong> ${analysis_data.get('ma_200', 0) or 0:.2f}</p>
                 <p><strong>BB Upper:</strong> ${analysis_data.get('bb_upper', 0) or 0:.2f}</p>
                 <p><strong>BB Lower:</strong> ${analysis_data.get('bb_lower', 0) or 0:.2f}</p>
+                <p><strong>30d Range:</strong> ${price_30d_low:.2f}-${price_30d_high:.2f} ({price_30d_fluctuation:.1f}%)</p>
+                <p><strong>Float:</strong> {float_shares/1e6:.0f}M ({float_pct:.1f}%)</p>
                 <p><strong>ADX:</strong> {analysis_data.get('adx', 'N/A')}</p>
                 <p><strong>ATR %:</strong> {analysis_data.get('atr_percent', 'N/A')}%</p>
                 <button onclick="showModal('tech_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
