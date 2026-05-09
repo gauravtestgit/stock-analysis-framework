@@ -164,6 +164,12 @@ class TechnicalAnalyzer(IAnalyzer):
                 
             chart_data = price_data.get('chart_data', {})
             
+            # 30-day price fluctuation
+            last_30 = hist.tail(30)
+            price_30d_high = last_30['High'].max() if len(last_30) > 0 else None
+            price_30d_low = last_30['Low'].min() if len(last_30) > 0 else None
+            price_30d_fluctuation = ((price_30d_high - price_30d_low) / current_price * 100) if price_30d_high and price_30d_low else None
+            
             return {
                 'method': 'Technical Analysis',
                 'current_price': current_price,
@@ -196,7 +202,10 @@ class TechnicalAnalyzer(IAnalyzer):
                 'atr_percent': atr_percent,
                 'technical_signals': technical_signals,
                 'support_resistance': support_resistance,
-                'chart_data': chart_data
+                'chart_data': chart_data,
+                'price_30d_high': price_30d_high,
+                'price_30d_low': price_30d_low,
+                'price_30d_fluctuation': price_30d_fluctuation
             }
             
         except Exception as e:
