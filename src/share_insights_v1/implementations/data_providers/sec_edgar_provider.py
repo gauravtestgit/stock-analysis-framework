@@ -11,7 +11,8 @@ class SECEdgarProvider(SECDataProvider):
         self.base_url = "https://data.sec.gov"
         self.cik_retrieval_url = "https://sec.gov"
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'StockAnalysisFramework admin@stockanalysis.dev',
+            'Accept-Encoding': 'gzip, deflate'
         }
         self.rate_limit_delay = 0.1  # SEC requires 10 requests per second max
     
