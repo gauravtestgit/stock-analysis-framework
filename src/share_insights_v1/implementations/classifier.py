@@ -63,9 +63,9 @@ class CompanyClassifier(ICompanyClassifier):
             # Enhanced ETF Detection using config
             etf_indicators = [
                 quote_type == 'ETF',
-                'ETF' in long_name.upper(),
-                'FUND' in long_name.upper(),
-                'TRUST' in long_name.upper(),
+                long_name.upper().endswith(' ETF') or ' ETF ' in long_name.upper(),
+                long_name.upper().endswith(' FUND') or ' FUND ' in long_name.upper(),
+                long_name.upper().endswith(' TRUST') or ' TRUST ' in long_name.upper(),
                 bool(fund_family),
                 bool(category),
                 ticker.endswith('ETF'),
