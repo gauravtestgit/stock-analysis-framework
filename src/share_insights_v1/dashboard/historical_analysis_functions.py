@@ -190,7 +190,7 @@ def show_recommendation_timeline(ticker: str, timeline_data):
         
         # Show table
         st.subheader("📊 Recent Recommendations")
-        display_df = df.copy()
+        display_df = df.sort_values('date', ascending=False).copy()
         display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
         display_df = display_df[['date', 'recommendation', 'target_price', 'current_price', 'confidence']].head(10)
         st.dataframe(display_df, use_container_width=True)
