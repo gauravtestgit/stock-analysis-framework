@@ -160,7 +160,12 @@ class TechnicalAnalyzer(IAnalyzer):
                 predicted_price = current_price * (1 - volatility * 0.3)  # Bearish target
             elif recommendation in ['Strong Buy', 'Buy']:
                 predicted_price = current_price * (1 + volatility * 0.8)  # Bullish target
-            # Keep existing predicted_price for Hold
+            else:
+                # Hold: small move in the direction of the (weak) net signal, capped well
+                # below the Buy/Sell multipliers so a Hold can never out-rank a real Buy
+                net_signal = technical_signals['net_signal']
+                tilt = 0.1 if net_signal > 0 else -0.1 if net_signal < 0 else 0.0
+                predicted_price = current_price * (1 + volatility * tilt)
                 
             chart_data = price_data.get('chart_data', {})
             
