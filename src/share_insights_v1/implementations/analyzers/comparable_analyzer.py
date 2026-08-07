@@ -33,6 +33,9 @@ class ComparableAnalyzer(IAnalyzer):
             net_income = metrics.get('net_income', 0)
             shares_outstanding = metrics.get('shares_outstanding', 0)
             current_price = metrics.get('current_price', 0)
+            # yfinance sometimes includes 'bookValue' as an explicit None rather than
+            # omitting it, so .get(key, 0) alone won't catch that - normalize with `or 0`
+            book_value_per_share = metrics.get('book_value_per_share', 0) or 0
             
             sector = company_info.get('sector', '')
             industry = company_info.get('industry', '')
@@ -68,7 +71,16 @@ class ComparableAnalyzer(IAnalyzer):
             if total_revenue > 0 and shares_outstanding > 0:
                 revenue_per_share = total_revenue / shares_outstanding
                 fair_values['ps_fair_value'] = revenue_per_share * target_multiples['ps']
-            
+
+            # P/B valuation - book value isn't available for a lot of stocks, so this
+            # is expected to be skipped often; that's fine, it just won't contribute
+            # to the average fair value below (same as P/E and P/S when unavailable)
+            try:
+                if book_value_per_share > 0:
+                    fair_values['pb_fair_value'] = book_value_per_share * target_multiples['pb']
+            except TypeError:
+                pass  # malformed book value data for this ticker; skip P/B rather than fail the whole analysis
+
             # Calculate average fair value
             valid_values = [v for v in fair_values.values() if v > 0]
             avg_fair_value = sum(valid_values) / len(valid_values) if valid_values else 0
@@ -107,6 +119,7 @@ class ComparableAnalyzer(IAnalyzer):
                 'parameters_used': {
                     'pe_multiple': f"{target_multiples['pe']:.1f}x",
                     'ps_multiple': f"{target_multiples['ps']:.1f}x",
+                    'pb_multiple': f"{target_multiples['pb']:.1f}x",
                     'quality_adjustment': quality_grade
                 }
             }
