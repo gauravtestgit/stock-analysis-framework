@@ -250,7 +250,10 @@ class AnalysisOrchestrator:
         
         # Type-specific analyses
         if company_type == CompanyType.STARTUP_LOSS_MAKING.value:
+            # Startups get their own analyzer, plus comparable analysis (P/E, P/S, P/B) -
+            # DCF is intentionally excluded since it needs projectable positive cash flow
             applicable.append(AnalysisType.STARTUP)
+            applicable.append(AnalysisType.COMPARABLE)
         elif company_type in [
             CompanyType.MATURE_PROFITABLE.value,
             CompanyType.GROWTH_PROFITABLE.value,
