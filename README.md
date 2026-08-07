@@ -159,6 +159,7 @@ Stock Lists (CSV) → Batch Analysis → Method Comparison → Convergence Analy
 - **ORM**: SQLAlchemy with declarative models
 - **Tables**: `analysis_history`, `portfolios`, `positions`, `trades`, `scenarios`, etc.
 - **Example**: `postgresql://user:password@localhost:5432/strategy_framework`
+- **Production DB user**: the EC2 deployment connects as a dedicated, least-privilege role (`db_analysis_api_user`) scoped to the `strategy_framework` database, **not** the `postgres` superuser used in local dev. Credentials live only in that environment's `.env` (`DATABASE_URL`), never committed to the repo. If this role's password is ever lost, reset it via `ALTER USER db_analysis_api_user WITH PASSWORD '...'` as the Postgres superuser and update `.env` to match — see [SECURITY.md](SECURITY.md).
 
 ### Storage Flow
 1. **Analysis Execution**:
