@@ -5,8 +5,14 @@ class PeerComparisonProvider(ABC):
     """Interface for peer comparison data providers"""
     
     @abstractmethod
-    def get_industry_peers(self, ticker: str, sector: str, industry: str) -> List[str]:
-        """Get list of peer companies in same industry"""
+    def get_industry_peers(self, ticker: str, sector: str, industry: str, market_cap: float = 0, market: str = '') -> List[str]:
+        """Get list of peer companies in same industry.
+
+        market_cap (target company's own, if known) lets implementations narrow
+        peers to a comparable size band rather than just industry/exchange.
+        market is yfinance's `info['market']` value (e.g. 'us_market', 'au_market')
+        and lets implementations scope peers to the target's own exchange/region.
+        """
         pass
     
     @abstractmethod

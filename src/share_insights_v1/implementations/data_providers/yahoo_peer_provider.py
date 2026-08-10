@@ -19,19 +19,104 @@ class YahooPeerProvider(PeerComparisonProvider):
             'Drug Manufacturers - Specialty & Generic': ['PFE', 'JNJ', 'MRK', 'LLY', 'ABBV']
         }
     
-    def get_industry_peers(self, ticker: str, sector: str, industry: str) -> List[str]:
-        """Get list of peer companies in same industry"""
-        
+    def get_industry_peers(self, ticker: str, sector: str, industry: str, market_cap: float = 0, market: str = '') -> List[str]:
+        """Get list of peer companies in same industry.
+
+        Prefers a live Yahoo screener query scoped to the target's own exchange
+        (region) and, when known, its market-cap band - this is what makes
+        peers correct for ASX/NZX/etc tickers (rather than defaulting to US
+        names) and keeps micro/small-caps from being benchmarked against
+        unrelated mega-caps. Falls back to the static table below only if the
+        screener query errors out or returns nothing (e.g. thin coverage, API
+        changes).
+        """
+        peers = self._screen_peers(ticker, sector, industry, market_cap, market)
+        if peers:
+            return peers
+
+        return self._get_static_peers(ticker, sector, industry)
+
+    def _resolve_region(self, ticker: str, market: str) -> str:
+        """Determine the Yahoo screener 'region' value for the target.
+
+        Prefers yfinance's own `info['market']` classification (e.g.
+        'au_market' -> 'au'), which is correct for any exchange. Only falls
+        back to guessing from the ticker suffix when that field wasn't
+        supplied (e.g. older data provider, hand-built test fixtures) -
+        `info.get('region')` itself is not usable here, it's been observed to
+        return 'US' regardless of the company's actual listing.
+        """
+        if market and market.endswith('_market'):
+            return market[:-len('_market')]
+
+        if ticker.endswith('.AX'):
+            return 'au'
+        elif ticker.endswith('.NZ'):
+            return 'nz'
+        else:
+            return 'us'
+
+    def _screen_peers(self, ticker: str, sector: str, industry: str, market_cap: float, market: str) -> List[str]:
+        """Live-query Yahoo's equity screener for same-region, same-industry peers"""
+        ticker_upper = ticker.upper()
+        region = self._resolve_region(ticker, market)
+        # +/-5x band around the target's own market cap so peers are a
+        # comparable size, not just the biggest names in the industry
+        cap_band = (market_cap * 0.2, market_cap * 5) if market_cap and market_cap > 0 else None
+
+        for classifier_field, classifier_value in (('industry', industry), ('sector', sector)):
+            if not classifier_value:
+                continue
+            for use_cap_band in ([True, False] if cap_band else [False]):
+                try:
+                    filters = [
+                        yf.EquityQuery('eq', ['region', region]),
+                        yf.EquityQuery('eq', [classifier_field, classifier_value]),
+                    ]
+                    if use_cap_band:
+                        filters.append(yf.EquityQuery('gt', ['intradaymarketcap', cap_band[0]]))
+                        filters.append(yf.EquityQuery('lt', ['intradaymarketcap', cap_band[1]]))
+
+                    query = yf.EquityQuery('and', filters)
+                    # Fetch a wide candidate pool (not just top 5) - the screener sorts
+                    # by raw market cap, so without this we'd always keep the biggest
+                    # names in the band rather than the ones actually closest in size
+                    # to the target
+                    result = yf.screen(query, count=50, sortField='intradaymarketcap', sortAsc=False)
+                    quotes = result.get('quotes', []) if result else []
+                    candidates = [
+                        (q.get('symbol'), q.get('marketCap'))
+                        for q in quotes
+                        if q.get('symbol') and q.get('symbol').upper() != ticker_upper
+                    ]
+                    if not candidates:
+                        continue
+
+                    if market_cap and market_cap > 0:
+                        candidates.sort(key=lambda c: abs((c[1] or 0) - market_cap))
+
+                    peers = [symbol for symbol, _ in candidates[:5]]
+                    if peers:
+                        return peers
+                except Exception:
+                    # Invalid classifier value for the screener, network error, etc -
+                    # try the next fallback tier rather than failing the whole lookup
+                    continue
+
+        return []
+
+    def _get_static_peers(self, ticker: str, sector: str, industry: str) -> List[str]:
+        """Hardcoded peer table used only when the live screener finds nothing"""
         peers = self.industry_peers.get(industry, [])
-        
-        # Remove the target ticker from peers
-        if ticker in peers:
-            peers = [p for p in peers if p != ticker]
-        
+
+        # Remove the target ticker from peers (case-insensitive - callers may pass lowercase tickers)
+        ticker_upper = ticker.upper()
+        peers = [p for p in peers if p.upper() != ticker_upper]
+
         # If no specific industry mapping, use sector-based approach
         if not peers:
             peers = self._get_sector_peers(sector, ticker)
-        
+
         return peers[:5]  # Limit to top 5 peers
     
     def get_peer_metrics(self, tickers: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -117,4 +202,4 @@ class YahooPeerProvider(PeerComparisonProvider):
         }
         
         peers = sector_stocks.get(sector, [])
-        return [p for p in peers if p != exclude_ticker]
+        return [p for p in peers if p.upper() != exclude_ticker.upper()]
