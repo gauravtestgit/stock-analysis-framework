@@ -120,9 +120,14 @@ class BatchAnalysisService:
         for idx, row in df.iterrows():
             
             count += 1
+            # Set before the try so a malformed Symbol value (e.g. NaN) can't leave
+            # `ticker` unbound - the except block below references it, and an
+            # unbound reference there would raise NameError and abort the whole
+            # batch loop instead of just failing this one row
+            ticker = f"<row {idx}>"
             try:
 
-                ticker = row['Symbol'].strip().upper()
+                ticker = str(row['Symbol']).strip().upper()
                 if count >= 2:
                     time_diff = datetime.now() - time_start
                     time_per_stock = time_diff / (count - 1)

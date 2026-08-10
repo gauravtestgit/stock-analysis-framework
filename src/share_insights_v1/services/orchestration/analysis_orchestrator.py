@@ -1,6 +1,5 @@
 from typing import Dict, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
-import time
 from ...interfaces.analyzer import IAnalyzer
 from ...interfaces.data_provider import IDataProvider
 from ...interfaces.classifier import ICompanyClassifier
@@ -189,7 +188,12 @@ class AnalysisOrchestrator:
             return results
             
         except Exception as e:
-            execution_time = time.time() - start_time
+            # start_time gets reassigned to a datetime.now() checkpoint earlier in this
+            # method (for per-step timing), so `time.time() - start_time` here mixed a
+            # float with a datetime and raised inside the handler itself, letting the
+            # real error escape uncaught. overall_start_time is a datetime set once at
+            # the top of the method, before anything that could fail.
+            execution_time = (datetime.now() - overall_start_time).total_seconds()
             return {
                 'error': f"Analysis orchestration failed: {str(e)}",
                 'execution_time_seconds': round(execution_time, 2)
