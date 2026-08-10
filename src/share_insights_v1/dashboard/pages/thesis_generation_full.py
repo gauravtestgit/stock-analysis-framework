@@ -1435,21 +1435,65 @@ def display_technical_details(data, ticker=None, financial_metrics=None):
 def display_comparable_details(data):
     """Display comparable analysis details"""
     st.markdown("### 📉 Valuation Multiples")
-    
+
     multiples = data.get('target_multiples', {})
+    sources = data.get('multiple_sources', {})
+
+    def _source_tag(key):
+        return " 🔗" if sources.get(key) == 'config+peer_blend' else ""
+
     if multiples:
         col1, col2 = st.columns(2)
         with col1:
-            st.write(f"**P/E:** {multiples.get('pe', 'N/A')}x")
-            st.write(f"**P/S:** {multiples.get('ps', 'N/A')}x")
+            st.write(f"**P/E:** {multiples.get('pe', 'N/A')}x{_source_tag('pe')}")
+            st.write(f"**P/S:** {multiples.get('ps', 'N/A')}x{_source_tag('ps')}")
         with col2:
-            st.write(f"**P/B:** {multiples.get('pb', 'N/A')}x")
-            st.write(f"**EV/EBITDA:** {multiples.get('ev_ebitda', 'N/A')}x")
-    
+            st.write(f"**P/B:** {multiples.get('pb', 'N/A')}x{_source_tag('pb')}")
+            st.write(f"**EV/EBITDA:** {multiples.get('ev_ebitda', 'N/A')}x{_source_tag('ev_ebitda')}")
+        if sources:
+            st.caption("🔗 = blended with live peer data; otherwise a config-based default")
+
     peers = data.get('peer_tickers', [])
     if peers:
         st.markdown("### 🏭 Peer Companies")
         st.write(", ".join(peers[:10]))
+
+    peer_averages = data.get('peer_averages', {})
+    if peer_averages:
+        st.markdown("### 📊 Peer Averages")
+        multiple_fields = {
+            'pe_ratio': 'P/E', 'price_to_sales': 'P/S',
+            'price_to_book': 'P/B', 'ev_ebitda': 'EV/EBITDA',
+        }
+        pct_fields = {'roe': 'ROE', 'revenue_growth': 'Revenue Growth', 'profit_margin': 'Profit Margin'}
+        col1, col2 = st.columns(2)
+        rows = []
+        for key, label in multiple_fields.items():
+            if key in peer_averages:
+                rows.append(f"**{label}:** {peer_averages[key]:.2f}x")
+        for key, label in pct_fields.items():
+            if key in peer_averages:
+                rows.append(f"**{label}:** {peer_averages[key] * 100:.1f}%")
+        for i, row in enumerate(rows):
+            (col1 if i % 2 == 0 else col2).write(row)
+
+    relative_position = data.get('relative_position', {})
+    if relative_position:
+        st.markdown("### ⚖️ Relative Position vs Peers")
+        badge = {'Discount': '🟢', 'Premium': '🔴', 'Inline': '⚪', 'Superior': '🟢', 'Below': '🔴'}
+        label_map = {
+            'pe_ratio': 'P/E', 'price_to_sales': 'P/S', 'price_to_book': 'P/B',
+            'roe': 'ROE', 'profit_margin': 'Profit Margin',
+        }
+        for key, position in relative_position.items():
+            label = label_map.get(key, key)
+            st.write(f"{badge.get(position, '')} **{label}:** {position}")
+
+    peer_insights = data.get('peer_insights', [])
+    if peer_insights:
+        st.markdown("### 💡 Peer Insights")
+        for insight in peer_insights:
+            st.write(f"- {insight}")
 
 def display_ai_insights_details(data):
     """Display AI insights details"""
