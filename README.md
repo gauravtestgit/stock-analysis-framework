@@ -44,8 +44,8 @@ python run_dashboard.py  # Dashboard on port 8501
 
 ## 📊 Analysis Methods
 
-1. **DCF Analyzer** - Discounted cash flow valuation
-2. **Comparable Analyzer** - Peer company valuation
+1. **DCF Analyzer** - Discounted cash flow valuation, with an automatic Base/Bull/Bear/Rate-Shock scenario comparison plus a user-editable custom scenario
+2. **Comparable Analyzer** - Peer company valuation, with live region-aware peer data blended into the target multiples
 3. **Technical Analyzer** - Price patterns and indicators
 4. **Startup Analyzer** - Early-stage company metrics
 5. **AI Insights Analyzer** - LLM-powered analysis
@@ -105,8 +105,8 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 #### 2. Specialized Analyzers (14 Total)
 - **Location**: `src/share_insights_v1/implementations/analyzers/`
-- **DCF Analyzer**: Discounted Cash Flow valuation with free cash flow projections, WACC calculation, and terminal value estimation
-- **Comparable Analyzer**: Peer company valuation using P/E, P/B, P/S multiples with sector-specific adjustments
+- **DCF Analyzer**: Discounted Cash Flow valuation with free cash flow projections, WACC calculation, and terminal value estimation - runs a Base Case plus automatic Bull/Bear/Rate-Shock scenarios, and supports a user-defined custom scenario via a dedicated fast API endpoint
+- **Comparable Analyzer**: Peer company valuation using P/E, P/B, P/S, EV/EBITDA multiples blended with live, region-aware peer data (not just static sector defaults), with peer relative-position and insights
 - **Technical Analyzer**: Price pattern analysis with RSI, MACD, Bollinger Bands, Stochastic, ADX indicators and trend identification
 - **AI Insights Analyzer**: LLM-powered business analysis combining financial metrics, market position, and growth prospects
 - **News Sentiment Analyzer**: Real-time news sentiment analysis with enhanced fact extraction for thesis generation

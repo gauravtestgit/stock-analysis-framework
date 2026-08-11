@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any, Optional, List
 import logging
 
-from .models import AnalysisRequest, AnalysisResponse, HealthResponse, ConfigResponse, ErrorResponse, AnalyzerInfo
+from .models import AnalysisRequest, AnalysisResponse, HealthResponse, ConfigResponse, ErrorResponse, AnalyzerInfo, DCFScenarioRequest, DCFScenarioResponse
 from .batch_models import BatchJobResponse, BatchResultsResponse
 from .service import AnalysisService
 from .batch_service import BatchAnalysisService
@@ -109,6 +109,27 @@ async def analyze_stock(ticker: str, request: AnalysisRequest = None):
         
     except Exception as e:
         logger.error(f"Analysis failed for {ticker}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze/{ticker}/dcf-scenario", response_model=DCFScenarioResponse)
+async def analyze_dcf_scenario(ticker: str, request: DCFScenarioRequest):
+    """Run a single user-defined DCF scenario. Only DCFAnalyzer runs (no other
+    analyzers, no LLM calls, no DB writes) so this is fast enough for interactive
+    what-if exploration - unlike /analyze/{ticker}, which runs the full pipeline."""
+    try:
+        actual_ticker = ticker.upper()
+        overrides = request.dict()
+        result = await analysis_service.analyze_dcf_scenario(actual_ticker, overrides)
+
+        if 'error' in result:
+            raise HTTPException(status_code=400, detail=result['error'])
+
+        return DCFScenarioResponse(ticker=actual_ticker, scenario=result['scenario'])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"DCF scenario analysis failed for {ticker}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/analyzers", response_model=ConfigResponse)

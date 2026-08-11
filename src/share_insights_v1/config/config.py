@@ -45,12 +45,16 @@ class FinanceConfig:
     # Return configs
     market_return: float = 0.08
     cost_of_debt: float = 0.055  # Updated for 2024-2025 environment
-    tax_rate: float = 0.21    
+    tax_rate: float = 0.21
     years: int = 5
-    
+
     # Risk-free rate and market conditions
     risk_free_rate: float = 0.045  # Current 10-year treasury
     equity_risk_premium: float = 0.055  # Market return - risk free rate
+
+    # DCF scenario levers - defaults reproduce the historical (uncapped/live-fetched) behavior
+    max_terminal_value_ratio: float = 1.0  # 1.0 = terminal value dominance cap disabled
+    risk_free_rate_override: Optional[float] = None  # None = live-fetch ^TNX
     
     # Industry-specific configurations
     industry_configs: Dict[str, IndustryConfig] = field(default_factory=lambda: {
@@ -257,7 +261,23 @@ class FinanceConfig:
             'combined_adjustment': runway_adjustment * volatility_adjustment * data_adjustment
         }
     
-    def get_adjusted_parameters(self, sector: str, industry: str, 
+    def with_overrides(self, **overrides) -> "FinanceConfig":
+        """Return a copy of this config with the given fields overridden.
+
+        Uses copy.copy (shallow) rather than dataclasses.replace: callers like
+        DCFAnalyzer set ad-hoc, non-dataclass-field attributes (e.g. `company_type`)
+        directly on a config instance, and dataclasses.replace only reconstructs
+        declared fields via __init__, silently dropping those. copy.copy preserves
+        the full instance __dict__, including such ad-hoc attributes.
+        """
+        import copy
+        new_config = copy.copy(self)
+        for key, value in overrides.items():
+            if value is not None:
+                setattr(new_config, key, value)
+        return new_config
+
+    def get_adjusted_parameters(self, sector: str, industry: str,
                               company_type: CompanyType, quality_grade: str) -> Dict[str, float]:
         """Get fully adjusted parameters for a specific company"""
         industry_config = self.get_industry_config(sector, industry)

@@ -8,8 +8,7 @@ class TerminalCalculator:
     
     def __init__(self, config: FinanceConfig = None):
         self.config = config or FinanceConfig()
-        self.max_terminal_ratio = 1.0  # No terminal ratio cap (original behavior)
-    
+
     def calculate_terminal_value(self, fcf_future: float, ebitda_future: float, 
                                wacc: float, ticker) -> Dict:
         """Calculate terminal value using hybrid approach"""
@@ -45,22 +44,44 @@ class TerminalCalculator:
         
         terminal_ratio = terminal_value / total_value
         debug_print(f"Terminal value ratio: {terminal_ratio:.1%}")
-        
-        # Only apply caps if we have a reasonable max_terminal_ratio (< 1.0)
-        if terminal_ratio > self.max_terminal_ratio and self.max_terminal_ratio < 1.0:
+
+        # Read the cap threshold from config each call (not a cached instance attribute) -
+        # this is what makes the cap a per-scenario lever rather than a fixed global
+        max_ratio = self.config.max_terminal_value_ratio
+
+        # The cap formula below solves for the terminal value that hits the target
+        # ratio, which is only algebraically valid when pv_fcf is positive - for
+        # negative pv_fcf (near-term cash flows are a net drag, common for early-stage
+        # growth/turnaround names) it produces a nonsensical, more-negative "capped"
+        # value than pv_fcf itself. Skip the cap in that case and just flag low
+        # confidence; turnaround-specific handling already exists separately in
+        # DCFEngine._apply_risk_adjustments.
+        if pv_fcf <= 0:
+            if terminal_ratio > max_ratio and max_ratio < 1.0:
+                debug_print(f"Terminal ratio {terminal_ratio:.1%} exceeds cap but pv_fcf is non-positive - "
+                             f"cap formula not applicable here, leaving terminal value unadjusted")
+                return {
+                    'adjusted_terminal_value': terminal_value,
+                    'adjustment_factor': 1.0,
+                    'confidence_impact': 'Low',
+                    'original_ratio': terminal_ratio
+                }
+
+        # Only apply caps if we have a reasonable max_ratio (< 1.0)
+        if terminal_ratio > max_ratio and max_ratio < 1.0:
             debug_print(f"Terminal value dominance detected ({terminal_ratio:.1%}), applying caps")
-            
+
             # Reduce terminal value to acceptable ratio
-            max_terminal = pv_fcf * (self.max_terminal_ratio / (1 - self.max_terminal_ratio))
+            max_terminal = pv_fcf * (max_ratio / (1 - max_ratio))
             adjustment_factor = max_terminal / terminal_value if terminal_value != 0 else 1.0
-            
+
             return {
                 'adjusted_terminal_value': max_terminal,
                 'adjustment_factor': adjustment_factor,
                 'confidence_impact': 'Low',  # Lower confidence due to high terminal dependence
                 'original_ratio': terminal_ratio
             }
-        
+
         return {
             'adjusted_terminal_value': terminal_value,
             'adjustment_factor': 1.0,
