@@ -1308,17 +1308,25 @@ def display_dcf_custom_scenario_form(ticker):
     """Let the user tweak DCF assumptions and run a one-off scenario against just
     the DCF analyzer (fast - no other analyzers, no LLM calls, no DB writes).
 
-    Wrapped in st.form so adjusting individual inputs doesn't trigger a rerun on
-    every keystroke/spinner click - only "Run Custom Scenario" does. One side
-    effect: since nothing inside a form reruns until submit, the Risk-Free Rate
-    input's enabled/disabled state only reflects the checkbox as of the last
-    submit, not live - a minor, acceptable tradeoff for avoiding reruns on every
-    other field.
+    The Override Risk-Free Rate checkbox and its input live outside the form so
+    toggling the checkbox stays live (immediately enables/disables the rate
+    field) - nothing inside a form reruns until submit, so this pair can't live
+    inside it. The other four inputs stay inside the form so adjusting them
+    doesn't trigger a rerun on every keystroke/spinner click.
     """
     st.markdown("### 🛠️ Custom Scenario")
 
+    rf_col1, rf_col2 = st.columns(2)
+    with rf_col1:
+        use_rf_override = st.checkbox("Override Risk-Free Rate", key=f"dcf_custom_rf_toggle_{ticker}")
+    with rf_col2:
+        custom_rf = st.number_input(
+            "Risk-Free Rate (%)", min_value=0.0, max_value=15.0, value=4.5, step=0.1,
+            key=f"dcf_custom_rf_{ticker}", disabled=not use_rf_override
+        )
+
     with st.form(key=f"dcf_custom_form_{ticker}"):
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             custom_max_cagr = st.number_input(
                 "Max CAGR Threshold (%)", min_value=0.0, max_value=None, value=15.0, step=1.0,
@@ -1338,12 +1346,6 @@ def display_dcf_custom_scenario_form(ticker):
             custom_ev_ebitda = st.number_input(
                 "EV/EBITDA Exit Multiple", min_value=1.0, max_value=50.0, value=12.0, step=0.5,
                 key=f"dcf_custom_ev_{ticker}"
-            )
-        with col3:
-            use_rf_override = st.checkbox("Override Risk-Free Rate", key=f"dcf_custom_rf_toggle_{ticker}")
-            custom_rf = st.number_input(
-                "Risk-Free Rate (%)", min_value=0.0, max_value=15.0, value=4.5, step=0.1,
-                key=f"dcf_custom_rf_{ticker}", disabled=not use_rf_override
             )
 
         submitted = st.form_submit_button("Run Custom Scenario")
