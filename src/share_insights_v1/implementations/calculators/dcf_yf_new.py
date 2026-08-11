@@ -6,13 +6,15 @@ from typing import Dict
 from .dcf_calculator.dcf_engine import DCFEngine
 from ...config.config import FinanceConfig
 
-def get_share_price(ticker_symbol: str, config: FinanceConfig = None) -> Dict:
+def get_share_price(ticker_symbol: str, config: FinanceConfig = None, ticker=None) -> Dict:
     """
     Clean interface for DCF calculation - matches original dcf_yf signature
-    Config contains all adjusted parameters from analyzer
+    Config contains all adjusted parameters from analyzer.
+    `ticker` (optional pre-built yf.Ticker) lets callers reuse one fetched ticker
+    across multiple scenario calculations for the same symbol.
     """
     engine = DCFEngine(config)
-    return engine.calculate_dcf(ticker_symbol)
+    return engine.calculate_dcf(ticker_symbol, ticker=ticker)
 
 # Maintain backward compatibility for individual functions if needed
 def get_stock_ticker_object(ticker):

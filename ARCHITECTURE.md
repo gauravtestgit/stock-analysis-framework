@@ -121,15 +121,47 @@ curl -X POST http://localhost:8000/analyze/AAPL
 - Discounted Cash Flow valuation
 - Free cash flow projections (5 years)
 - WACC calculation (cost of equity + cost of debt)
-- Terminal value (Gordon Growth Model)
+- Terminal value (hybrid: perpetuity growth + EV/EBITDA multiple, averaged), with a
+  configurable dominance cap so terminal value can't silently swamp the valuation
 - Quality adjustments for data reliability
+- **Scenario analysis**: every run computes a **Base Case** (the sector/quality-adjusted
+  default, unchanged from a plain single-estimate DCF) plus three automatic alternative
+  scenarios nested under `result['scenarios']`:
+  - **Bull (High Growth)** - raises the growth-rate ceiling so a hypergrowth company's real
+    historical CAGR flows through instead of being clamped by the sector default (still
+    capped, at 75%, not literally unbounded)
+  - **Bear** - tighter growth cap, lower terminal growth, and the terminal-value dominance
+    cap actually engaged
+  - **Rate Shock (+100bps)** - shifts the risk-free rate and market return together (holding
+    the equity risk premium constant) to isolate Fed-move sensitivity without changing the
+    growth assumptions
+  - Plus an optional **Custom** scenario if the caller supplies `data['dcf_overrides']`
+    (max CAGR, terminal growth, terminal value ratio cap, EV/EBITDA exit multiple, risk-free
+    rate) - used by the dashboard's "Custom Scenario" form via a dedicated lightweight
+    endpoint (see API Layer) so exploring assumptions doesn't require re-running the full
+    multi-analyzer pipeline
+  - All scenarios reuse one fetched `yf.Ticker` per analysis rather than re-fetching per
+    scenario
 - **Applicable**: Mature/Growth companies only
 
 **Comparable Analyzer** (`comparable_analyzer.py`)
 - Peer company valuation
 - Multiples: P/E, P/B, P/S, EV/EBITDA
 - Sector-specific adjustments
-- Peer selection based on industry/market cap
+- **Live peer data blending**: target multiples are blended with live peer-observed averages
+  (`multiple_sources` reports which multiples were actually peer-blended vs. config-only
+  fallback) rather than relying purely on static sector defaults
+- **Region-aware peer selection**: peers are found via a live equity screener scoped to the
+  target's own exchange/region (so ASX/NZX/etc. tickers get real regional peers instead of
+  defaulting to US names) and sized to the target's own market-cap band, not just the
+  largest company in the industry; peer valuation ratios are bounds-checked to filter out
+  broken data from foreign ADR/OTC listings before they can skew the multiples
+  - Falls back to a static peer table only if the live screener finds nothing
+- **Peer comparison output**: `peer_averages` (raw peer figures), `relative_position`
+  (Discount/Premium/Inline/Superior/Below per metric), and `peer_insights` (plain-English
+  summary sentences)
+- **Confidence** reflects how much of the valuation rests on real peer data vs. config-only
+  defaults, rather than a fixed label
 - **Applicable**: All company types
 
 **Technical Analyzer** (`technical_analyzer.py`)
@@ -270,11 +302,13 @@ target_price = Σ(analyzer_price × weight) / total_valid_weight
 
 **Key Endpoints**:
 ```python
-POST /analyze/{ticker}           # Single stock analysis
-POST /batch/upload               # Batch CSV upload
-GET /batch/{job_id}/status       # Job status
-GET /batch/{job_id}/results      # Job results
-GET /health                      # Health check
+POST /analyze/{ticker}              # Single stock analysis (all analyzers)
+POST /analyze/{ticker}/dcf-scenario # Single custom DCF scenario only - fast,
+                                     # no other analyzers, no LLM calls, no DB writes
+POST /batch/upload                  # Batch CSV upload
+GET /batch/{job_id}/status          # Job status
+GET /batch/{job_id}/results         # Job results
+GET /health                         # Health check
 ```
 
 **Response Format**:
@@ -500,6 +534,30 @@ Response:
 }
 ```
 
+### Custom DCF Scenario
+```bash
+POST /analyze/{ticker}/dcf-scenario
+Content-Type: application/json
+
+Body (all fields optional - omitted fields fall back to the ticker's normal
+sector/quality-adjusted Base Case values):
+{
+  "max_cagr_threshold": 0.30,
+  "default_terminal_growth": 0.03,
+  "max_terminal_value_ratio": 0.85,
+  "default_ev_ebitda_multiple": 15.0,
+  "risk_free_rate_override": 0.05
+}
+
+Response:
+{
+  "ticker": "AAPL",
+  "scenario": { ...same shape as one entry in analyses.dcf.scenarios... }
+}
+```
+Runs only `DCFAnalyzer` (no other analyzers, no LLM calls, no DB writes) so it's fast
+enough for interactive what-if exploration from the dashboard's DCF tab.
+
 ### Batch Analysis
 ```bash
 # Upload CSV
@@ -655,7 +713,11 @@ python migrate_investment_theses.py
 
 1. **News Data Freshness**: yfinance may return stale news for small-cap stocks
 2. **SEC EDGAR**: Only available for US companies
-3. **DCF Limitations**: Not applicable for financial companies or loss-making startups
+3. **DCF Limitations**: Not applicable for financial companies or loss-making startups.
+   The Base Case's growth-rate cap is sector/quality-adjusted, not company-specific, so it
+   can still understate genuine hypergrowth names - the automatic "Bull (High Growth)"
+   scenario and the Custom-scenario endpoint exist specifically to surface what the model
+   implies without that cap
 4. **LLM Costs**: API calls incur costs (use Groq for cost-effectiveness)
 5. **Rate Limits**: Yahoo Finance and LLM providers have rate limits
 
@@ -696,5 +758,5 @@ python migrate_investment_theses.py
 
 ---
 
-**Last Updated**: 2025-01-XX
+**Last Updated**: 2026-08-11
 **Version**: 1.0

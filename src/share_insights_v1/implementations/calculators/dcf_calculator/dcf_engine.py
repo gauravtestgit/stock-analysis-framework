@@ -16,13 +16,20 @@ class DCFEngine:
         self.wacc_calc = WACCCalculator(config)
         self.fcf_projector = FCFProjector()
     
-    def calculate_dcf(self, ticker_symbol: str) -> Dict:
-        """Main DCF calculation using config parameters (already adjusted by analyzer)"""
+    def calculate_dcf(self, ticker_symbol: str, ticker=None) -> Dict:
+        """Main DCF calculation using config parameters (already adjusted by analyzer).
+
+        `ticker` may be a pre-built yf.Ticker to reuse across multiple scenario
+        calculations for the same symbol (yfinance lazily caches .info/.cashflow/
+        .income_stmt per-instance, so reusing one avoids redundant fetches when
+        running several scenarios back to back). Built internally if not provided.
+        """
         import yfinance as yf
         from ....models.company import CompanyType
-        
-        ticker = yf.Ticker(ticker_symbol)
-        
+
+        if ticker is None:
+            ticker = yf.Ticker(ticker_symbol)
+
         # Get company type from config (passed by analyzer)
         company_type = getattr(self.config, 'company_type', None)
         
@@ -69,8 +76,10 @@ class DCFEngine:
                 pv_terminal_value, pv_fcf
             )
             
-            # 8. Calculate enterprise and equity values
-            enterprise_value = pv_fcf + pv_terminal_value
+            # 8. Calculate enterprise and equity values - uses the (possibly capped)
+            # adjusted_terminal_value from step 7, not the raw pv_terminal_value, so
+            # the terminal dominance cap actually affects the result when enabled
+            enterprise_value = pv_fcf + terminal_caps['adjusted_terminal_value']
             equity_data = self._calculate_equity_value(ticker, enterprise_value)
             
             # 9. Apply risk adjustments for extreme cases
@@ -183,6 +192,7 @@ class DCFEngine:
         return {
             'wacc': wacc_data['wacc'],
             'cost_equity': wacc_data['cost_equity'],
+            'risk_free_rate': wacc_data['risk_free_rate'],
             'ev_ebitda_multiple': ticker.info.get('enterpriseToEbitda', self.config.default_ev_ebitda_multiple),
             'ev_ebitda_multiple_used': terminal_data.get('ev_ebitda_multiple_used', self.config.default_ev_ebitda_multiple),
             'fcf_cagr': fcf_cagr,

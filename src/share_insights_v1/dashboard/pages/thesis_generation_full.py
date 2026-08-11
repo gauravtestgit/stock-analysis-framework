@@ -1210,7 +1210,7 @@ def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name, financia
     
     # Display analyzer-specific content
     if analyzer_key == 'dcf':
-        display_dcf_details(analysis_data)
+        display_dcf_details(analysis_data, ticker)
     elif analyzer_key == 'technical':
         display_technical_details(analysis_data, ticker, financial_metrics=financial_metrics)
     elif analyzer_key == 'comparable':
@@ -1231,33 +1231,145 @@ def display_analyzer_tab(ticker, analyses, analyzer_key, analyzer_name, financia
         # Generic display for other analyzers
         st.json(analysis_data)
 
-def display_dcf_details(data):
-    """Display DCF analysis details"""
-    st.markdown("### 💰 DCF Calculations")
-    
+_DCF_SCENARIO_LABELS = {
+    'base_case': 'Base Case',
+    'bull_high_growth': 'Bull (High Growth)',
+    'bear': 'Bear',
+    'rate_shock_100bps': 'Rate Shock (+100bps)',
+    'custom': 'Custom',
+}
+_DCF_SCENARIO_ORDER = ['base_case', 'bull_high_growth', 'bear', 'rate_shock_100bps', 'custom']
+
+def display_dcf_details(data, ticker=None):
+    """Display DCF analysis details: a scenario comparison table (Base Case plus the
+    automatic Bull/Bear/Rate-Shock scenarios, and a Custom scenario if the user has
+    run one), the raw Base Case details, and a form to run a custom scenario."""
+    scenarios = dict(data.get('scenarios', {}))
+
+    if ticker:
+        custom_result = st.session_state.get('dcf_custom_scenarios', {}).get(ticker)
+        if custom_result:
+            scenarios['custom'] = custom_result
+
+    if scenarios:
+        st.markdown("### 🎯 Scenario Comparison")
+        rows = []
+        for key in _DCF_SCENARIO_ORDER:
+            s = scenarios.get(key)
+            if not s:
+                continue
+            label = _DCF_SCENARIO_LABELS.get(key, key)
+            if 'error' in s:
+                rows.append({'Scenario': label, 'Predicted Price': 'N/A', 'Upside/Downside': 'N/A',
+                             'Recommendation': f"Error: {s['error']}", 'Confidence': 'N/A', 'Terminal Value Ratio': 'N/A'})
+                continue
+            dc = s.get('dcf_calculations', {})
+            terminal_ratio = dc.get('terminal_ratio')
+            rows.append({
+                'Scenario': label,
+                'Predicted Price': f"${s.get('predicted_price', 0):.2f}",
+                'Upside/Downside': f"{s.get('upside_downside_pct', 0):+.1f}%",
+                'Recommendation': s.get('recommendation', 'N/A'),
+                'Confidence': s.get('confidence', 'N/A'),
+                'Terminal Value Ratio': f"{terminal_ratio:.0%}" if terminal_ratio is not None else 'N/A',
+            })
+        if rows:
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
     dcf_calcs = data.get('dcf_calculations', {})
     params = data.get('parameters_used', {})
-    
-    if dcf_calcs or params:
-        dcf_html = ""
-        
-        if params:
-            dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
-            dcf_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Parameters Used</h6>'
-            for key, value in params.items():
-                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
-            dcf_html += '</div>'
-        
-        if dcf_calcs:
-            dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">'
-            dcf_html += '<h6 style="margin: 0 0 8px 0; color: #007acc;">DCF Calculations</h6>'
-            for key, value in dcf_calcs.items():
-                dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
-            dcf_html += '</div>'
-        
-        st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{dcf_html}</div>', unsafe_allow_html=True)
-    else:
-        st.info("No DCF calculation details available")
+
+    with st.expander("Base Case Details"):
+        if dcf_calcs or params:
+            dcf_html = ""
+
+            if params:
+                dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #28a745; background: #f8f9fa;">'
+                dcf_html += '<h6 style="margin: 0 0 8px 0; color: #28a745;">Parameters Used</h6>'
+                for key, value in params.items():
+                    dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
+                dcf_html += '</div>'
+
+            if dcf_calcs:
+                dcf_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #007acc; background: #f8f9fa;">'
+                dcf_html += '<h6 style="margin: 0 0 8px 0; color: #007acc;">DCF Calculations</h6>'
+                for key, value in dcf_calcs.items():
+                    dcf_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>{key}:</strong> {value}</p>'
+                dcf_html += '</div>'
+
+            st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{dcf_html}</div>', unsafe_allow_html=True)
+        else:
+            st.info("No DCF calculation details available")
+
+    if ticker:
+        display_dcf_custom_scenario_form(ticker)
+
+def display_dcf_custom_scenario_form(ticker):
+    """Let the user tweak DCF assumptions and run a one-off scenario against just
+    the DCF analyzer (fast - no other analyzers, no LLM calls, no DB writes).
+
+    Wrapped in st.form so adjusting individual inputs doesn't trigger a rerun on
+    every keystroke/spinner click - only "Run Custom Scenario" does. One side
+    effect: since nothing inside a form reruns until submit, the Risk-Free Rate
+    input's enabled/disabled state only reflects the checkbox as of the last
+    submit, not live - a minor, acceptable tradeoff for avoiding reruns on every
+    other field.
+    """
+    st.markdown("### 🛠️ Custom Scenario")
+
+    with st.form(key=f"dcf_custom_form_{ticker}"):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            custom_max_cagr = st.number_input(
+                "Max CAGR Threshold (%)", min_value=0.0, max_value=None, value=15.0, step=1.0,
+                key=f"dcf_custom_cagr_{ticker}",
+                help="No upper limit - this is for exploring scenarios, including deliberately extreme ones."
+            )
+            custom_terminal_growth = st.number_input(
+                "Terminal Growth (%)", min_value=0.0, max_value=10.0, value=2.5, step=0.1,
+                key=f"dcf_custom_tg_{ticker}"
+            )
+        with col2:
+            custom_terminal_ratio = st.number_input(
+                "Terminal Value Ratio Cap (%)", min_value=10.0, max_value=100.0, value=100.0, step=5.0,
+                key=f"dcf_custom_tr_{ticker}",
+                help="Caps how much of the valuation can come from terminal value. 100% = disabled (Base Case default)."
+            )
+            custom_ev_ebitda = st.number_input(
+                "EV/EBITDA Exit Multiple", min_value=1.0, max_value=50.0, value=12.0, step=0.5,
+                key=f"dcf_custom_ev_{ticker}"
+            )
+        with col3:
+            use_rf_override = st.checkbox("Override Risk-Free Rate", key=f"dcf_custom_rf_toggle_{ticker}")
+            custom_rf = st.number_input(
+                "Risk-Free Rate (%)", min_value=0.0, max_value=15.0, value=4.5, step=0.1,
+                key=f"dcf_custom_rf_{ticker}", disabled=not use_rf_override
+            )
+
+        submitted = st.form_submit_button("Run Custom Scenario")
+
+    if submitted:
+        overrides = {
+            "max_cagr_threshold": custom_max_cagr / 100,
+            "default_terminal_growth": custom_terminal_growth / 100,
+            "max_terminal_value_ratio": (custom_terminal_ratio / 100) if custom_terminal_ratio < 100 else None,
+            "default_ev_ebitda_multiple": custom_ev_ebitda,
+            "risk_free_rate_override": (custom_rf / 100) if use_rf_override else None,
+        }
+        with st.spinner("Running custom DCF scenario..."):
+            try:
+                endpoint = f"http://localhost:8000/analyze/{ticker}/dcf-scenario"
+                response = requests.post(endpoint, json=overrides)
+                if response.status_code == 200:
+                    if 'dcf_custom_scenarios' not in st.session_state:
+                        st.session_state.dcf_custom_scenarios = {}
+                    st.session_state.dcf_custom_scenarios[ticker] = response.json()['scenario']
+                    st.success("Custom scenario computed")
+                    st.rerun()
+                else:
+                    st.error(f"Custom scenario failed: {response.text}")
+            except Exception as e:
+                st.error(f"Error connecting to API: {str(e)}")
 
 def display_technical_details(data, ticker=None, financial_metrics=None):
     """Display technical analysis details"""

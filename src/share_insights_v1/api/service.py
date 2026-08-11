@@ -347,6 +347,49 @@ class AnalysisService:
             }
         except Exception as e:
             return {'error': str(e)}
+
+    async def analyze_dcf_scenario(self, ticker: str, overrides: Dict[str, Any]) -> Dict[str, Any]:
+        """Run a single user-defined DCF scenario - only DCFAnalyzer runs, no other
+        analyzers, no LLM calls, no DB writes. Used for fast, interactive what-if
+        exploration from the UI without paying for the full comprehensive-analysis
+        pipeline just to test a tweaked growth-rate or discount-rate assumption."""
+        try:
+            financial_metrics = self.data_provider.get_financial_metrics(ticker)
+            if 'error' in financial_metrics:
+                return {'error': f"Failed to get financial data: {financial_metrics['error']}"}
+
+            company_type_raw = self.classifier.classify(ticker, financial_metrics)
+            company_type = company_type_raw.value if hasattr(company_type_raw, 'value') else company_type_raw
+
+            quality_result = self.quality_calculator.calculate(financial_metrics)
+            quality_grade = quality_result.get('grade', 'C')
+
+            analysis_data = {
+                'financial_metrics': financial_metrics,
+                'company_info': {
+                    'sector': financial_metrics.get('sector', ''),
+                    'industry': financial_metrics.get('industry', ''),
+                },
+                'company_type': company_type,
+                'quality_grade': quality_grade,
+                'dcf_overrides': {k: v for k, v in overrides.items() if v is not None}
+            }
+
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(None, DCFAnalyzer().analyze, ticker, analysis_data)
+
+            if 'error' in result:
+                return {'error': result['error']}
+
+            custom_scenario = result.get('scenarios', {}).get('custom')
+            if not custom_scenario:
+                return {'error': 'Custom scenario could not be computed'}
+            if 'error' in custom_scenario:
+                return {'error': custom_scenario['error']}
+
+            return {'ticker': ticker, 'scenario': custom_scenario}
+        except Exception as e:
+            return {'error': str(e)}
     
     async def analyze_watchlist(self, tickers: List[str], created_by: str = "dashboard") -> Dict[str, Any]:
         """Analyze multiple stocks as a batch job"""
