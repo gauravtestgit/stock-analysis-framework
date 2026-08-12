@@ -14,20 +14,109 @@ class GrowthCalculator:
         self.cyclical_industries = ["Semiconductors", "Auto Manufacturers", "Steel", "Aluminum", "Copper"]
     
     def calculate_fcf_cagr(self, ticker) -> float:
-        """Calculate FCF CAGR using config parameters"""
+        """Calculate FCF CAGR using config parameters. When
+        config.use_forward_guidance_growth is set, prefers the analyst
+        next-year revenue consensus growth (used as a proxy - yfinance has no
+        direct forward FCF estimate) over historical CAGR, falling back to
+        historical CAGR when analyst coverage is thin or unavailable."""
+        if self.config.use_forward_guidance_growth:
+            forward_growth = self._get_forward_guidance_growth(ticker, 'revenue_estimate')
+            if forward_growth is not None:
+                debug_print(f"Using forward guidance revenue growth as FCF growth proxy: {forward_growth:.1%}")
+                return forward_growth
+            debug_print("Forward guidance unavailable for FCF - falling back to historical CAGR")
         try:
             return self._get_raw_fcf_cagr(ticker)
         except Exception as e:
             debug_print(f"FCF CAGR calculation error: {e}")
             return self.config.default_cagr
-    
+
     def calculate_ebitda_cagr(self, ticker) -> float:
-        """Calculate EBITDA CAGR using config parameters"""
+        """Calculate EBITDA CAGR using config parameters. When
+        config.use_forward_guidance_growth is set, prefers the analyst
+        next-year EPS consensus growth (used as a proxy - yfinance has no
+        direct forward EBITDA estimate) over historical CAGR, falling back to
+        historical CAGR when analyst coverage is thin or unavailable."""
+        if self.config.use_forward_guidance_growth:
+            forward_growth = self._get_forward_guidance_growth(ticker, 'earnings_estimate')
+            if forward_growth is not None:
+                debug_print(f"Using forward guidance EPS growth as EBITDA growth proxy: {forward_growth:.1%}")
+                return forward_growth
+            debug_print("Forward guidance unavailable for EBITDA - falling back to historical CAGR")
         try:
             return self._get_raw_ebitda_cagr(ticker)
         except Exception as e:
             debug_print(f"EBITDA CAGR calculation error: {e}")
             return self.config.default_cagr
+
+    def _get_forward_guidance_growth(self, ticker, estimate_attr: str, min_analysts: int = 2) -> Optional[float]:
+        """Pull the analyst consensus next-year ('+1y') growth rate from a
+        yfinance forward-estimate DataFrame (earnings_estimate or
+        revenue_estimate). Returns None on missing data or thin analyst
+        coverage so callers fall back to historical CAGR."""
+        try:
+            df = getattr(ticker, estimate_attr)
+            if df is None or df.empty or '+1y' not in df.index:
+                return None
+            row = df.loc['+1y']
+            growth = row.get('growth')
+            num_analysts = row.get('numberOfAnalysts')
+            if growth is None or pd.isna(growth):
+                return None
+            if num_analysts is None or pd.isna(num_analysts) or num_analysts < min_analysts:
+                debug_print(f"Forward guidance from {estimate_attr} has thin coverage "
+                            f"({num_analysts} analysts) - skipping")
+                return None
+            # Loose sanity bound rather than the sector cap - analyst consensus is
+            # already a real-world number, this just guards against a data glitch
+            return max(min(float(growth), 1.5), -0.5)
+        except Exception as e:
+            debug_print(f"Forward guidance growth lookup failed for {estimate_attr}: {e}")
+            return None
+
+    def get_forward_guidance_summary(self, ticker) -> Dict:
+        """Raw analyst forward-estimate details for display purposes,
+        independent of which growth rate ultimately gets used for the DCF
+        (which may fall back to historical CAGR if this is thin/unavailable).
+        Missing fields are simply omitted rather than raising."""
+        summary = {}
+
+        try:
+            eps_df = ticker.earnings_estimate
+            if eps_df is not None and not eps_df.empty and '+1y' in eps_df.index:
+                row = eps_df.loc['+1y']
+                if pd.notna(row.get('growth')):
+                    summary['eps_growth_next_year'] = float(row['growth'])
+                if pd.notna(row.get('avg')):
+                    summary['eps_estimate_next_year'] = float(row['avg'])
+                if pd.notna(row.get('numberOfAnalysts')):
+                    summary['eps_analysts_count'] = int(row['numberOfAnalysts'])
+        except Exception as e:
+            debug_print(f"Forward EPS guidance summary failed: {e}")
+
+        try:
+            rev_df = ticker.revenue_estimate
+            if rev_df is not None and not rev_df.empty and '+1y' in rev_df.index:
+                row = rev_df.loc['+1y']
+                if pd.notna(row.get('growth')):
+                    summary['revenue_growth_next_year'] = float(row['growth'])
+                if pd.notna(row.get('avg')):
+                    summary['revenue_estimate_next_year'] = float(row['avg'])
+                if pd.notna(row.get('numberOfAnalysts')):
+                    summary['revenue_analysts_count'] = int(row['numberOfAnalysts'])
+        except Exception as e:
+            debug_print(f"Forward revenue guidance summary failed: {e}")
+
+        try:
+            growth_df = ticker.growth_estimates
+            if growth_df is not None and not growth_df.empty and 'LTG' in growth_df.index:
+                ltg = growth_df.loc['LTG'].get('stockTrend')
+                if pd.notna(ltg):
+                    summary['long_term_growth_estimate'] = float(ltg)
+        except Exception as e:
+            debug_print(f"Long-term growth estimate lookup failed: {e}")
+
+        return summary
     
     def _get_raw_fcf_cagr(self, ticker) -> float:
         """Extract raw FCF CAGR from existing logic"""

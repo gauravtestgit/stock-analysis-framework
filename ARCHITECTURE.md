@@ -125,7 +125,7 @@ curl -X POST http://localhost:8000/analyze/AAPL
   configurable dominance cap so terminal value can't silently swamp the valuation
 - Quality adjustments for data reliability
 - **Scenario analysis**: every run computes a **Base Case** (the sector/quality-adjusted
-  default, unchanged from a plain single-estimate DCF) plus three automatic alternative
+  default, unchanged from a plain single-estimate DCF) plus four automatic alternative
   scenarios nested under `result['scenarios']`:
   - **Bull (High Growth)** - raises the growth-rate ceiling so a hypergrowth company's real
     historical CAGR flows through instead of being clamped by the sector default (still
@@ -135,13 +135,24 @@ curl -X POST http://localhost:8000/analyze/AAPL
   - **Rate Shock (+100bps)** - shifts the risk-free rate and market return together (holding
     the equity risk premium constant) to isolate Fed-move sensitivity without changing the
     growth assumptions
+  - **Forward Guidance** - uses analyst next-year consensus growth (from yfinance's
+    `earnings_estimate`/`revenue_estimate`) instead of historical CAGR - a genuinely
+    different, forward-looking signal rather than just a different cap on the same
+    backward-looking number. Revenue growth is used as the FCF growth proxy and EPS growth
+    as the EBITDA growth proxy (yfinance has no direct forward FCF/EBITDA estimate). Falls
+    back to the identical Base Case historical-CAGR calculation per metric when analyst
+    coverage is thin (<2 analysts) or unavailable. The raw estimates (growth %, EPS/revenue
+    estimate, analyst counts, long-term growth if covered) are surfaced in
+    `dcf_calculations.forward_guidance` for display, independent of whether they were thin
+    enough to trigger the fallback
   - Plus an optional **Custom** scenario if the caller supplies `data['dcf_overrides']`
     (max CAGR, terminal growth, terminal value ratio cap, EV/EBITDA exit multiple, risk-free
     rate) - used by the dashboard's "Custom Scenario" form via a dedicated lightweight
     endpoint (see API Layer) so exploring assumptions doesn't require re-running the full
     multi-analyzer pipeline
   - All scenarios reuse one fetched `yf.Ticker` per analysis rather than re-fetching per
-    scenario
+    scenario; the Forward Guidance scenario's extra `earnings_estimate`/`revenue_estimate`
+    lookups only happen when that scenario runs, not for every analysis
 - **Applicable**: Mature/Growth companies only
 
 **Comparable Analyzer** (`comparable_analyzer.py`)

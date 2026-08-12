@@ -49,7 +49,15 @@ class DCFEngine:
             
             debug_print(f'FCF CAGR: {fcf_cagr}')
             debug_print(f'EBITDA CAGR: {ebitda_cagr}')
-            
+
+            # 2b. Forward guidance summary for display - only fetched when this
+            # scenario actually uses it, so other scenarios don't pay for the
+            # extra yfinance calls
+            forward_guidance = (
+                self.growth_calc.get_forward_guidance_summary(ticker)
+                if self.config.use_forward_guidance_growth else {}
+            )
+
             # 3. Project future cash flows
             projected_fcf = self.fcf_projector.project_cash_flows(ticker, fcf_cagr, self.config.years)
             fcf_future = self.fcf_projector.project_future_metric(ticker, 'FCF', fcf_cagr, self.config.years)
@@ -95,7 +103,7 @@ class DCFEngine:
                 ticker_symbol, ticker, wacc_data, fcf_cagr, ebitda_cagr,
                 fcf_future, ebitda_future, terminal_data, terminal_caps,
                 projected_fcf, pv_fcf_list, pv_fcf, pv_terminal_value,
-                enterprise_value, risk_adjusted_equity, confidence
+                enterprise_value, risk_adjusted_equity, confidence, forward_guidance
             )
             
         except Exception as e:
@@ -181,18 +189,19 @@ class DCFEngine:
         else:
             return "High"
     
-    def _compile_results(self, ticker_symbol: str, ticker, wacc_data: Dict, 
+    def _compile_results(self, ticker_symbol: str, ticker, wacc_data: Dict,
                         fcf_cagr: float, ebitda_cagr: float, fcf_future: float,
                         ebitda_future: float, terminal_data: Dict, terminal_caps: Dict,
                         projected_fcf: list, pv_fcf_list: list, pv_fcf: float,
                         pv_terminal_value: float, enterprise_value: float,
-                        equity_data: Dict, confidence: str) -> Dict:
+                        equity_data: Dict, confidence: str, forward_guidance: Dict = None) -> Dict:
         """Compile all results into final dictionary"""
-        
+
         return {
             'wacc': wacc_data['wacc'],
             'cost_equity': wacc_data['cost_equity'],
             'risk_free_rate': wacc_data['risk_free_rate'],
+            'forward_guidance': forward_guidance or {},
             'ev_ebitda_multiple': ticker.info.get('enterpriseToEbitda', self.config.default_ev_ebitda_multiple),
             'ev_ebitda_multiple_used': terminal_data.get('ev_ebitda_multiple_used', self.config.default_ev_ebitda_multiple),
             'fcf_cagr': fcf_cagr,

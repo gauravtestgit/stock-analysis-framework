@@ -1236,9 +1236,10 @@ _DCF_SCENARIO_LABELS = {
     'bull_high_growth': 'Bull (High Growth)',
     'bear': 'Bear',
     'rate_shock_100bps': 'Rate Shock (+100bps)',
+    'forward_guidance': 'Forward Guidance',
     'custom': 'Custom',
 }
-_DCF_SCENARIO_ORDER = ['base_case', 'bull_high_growth', 'bear', 'rate_shock_100bps', 'custom']
+_DCF_SCENARIO_ORDER = ['base_case', 'bull_high_growth', 'bear', 'rate_shock_100bps', 'forward_guidance', 'custom']
 
 def display_dcf_details(data, ticker=None):
     """Display DCF analysis details: a scenario comparison table (Base Case plus the
@@ -1275,6 +1276,37 @@ def display_dcf_details(data, ticker=None):
             })
         if rows:
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    forward_guidance_scenario = scenarios.get('forward_guidance', {})
+    fg = forward_guidance_scenario.get('dcf_calculations', {}).get('forward_guidance', {})
+    if fg:
+        st.markdown("### 📡 Analyst Forward Guidance")
+        st.caption("Next-year (+1y) consensus estimates used by the Forward Guidance scenario. "
+                   "Revenue growth is used as the FCF growth proxy, EPS growth as the EBITDA "
+                   "growth proxy - yfinance has no direct forward FCF/EBITDA estimate.")
+        fg_col1, fg_col2, fg_col3 = st.columns(3)
+        with fg_col1:
+            eps_growth = fg.get('eps_growth_next_year')
+            st.metric("EPS Growth (Next Year)", f"{eps_growth:+.1%}" if eps_growth is not None else "N/A")
+            eps_est = fg.get('eps_estimate_next_year')
+            st.metric("EPS Estimate (Next Year)", f"${eps_est:.2f}" if eps_est is not None else "N/A")
+        with fg_col2:
+            rev_growth = fg.get('revenue_growth_next_year')
+            st.metric("Revenue Growth (Next Year)", f"{rev_growth:+.1%}" if rev_growth is not None else "N/A")
+            rev_est = fg.get('revenue_estimate_next_year')
+            st.metric("Revenue Estimate (Next Year)", f"${rev_est/1e9:.2f}B" if rev_est is not None else "N/A")
+        with fg_col3:
+            eps_analysts = fg.get('eps_analysts_count')
+            rev_analysts = fg.get('revenue_analysts_count')
+            st.metric("Analysts (EPS / Revenue)",
+                     f"{eps_analysts if eps_analysts is not None else 'N/A'} / {rev_analysts if rev_analysts is not None else 'N/A'}")
+            ltg = fg.get('long_term_growth_estimate')
+            if ltg is not None:
+                st.metric("Long-Term Growth Estimate", f"{ltg:+.1%}")
+        if (fg.get('eps_analysts_count') is not None and fg['eps_analysts_count'] < 2) or \
+           (fg.get('revenue_analysts_count') is not None and fg['revenue_analysts_count'] < 2):
+            st.caption("⚠️ Thin analyst coverage on at least one estimate - the Forward Guidance "
+                      "scenario falls back to historical CAGR for that metric rather than using it.")
 
     dcf_calcs = data.get('dcf_calculations', {})
     params = data.get('parameters_used', {})
