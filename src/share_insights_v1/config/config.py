@@ -55,6 +55,8 @@ class FinanceConfig:
     # DCF scenario levers - defaults reproduce the historical (uncapped/live-fetched) behavior
     max_terminal_value_ratio: float = 1.0  # 1.0 = terminal value dominance cap disabled
     risk_free_rate_override: Optional[float] = None  # None = live-fetch ^TNX
+    use_forward_guidance_growth: bool = False  # True = prefer analyst next-year consensus
+    # growth over historical CAGR, falling back to historical CAGR when coverage is thin
     
     # Industry-specific configurations
     industry_configs: Dict[str, IndustryConfig] = field(default_factory=lambda: {

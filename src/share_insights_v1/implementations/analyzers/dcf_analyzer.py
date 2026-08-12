@@ -117,6 +117,16 @@ class DCFAnalyzer(IAnalyzer):
                 'risk_free_rate_override': (base_rf + 0.01) if base_rf is not None else None,
                 'market_return': base_tmp_config.market_return + 0.01,
             },
+            # Uses analyst next-year consensus growth (from earnings_estimate /
+            # revenue_estimate) instead of historical CAGR - a genuinely different
+            # signal (forward Wall Street consensus vs. backward realized trend),
+            # not just a different cap on the same historical number. Falls back
+            # to the identical Base Case behavior per-metric when analyst coverage
+            # is thin or unavailable (see GrowthCalculator._get_forward_guidance_growth),
+            # so max_cagr_threshold is deliberately left at the Base Case value.
+            'forward_guidance': {
+                'use_forward_guidance_growth': True,
+            },
         }
 
         results = {}
