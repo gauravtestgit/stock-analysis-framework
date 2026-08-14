@@ -56,7 +56,11 @@ class BatchAnalysisService:
             llm_manager = LLMManager()  # Fallback to legacy
         
         # Register quantitative analyzers
-        self.orchestrator.register_analyzer(AnalysisType.DCF, DCFAnalyzer(self.config))
+        # Bull/Bear/Rate-Shock/Forward-Guidance scenarios cost extra compute and (for
+        # Forward Guidance specifically) 3 more yfinance calls per stock; batch CSV
+        # output only ever reads the top-level base-case predicted_price, never
+        # result['scenarios'], so batch runs skip them and keep just Base Case.
+        self.orchestrator.register_analyzer(AnalysisType.DCF, DCFAnalyzer(self.config, run_preset_scenarios=False))
         self.orchestrator.register_analyzer(AnalysisType.TECHNICAL, TechnicalAnalyzer())
         # Live peer comparison (screener queries + per-peer data fetches) adds up to
         # ~9 extra yfinance calls per stock - fine for one interactive analysis, but
