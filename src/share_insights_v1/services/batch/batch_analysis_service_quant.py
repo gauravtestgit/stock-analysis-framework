@@ -58,7 +58,14 @@ class BatchAnalysisService:
         # Register quantitative analyzers
         self.orchestrator.register_analyzer(AnalysisType.DCF, DCFAnalyzer(self.config))
         self.orchestrator.register_analyzer(AnalysisType.TECHNICAL, TechnicalAnalyzer())
-        self.orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer(self.config))
+        # Live peer comparison (screener queries + per-peer data fetches) adds up to
+        # ~9 extra yfinance calls per stock - fine for one interactive analysis, but
+        # roughly doubles batch runtime across thousands of stocks and increases
+        # throttling risk, for data (peer_tickers/relative_position/peer_insights)
+        # this batch pipeline's CSV output never reads. Batch runs get the
+        # config-only comparable multiples instead (same as before peer comparison
+        # existed); the live dashboard/API keeps real peer blending.
+        self.orchestrator.register_analyzer(AnalysisType.COMPARABLE, ComparableAnalyzer(self.config, use_peer_comparison=False))
         self.orchestrator.register_analyzer(AnalysisType.STARTUP, StartupAnalyzer(self.config))
         self.orchestrator.register_analyzer(AnalysisType.ANALYST_CONSENSUS, AnalystConsensusAnalyzer(self.data_provider))
         
