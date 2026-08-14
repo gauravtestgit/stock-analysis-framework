@@ -15,8 +15,15 @@ class DCFAnalyzer(IAnalyzer):
     Case, unchanged - scenarios are nested under result['scenarios'].
     """
 
-    def __init__(self, config : Optional[FinanceConfig] = None):
+    def __init__(self, config: Optional[FinanceConfig] = None, run_preset_scenarios: bool = True):
         self.config = config if config is not None else FinanceConfig()
+        # Bull/Bear/Rate-Shock cost extra compute (cheap, no new network calls -
+        # they reuse the same shared ticker object as Base Case) but Forward
+        # Guidance adds 3 genuinely separate yfinance calls (earnings_estimate/
+        # revenue_estimate/growth_estimates) per stock. Batch runs only ever read
+        # the top-level (base-case) predicted_price, never result['scenarios'],
+        # so this lets batch skip all 4 preset scenarios and keep just Base Case.
+        self.run_preset_scenarios = run_preset_scenarios
 
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform DCF analysis using original dcf_yf functions"""
@@ -57,10 +64,11 @@ class DCFAnalyzer(IAnalyzer):
             )
 
             scenarios = {'base_case': base}
-            scenarios.update(self._run_preset_scenarios(
-                ticker, ticker_obj, base_tmp_config, metrics, company_type,
-                sector, industry, quality_grade, base
-            ))
+            if self.run_preset_scenarios:
+                scenarios.update(self._run_preset_scenarios(
+                    ticker, ticker_obj, base_tmp_config, metrics, company_type,
+                    sector, industry, quality_grade, base
+                ))
 
             dcf_overrides = data.get('dcf_overrides')
             if dcf_overrides:
