@@ -8,11 +8,18 @@ from ...implementations.data_providers.yahoo_peer_provider import YahooPeerProvi
 class ComparableAnalyzer(IAnalyzer):
     """Comparable company analysis using sector-target multiples plus live peer data"""
 
-    def __init__(self, config: Optional[FinanceConfig] = None, peer_provider: Optional[PeerComparisonProvider] = None):
+    def __init__(self, config: Optional[FinanceConfig] = None, peer_provider: Optional[PeerComparisonProvider] = None,
+                 use_peer_comparison: bool = True):
         self.config = config if config is not None else FinanceConfig()
         # Reuses the shared peer-data abstraction instead of hand-rolling yfinance
         # calls here; defaults to the real provider but is injectable for tests
         self.peer_provider = peer_provider or YahooPeerProvider()
+        # Live peer screening/fetching costs up to ~9 extra yfinance calls per
+        # stock (screener queries + one .info fetch per peer) - fine for a
+        # single interactive analysis, too expensive across a large batch run.
+        # Off, this analyzer falls back to the config-only multiples it always
+        # had before live peer comparison existed (see _get_peer_data/_blend_multiples).
+        self.use_peer_comparison = use_peer_comparison
 
     def analyze(self, ticker: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform comparable company analysis"""
@@ -58,7 +65,10 @@ class ComparableAnalyzer(IAnalyzer):
             # today rather than only a static config assumption
             market_cap = metrics.get('market_cap', 0) or 0
             market = metrics.get('market', '')
-            peer_tickers, peer_averages = self._get_peer_data(ticker, sector, industry, market_cap, market)
+            if self.use_peer_comparison:
+                peer_tickers, peer_averages = self._get_peer_data(ticker, sector, industry, market_cap, market)
+            else:
+                peer_tickers, peer_averages = [], {}
             target_multiples, multiple_sources = self._blend_multiples(config_multiples, peer_averages)
 
             # Calculate fair values using different multiples
