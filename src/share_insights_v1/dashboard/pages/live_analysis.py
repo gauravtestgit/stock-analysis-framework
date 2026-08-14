@@ -124,11 +124,12 @@ table.la-kv td.la-kv-v { font-family: var(--la-font-mono); font-weight: 700; fon
 }
 
 /* Stylized expander treatment (Option D: top accent stripe) - trialled on
-   Configure first via a keyed wrapper before rolling out to every expander
-   on the page. */
-.st-key-la_configure_wrap [data-testid="stExpander"],
-.st-key-la_configure_wrap [data-testid="stExpander"] > div,
-.st-key-la_configure_wrap [data-testid="stExpander"] details {
+   Configure first via a keyed wrapper, now shared by every expander on the
+   page (Configure + the per-analyzer expanders in Valuation/Market Signals/
+   Qualitative) via the common "la_expander_*" container-key prefix. */
+[class*="st-key-la_expander_"] [data-testid="stExpander"],
+[class*="st-key-la_expander_"] [data-testid="stExpander"] > div,
+[class*="st-key-la_expander_"] [data-testid="stExpander"] details {
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
@@ -136,7 +137,7 @@ table.la-kv td.la-kv-v { font-family: var(--la-font-mono); font-weight: 700; fon
     border-radius: 6px 6px 0 0 !important;
     overflow: hidden;
 }
-.st-key-la_configure_wrap [data-testid="stExpander"] summary {
+[class*="st-key-la_expander_"] [data-testid="stExpander"] summary {
     padding: 13px 16px !important;
     font-weight: 700 !important;
     color: var(--la-ink) !important;
@@ -145,12 +146,12 @@ table.la-kv td.la-kv-v { font-family: var(--la-font-mono); font-weight: 700; fon
     box-shadow: none !important;
     transition: color 0.12s ease;
 }
-.st-key-la_configure_wrap [data-testid="stExpander"] summary:hover {
+[class*="st-key-la_expander_"] [data-testid="stExpander"] summary:hover {
     color: var(--la-accent) !important;
 }
-.st-key-la_configure_wrap [data-testid="stExpander"] summary svg { color: var(--la-ink-faint); transition: color 0.12s ease; }
-.st-key-la_configure_wrap [data-testid="stExpander"] summary:hover svg { color: var(--la-accent) !important; }
-.st-key-la_configure_wrap [data-testid="stExpanderDetails"] {
+[class*="st-key-la_expander_"] [data-testid="stExpander"] summary svg { color: var(--la-ink-faint); transition: color 0.12s ease; }
+[class*="st-key-la_expander_"] [data-testid="stExpander"] summary:hover svg { color: var(--la-accent) !important; }
+[class*="st-key-la_expander_"] [data-testid="stExpanderDetails"] {
     border: none !important;
     box-shadow: none !important;
     padding: 16px !important;
@@ -621,7 +622,7 @@ def render_configure_section():
     elif watchlist:
         st.markdown(f'<span class="la-mode-pill">📋 Watchlist · {len(watchlist)} stocks</span>', unsafe_allow_html=True)
 
-    with st.container(key="la_configure_wrap"), st.expander("⚙️ Configure", expanded=not has_results):
+    with st.container(key="la_expander_configure"), st.expander("⚙️ Configure", expanded=not has_results):
         mode = st.radio("Analysis Mode:", ["Watchlist Batch", "Single Stock"], horizontal=True, key="la_mode")
 
         if mode == "Single Stock":
@@ -783,7 +784,7 @@ def render_stock_detail(ticker, data):
                 _render_analyzer_tab(ticker, analyses, present[0], fm)
             else:
                 for k in present:
-                    with st.expander(ANALYZER_LABELS[k]):
+                    with st.container(key=f"la_expander_{k}"), st.expander(ANALYZER_LABELS[k]):
                         _render_analyzer_tab(ticker, analyses, k, fm)
 
 
@@ -863,6 +864,13 @@ def show_live_analysis_page():
             st.warning("All stocks in the last batch run failed.")
         else:
             st.subheader(f"📊 Results ({len(successful_results)} stocks)")
+            batch_timing = st.session_state.get('batch_timing')
+            if batch_timing:
+                _render_kv_table([
+                    ("Total Batch Time", f"{batch_timing['total_batch_time']}s"),
+                    ("Avg Time/Stock", f"{batch_timing['avg_time_per_stock']}s"),
+                    ("Parallel Workers", batch_timing.get('parallel_workers', 'N/A')),
+                ], cols=3)
             selected_ticker = render_summary_table(successful_results)
             if failed_tickers:
                 st.caption(f"Failed: {', '.join(failed_tickers)}")
