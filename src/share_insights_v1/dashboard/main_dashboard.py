@@ -54,7 +54,11 @@ def render_main_dashboard():
         # Thesis Generation
         if st.button("📝 Thesis Generation", use_container_width=True, help="Generate professional investment theses"):
             st.switch_page("pages/thesis_generation_full.py")
-        
+
+        # Live Analysis
+        if st.button("📈 Live Analysis", use_container_width=True, help="Analyze stocks now - single ticker or watchlist batch"):
+            st.switch_page("pages/live_analysis.py")
+
         # Historical Analysis
         if st.button("📊 Historical Analysis", use_container_width=True, help="Track analysis evolution and performance over time"):
             st.switch_page("pages/historical_analysis.py")
