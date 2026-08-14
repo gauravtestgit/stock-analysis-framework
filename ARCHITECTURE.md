@@ -153,6 +153,15 @@ curl -X POST http://localhost:8000/analyze/AAPL
   - All scenarios reuse one fetched `yf.Ticker` per analysis rather than re-fetching per
     scenario; the Forward Guidance scenario's extra `earnings_estimate`/`revenue_estimate`
     lookups only happen when that scenario runs, not for every analysis
+- **Batch vs. interactive behavior**: `DCFAnalyzer(config, run_preset_scenarios=False)`
+  skips all four preset scenarios and computes only Base Case - `result['scenarios']`
+  contains just `{'base_case': ...}`, and the top-level fields (unchanged either way) still
+  reflect it. `BatchAnalysisService` (`services/batch/batch_analysis_service_quant.py`)
+  registers the analyzer this way, since Bull/Bear/Rate-Shock cost extra compute and Forward
+  Guidance specifically costs 3 more yfinance calls per stock (`earnings_estimate`/
+  `revenue_estimate`/`growth_estimates`) that the batch CSV output never reads (only
+  `DCF_Price`, the base-case price). The dashboard/API path keeps `run_preset_scenarios=True`
+  (the default) and computes all 5. See "Batch Processing System" below.
 - **Applicable**: Mature/Growth companies only
 
 **Comparable Analyzer** (`comparable_analyzer.py`)
@@ -173,6 +182,16 @@ curl -X POST http://localhost:8000/analyze/AAPL
   summary sentences)
 - **Confidence** reflects how much of the valuation rests on real peer data vs. config-only
   defaults, rather than a fixed label
+- **Batch vs. interactive behavior**: `ComparableAnalyzer(config, use_peer_comparison=False)`
+  skips the live screener/peer-fetch pipeline entirely - `peer_tickers`/`peer_averages` are
+  `[]`/`{}`, and `target_multiples` fall back to the config-only defaults (same as before live
+  peer comparison existed). `BatchAnalysisService` registers the analyzer this way: live peer
+  comparison can cost up to ~9 extra yfinance calls per stock (up to 4 `yf.screen()` queries +
+  up to 5 per-peer `.info` fetches), which roughly doubled batch runtime and caused
+  throttling-related failures at full-exchange scale, for data (`peer_tickers`/
+  `relative_position`/`peer_insights`) the batch CSV output never reads - it only reads
+  `Comparable_Price`. The dashboard/API path keeps `use_peer_comparison=True` (the default)
+  and does real peer blending, since the extra latency is fine for one interactive lookup.
 - **Applicable**: All company types
 
 **Technical Analyzer** (`technical_analyzer.py`)
@@ -343,11 +362,18 @@ GET /health                         # Health check
 
 ### 5. Batch Processing System
 
-**Batch Analysis Service** (`services/batch/batch_analysis_service.py`)
-- High-volume direct processing
-- Processes 1000+ stocks in 10-15 minutes
-- Incremental CSV writing
-- Memory efficient
+**Batch Analysis Service** (`services/batch/batch_analysis_service_quant.py`, used by
+`test_batch_analysis.py`; an older `batch_analysis_service.py` variant also exists)
+- High-volume direct processing (ThreadPoolExecutor, `max_workers` threads)
+- Incremental CSV writing, per-ticker failure log
+- Registers `DCFAnalyzer(run_preset_scenarios=False)` and
+  `ComparableAnalyzer(use_peer_comparison=False)` - batch runs compute DCF Base Case only and
+  comparable multiples from config defaults only, skipping the live peer-comparison and
+  multi-scenario DCF work the dashboard/API path does. This is a deliberate trade-off: those
+  features cost real time and yfinance call volume that only pays off for one-at-a-time
+  interactive analysis, not a run across an entire exchange (see the DCF/Comparable analyzer
+  notes above). A full ASX run (~1992 tickers, 2 threads) takes roughly 2.2-2.4 hours with
+  both skipped; enabling either one roughly doubles that and increases throttling risk.
 
 **Batch Comparison Service** (`services/comparison/batch_comparison_service.py`)
 - Multi-method analyst alignment analysis
@@ -370,6 +396,27 @@ GET /health                         # Health check
 - **Analyst Alignment**: Method performance analysis
 - **Bullish Convergence**: Multi-method agreement
 - **Watchlist**: Custom stock lists
+- **Thesis Generation Full** (`thesis_generation_full.py`): the original, still-in-production
+  single-stock/watchlist-batch analysis + thesis generation page (13 flat analyzer tabs)
+- **Live Analysis** (`live_analysis.py`): a redesigned version of the same job (real-time
+  single-stock or watchlist-batch analysis), built as a new page reusing
+  `thesis_generation_full.py`'s business logic (`analyze_watchlist_batch`,
+  `analyze_single_stock`, `generate_investment_thesis`, etc.) via direct import rather than
+  modifying that page in place. Pairs with **Historical Analysis** (real-time vs. past runs).
+  Structural changes from the old page: a collapsible Configure section (auto-collapses once
+  results exist), a native `st.dataframe` row-selection table instead of a hand-rolled
+  button-list column, the old page's 13 flat analyzer tabs collapsed into 5 grouped tabs
+  (Overview/Valuation/Market Signals/Qualitative/News) plus a dedicated Thesis tab, and a
+  persistent LLM provider/model row. Visually, it reskins Streamlit's default chrome via CSS
+  (`_THEME_CSS`) rather than boxed `st.metric` cards: label/value pairs render as compact
+  HTML tables (`_render_kv_table`) so long labels/values can't get clipped the way a
+  fixed-width metric box does, secondary content (full business summary, financial charts)
+  uses `st.popover` instead of an always-expanded section, and every expander gets a shared
+  "top accent stripe" style via a common `st-key-la_expander_*` container-key prefix. The
+  three analyzers with no dedicated renderer upstream (Financial Health, Competitive
+  Position, Management Quality - `display_analyzer_tab` falls back to raw `st.json()` for
+  these) get a local, readable label/value formatter instead
+  (`_render_readable_dict`/`_render_value_readable`) rather than the raw JSON dump.
 - **Thesis Generation**: Professional investment theses
 
 **Features**:
@@ -713,7 +760,10 @@ python migrate_investment_theses.py
 ## Performance Characteristics
 
 - **Single Stock**: 2-5 seconds
-- **Batch (1000 stocks)**: 10-15 minutes
+- **Batch (~2000 stocks, 2 threads)**: ~2.2-2.4 hours with `DCFAnalyzer(run_preset_scenarios=False)`
+  and `ComparableAnalyzer(use_peer_comparison=False)` (the batch service's default
+  configuration - see "Batch Processing System"). Enabling either flag back on roughly
+  doubles this and increases the chance of Yahoo Finance throttling at that request volume.
 - **Memory**: ~500MB per analysis process
 - **Database**: ~1MB per comprehensive analysis
 - **API Throughput**: 10-20 requests/second
@@ -731,6 +781,11 @@ python migrate_investment_theses.py
    implies without that cap
 4. **LLM Costs**: API calls incur costs (use Groq for cost-effectiveness)
 5. **Rate Limits**: Yahoo Finance and LLM providers have rate limits
+6. **Batch results are Base-Case/config-only, not the full picture**: `DCF_Price` and
+   `Comparable_Price` in batch CSV output reflect DCF Base Case and config-only comparable
+   multiples respectively - not the Bull/Bear/Rate-Shock/Forward-Guidance DCF scenarios or
+   live peer-blended multiples the dashboard/API path computes for the same ticker. Re-run a
+   ticker through the dashboard or `POST /analyze/{ticker}` for the full picture.
 
 ---
 
@@ -769,5 +824,5 @@ python migrate_investment_theses.py
 
 ---
 
-**Last Updated**: 2026-08-11
+**Last Updated**: 2026-08-15
 **Version**: 1.0

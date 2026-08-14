@@ -44,8 +44,8 @@ python run_dashboard.py  # Dashboard on port 8501
 
 ## 📊 Analysis Methods
 
-1. **DCF Analyzer** - Discounted cash flow valuation, with an automatic Base/Bull/Bear/Rate-Shock scenario comparison plus a user-editable custom scenario
-2. **Comparable Analyzer** - Peer company valuation, with live region-aware peer data blended into the target multiples
+1. **DCF Analyzer** - Discounted cash flow valuation, with an automatic Base/Bull/Bear/Rate-Shock/Forward-Guidance scenario comparison plus a user-editable custom scenario (dashboard/API only - batch runs compute Base Case only, see [ARCHITECTURE.md](ARCHITECTURE.md))
+2. **Comparable Analyzer** - Peer company valuation, with live region-aware peer data blended into the target multiples (dashboard/API only - batch runs use config-only multiples, see [ARCHITECTURE.md](ARCHITECTURE.md))
 3. **Technical Analyzer** - Price patterns and indicators
 4. **Startup Analyzer** - Early-stage company metrics
 5. **AI Insights Analyzer** - LLM-powered analysis
@@ -134,7 +134,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 #### 5. Interactive Dashboard
 - **Framework**: Streamlit with enhanced UI components
-- **Pages**: Batch results, detailed analysis, analyst alignment, bullish convergence, thesis generation
+- **Pages**: Batch results, detailed analysis, analyst alignment, bullish convergence, thesis generation, **Live Analysis** (`live_analysis.py` - redesigned single-stock/watchlist real-time analysis, pairs with Historical Analysis; see [ARCHITECTURE.md](ARCHITECTURE.md))
 - **Features**: Interactive filtering, watchlist management, real-time API integration, modal dialogs, SVG price charts
 
 #### 6. Professional Thesis Generation
@@ -427,7 +427,8 @@ src/share_insights_v1/
 │       └── yahoo_peer_provider.py  # Peer comparison data
 ├── dashboard/              # Streamlit dashboard components
 │   └── pages/
-│       ├── thesis_generation_full.py  # Professional thesis generation (with financial charts)
+│       ├── thesis_generation_full.py  # Original thesis generation + watchlist batch page (still in production)
+│       ├── live_analysis.py           # Redesigned real-time analysis page (reuses thesis_generation_full's business logic)
 │       └── ...             # Other dashboard pages
 ├── models/                 # Data models and schemas
 ├── resources/              # Input data and analysis outputs
@@ -437,7 +438,7 @@ src/share_insights_v1/
 ## Performance Characteristics
 
 - **Single Stock Analysis**: 2-5 seconds per stock
-- **Batch Processing**: 1000+ stocks in 10-15 minutes (services)
+- **Batch Processing**: ~2000 stocks in ~2.2-2.4 hours (2 threads) - batch runs skip DCF's extra scenarios and live peer comparison (Base Case / config-only multiples instead) to keep this reasonable at full-exchange scale; see [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-off
 - **API Processing**: Background jobs with status tracking
 - **Memory Efficiency**: Incremental CSV writing for large datasets
 - **Scalability**: Horizontal scaling via multiple API instances
@@ -463,6 +464,19 @@ src/share_insights_v1/
 - **Impact**: Small-cap stocks may show news from weeks/months ago instead of latest articles
 - **Workaround**: None available - this is a yfinance library limitation
 - **Note**: Large-cap stocks (AAPL, MSFT, etc.) typically have fresher news data
+
+## Recent Updates & Fixes (August 2026)
+
+### New "Live Analysis" Dashboard Page
+- **Added**: `live_analysis.py` - a redesigned real-time analysis page (single-stock or watchlist-batch), pairing with the existing "Historical Analysis" page. Built as a new page reusing `thesis_generation_full.py`'s business logic via direct import, rather than modifying that page in place - it stays in production during the transition.
+- **UX changes**: collapsible Configure section (collapses automatically once results exist), a native interactive summary table (row selection) instead of a hand-rolled button list, the old page's 13 flat analyzer tabs collapsed into 5 grouped tabs plus a dedicated Thesis tab, and a persistent LLM provider/model row.
+- **Visual changes**: label/value pairs render as compact HTML tables instead of boxed `st.metric` cards (avoids long labels/values getting clipped), secondary content (full business summary, financial charts) uses a popover instead of an always-expanded section, and all expanders share a consistent "top accent stripe" style.
+- **Fixed**: a UTF-8 decoding bug in `load_llm_config()` that mangled the LLM provider icons (e.g. Groq's 🚀) on Windows.
+
+### Batch Analysis Performance
+- **Issue**: batch runs across a full exchange (e.g. ~2000 ASX tickers) had roughly doubled in runtime (from ~2.2-2.4 hours to ~6-12 hours) and were failing frequently, especially on ASX/NYSE.
+- **Cause**: the DCF analyzer's automatic Bull/Bear/Rate-Shock/Forward-Guidance scenarios and the comparable analyzer's live peer screening/fetching - both genuinely valuable for one-at-a-time interactive analysis - were also running unconditionally for every stock in a batch run, adding up to ~12 extra yfinance calls per stock for data (DCF scenario detail, peer tickers/relative position) the batch CSV output never actually reads.
+- **Fix**: `BatchAnalysisService` now registers `DCFAnalyzer(run_preset_scenarios=False)` and `ComparableAnalyzer(use_peer_comparison=False)`, so batch runs compute DCF Base Case and config-only comparable multiples only. The dashboard/API path is unchanged and keeps the full scenario/peer-comparison behavior. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Recent Updates & Fixes (December 2024)
 
