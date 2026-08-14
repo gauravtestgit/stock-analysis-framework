@@ -16,6 +16,12 @@ from src.share_insights_v1.dashboard.pages.thesis_generation_full import (
     generate_investment_thesis,
 )
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
+from src.share_insights_v1.dashboard.components.theme import (
+    inject_theme_css,
+    rec_pill_html,
+    section_label,
+    render_kv_table,
+)
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
 from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
@@ -54,232 +60,6 @@ TAB_GROUPS = {
     "News": ["news_sentiment"],
     "Thesis": [],
 }
-
-# Token palette ported from the approved watchlist-redesign mockup, reskinning
-# Streamlit's default chrome via its stable data-testid hooks (Streamlit 1.50)
-# rather than the mockup's hand-authored HTML, since every widget here still
-# needs to be a real interactive Streamlit component.
-_THEME_CSS = """
-<style>
-:root {
-    --la-ink: #151b1e; --la-ink-muted: #55636a; --la-ink-faint: #8a9599;
-    --la-surface-raised: #ffffff; --la-surface-sunken: #eceeed;
-    --la-border: #dde2e1; --la-border-strong: #c7cecd;
-    --la-accent: #1e4a5c; --la-accent-strong: #163949; --la-accent-soft: #e4eef0; --la-accent-ink: #ffffff;
-    --la-good: #1f7a4d; --la-good-soft: #e4f3ea;
-    --la-warn: #9a6b14; --la-warn-soft: #fbf1dd;
-    --la-bad: #b23a3a; --la-bad-soft: #fbe9e9;
-    --la-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --la-font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-    :root {
-        --la-ink: #e9edee; --la-ink-muted: #a3b0b4; --la-ink-faint: #6c7a7f;
-        --la-surface-raised: #171e22; --la-surface-sunken: #11161a;
-        --la-border: #2a3338; --la-border-strong: #3a454b;
-        --la-accent: #72b8ce; --la-accent-strong: #94cbdd; --la-accent-soft: #1c333c; --la-accent-ink: #0d1114;
-        --la-good: #4fbe85; --la-good-soft: #163123;
-        --la-warn: #d7a53f; --la-warn-soft: #332a10;
-        --la-bad: #e17575; --la-bad-soft: #362020;
-    }
-}
-
-[data-testid="stAppViewContainer"] { font-family: var(--la-font-ui); }
-[data-testid="stAppViewContainer"] h1, [data-testid="stAppViewContainer"] h2, [data-testid="stAppViewContainer"] h3 {
-    letter-spacing: -0.01em;
-}
-
-/* Metric labels/values (st.metric still used by the shared display_analyzer_tab
-   header for dcf/technical/etc - can't be touched, so this is a plain,
-   box-free style rather than the card look, plus a wrap fallback so long
-   labels/values can't clip the way they did in the boxed version). */
-[data-testid="stMetricLabel"] { color: var(--la-ink-faint) !important; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.7rem !important; white-space: normal !important; }
-[data-testid="stMetricValue"] {
-    font-family: var(--la-font-mono) !important; font-variant-numeric: tabular-nums;
-    white-space: normal !important; overflow-wrap: break-word; line-height: 1.25 !important;
-    font-size: 1.1rem !important;
-}
-
-/* Finviz-style key:value table (Option C) - label/value are separate cells so
-   long content grows the row instead of clipping, unlike st.metric. */
-table.la-kv { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 2px 0; }
-table.la-kv td { padding: 6px 8px; border-bottom: 1px solid var(--la-border); vertical-align: baseline; }
-table.la-kv tr:last-child td { border-bottom: none; }
-table.la-kv td.la-kv-k {
-    color: var(--la-ink-faint); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em;
-    width: 1%; white-space: nowrap; padding-right: 12px;
-}
-table.la-kv td.la-kv-v { font-family: var(--la-font-mono); font-weight: 700; font-variant-numeric: tabular-nums; }
-
-/* Density: shrink default heading/divider spacing so tabs need less scrolling */
-[data-testid="stAppViewContainer"] h3 { margin: 0.5rem 0 0.35rem !important; font-size: 1.05rem !important; }
-[data-testid="stAppViewContainer"] hr { margin: 0.5rem 0 !important; }
-[data-testid="stVerticalBlock"] { gap: 0.35rem !important; }
-
-/* Expanders as cards */
-[data-testid="stExpander"] {
-    border: 1px solid var(--la-border) !important;
-    border-radius: 8px !important;
-    background: var(--la-surface-raised);
-}
-
-/* Stylized expander treatment (Option D: top accent stripe) - trialled on
-   Configure first via a keyed wrapper, now shared by every expander on the
-   page (Configure + the per-analyzer expanders in Valuation/Market Signals/
-   Qualitative) via the common "la_expander_*" container-key prefix. */
-[class*="st-key-la_expander_"] [data-testid="stExpander"],
-[class*="st-key-la_expander_"] [data-testid="stExpander"] > div,
-[class*="st-key-la_expander_"] [data-testid="stExpander"] details {
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    border-top: 3px solid var(--la-accent) !important;
-    border-radius: 6px 6px 0 0 !important;
-    overflow: hidden;
-}
-[class*="st-key-la_expander_"] [data-testid="stExpander"] summary {
-    padding: 13px 16px !important;
-    font-weight: 700 !important;
-    color: var(--la-ink) !important;
-    border: none !important;
-    border-bottom: 1px solid var(--la-border) !important;
-    box-shadow: none !important;
-    transition: color 0.12s ease;
-}
-[class*="st-key-la_expander_"] [data-testid="stExpander"] summary:hover {
-    color: var(--la-accent) !important;
-}
-[class*="st-key-la_expander_"] [data-testid="stExpander"] summary svg { color: var(--la-ink-faint); transition: color 0.12s ease; }
-[class*="st-key-la_expander_"] [data-testid="stExpander"] summary:hover svg { color: var(--la-accent) !important; }
-[class*="st-key-la_expander_"] [data-testid="stExpanderDetails"] {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 16px !important;
-}
-
-/* Buttons */
-[data-testid^="stBaseButton-"] {
-    border-radius: 6px !important;
-    font-weight: 600 !important;
-}
-[data-testid="stBaseButton-primary"] {
-    background: var(--la-accent) !important;
-    border-color: var(--la-accent) !important;
-    color: var(--la-accent-ink) !important;
-}
-[data-testid="stBaseButton-primary"]:hover {
-    background: var(--la-accent-strong) !important;
-    border-color: var(--la-accent-strong) !important;
-}
-
-/* Pill-style tabs */
-[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: 6px; border-bottom: 1px solid var(--la-border); }
-[data-testid="stTab"] {
-    border-radius: 999px !important;
-    padding: 6px 14px !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    background: transparent;
-}
-[data-testid="stTab"][aria-selected="true"] {
-    background: var(--la-accent) !important;
-    color: var(--la-accent-ink) !important;
-}
-[data-testid="stTab"][aria-selected="true"] p { color: var(--la-accent-ink) !important; }
-
-/* Interactive table */
-[data-testid="stDataFrame"] {
-    border: 1px solid var(--la-border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-/* Plain HTML tables (methods summary) - lighter than st.dataframe's canvas grid */
-table.la-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 2px 0; }
-table.la-table th {
-    text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em;
-    color: var(--la-ink-faint); font-weight: 600; padding: 6px 10px; border-bottom: 1px solid var(--la-border-strong);
-}
-table.la-table td { padding: 6px 10px; border-bottom: 1px solid var(--la-border); }
-table.la-table tr:last-child td { border-bottom: none; }
-
-/* Sleek "read more" popover trigger - plain text-link look, not a full button */
-.st-key-la_summary_popover_wrap button {
-    background: transparent !important; border: none !important; box-shadow: none !important;
-    color: var(--la-accent) !important; padding: 2px 0 !important; font-size: 0.8rem !important;
-}
-.st-key-la_summary_popover_wrap button:hover { text-decoration: underline; }
-.st-key-la_summary_popover_wrap button p { color: var(--la-accent) !important; font-size: 0.8rem !important; }
-
-/* Section labels - one consistent style for every sub-section header across
-   every tab, instead of ad hoc st.markdown("###"/"####") of varying levels. */
-.la-section-label {
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--la-ink-faint); margin: 20px 0 8px; padding-bottom: 5px;
-    border-bottom: 1px solid var(--la-border);
-}
-
-/* Inputs */
-[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-[data-testid="stTextInput"] input,
-[data-testid="stNumberInput"] input {
-    border-radius: 6px !important;
-    border-color: var(--la-border-strong) !important;
-}
-
-.la-mode-pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: var(--la-accent-soft); color: var(--la-accent);
-    font-size: 0.8rem; font-weight: 600;
-    padding: 5px 12px; border-radius: 6px; margin-bottom: 8px;
-}
-.la-rec-pill {
-    display: inline-block; font-size: 0.75rem; font-weight: 700;
-    padding: 3px 10px; border-radius: 4px; letter-spacing: 0.01em; white-space: nowrap;
-}
-.la-rec-strongbuy, .la-rec-buy { background: var(--la-good-soft); color: var(--la-good); }
-.la-rec-hold { background: var(--la-warn-soft); color: var(--la-warn); }
-.la-rec-sell, .la-rec-strongsell { background: var(--la-bad-soft); color: var(--la-bad); }
-.la-ticker-mono { font-family: var(--la-font-mono); font-weight: 700; }
-.la-upside-pos { color: var(--la-good); font-family: var(--la-font-mono); font-weight: 700; }
-.la-upside-neg { color: var(--la-bad); font-family: var(--la-font-mono); font-weight: 700; }
-</style>
-"""
-
-
-def _inject_theme_css():
-    st.markdown(_THEME_CSS, unsafe_allow_html=True)
-
-
-def _rec_pill_class(rec: str) -> str:
-    return "la-rec-" + rec.lower().replace(" ", "").replace("-", "")
-
-
-def _rec_pill_html(rec: str) -> str:
-    return f'<span class="la-rec-pill {_rec_pill_class(rec)}">{rec}</span>'
-
-
-def _section_label(text: str):
-    """One consistent sub-section header style, used across every tab instead
-    of ad hoc st.markdown("###"/"####") calls at varying heading levels."""
-    st.markdown(f'<div class="la-section-label">{text}</div>', unsafe_allow_html=True)
-
-
-def _render_kv_table(pairs, cols=2):
-    """Finviz-style label:value table (chosen over boxed st.metric cards after
-    comparing options) - each label/value is its own table cell, so a long
-    label ("Revenue Growth") or long value ("Consumer Electronics") just grows
-    that row instead of getting clipped the way a fixed-width metric box does."""
-    rows_html = []
-    for i in range(0, len(pairs), cols):
-        chunk = pairs[i:i + cols]
-        cells = ''.join(
-            f'<td class="la-kv-k">{label}</td><td class="la-kv-v">{value}</td>'
-            for label, value in chunk
-        )
-        rows_html.append(f'<tr>{cells}</tr>')
-    st.markdown(f'<table class="la-kv">{"".join(rows_html)}</table>', unsafe_allow_html=True)
-
 
 # Analyzers with no dedicated renderer in the shared page - display_analyzer_tab
 # falls back to a raw st.json() dump for these, which is hard to scan. Rendered
@@ -338,10 +118,10 @@ def _render_readable_dict(data: dict, hidden_keys=_READABLE_DICT_HIDDEN_KEYS):
                       and not isinstance(v, (str, int, float, bool))]
 
     if scalar_rows:
-        _render_kv_table([(_humanize_key(k), v) for k, v in scalar_rows], cols=2)
+        render_kv_table([(_humanize_key(k), v) for k, v in scalar_rows], cols=2)
 
     for key, value in complex_items:
-        _section_label(_humanize_key(key))
+        section_label(_humanize_key(key))
         _render_value_readable(value)
 
 
@@ -361,12 +141,12 @@ def _render_analyzer_tab(ticker, analyses, key, fm):
         return
 
     target = analysis_data.get('predicted_price', 0) or 0
-    _render_kv_table([
-        ("Recommendation", _rec_pill_html(analysis_data.get('recommendation', 'N/A'))),
+    render_kv_table([
+        ("Recommendation", rec_pill_html(analysis_data.get('recommendation', 'N/A'))),
         ("Target Price", f"${target:.2f}" if target else "N/A"),
         ("Confidence", analysis_data.get('confidence', 'N/A')),
     ], cols=3)
-    _section_label("Details")
+    section_label("Details")
     _render_readable_dict(analysis_data)
 
 
@@ -476,7 +256,7 @@ def _render_methods_table(analyses):
     Streamlit's canvas-rendered grid, so it matches the page's density/style
     rather than bringing its own toolbar/scrollbar chrome."""
     rows = [
-        (k.replace('_', ' ').title(), _rec_pill_html(v.get('recommendation', 'N/A')),
+        (k.replace('_', ' ').title(), rec_pill_html(v.get('recommendation', 'N/A')),
          f"${v.get('predicted_price', 0) or 0:.2f}", v.get('confidence', 'N/A'))
         for k, v in analyses.items() if isinstance(v, dict)
     ]
@@ -514,7 +294,7 @@ def _render_overview_compact(ticker, data, analyses):
 
     revenue_data_statements = fm.get('revenue_data_statements') or {}
     if revenue_data_statements:
-        _section_label("Charts")
+        section_label("Charts")
         _render_financial_charts(revenue_data_statements)
 
     market_cap = fm.get('market_cap') or 0
@@ -531,8 +311,8 @@ def _render_overview_compact(ticker, data, analyses):
     earnings_date = fm.get('earnings_date', 'N/A')
     target_median = (analyses.get('analyst_consensus') or {}).get('target_median_price') or 0
 
-    _section_label("Metrics")
-    _render_kv_table(_financial_figures_pairs(fm) + [
+    section_label("Metrics")
+    render_kv_table(_financial_figures_pairs(fm) + [
         ("Market Cap", format_currency(market_cap) if market_cap else "N/A"),
         ("P/E Ratio", fm.get('pe_ratio', 'N/A')),
         ("Forward P/E", f"{forward_pe:.2f}" if forward_pe else "N/A"),
@@ -549,7 +329,7 @@ def _render_overview_compact(ticker, data, analyses):
         ("Next Earnings", earnings_date if earnings_date and earnings_date != 'N/A' else "N/A"),
     ], cols=3)
 
-    _section_label("Analysis Summary")
+    section_label("Analysis Summary")
     _render_methods_table(analyses)
 
 
@@ -757,11 +537,11 @@ def render_stock_detail(ticker, data):
             unsafe_allow_html=True
         )
     with col2:
-        _render_kv_table([
+        render_kv_table([
             ("Current Price", f"${current_price:.2f}" if current_price else "N/A"),
             ("Target Price", f"${target_price:.2f}" if target_price else "N/A"),
             ("Upside", upside_html),
-            ("Recommendation", _rec_pill_html(rec.get("recommendation", "N/A"))),
+            ("Recommendation", rec_pill_html(rec.get("recommendation", "N/A"))),
         ], cols=2)
 
     st.caption(f"Confidence: {rec.get('confidence', 'N/A')}")
@@ -821,7 +601,7 @@ def render_generate_thesis_section(ticker, data):
 
     history = ThesisStorageService().get_thesis_history(ticker, limit=5)
     if history:
-        _section_label("Recent Theses")
+        section_label("Recent Theses")
         for h in history:
             created = h['created_at']
             label = f"{h['thesis_type'].replace('_', ' ').title()} — {created:%Y-%m-%d %H:%M}" if created else h['thesis_type']
@@ -837,7 +617,7 @@ def show_live_analysis_page():
         return
 
     render_navigation()
-    _inject_theme_css()
+    inject_theme_css()
 
     st.title("📈 Live Analysis")
     show_disclaimer()
@@ -866,7 +646,7 @@ def show_live_analysis_page():
             st.subheader(f"📊 Results ({len(successful_results)} stocks)")
             batch_timing = st.session_state.get('batch_timing')
             if batch_timing:
-                _render_kv_table([
+                render_kv_table([
                     ("Total Batch Time", f"{batch_timing['total_batch_time']}s"),
                     ("Avg Time/Stock", f"{batch_timing['avg_time_per_stock']}s"),
                     ("Parallel Workers", batch_timing.get('parallel_workers', 'N/A')),
