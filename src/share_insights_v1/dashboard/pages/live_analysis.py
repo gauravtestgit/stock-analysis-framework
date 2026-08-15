@@ -12,13 +12,20 @@ from src.share_insights_v1.dashboard.pages.thesis_generation_full import (
     get_provider_models,
     analyze_watchlist_batch,
     analyze_single_stock,
-    display_analyzer_tab,
+    display_dcf_details,
+    display_ai_insights_details,
+    display_news_details,
+    display_business_model_details,
+    display_analyst_consensus_details,
+    display_industry_analysis_details,
+    display_startup_details,
     generate_investment_thesis,
 )
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 from src.share_insights_v1.dashboard.components.theme import (
     inject_theme_css,
     rec_pill_html,
+    rec_pill_class,
     section_label,
     render_kv_table,
 )
@@ -61,11 +68,11 @@ TAB_GROUPS = {
     "Thesis": [],
 }
 
-# Analyzers with no dedicated renderer in the shared page - display_analyzer_tab
-# falls back to a raw st.json() dump for these, which is hard to scan. Rendered
-# locally instead (see _render_readable_dict) without touching the shared file.
-_JSON_FALLBACK_ANALYZERS = {'financial_health', 'competitive_position', 'management_quality'}
-
+# financial_health/competitive_position/management_quality have no dedicated
+# renderer upstream (display_analyzer_tab falls back to a raw st.json() dump
+# for these, which is hard to scan) - they're the analyzer keys absent from
+# _LOCAL_DETAIL_RENDERERS below, so _render_analyzer_tab's dispatch falls
+# through to _render_readable_dict for them instead.
 _READABLE_DICT_HIDDEN_KEYS = {
     'method', 'applicable', 'recommendation', 'predicted_price', 'confidence',
     'error', 'upside_downside_pct', 'current_price', 'total_equity_value',
@@ -74,6 +81,14 @@ _READABLE_DICT_HIDDEN_KEYS = {
 
 def _humanize_key(key: str) -> str:
     return key.replace('_', ' ').title()
+
+
+def _fmt_num(value, decimals=2, suffix=""):
+    """Round a raw numeric indicator (e.g. RSI 51.559723317858584) to a
+    readable precision; passes non-numeric values through as-is."""
+    if isinstance(value, (int, float)):
+        return f"{value:.{decimals}f}{suffix}"
+    return value if value is not None else "N/A"
 
 
 def _render_value_readable(value, depth=0):
@@ -125,29 +140,313 @@ def _render_readable_dict(data: dict, hidden_keys=_READABLE_DICT_HIDDEN_KEYS):
         _render_value_readable(value)
 
 
-def _render_analyzer_tab(ticker, analyses, key, fm):
-    """Drop-in replacement for display_analyzer_tab for the three analyzers
-    that have no dedicated renderer upstream (mirrors its Recommendation/Target/
-    Confidence header for visual consistency with the other tabs, then formats
-    the body readably instead of falling back to st.json)."""
-    if key not in _JSON_FALLBACK_ANALYZERS:
-        display_analyzer_tab(ticker, analyses, key, ANALYZER_LABELS[key], financial_metrics=fm)
-        return
+def _render_comparable_details(data: dict):
+    """Local, denser replacement for the shared display_comparable_details
+    (thesis_generation_full.py) - that function renders one st.write() call
+    per field (each its own paragraph-spaced block, only 2 per row), which
+    reads as a long vertical list. Same fields, as kv-tables instead."""
+    multiples = data.get('target_multiples') or {}
+    sources = data.get('multiple_sources') or {}
 
+    def _tagged(key, label):
+        val = multiples.get(key)
+        tag = " 🔗" if sources.get(key) == 'config+peer_blend' else ""
+        return (label, f"{val:.2f}x{tag}" if isinstance(val, (int, float)) else "N/A")
+
+    if multiples:
+        section_label("Valuation Multiples")
+        render_kv_table([_tagged('pe', 'P/E'), _tagged('ps', 'P/S'),
+                          _tagged('pb', 'P/B'), _tagged('ev_ebitda', 'EV/EBITDA')], cols=4)
+        if sources:
+            st.caption("🔗 = blended with live peer data; otherwise a config-based default")
+
+    peers = data.get('peer_tickers') or []
+    if peers:
+        section_label("Peer Companies")
+        st.write(", ".join(peers[:10]))
+
+    peer_averages = data.get('peer_averages') or {}
+    if peer_averages:
+        section_label("Peer Averages")
+        multiple_fields = {'pe_ratio': 'P/E', 'price_to_sales': 'P/S', 'price_to_book': 'P/B', 'ev_ebitda': 'EV/EBITDA'}
+        pct_fields = {'roe': 'ROE', 'revenue_growth': 'Revenue Growth', 'profit_margin': 'Profit Margin'}
+        pairs = [(label, f"{peer_averages[key]:.2f}x") for key, label in multiple_fields.items() if key in peer_averages]
+        pairs += [(label, f"{peer_averages[key] * 100:.1f}%") for key, label in pct_fields.items() if key in peer_averages]
+        render_kv_table(pairs, cols=4)
+
+    relative_position = data.get('relative_position') or {}
+    if relative_position:
+        section_label("Relative Position vs Peers")
+        badge = {'Discount': '🟢', 'Premium': '🔴', 'Inline': '⚪', 'Superior': '🟢', 'Below': '🔴'}
+        label_map = {'pe_ratio': 'P/E', 'price_to_sales': 'P/S', 'price_to_book': 'P/B',
+                     'roe': 'ROE', 'profit_margin': 'Profit Margin'}
+        pairs = [(label_map.get(k, k), f"{badge.get(v, '')} {v}") for k, v in relative_position.items()]
+        render_kv_table(pairs, cols=3)
+
+    peer_insights = data.get('peer_insights') or []
+    if peer_insights:
+        section_label("Peer Insights")
+        for insight in peer_insights:
+            st.markdown(f"- {insight}")
+
+
+def _render_technical_details(data: dict, ticker: str, fm: dict):
+    """Local, denser replacement for the shared display_technical_details -
+    same indicator/range/support-resistance fields as kv-tables instead of
+    one st.write() per field across several 3-4 column st.columns() grids,
+    same price chart (height trimmed from 900 to 650), and the raw
+    st.json(technical_signals) dump replaced with a bullish/bearish count
+    summary plus a clean bullet list. Note: signal_details strings aren't
+    individually tagged bullish/bearish in the underlying data, so they can't
+    be reliably split into two separate lists - only the aggregate counts can."""
+    fm = fm or {}
+    float_shares = fm.get('float_shares', 0) or 0
+    shares_outstanding = fm.get('shares_outstanding', 0) or 0
+    float_pct = min((float_shares / shares_outstanding * 100), 100.0) if shares_outstanding > 0 else 0
+
+    section_label("Technical Indicators")
+    render_kv_table([
+        ("RSI (14)", _fmt_num(data.get('rsi_14'))),
+        ("MACD", _fmt_num(data.get('macd_line'))),
+        ("MA 20", _fmt_num(data.get('ma_20'))),
+        ("MA 50", _fmt_num(data.get('ma_50'))),
+        ("MA 200", _fmt_num(data.get('ma_200'))),
+        ("ADX", _fmt_num(data.get('adx'))),
+        ("ATR %", _fmt_num(data.get('atr_percent'), suffix="%")),
+        ("Trend", data.get('trend', 'N/A')),
+        ("Volume Trend", data.get('volume_trend', 'N/A')),
+        ("BB Upper", f"${data.get('bb_upper', 0) or 0:.2f}"),
+        ("BB Middle", f"${data.get('bb_middle', 0) or 0:.2f}"),
+        ("BB Lower", f"${data.get('bb_lower', 0) or 0:.2f}"),
+    ], cols=4)
+
+    section_label("Range & Float")
+    render_kv_table([
+        ("30d High", f"${(data.get('price_30d_high', 0) or 0):.2f}"),
+        ("30d Low", f"${(data.get('price_30d_low', 0) or 0):.2f}"),
+        ("30d Fluctuation", f"{(data.get('price_30d_fluctuation', 0) or 0):.1f}%"),
+        ("52w High", f"${(data.get('high_52w', 0) or 0):.2f}"),
+        ("52w Low", f"${(data.get('low_52w', 0) or 0):.2f}"),
+        ("Volatility (Ann)", f"{(data.get('volatility_annual', 0) or 0) * 100:.1f}%"),
+        ("Float Shares", f"{float_shares / 1e6:.0f}M"),
+        ("Float %", f"{float_pct:.1f}%"),
+        ("Shares Outstanding", f"{shares_outstanding / 1e6:.0f}M"),
+    ], cols=3)
+
+    support_resistance = data.get('support_resistance') or {}
+    if support_resistance:
+        section_label("Support & Resistance")
+        support_levels = support_resistance.get('support_levels') or []
+        resistance_levels = support_resistance.get('resistance_levels') or []
+        level_pairs = [(f"Support S{i}", f"${lvl:.2f}") for i, lvl in enumerate(support_levels, 1)]
+        level_pairs += [(f"Resistance R{i}", f"${lvl:.2f}") for i, lvl in enumerate(resistance_levels, 1)]
+        if level_pairs:
+            render_kv_table(level_pairs, cols=4)
+        else:
+            st.caption("No support/resistance levels calculated")
+
+        fibonacci = support_resistance.get('fibonacci') or {}
+        if fibonacci:
+            st.markdown("**Fibonacci Retracement**")
+            render_kv_table([(level.replace('level_', ''), f"${value:.2f}") for level, value in fibonacci.items()], cols=4)
+
+        pivots = support_resistance.get('pivot_points') or {}
+        if pivots:
+            st.markdown("**Pivot Points**")
+            render_kv_table([
+                ("Pivot", f"${pivots.get('pivot', 0):.2f}"),
+                ("R1", f"${pivots.get('r1', 0):.2f}"),
+                ("R2", f"${pivots.get('r2', 0):.2f}"),
+                ("S1", f"${pivots.get('s1', 0):.2f}"),
+                ("S2", f"${pivots.get('s2', 0):.2f}"),
+            ], cols=5)
+
+    if ticker:
+        try:
+            import yfinance as yf
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period="2y")
+
+            if not hist.empty:
+                section_label("Price Chart with Indicators")
+                st.caption("Click legend items to show/hide indicators")
+
+                sma_20 = hist['Close'].rolling(window=20).mean()
+                std_20 = hist['Close'].rolling(window=20).std()
+                bb_upper = sma_20 + (std_20 * 2)
+                bb_lower = sma_20 - (std_20 * 2)
+                ma_50 = hist['Close'].rolling(window=50).mean()
+                ma_200 = hist['Close'].rolling(window=200).mean()
+
+                delta = hist['Close'].diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+
+                exp1 = hist['Close'].ewm(span=12, adjust=False).mean()
+                exp2 = hist['Close'].ewm(span=26, adjust=False).mean()
+                macd = exp1 - exp2
+                signal = macd.ewm(span=9, adjust=False).mean()
+
+                import plotly.graph_objects as go
+                from plotly.subplots import make_subplots
+
+                fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+                                     row_heights=[0.4, 0.15, 0.225, 0.225],
+                                     subplot_titles=('Price with Indicators', 'Volume', 'RSI (14)', 'MACD'))
+
+                fig.add_trace(go.Scatter(x=hist.index, y=hist['Close'], name='Price', line=dict(color='blue', width=2)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=bb_upper, name='BB Upper', line=dict(color='gray', width=1, dash='dot')), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=sma_20, name='BB Middle (MA20)', line=dict(color='orange', width=1)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=bb_lower, name='BB Lower', line=dict(color='gray', width=1, dash='dot')), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=ma_50, name='MA50', line=dict(color='green', width=1.5)), row=1, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=ma_200, name='MA200', line=dict(color='red', width=1.5)), row=1, col=1)
+
+                colors = ['red' if hist['Close'].iloc[i] < hist['Open'].iloc[i] else 'green' for i in range(len(hist))]
+                fig.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume', marker_color=colors), row=2, col=1)
+
+                fig.add_trace(go.Scatter(x=hist.index, y=rsi, name='RSI', line=dict(color='purple', width=1.5)), row=3, col=1)
+                fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=3, col=1)
+                fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=3, col=1)
+
+                fig.add_trace(go.Scatter(x=hist.index, y=macd, name='MACD', line=dict(color='blue', width=1.5)), row=4, col=1)
+                fig.add_trace(go.Scatter(x=hist.index, y=signal, name='Signal', line=dict(color='red', width=1.5)), row=4, col=1)
+
+                fig.update_layout(
+                    height=650,
+                    hovermode='x unified',
+                    showlegend=True,
+                    legend=dict(yanchor="top", y=1, xanchor="left", x=-0.5, bgcolor="rgba(255,255,255,0.9)", bordercolor="#ddd", borderwidth=1)
+                )
+                fig.update_yaxes(title_text="Price ($)", row=1, col=1)
+                fig.update_yaxes(title_text="Volume", row=2, col=1)
+                fig.update_yaxes(title_text="RSI", row=3, col=1)
+                fig.update_yaxes(title_text="MACD", row=4, col=1)
+
+                st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.warning(f"Could not load price chart: {str(e)}")
+
+    signals = data.get('technical_signals') or {}
+    if signals:
+        section_label("Signals")
+        net = signals.get('net_signal', 0)
+        render_kv_table([
+            # bullish_signals/bearish_signals are weighted point totals, not item
+            # counts - e.g. a single "Strong MA uptrend" is worth 3 points alone -
+            # labeled "Score" rather than "Signals" so that isn't misread as a count.
+            ("Bullish Score", f"🟢 {signals.get('bullish_signals', 0)}"),
+            ("Bearish Score", f"🔴 {signals.get('bearish_signals', 0)}"),
+            ("Net Score", f"{net:+d}" if isinstance(net, int) else net),
+        ], cols=3)
+
+        details = signals.get('signal_details') or []
+        categories = signals.get('signal_categories') or []
+        if details and len(categories) == len(details):
+            # signal_categories (technical_analyzer.py) tags each detail string
+            # bullish/bearish/neutral - grouped into columns so it's clear which
+            # is which, rather than one flat list that reads as if everything's
+            # under "bullish" since nothing visually distinguishes them.
+            grouped = {'bullish': [], 'bearish': [], 'neutral': []}
+            for text, cat in zip(details, categories):
+                grouped.setdefault(cat, grouped['neutral']).append(text)
+            sig_col1, sig_col2, sig_col3 = st.columns(3)
+            for col, cat, icon in ((sig_col1, 'bullish', '🟢'), (sig_col2, 'bearish', '🔴'), (sig_col3, 'neutral', '⚪')):
+                with col:
+                    st.markdown(f"**{icon} {cat.title()}**")
+                    if grouped[cat]:
+                        for text in grouped[cat]:
+                            st.markdown(f"- {text}")
+                    else:
+                        st.caption("None")
+        elif details:
+            # Older/cached result predating signal_categories - fall back to
+            # an unclassified flat list rather than erroring.
+            for item in details:
+                st.markdown(f"- {item}")
+
+
+# Analyzers with a local, denser renderer replacing the shared page's version -
+# same underlying analysis data and (for dcf/analyst_consensus/business_model/
+# industry_analysis/ai_insights/news_sentiment/startup) the exact same body
+# content via the shared page's own inner display_*_details functions, just
+# under OUR header instead of display_analyzer_tab's own st.metric one - that
+# function bundles its header and body together, so getting a consistent
+# Recommendation-pill/Target/Confidence header across every tab means calling
+# the inner functions directly rather than the dispatch wrapper (which would
+# render its own header a second time). All take (analysis_data, ticker,
+# financial_metrics) for a uniform dispatch signature even where an argument
+# goes unused.
+_LOCAL_DETAIL_RENDERERS = {
+    'comparable': lambda data, ticker, fm: _render_comparable_details(data),
+    'technical': _render_technical_details,
+    'dcf': lambda data, ticker, fm: display_dcf_details(data, ticker),
+    'analyst_consensus': lambda data, ticker, fm: display_analyst_consensus_details(data),
+    'business_model': lambda data, ticker, fm: display_business_model_details(data),
+    'industry_analysis': lambda data, ticker, fm: display_industry_analysis_details(data),
+    'ai_insights': lambda data, ticker, fm: display_ai_insights_details(data),
+    'news_sentiment': lambda data, ticker, fm: display_news_details(data),
+    'startup': lambda data, ticker, fm: display_startup_details(data),
+}
+
+
+# st.expander labels are plain text only (no markdown/HTML rendering), so the
+# colored rec-pill badge used everywhere else on this page can't appear in a
+# title - a colored emoji is the closest equivalent that's still plain text.
+# Keyed off the same la-rec-* classes rec_pill_html uses, so an expander title
+# always agrees with what the pill badge inside its own body would show.
+_REC_CLASS_EMOJI = {
+    'la-rec-strongbuy': '🟢', 'la-rec-buy': '🟢',
+    'la-rec-hold': '🟡',
+    'la-rec-sell': '🔴', 'la-rec-strongsell': '🔴',
+}
+
+
+def _analyzer_expander_label(analyses, key):
+    """Recommendation/Target/Confidence summary for an expander's title
+    itself, so it's visible collapsed without needing to open every analyzer
+    to compare them."""
+    label = ANALYZER_LABELS[key]
+    analysis_data = analyses.get(key)
+    if not analysis_data or 'error' in analysis_data:
+        return label
+    target = analysis_data.get('predicted_price', 0) or 0
+    rec = analysis_data.get('recommendation', 'N/A')
+    conf = analysis_data.get('confidence', 'N/A')
+    target_str = f"${target:.2f}" if target else "N/A"
+    emoji = _REC_CLASS_EMOJI.get(rec_pill_class(rec), '⚪')
+    return f"{label}  —  {emoji} {rec} · {target_str} · {conf}"
+
+
+def _render_analyzer_tab(ticker, analyses, key, fm, show_header=True):
+    """Consistent Recommendation-pill/Target/Confidence header for every
+    analyzer tab (previously only the JSON-fallback and locally-rewritten
+    tabs got this; dcf/analyst_consensus/business_model/industry_analysis/
+    ai_insights/news_sentiment/startup used display_analyzer_tab's own
+    st.metric-based header, which looked different) - then dispatches to
+    either a local renderer or the shared inner body-content function.
+    show_header=False when the same Recommendation/Target/Confidence is
+    already shown in the caller's expander title, to avoid repeating it."""
     analysis_data = analyses.get(key)
     if not analysis_data or 'error' in analysis_data:
         st.info(f"{ANALYZER_LABELS[key]} was not run for this stock" if not analysis_data
                 else f"{ANALYZER_LABELS[key]} failed: {analysis_data.get('error', 'Unknown error')}")
         return
 
-    target = analysis_data.get('predicted_price', 0) or 0
-    render_kv_table([
-        ("Recommendation", rec_pill_html(analysis_data.get('recommendation', 'N/A'))),
-        ("Target Price", f"${target:.2f}" if target else "N/A"),
-        ("Confidence", analysis_data.get('confidence', 'N/A')),
-    ], cols=3)
-    section_label("Details")
-    _render_readable_dict(analysis_data)
+    if show_header:
+        target = analysis_data.get('predicted_price', 0) or 0
+        render_kv_table([
+            ("Recommendation", rec_pill_html(analysis_data.get('recommendation', 'N/A'))),
+            ("Target Price", f"${target:.2f}" if target else "N/A"),
+            ("Confidence", analysis_data.get('confidence', 'N/A')),
+        ], cols=3)
+
+    if key in _LOCAL_DETAIL_RENDERERS:
+        _LOCAL_DETAIL_RENDERERS[key](analysis_data, ticker, fm)
+    else:
+        section_label("Details")
+        _render_readable_dict(analysis_data)
 
 
 def _render_financial_charts(revenue_data_statements):
@@ -564,8 +863,8 @@ def render_stock_detail(ticker, data):
                 _render_analyzer_tab(ticker, analyses, present[0], fm)
             else:
                 for k in present:
-                    with st.container(key=f"la_expander_{k}"), st.expander(ANALYZER_LABELS[k]):
-                        _render_analyzer_tab(ticker, analyses, k, fm)
+                    with st.container(key=f"la_expander_{k}"), st.expander(_analyzer_expander_label(analyses, k)):
+                        _render_analyzer_tab(ticker, analyses, k, fm, show_header=False)
 
 
 def render_generate_thesis_section(ticker, data):
