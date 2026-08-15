@@ -111,6 +111,24 @@ table.la-kv td.la-kv-v { font-family: var(--la-font-mono); font-weight: 700; fon
     padding: 16px !important;
 }
 
+/* Density inside expander bodies - the shared display_*_details render
+   functions (dcf/comparable/technical/analyst_consensus, in
+   thesis_generation_full.py) use default-sized headers/dividers throughout;
+   this tightens just those specifically inside an expander without touching
+   that shared file. Scoped narrowly (headers/dividers only, not the vertical
+   gap or a blanket <p> rule) after an earlier, broader version broke the DCF
+   scenario table and caused text overlap - canvas-rendered elements like
+   st.dataframe and Streamlit's own internal <p>-based component markup don't
+   tolerate aggressive ancestor gap/margin overrides well. */
+[class*="st-key-la_expander_"] [data-testid="stExpanderDetails"] h3,
+[class*="st-key-la_expander_"] [data-testid="stExpanderDetails"] h4 {
+    margin: 10px 0 6px !important;
+    font-size: 0.95rem !important;
+}
+[class*="st-key-la_expander_"] [data-testid="stExpanderDetails"] hr {
+    margin: 8px 0 !important;
+}
+
 /* Buttons */
 [data-testid^="stBaseButton-"] {
     border-radius: 6px !important;

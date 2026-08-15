@@ -190,7 +190,7 @@ class TechnicalAnalyzer(IAnalyzer):
                 'low_52w': low_52w,
                 'distance_from_high': (current_price - high_52w) / high_52w,
                 'distance_from_low': (current_price - low_52w) / low_52w,
-                'volume_trend': f"Average Daily Volume:{avg_volume}, Trend: " + ('Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal'),
+                'volume_trend': f"Average Daily Volume: {avg_volume:,.0f}, Trend: " + ('Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal'),
                 'rsi_14': rsi_14,
                 'macd_line': macd_line,
                 'macd_signal': macd_signal,
@@ -218,107 +218,100 @@ class TechnicalAnalyzer(IAnalyzer):
     
     def _analyze_technical_signals(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
         """Enhanced technical analysis with multiple indicators"""
-        signals = {'bullish': 0, 'bearish': 0, 'signals': []}
-        
+        signals = {'bullish': 0, 'bearish': 0, 'signals': [], 'categories': []}
+
+        def _add(category: str, text: str, points: int = 0):
+            """Records a signal string alongside its category ('bullish'/
+            'bearish'/'neutral') in signal_categories - a new field, parallel
+            to and same length/order as the existing signal_details, added
+            without changing signal_details' own shape (list[str]) since
+            other pages already consume it as plain strings."""
+            if category == 'bullish':
+                signals['bullish'] += points
+            elif category == 'bearish':
+                signals['bearish'] += points
+            signals['signals'].append(text)
+            signals['categories'].append(category)
+
         # Moving Average Signals
         if indicators['ma_trend'] == "Strong Uptrend":
-            signals['bullish'] += 3
-            signals['signals'].append("Strong MA uptrend")
+            _add('bullish', "Strong MA uptrend", 3)
         elif indicators['ma_trend'] in ["Uptrend", "Short-term Uptrend"]:
-            signals['bullish'] += 2
-            signals['signals'].append("MA uptrend")
+            _add('bullish', "MA uptrend", 2)
         elif indicators['ma_trend'] == "Strong Downtrend":
-            signals['bearish'] += 3
-            signals['signals'].append("Strong MA downtrend")
+            _add('bearish', "Strong MA downtrend", 3)
         elif indicators['ma_trend'] in ["Downtrend", "Short-term Downtrend"]:
-            signals['bearish'] += 2
-            signals['signals'].append("MA downtrend")
-        
+            _add('bearish', "MA downtrend", 2)
+
         # RSI Signals
         if indicators['rsi'] is not None:
             if indicators['rsi'] < 30:
-                signals['bullish'] += 2
-                signals['signals'].append(f"RSI oversold ({indicators['rsi']:.1f})")
+                _add('bullish', f"RSI oversold ({indicators['rsi']:.1f})", 2)
             elif indicators['rsi'] > 70:
-                signals['bearish'] += 2
-                signals['signals'].append(f"RSI overbought ({indicators['rsi']:.1f})")
+                _add('bearish', f"RSI overbought ({indicators['rsi']:.1f})", 2)
             elif 30 <= indicators['rsi'] <= 50:
-                signals['bullish'] += 1
-                signals['signals'].append("RSI bullish zone")
+                _add('bullish', "RSI bullish zone", 1)
             elif 50 <= indicators['rsi'] <= 70:
-                signals['bearish'] += 1
-                signals['signals'].append("RSI bearish zone")
-        
+                _add('bearish', "RSI bearish zone", 1)
+
         # MACD Signals
         if indicators['macd_line'] is not None and indicators['macd_signal'] is not None:
             if indicators['macd_line'] > indicators['macd_signal']:
-                signals['bullish'] += 2
-                signals['signals'].append("MACD bullish crossover")
+                _add('bullish', "MACD bullish crossover", 2)
             else:
-                signals['bearish'] += 2
-                signals['signals'].append("MACD bearish crossover")
-            
+                _add('bearish', "MACD bearish crossover", 2)
+
             if indicators['macd_histogram'] is not None:
                 if indicators['macd_histogram'] > 0:
-                    signals['bullish'] += 1
-                    signals['signals'].append("MACD histogram positive")
+                    _add('bullish', "MACD histogram positive", 1)
                 else:
-                    signals['bearish'] += 1
-                    signals['signals'].append("MACD histogram negative")
-        
+                    _add('bearish', "MACD histogram negative", 1)
+
         # Bollinger Bands Signals
         if all(x is not None for x in [indicators['bb_upper'], indicators['bb_lower'], indicators['current_price']]):
             if indicators['current_price'] <= indicators['bb_lower']:
-                signals['bullish'] += 2
-                signals['signals'].append("Price at lower Bollinger Band")
+                _add('bullish', "Price at lower Bollinger Band", 2)
             elif indicators['current_price'] >= indicators['bb_upper']:
-                signals['bearish'] += 2
-                signals['signals'].append("Price at upper Bollinger Band")
-        
+                _add('bearish', "Price at upper Bollinger Band", 2)
+
         # Stochastic Signals
         if indicators['stoch_k'] is not None and indicators['stoch_d'] is not None:
             if indicators['stoch_k'] < 20 and indicators['stoch_d'] < 20:
-                signals['bullish'] += 1
-                signals['signals'].append("Stochastic oversold")
+                _add('bullish', "Stochastic oversold", 1)
             elif indicators['stoch_k'] > 80 and indicators['stoch_d'] > 80:
-                signals['bearish'] += 1
-                signals['signals'].append("Stochastic overbought")
-        
+                _add('bearish', "Stochastic overbought", 1)
+
         # Range Position Signals
         if indicators['range_pos'] < 20:
-            signals['bullish'] += 1
-            signals['signals'].append("Near 52-week low")
+            _add('bullish', "Near 52-week low", 1)
         elif indicators['range_pos'] > 80:
-            signals['bearish'] += 1
-            signals['signals'].append("Near 52-week high")
-        
+            _add('bearish', "Near 52-week high", 1)
+
         # ADX Signals (Trend Strength)
         if indicators.get('adx') is not None:
             adx = indicators['adx']
             di_plus = indicators.get('di_plus')
             di_minus = indicators.get('di_minus')
-            
+
             if adx > 25:  # Strong trend
                 if di_plus and di_minus and di_plus > di_minus:
-                    signals['bullish'] += 2
-                    signals['signals'].append(f"Strong uptrend (ADX {adx:.1f})")
+                    _add('bullish', f"Strong uptrend (ADX {adx:.1f})", 2)
                 elif di_plus and di_minus and di_minus > di_plus:
-                    signals['bearish'] += 2
-                    signals['signals'].append(f"Strong downtrend (ADX {adx:.1f})")
+                    _add('bearish', f"Strong downtrend (ADX {adx:.1f})", 2)
             elif adx < 20:  # Weak trend / ranging
-                signals['signals'].append(f"Weak trend/ranging (ADX {adx:.1f})")
-        
+                _add('neutral', f"Weak trend/ranging (ADX {adx:.1f})")
+
         # ATR Signals (Volatility context)
         if indicators.get('atr_percent') is not None:
             atr_pct = indicators['atr_percent']
             if atr_pct > 5:  # High volatility
-                signals['signals'].append(f"High volatility (ATR {atr_pct:.1f}%)")
+                _add('neutral', f"High volatility (ATR {atr_pct:.1f}%)")
             elif atr_pct < 2:  # Low volatility
-                signals['signals'].append(f"Low volatility (ATR {atr_pct:.1f}%)")
-        
+                _add('neutral', f"Low volatility (ATR {atr_pct:.1f}%)")
+
         # Generate recommendation based on signal strength
         net_signal = signals['bullish'] - signals['bearish']
-        
+
         if net_signal >= 4:
             recommendation = "Strong Buy"
         elif net_signal >= 2:
@@ -329,13 +322,14 @@ class TechnicalAnalyzer(IAnalyzer):
             recommendation = "Sell"
         else:
             recommendation = "Hold"
-        
+
         return {
             'recommendation': recommendation,
             'bullish_signals': signals['bullish'],
             'bearish_signals': signals['bearish'],
             'net_signal': net_signal,
-            'signal_details': signals['signals']
+            'signal_details': signals['signals'],
+            'signal_categories': signals['categories']
         }
     
     def _calculate_support_resistance(self, hist: pd.DataFrame, current_price: float) -> Dict[str, Any]:
