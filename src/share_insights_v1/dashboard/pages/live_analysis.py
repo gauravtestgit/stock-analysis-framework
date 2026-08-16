@@ -60,10 +60,10 @@ ANALYZER_LABELS = {
 
 TAB_GROUPS = {
     "Overview": ["overview"],
-    "Valuation": ["dcf", "comparable", "financial_health"],
+    "Valuation": ["dcf", "comparable", "financial_health", "startup"],
     "Market Signals": ["technical", "analyst_consensus"],
-    "Qualitative": ["business_model", "competitive_position", "management_quality",
-                     "industry_analysis", "ai_insights", "startup"],
+    "Qualitative": ["ai_insights", "business_model", "competitive_position",
+                     "management_quality", "industry_analysis"],
     "News": ["news_sentiment"],
     "Thesis": [],
 }
