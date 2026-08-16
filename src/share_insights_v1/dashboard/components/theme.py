@@ -184,6 +184,32 @@ table.la-table tr:last-child td { border-bottom: none; }
 .st-key-la_summary_popover_wrap button:hover { text-decoration: underline; }
 .st-key-la_summary_popover_wrap button p { color: var(--la-accent) !important; font-size: 0.8rem !important; }
 
+/* Ticker link buttons in a summary table (opens the stock's full detail in a
+   modal instead of an inline panel) - plain text-link look, monospace to
+   match the ticker styling used elsewhere. Apply by wrapping the st.button(
+   ticker, ...) call in st.container(key=f"la_ticker_link_{ticker}"). */
+[class*="st-key-la_ticker_link_"] { border-bottom: 1px solid var(--la-border); }
+[class*="st-key-la_ticker_link_"] button {
+    background: transparent !important; border: none !important; box-shadow: none !important;
+    color: var(--la-accent) !important; font-weight: 700 !important; font-family: var(--la-font-mono);
+    padding: 4px 0 !important; justify-content: flex-start !important;
+}
+[class*="st-key-la_ticker_link_"] button:hover { text-decoration: underline; }
+[class*="st-key-la_ticker_link_"] button p { color: var(--la-accent) !important; font-family: var(--la-font-mono); font-weight: 700 !important; }
+
+/* Header/cell styling for the custom link-based summary table (replaces
+   st.dataframe there, since its canvas cells can't hold a clickable element
+   that calls back into Python). */
+.la-linktable-h {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--la-ink-faint); font-weight: 600; padding: 4px 0 8px;
+    border-bottom: 1px solid var(--la-border-strong);
+}
+.la-linktable-c {
+    padding: 8px 0; font-family: var(--la-font-mono); font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--la-border);
+}
+
 /* Section labels - one consistent style for every sub-section header across
    every tab, instead of ad hoc st.markdown("###"/"####") of varying levels. */
 .la-section-label {

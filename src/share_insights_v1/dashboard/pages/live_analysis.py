@@ -772,45 +772,71 @@ def render_configure_section():
     return mode
 
 
+def _close_stock_detail_dialog():
+    st.session_state.la_open_ticker_dialog = None
+
+
+@st.dialog("📊 Stock Detail", width="large", on_dismiss=_close_stock_detail_dialog)
+def _render_stock_detail_dialog(ticker, data):
+    """Full stock detail (all 6 tabs, via render_stock_detail) in a closable
+    modal instead of an inline panel - st.dialog defaults to dismissible=True
+    (a native close control the user can always reach; on_dismiss clears the
+    open-dialog flag below when it's used), and the explicit Close button
+    plus try/except are extra insurance so an error deep inside one tab's
+    rendering can't leave the popup stuck open with no way out."""
+    if st.button("✕ Close", key=f"la_dialog_close_{ticker}"):
+        _close_stock_detail_dialog()
+        st.rerun()
+    try:
+        render_stock_detail(ticker, data)
+    except Exception as e:
+        st.error(f"Couldn't render {ticker}'s detail: {e}")
+
+
 def render_summary_table(successful_results):
-    """Native interactive summary table replacing the old button-column selector."""
-    rows = []
+    """Link-based summary table (replaces the old st.dataframe row-selector) -
+    a canvas-rendered dataframe's cells can't hold a clickable element that
+    calls back into Python, so each ticker is its own link-styled button that
+    opens the full detail in a modal instead of always rendering inline below
+    the table. Keeps the table itself clean regardless of how many stocks are
+    analyzed, at the cost of the native dataframe's built-in column sorting.
+
+    Which ticker's dialog is open is tracked in session_state rather than
+    just calling _render_stock_detail_dialog() directly from the button click:
+    some content inside the dialog (e.g. the DCF custom-scenario form) calls a
+    raw st.rerun() after submitting, which restarts the whole script - on that
+    fresh run this button's own click-state has already reset to False, so
+    without a persisted flag the dialog would never reopen and would appear to
+    just close itself on every inner action."""
+    header_cols = st.columns([1, 1, 1, 1, 1.4, 1])
+    for col, label in zip(header_cols, ["Ticker", "Price", "Target", "Upside %", "Recommendation", "Confidence"]):
+        col.markdown(f'<div class="la-linktable-h">{label}</div>', unsafe_allow_html=True)
+
     for ticker, data in successful_results.items():
         fm = data.get('financial_metrics') or {}
         rec = data.get('final_recommendation') or {}
         current_price = fm.get('current_price') or 0
         target_price = rec.get('target_price') or 0
         upside = ((target_price - current_price) / current_price * 100) if current_price and target_price else None
-        rows.append({
-            "Ticker": ticker,
-            "Price": current_price,
-            "Target": target_price,
-            "Upside %": upside,
-            "Recommendation": rec.get('recommendation', 'N/A'),
-            "Confidence": rec.get('confidence', 'N/A'),
-        })
+        upside_html = (
+            f'<span class="{"la-upside-pos" if upside >= 0 else "la-upside-neg"}">{upside:+.1f}%</span>'
+            if upside is not None else 'N/A'
+        )
 
-    df = pd.DataFrame(rows)
-    event = st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Price": st.column_config.NumberColumn(format="$%.2f"),
-            "Target": st.column_config.NumberColumn(format="$%.2f"),
-            "Upside %": st.column_config.NumberColumn(format="%+.1f%%"),
-        },
-        on_select="rerun",
-        selection_mode="single-row",
-        key="la_summary_table",
-    )
+        row_cols = st.columns([1, 1, 1, 1, 1.4, 1])
+        with row_cols[0]:
+            with st.container(key=f"la_ticker_link_{ticker}"):
+                if st.button(ticker, key=f"la_open_{ticker}", use_container_width=True):
+                    st.session_state.la_open_ticker_dialog = ticker
+        row_cols[1].markdown(f'<div class="la-linktable-c">{f"${current_price:.2f}" if current_price else "N/A"}</div>', unsafe_allow_html=True)
+        row_cols[2].markdown(f'<div class="la-linktable-c">{f"${target_price:.2f}" if target_price else "N/A"}</div>', unsafe_allow_html=True)
+        row_cols[3].markdown(f'<div class="la-linktable-c">{upside_html}</div>', unsafe_allow_html=True)
+        row_cols[4].markdown(f'<div class="la-linktable-c">{rec_pill_html(rec.get("recommendation", "N/A"))}</div>', unsafe_allow_html=True)
+        row_cols[5].markdown(f'<div class="la-linktable-c">{rec.get("confidence", "N/A")}</div>', unsafe_allow_html=True)
 
-    if event.selection.rows:
-        st.session_state.la_selected_ticker = df.iloc[event.selection.rows[0]]["Ticker"]
-    elif st.session_state.get('la_selected_ticker') not in successful_results:
-        st.session_state.la_selected_ticker = df.iloc[0]["Ticker"] if not df.empty else None
-
-    return st.session_state.get('la_selected_ticker')
+    open_ticker = st.session_state.get('la_open_ticker_dialog')
+    if open_ticker and open_ticker in successful_results:
+        _render_stock_detail_dialog(open_ticker, successful_results[open_ticker])
 
 
 def render_stock_detail(ticker, data):
@@ -950,13 +976,9 @@ def show_live_analysis_page():
                     ("Avg Time/Stock", f"{batch_timing['avg_time_per_stock']}s"),
                     ("Parallel Workers", batch_timing.get('parallel_workers', 'N/A')),
                 ], cols=3)
-            selected_ticker = render_summary_table(successful_results)
+            render_summary_table(successful_results)
             if failed_tickers:
                 st.caption(f"Failed: {', '.join(failed_tickers)}")
-
-            if selected_ticker:
-                st.markdown("---")
-                render_stock_detail(selected_ticker, successful_results[selected_ticker])
 
     elif mode == "Single Stock" and st.session_state.get('thesis_analysis_data') and st.session_state.get('thesis_ticker'):
         ticker = st.session_state.thesis_ticker
