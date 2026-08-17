@@ -453,12 +453,17 @@ class EnhancedDatabaseDashboard:
         return None
 
 def main():
-    st.set_page_config(
-        page_title="Stock Analysis Database",
-        page_icon="📊",
-        layout="wide"
-    )
-    
+    try:
+        # No-ops under st.navigation() (main_dashboard.py already set the page
+        # config for this run); only takes effect when run standalone.
+        st.set_page_config(
+            page_title="Stock Analysis Database",
+            page_icon="📊",
+            layout="wide"
+        )
+    except st.errors.StreamlitAPIException:
+        pass
+
     dashboard = EnhancedDatabaseDashboard()
     dashboard.render_main_dashboard()
 

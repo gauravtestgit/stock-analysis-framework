@@ -28,11 +28,19 @@ class LoginManager:
 
 def render_login_page():
     """Render the login page"""
-    st.set_page_config(
-        page_title="Stock Analysis Login",
-        page_icon="🔐",
-        layout="centered"
-    )
+    try:
+        # Only succeeds when this page runs standalone (e.g. direct
+        # st.switch_page navigation outside st.navigation()) - under
+        # st.navigation(), main_dashboard.py's own set_page_config() call
+        # already ran first for this script execution, and a second call
+        # would raise, so this one is just a no-op in that case.
+        st.set_page_config(
+            page_title="Stock Analysis Login",
+            page_icon="🔐",
+            layout="centered"
+        )
+    except st.errors.StreamlitAPIException:
+        pass
     
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])

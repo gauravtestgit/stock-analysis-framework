@@ -7,13 +7,19 @@ import os
 import glob
 from datetime import datetime
 
-# Page config
-st.set_page_config(
-    page_title="Stock Analysis Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Page config - this runs at import time, which file_dashboard.py triggers
+# (`from ...app import main as batch_dashboard`) even though it never calls
+# main() itself. No-ops under st.navigation() (main_dashboard.py already set
+# the page config for this run); only takes effect when run standalone.
+try:
+    st.set_page_config(
+        page_title="Stock Analysis Dashboard",
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+except st.errors.StreamlitAPIException:
+    pass
 
 @st.cache_data
 def load_batch_results():
