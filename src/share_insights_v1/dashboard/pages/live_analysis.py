@@ -777,18 +777,41 @@ def _close_stock_detail_dialog():
 
 
 @st.dialog("📊 Stock Detail", width="large", on_dismiss=_close_stock_detail_dialog)
-def _render_stock_detail_dialog(ticker, data):
+def _render_stock_detail_dialog(ticker, successful_results):
     """Full stock detail (all 6 tabs, via render_stock_detail) in a closable
     modal instead of an inline panel - st.dialog defaults to dismissible=True
     (a native close control the user can always reach; on_dismiss clears the
-    open-dialog flag below when it's used), and the explicit Close button
-    plus try/except are extra insurance so an error deep inside one tab's
-    rendering can't leave the popup stuck open with no way out."""
-    if st.button("✕ Close", key=f"la_dialog_close_{ticker}"):
-        _close_stock_detail_dialog()
-        st.rerun()
+    open-dialog flag below when it's used, covering the "closable so it can't
+    hang" need without a separate Close button taking up space), and the
+    try/except is extra insurance so an error deep inside one tab's rendering
+    can't leave the popup stuck open with no way out.
+
+    Previous/Next step through the same watchlist ordering shown in the
+    table, reusing the open-ticker session_state flag and a plain st.rerun()
+    (same mechanism the ticker-click uses) rather than recursing into this
+    function directly, so it survives the same way an inner st.rerun()
+    (e.g. from the DCF custom-scenario form) does."""
+    tickers = list(successful_results.keys())
+    idx = tickers.index(ticker)
+
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 3, 1])
+    with nav_col1:
+        if st.button("◀ Prev", key=f"la_dialog_prev_{ticker}", disabled=idx == 0, use_container_width=True):
+            st.session_state.la_open_ticker_dialog = tickers[idx - 1]
+            st.rerun()
+    with nav_col2:
+        st.markdown(
+            f'<div style="text-align:center; color:var(--la-ink-faint); font-size:0.8rem; padding-top:8px;">'
+            f'{idx + 1} of {len(tickers)}</div>',
+            unsafe_allow_html=True,
+        )
+    with nav_col3:
+        if st.button("Next ▶", key=f"la_dialog_next_{ticker}", disabled=idx == len(tickers) - 1, use_container_width=True):
+            st.session_state.la_open_ticker_dialog = tickers[idx + 1]
+            st.rerun()
+
     try:
-        render_stock_detail(ticker, data)
+        render_stock_detail(ticker, successful_results[ticker])
     except Exception as e:
         st.error(f"Couldn't render {ticker}'s detail: {e}")
 
@@ -836,7 +859,7 @@ def render_summary_table(successful_results):
 
     open_ticker = st.session_state.get('la_open_ticker_dialog')
     if open_ticker and open_ticker in successful_results:
-        _render_stock_detail_dialog(open_ticker, successful_results[open_ticker])
+        _render_stock_detail_dialog(open_ticker, successful_results)
 
 
 def render_stock_detail(ticker, data):
