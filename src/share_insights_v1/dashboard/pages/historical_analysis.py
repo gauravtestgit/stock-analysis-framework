@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 from src.share_insights_v1.dashboard.historical_analysis_functions import show_historical_analysis, show_bulk_analysis
+from src.share_insights_v1.dashboard.watchlist_component import render_watchlist_header
 
 def main():
     """Historical Analysis page"""
@@ -22,7 +23,9 @@ def main():
     
     # Show disclaimer
     show_disclaimer()
-    
+
+    render_watchlist_header()
+
     # Back to main dashboard
     if st.button("← Back to Main Dashboard"):
         st.switch_page("main_dashboard.py")

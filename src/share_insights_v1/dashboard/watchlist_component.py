@@ -55,6 +55,67 @@ def show_watchlist_sidebar():
     else:
         st.sidebar.info("No stocks in watchlist")
 
+def render_watchlist_header():
+    """Common watchlist widget shown in the main content area (a shared
+    header) instead of the sidebar, so it's visible consistently across
+    pages. Uses Streamlit's native bordered container rather than custom CSS
+    so it renders the same regardless of whether a page has adopted the Live
+    Analysis theme (components/theme.py)."""
+    init_watchlist()
+    watchlist = st.session_state.watchlist
+
+    with st.container(border=True):
+        header_col, add_col, add_btn_col, clear_col, analyze_col = st.columns([1.3, 3, 0.8, 0.8, 1.4])
+
+        with header_col:
+            st.markdown(f"**📋 Watchlist ({len(watchlist)})**")
+
+        with add_col:
+            new_stock = st.text_input(
+                "Add Stock(s)",
+                placeholder="Add tickers, e.g. AAPL MSFT GOOGL",
+                key="watchlist_header_add_input",
+                label_visibility="collapsed",
+            )
+
+        with add_btn_col:
+            if st.button("Add", key="watchlist_header_add_btn", use_container_width=True):
+                if new_stock:
+                    tickers = [t.strip().upper() for t in new_stock.split() if t.strip()]
+                    added = [t for t in tickers if t not in watchlist]
+                    watchlist.extend(added)
+                    if added:
+                        st.toast(f"Added {len(added)} stock(s)")
+                    st.rerun()
+
+        with clear_col:
+            if st.button("Clear", key="watchlist_header_clear_btn", use_container_width=True, disabled=not watchlist):
+                st.session_state.watchlist = []
+                st.rerun()
+
+        with analyze_col:
+            if st.button(
+                "🔍 Analyze", key="watchlist_header_analyze_btn", use_container_width=True,
+                disabled=not watchlist, help="Go to Live Analysis to run analysis on the watchlist",
+            ):
+                st.switch_page("pages/live_analysis.py")
+
+        if watchlist:
+            per_row = 8
+            for i in range(0, len(watchlist), per_row):
+                chunk = watchlist[i:i + per_row]
+                cols = st.columns(per_row)
+                for col, ticker in zip(cols, chunk):
+                    with col:
+                        c1, c2 = st.columns([3, 1])
+                        c1.markdown(f"`{ticker}`")
+                        if c2.button("×", key=f"watchlist_header_remove_{ticker}", help=f"Remove {ticker}"):
+                            watchlist.remove(ticker)
+                            st.rerun()
+        else:
+            st.caption("No stocks in watchlist")
+
+
 def add_stock_to_watchlist_button(ticker):
     """Add a button to add specific stock to watchlist"""
     init_watchlist()
