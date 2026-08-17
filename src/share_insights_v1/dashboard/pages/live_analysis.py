@@ -973,8 +973,8 @@ def show_live_analysis_page():
 
     log_page_view('live_analysis', metadata={'mode': 'initial_load'})
 
-    from watchlist_component import show_watchlist_sidebar
-    show_watchlist_sidebar()
+    from watchlist_component import render_watchlist_header
+    render_watchlist_header()
 
     providers_config = load_llm_config()
     render_llm_selector(providers_config)

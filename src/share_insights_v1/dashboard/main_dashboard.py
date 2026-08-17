@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from src.share_insights_v1.dashboard.login_page import check_authentication, logout, render_navigation
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
+from src.share_insights_v1.dashboard.watchlist_component import render_watchlist_header
 
 def render_main_dashboard():
     """Render the main dashboard content (registered as the default page via
@@ -25,7 +26,9 @@ def render_main_dashboard():
     # Show disclaimer
     show_disclaimer()
     st.markdown("*Comprehensive stock analysis with multiple valuation methods and database management*")
-    
+
+    render_watchlist_header()
+
     # Main dashboard content
     col1, col2 = st.columns(2)
     
