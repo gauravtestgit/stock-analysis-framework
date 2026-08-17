@@ -9,13 +9,9 @@ from src.share_insights_v1.dashboard.login_page import check_authentication, log
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
 
 def render_main_dashboard():
-    """Render the main dashboard with navigation"""
-    st.set_page_config(
-        page_title="Stock Analysis Dashboard",
-        page_icon="📊",
-        layout="wide"
-    )
-    
+    """Render the main dashboard content (registered as the default page via
+    st.Page in main() below - st.set_page_config lives there instead, since it
+    must run once, first, before st.navigation() is constructed)."""
     # Check authentication
     if not check_authentication():
         st.switch_page("pages/login_page.py")
@@ -103,7 +99,32 @@ def render_main_dashboard():
         st.metric("🔄 Real-time Data", "✅")
 
 def main():
-    render_main_dashboard()
+    st.set_page_config(
+        page_title="Stock Analysis Dashboard",
+        page_icon="📊",
+        layout="wide"
+    )
+
+    # Grouped sidebar nav - only the actively-used pages (Main Dashboard,
+    # Login, Live Analysis, Historical Analysis) show up front; everything
+    # else lives collapsed under "Under Work Pages" instead of Streamlit's
+    # default flat, ungrouped listing of every file in pages/.
+    pg = st.navigation({
+        "Main": [
+            st.Page(render_main_dashboard, title="Main Dashboard", icon="📊", default=True),
+            st.Page("pages/login_page.py", title="Login", icon="🔐"),
+            st.Page("pages/live_analysis.py", title="Live Analysis", icon="📈"),
+            st.Page("pages/historical_analysis.py", title="Historical Analysis", icon="📊"),
+        ],
+        "Under Work Pages": [
+            st.Page("pages/database_dashboard.py", title="Database Dashboard", icon="🗄️"),
+            st.Page("pages/stock_management.py", title="Stock Management", icon="🗃️"),
+            st.Page("pages/file_dashboard.py", title="File Dashboard", icon="📁"),
+            st.Page("pages/prompt_management.py", title="Prompt Management", icon="🔧"),
+            st.Page("pages/thesis_generation_full.py", title="Thesis Generation Full", icon="📝"),
+        ],
+    })
+    pg.run()
 
 if __name__ == "__main__":
     main()
