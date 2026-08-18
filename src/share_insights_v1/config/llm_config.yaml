@@ -9,26 +9,21 @@ llm_providers:
     default_model: "openai/gpt-oss-20b"
     models:
       - name: "openai/gpt-oss-20b"
-        display_name: "GPT OSS 20B"
-        description: "Open source GPT model with 20B parameters"
-        context_length: 8192
-        cost_per_1k_tokens: 0.0003
-      - name: "llama-3.3-70b-versatile"
-        display_name: "Llama 3.3 70B (Best)"
-        description: "Most capable model, slower but higher quality"
+        display_name: "GPT OSS 20B (Fast)"
+        description: "Open source GPT model with 20B parameters - Groq's recommended replacement for the deprecated llama-3.1-8b-instant"
         context_length: 131072
-        cost_per_1k_tokens: 0.001
-      - name: "llama-3.1-8b-instant"
-        display_name: "Llama 3.1 8B (Fast)"
-        description: "Fastest model, good for most tasks"
-        context_length: 8192
-        cost_per_1k_tokens: 0.0001      
-      - name: "mixtral-8x7b-32768"
-        display_name: "Mixtral 8x7B"
-        description: "Good balance of speed and quality"
-        context_length: 32768
-        cost_per_1k_tokens: 0.0005
-      
+        cost_per_1k_tokens: 0.0003
+      - name: "openai/gpt-oss-120b"
+        display_name: "GPT OSS 120B (Best)"
+        description: "Most capable model, slower but higher quality - Groq's recommended replacement for the deprecated llama-3.3-70b-versatile"
+        context_length: 131072
+        cost_per_1k_tokens: 0.0006
+      - name: "qwen/qwen3.6-27b"
+        display_name: "Qwen 3.6 27B"
+        description: "Alternative replacement for the deprecated llama-3.3-70b-versatile"
+        context_length: 131072
+        cost_per_1k_tokens: 0.003
+
 
   - name: "openai"
     display_name: "OpenAI"

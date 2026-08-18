@@ -219,7 +219,7 @@ class LLMManager:
                     "name": "groq",
                     "display_name": "Groq",
                     "available": bool(os.getenv("GROQ_API_KEY")),
-                    "models": [{"name": "llama-3.1-8b-instant", "display_name": "Llama 3.1 8B"}]
+                    "models": [{"name": "openai/gpt-oss-20b", "display_name": "GPT OSS 20B"}]
                 }
             ]
         }

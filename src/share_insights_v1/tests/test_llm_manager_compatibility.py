@@ -139,7 +139,7 @@ def test_provider_injection():
         from src.share_insights_v1.implementations.llm_providers.groq_provider import GroqProvider
         
         # Create a provider manually
-        groq_provider = GroqProvider("llama-3.1-8b-instant")
+        groq_provider = GroqProvider("openai/gpt-oss-20b")
         
         # Inject it into manager
         injected_manager = LLMManager(providers=[groq_provider])
