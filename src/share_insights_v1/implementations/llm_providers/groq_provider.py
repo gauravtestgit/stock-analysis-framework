@@ -9,7 +9,7 @@ from ...utils.debug_printer import debug_print
 class GroqProvider(ILLMProvider):
     """Groq LLM provider with rate limiting"""
     
-    def __init__(self, model_name: str = "llama-3.1-8b-instant", max_retries: int = 3):
+    def __init__(self, model_name: str = "openai/gpt-oss-20b", max_retries: int = 3):
         self.model_name = model_name
         self.max_retries = max_retries
         self.last_request_time = 0

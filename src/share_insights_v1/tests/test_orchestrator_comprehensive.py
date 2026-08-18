@@ -34,7 +34,7 @@ def setup_comprehensive_orchestrator():
     try:
         llm_manager = LLMManager(use_plugin_system=True)
         # Use enhanced set_primary_provider to switch to specific model
-        llm_manager.set_primary_provider("groq", "llama-3.3-70b-versatile")
+        llm_manager.set_primary_provider("groq", "openai/gpt-oss-120b")
         primary = llm_manager.get_primary_provider()
         print("✅ Plugin system initialized successfully")
         print(f"🎯 Primary provider: {primary.get_provider_name()} using model: {primary.get_current_model()}")
@@ -114,7 +114,8 @@ def test_comprehensive_analysis(ticker: str, save_to_db: bool = False):
 
 def test_all_comprehensive(save_to_db: bool = False):
     """Test comprehensive analysis on multiple tickers"""
-    test_tickers = ['PAVM', 'CHRS', 'AAPL', 'KO', 'UAL', 'GS', 'VGL.NZ', 'KCN.AX', 'SUM.NZ', 'DRO.AX']
+    # test_tickers = ['KMDA', 'CHRS', 'AAPL', 'KO', 'UAL', 'GS', 'VGL.NZ', 'KCN.AX', 'SUM.NZ', 'DRO.AX']
+    test_tickers = ['KMDA']
     all_results = {}
     
     print("🚀 Running Comprehensive Analysis Tests")

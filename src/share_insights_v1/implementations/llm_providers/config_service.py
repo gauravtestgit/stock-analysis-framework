@@ -47,7 +47,7 @@ class LLMConfigService:
         
         # Fallback model lists
         fallback_models = {
-            "groq": ["llama-3.1-8b-instant", "llama-3.1-70b-versatile"],
+            "groq": ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "qwen/qwen3.6-27b"],
             "openai": ["gpt-3.5-turbo", "gpt-4"],
             "xai": ["grok-beta"]
         }
@@ -73,11 +73,11 @@ class LLMConfigService:
                     "description": "Fast inference with Llama models",
                     "icon": "🚀",
                     "available": bool(os.getenv("GROQ_API_KEY")),
-                    "default_model": "llama-3.1-8b-instant",
+                    "default_model": "openai/gpt-oss-20b",
                     "models": [
                         {
-                            "name": "llama-3.1-8b-instant",
-                            "display_name": "Llama 3.1 8B (Fast)",
+                            "name": "openai/gpt-oss-20b",
+                            "display_name": "GPT OSS 20B (Fast)",
                             "description": "Fastest model, good for most tasks"
                         }
                     ]
