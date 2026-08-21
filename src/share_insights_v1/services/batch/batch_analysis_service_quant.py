@@ -295,28 +295,25 @@ class BatchAnalysisService:
             writer.writerow(row)
     
     def _initialize_failure_log(self, output_csv_path: str):
-        """Initialize failure log file"""
+        """Initialize failure log as CSV - ticker is column 1 so failed tickers
+        can be copied straight out of the file and rerun."""
         base_name = output_csv_path.replace('.csv', '')
-        self.failure_log_path = f"{base_name}_failures.txt"
-        
-        with open(self.failure_log_path, 'w', encoding='utf-8') as f:
-            f.write(f"BATCH ANALYSIS FAILURE LOG\n")
-            f.write(f"Started: {datetime.now()}\n")
-            f.write(f"Output CSV: {output_csv_path}\n")
-            f.write(f"Database Storage: {'Enabled' if self.save_to_db else 'Disabled'}\n")
-            f.write("=" * 80 + "\n\n")
-    
+        self.failure_log_path = f"{base_name}_failures.csv"
+
+        with open(self.failure_log_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Ticker', 'Error_Type', 'Error_Message', 'Timestamp'])
+
     def _log_failure(self, ticker: str, error_type: str, error_message: str):
-        """Log failure to text file"""
+        """Log failure to CSV file"""
         if not self.failure_log_path:
             return
-        
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        with open(self.failure_log_path, 'a', encoding='utf-8') as f:
-            f.write(f"[{timestamp}] {ticker} - {error_type}\n")
-            f.write(f"Error: {error_message}\n")
-            f.write("-" * 40 + "\n\n")
+
+        with open(self.failure_log_path, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow([ticker, error_type, error_message, timestamp])
     
     def _create_batch_job(self, name: str, exchange: str, total_stocks: int, input_file: str, output_file: str, created_by: str) -> uuid.UUID:
         """Create a new batch job in database"""
