@@ -796,7 +796,8 @@ def _render_stock_detail_dialog(ticker, successful_results):
 
     nav_col1, nav_col2, nav_col3 = st.columns([1, 3, 1])
     with nav_col1:
-        if st.button("◀ Prev", key=f"la_dialog_prev_{ticker}", disabled=idx == 0, use_container_width=True):
+        prev_label = f"◀ {tickers[idx - 1]}" if idx > 0 else "◀ Prev"
+        if st.button(prev_label, key=f"la_dialog_prev_{ticker}", disabled=idx == 0, use_container_width=True):
             st.session_state.la_open_ticker_dialog = tickers[idx - 1]
             st.rerun()
     with nav_col2:
@@ -806,7 +807,8 @@ def _render_stock_detail_dialog(ticker, successful_results):
             unsafe_allow_html=True,
         )
     with nav_col3:
-        if st.button("Next ▶", key=f"la_dialog_next_{ticker}", disabled=idx == len(tickers) - 1, use_container_width=True):
+        next_label = f"{tickers[idx + 1]} ▶" if idx < len(tickers) - 1 else "Next ▶"
+        if st.button(next_label, key=f"la_dialog_next_{ticker}", disabled=idx == len(tickers) - 1, use_container_width=True):
             st.session_state.la_open_ticker_dialog = tickers[idx + 1]
             st.rerun()
 
