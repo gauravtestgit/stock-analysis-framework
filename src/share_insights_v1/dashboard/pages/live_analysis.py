@@ -701,7 +701,29 @@ def render_configure_section():
     elif watchlist:
         st.markdown(f'<span class="la-mode-pill">📋 Watchlist · {len(watchlist)} stocks</span>', unsafe_allow_html=True)
 
-    with st.container(key="la_expander_configure"), st.expander("⚙️ Configure", expanded=not has_results):
+    with st.container(key="la_expander_configure"), st.expander("⚙️ Analysis Settings", expanded=not has_results):
+        # Pinned at the top so the primary action is reachable without scrolling
+        # past mode/analyzer settings below. Reads the batch analyzer/news-option
+        # widgets' last known values from session_state (same keys those widgets
+        # use further down) since this fires independently of the mode radio.
+        if st.button("Analyze All Watchlist Stocks", key="la_analyze_batch", disabled=not watchlist):
+            batch_analyzers = st.session_state.get("la_batch_analyzers", AVAILABLE_ANALYZERS)
+            batch_web_scraping = st.session_state.get("la_batch_scrape", False)
+            batch_llm_sentiment = st.session_state.get("la_batch_llm_sent", False)
+            batch_max_news_articles = st.session_state.get("la_batch_news_n", 7)
+            if not st.session_state.get('thesis_llm_provider') or not st.session_state.get('thesis_llm_model'):
+                st.error("Please select LLM provider and model first")
+            elif not batch_analyzers:
+                st.error("Please select at least one analyzer")
+            else:
+                st.session_state.batch_news_options = {
+                    'enable_web_scraping': batch_web_scraping,
+                    'enable_llm_sentiment': batch_llm_sentiment,
+                    'max_news_articles': batch_max_news_articles
+                }
+                analyze_watchlist_batch(watchlist, batch_analyzers, st.session_state.thesis_llm_manager, batch_max_news_articles)
+                st.rerun()
+
         mode = st.radio("Analysis Mode:", ["Watchlist Batch", "Single Stock"], horizontal=True, key="la_mode")
 
         if mode == "Single Stock":
@@ -754,20 +776,6 @@ def render_configure_section():
                 batch_analyzers = st.multiselect(
                     "Analyzers to run:", AVAILABLE_ANALYZERS, default=AVAILABLE_ANALYZERS, key="la_batch_analyzers"
                 )
-
-                if st.button("Analyze All Watchlist Stocks", key="la_analyze_batch"):
-                    if not st.session_state.get('thesis_llm_provider') or not st.session_state.get('thesis_llm_model'):
-                        st.error("Please select LLM provider and model first")
-                    elif not batch_analyzers:
-                        st.error("Please select at least one analyzer")
-                    else:
-                        st.session_state.batch_news_options = {
-                            'enable_web_scraping': batch_web_scraping,
-                            'enable_llm_sentiment': batch_llm_sentiment,
-                            'max_news_articles': batch_max_news_articles
-                        }
-                        analyze_watchlist_batch(watchlist, batch_analyzers, st.session_state.thesis_llm_manager, batch_max_news_articles)
-                        st.rerun()
 
     return mode
 
