@@ -26,6 +26,7 @@ class YahooFinanceProvider(IDataProvider):
                 executor.submit(fetch_dataframe, 'quarterly_income_stmt'): 'quarterly_income',
                 executor.submit(fetch_dataframe, 'income_stmt'): 'annual_income',
                 executor.submit(fetch_dataframe, 'cashflow'): 'cashflow',
+                executor.submit(fetch_dataframe, 'quarterly_cashflow'): 'quarterly_cashflow',
                 executor.submit(fetch_dataframe, 'quarterly_financials'): 'quarterly_financials',
                 executor.submit(fetch_dataframe, 'financials'): 'annual_financials'
             }
@@ -44,6 +45,7 @@ class YahooFinanceProvider(IDataProvider):
         quarterly_income = dataframes.get('quarterly_income')
         annual_income = dataframes.get('annual_income')
         cashflow = dataframes.get('cashflow')
+        quarterly_cashflow = dataframes.get('quarterly_cashflow')
         quarterly_financials = dataframes.get('quarterly_financials')
         annual_financials = dataframes.get('annual_financials')
         
@@ -62,7 +64,8 @@ class YahooFinanceProvider(IDataProvider):
             'annual_income_stmt': serialize_dataframe(annual_income),
             'quarterly_financial_stmt': serialize_dataframe(quarterly_financials),
             'annual_financial_stmt': serialize_dataframe(annual_financials),
-            'cashflow': serialize_dataframe(cashflow)
+            'cashflow': serialize_dataframe(cashflow),
+            'quarterly_cashflow': serialize_dataframe(quarterly_cashflow)
         }
     
         # Annual revenue
@@ -92,6 +95,7 @@ class YahooFinanceProvider(IDataProvider):
             info = stock.info
         revenue_data['current_revenue'] = info.get('totalRevenue', 0)
         revenue_data['revenue_growth'] = info.get('revenueGrowth', 0)
+        revenue_data['current_net_income'] = info.get('netIncomeToCommon', 0)
         revenue_data['quarterly_revenue_growth'] = info.get('quarterlyRevenueGrowth', 0)
         
         return revenue_data
