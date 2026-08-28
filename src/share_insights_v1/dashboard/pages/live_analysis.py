@@ -449,11 +449,21 @@ def _render_analyzer_tab(ticker, analyses, key, fm, show_header=True):
         _render_readable_dict(analysis_data)
 
 
-def _render_financial_charts(revenue_data_statements):
+def _render_financial_charts(revenue_data_statements, ticker=None):
     """Local reimplementation of the shared display_financial_charts_modal's
     chart-data prep (not called here to avoid its own st.expander wrapper) -
     same 3 bar charts, rendered inside a popover instead of a permanently
-    expandable block."""
+    expandable block.
+
+    Also shows the current (most recent, possibly still in-progress)
+    financial year broken into its reported interim periods, so a company's
+    latest quarter/half isn't invisible just because its annual report hasn't
+    closed yet. AU/NZ tickers (.AX/.NZ) report half-yearly rather than
+    quarterly, and Yahoo's quarterly_* coverage for them is often sparse
+    (sometimes zero entries, sometimes one stale one) - this plots whatever
+    interim periods Yahoo actually has past the last annual close, labeled by
+    cadence, and degrades to a clear "not available" caption otherwise rather
+    than an empty or misleading chart."""
     revenue_data, gross_income_data, net_income_data = [], [], []
     operating_cf_data, free_cf_data, years = [], [], []
 
@@ -513,6 +523,84 @@ def _render_financial_charts(revenue_data_statements):
             'Operating': [o / cf_scale for o in operating_cf_data],
             'Free': [f / cf_scale for f in free_cf_data],
         }).set_index('Year'), height=200)
+
+    latest_annual_date = max(annual_revenue.keys()) if annual_revenue else None
+    is_au_nz = bool(ticker) and ticker.upper().endswith(('.AX', '.NZ'))
+    cadence_label = "Half-Yearly" if is_au_nz else "Quarterly"
+
+    quarterly_income = revenue_data_statements.get('quarterly_income_stmt', {})
+    quarterly_cashflow = revenue_data_statements.get('quarterly_cashflow', {})
+
+    interim_dates = sorted(
+        d for d in set(quarterly_income.keys()) | set(quarterly_cashflow.keys())
+        if latest_annual_date is None or d > latest_annual_date
+    )
+
+    section_label(f"{cadence_label} — Current Financial Year So Far")
+
+    # Yahoo's TTM totalRevenue/netIncomeToCommon (from .info, a separate
+    # quote-summary endpoint) sometimes already reflect a newer period than
+    # quarterly_income_stmt has broken out yet - no discrete interim
+    # line-items, but the trailing totals themselves have moved, which is
+    # worth surfacing even when there's nothing to chart below (common for
+    # AU/NZ half-yearly reporters).
+    def _ttm_caption(label, ttm_value, latest_annual_value):
+        if not ttm_value or not latest_annual_value:
+            return
+        scale, unit = get_scale_and_label(max(abs(ttm_value), abs(latest_annual_value)))
+        pct_diff = (ttm_value - latest_annual_value) / latest_annual_value * 100
+        st.caption(
+            f"**TTM {label}:** ${ttm_value / scale:,.1f}{unit} "
+            f"(vs FY{latest_annual_date[:4]} Annual: ${latest_annual_value / scale:,.1f}{unit}, {pct_diff:+.1f}% vs last annual) "
+            f"— Yahoo's trailing-12-month total, which can already include a period not yet broken out below."
+        )
+
+    latest_annual_revenue = annual_revenue.get(latest_annual_date) if (annual_revenue and latest_annual_date) else None
+    _ttm_caption("Revenue", revenue_data_statements.get('current_revenue') or 0, latest_annual_revenue)
+
+    latest_annual_income = annual_income.get(latest_annual_date, {}) if (annual_income and latest_annual_date) else {}
+    latest_annual_net_income = latest_annual_income.get('Net Income')
+    _ttm_caption("Net Income", revenue_data_statements.get('current_net_income') or 0, latest_annual_net_income)
+
+    if not interim_dates:
+        st.caption(f"No {cadence_label.lower()} data available yet from Yahoo Finance for the current financial year.")
+        return
+
+    i_revenue, i_gross, i_net, i_op_cf, i_free_cf, i_labels = [], [], [], [], [], []
+    for date_str in interim_dates:
+        i_labels.append(date_str[:7])  # YYYY-MM - unambiguous regardless of fiscal calendar
+        inc = quarterly_income.get(date_str, {})
+        i_revenue.append(inc.get('Total Revenue', 0) or 0)
+        i_gross.append(inc.get('Gross Profit', 0) or 0)
+        i_net.append(inc.get('Net Income', 0) or 0)
+        cf = quarterly_cashflow.get(date_str, {})
+        i_op_cf.append(cf.get('Operating Cash Flow', 0) or cf.get('Total Cash From Operating Activities', 0) or
+                       cf.get('Cash Flowsfromusedin Operating Activities Direct', 0) or cf.get('OperatingCashFlow', 0) or 0)
+        i_free_cf.append(cf.get('Free Cash Flow', 0) or cf.get('FreeCashFlow', 0) or 0)
+
+    i_rev_scale, i_rev_label = get_scale_and_label(max([abs(v) for v in i_revenue]) if i_revenue else 0)
+    i_income_scale, i_income_label = get_scale_and_label(max([abs(v) for v in i_gross + i_net]) if (i_gross or i_net) else 0)
+    i_cf_scale, i_cf_label = get_scale_and_label(max([abs(v) for v in i_op_cf + i_free_cf]) if (i_op_cf or i_free_cf) else 0)
+
+    i_col1, i_col2, i_col3 = st.columns(3)
+    with i_col1:
+        st.markdown(f"**Revenue ({i_rev_label})**")
+        st.bar_chart(pd.DataFrame({'Period': i_labels, 'Revenue': [r / i_rev_scale for r in i_revenue]}).set_index('Period'),
+                     height=200)
+    with i_col2:
+        st.markdown(f"**Income ({i_income_label})**")
+        st.bar_chart(pd.DataFrame({
+            'Period': i_labels,
+            'Gross': [g / i_income_scale for g in i_gross],
+            'Net': [n / i_income_scale for n in i_net],
+        }).set_index('Period'), height=200)
+    with i_col3:
+        st.markdown(f"**Cash Flow ({i_cf_label})**")
+        st.bar_chart(pd.DataFrame({
+            'Period': i_labels,
+            'Operating': [o / i_cf_scale for o in i_op_cf],
+            'Free': [f / i_cf_scale for f in i_free_cf],
+        }).set_index('Period'), height=200)
 
 
 def _financial_figures_pairs(fm):
@@ -594,7 +682,7 @@ def _render_overview_compact(ticker, data, analyses):
     revenue_data_statements = fm.get('revenue_data_statements') or {}
     if revenue_data_statements:
         section_label("Charts")
-        _render_financial_charts(revenue_data_statements)
+        _render_financial_charts(revenue_data_statements, ticker)
 
     market_cap = fm.get('market_cap') or 0
     roe = fm.get('roe')
