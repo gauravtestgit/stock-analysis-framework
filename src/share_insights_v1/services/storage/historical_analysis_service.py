@@ -175,13 +175,19 @@ class HistoricalAnalysisService:
         finally:
             db.close()
     
-    def get_batch_jobs_by_exchange(self, exchange: str = None) -> List[Dict[str, Any]]:
-        """Get all completed batch jobs for an exchange with stock counts"""
+    def get_batch_jobs_by_exchange(self, exchange: str = None, include_cancelled: bool = False) -> List[Dict[str, Any]]:
+        """Get all completed batch jobs for an exchange with stock counts.
+
+        include_cancelled defaults to False (today's behavior, unchanged) so a
+        cancelled run's incomplete results don't clutter this view by default - but a
+        cancelled job's results are otherwise permanently unreachable in the UI once
+        cancelled, so this lets an admin opt into seeing (and reviewing) them here."""
         db = SessionLocal()
         try:
             from ...models.strategy_models import BatchJob
-            
-            query = db.query(BatchJob).filter(BatchJob.status.in_(['completed', 'running']))
+
+            statuses = ['completed', 'running'] + (['cancelled'] if include_cancelled else [])
+            query = db.query(BatchJob).filter(BatchJob.status.in_(statuses))
             if exchange:
                 query = query.filter(BatchJob.exchange == exchange)
             

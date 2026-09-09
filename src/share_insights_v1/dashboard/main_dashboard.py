@@ -118,6 +118,7 @@ def main():
             st.Page("pages/login_page.py", title="Login", icon="🔐"),
             st.Page("pages/live_analysis.py", title="Live Analysis", icon="📈"),
             st.Page("pages/historical_analysis.py", title="Historical Analysis", icon="📊"),
+            st.Page("pages/batch_analysis.py", title="Batch Analysis", icon="⚙️"),
         ],
         "Under Work Pages": [
             st.Page("pages/database_dashboard.py", title="Database Dashboard", icon="🗄️"),

@@ -29,6 +29,7 @@ src/resources/
 src/financial_analyst/output/
 src/share_insights_v1/resources/stock_analyses/
 src/share_insights_v1/tmp/
+src/share_insights_v1/resources/tmp/
 
 # IDE
 .vscode/

@@ -9,6 +9,7 @@ from .service import AnalysisService
 from .batch_service import BatchAnalysisService
 from ..services.storage.thesis_storage_service import ThesisStorageService
 from .historical_analysis import router as historical_router
+from .batch_jobs import router as batch_jobs_router
 
 # Import logging middleware
 try:
@@ -52,6 +53,7 @@ thesis_service = ThesisStorageService()
 
 # Include routers
 app.include_router(historical_router, prefix="/api", tags=["historical"])
+app.include_router(batch_jobs_router, prefix="/api/batch-jobs", tags=["batch-jobs"])
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
