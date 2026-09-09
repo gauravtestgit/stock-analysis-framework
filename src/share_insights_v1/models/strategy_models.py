@@ -127,22 +127,37 @@ class Position(Base):
 class BatchJob(Base):
     """Batch analysis job tracking"""
     __tablename__ = "batch_jobs"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(200))  # e.g., "NASDAQ Analysis 2024-01-15"
     exchange = Column(String(50), index=True)  # NASDAQ, NYSE, ASX, etc.
-    status = Column(String(20), default="pending", index=True)  # pending, running, completed, failed
+    status = Column(String(20), default="pending", index=True)  # queued, running, completed, failed, cancelled, crashed
     total_stocks = Column(Integer, default=0)
     completed_stocks = Column(Integer, default=0)
     failed_stocks = Column(Integer, default=0)
-    started_at = Column(DateTime, default=datetime.utcnow)
+    # created_at is set once, at row-creation/queue time; started_at is set only when a job
+    # is actually promoted from queued to running - kept distinct so FIFO queue ordering and
+    # duration reporting are both accurate once jobs can sit queued for a while.
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime)
     created_by = Column(String(100))  # user who initiated
     input_file = Column(String(500))  # path to input CSV
     output_file = Column(String(500))  # path to output CSV
-    
+    pid = Column(Integer, nullable=True)  # OS process id of the running subprocess, for cancel/crash detection
+    thread_count = Column(Integer, default=2)  # worker threads for this job's subprocess
+
     # Relationships
     analyses = relationship("AnalysisHistory", back_populates="batch_job")
+
+
+class BatchSettings(Base):
+    """Single-row settings table for the Batch Analysis UI (e.g. concurrency limit) -
+    DB-backed rather than an env var so it's durable and editable from the UI without a redeploy."""
+    __tablename__ = "batch_settings"
+
+    id = Column(Integer, primary_key=True, default=1)
+    concurrency_limit = Column(Integer, default=1, nullable=False)
 
 class AnalysisHistory(Base):
     """Historical analysis results for tracking changes over time"""

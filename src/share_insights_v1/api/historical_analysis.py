@@ -64,10 +64,10 @@ async def get_available_exchanges() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/history/bulk/jobs")
-async def get_batch_jobs(exchange: str = None) -> List[Dict[str, Any]]:
+async def get_batch_jobs(exchange: str = None, include_cancelled: bool = False) -> List[Dict[str, Any]]:
     """Get all batch jobs for an exchange"""
     try:
         service = HistoricalAnalysisService()
-        return service.get_batch_jobs_by_exchange(exchange)
+        return service.get_batch_jobs_by_exchange(exchange, include_cancelled=include_cancelled)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

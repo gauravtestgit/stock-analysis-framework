@@ -1,8 +1,9 @@
 import pandas as pd
 import csv
 import logging
+import os
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Union
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from ..orchestration.analysis_orchestrator import AnalysisOrchestrator
@@ -38,7 +39,12 @@ class BatchAnalysisService:
         self.progress_lock = threading.Lock()
         self.completed = 0
         self.failed = 0
-        
+        # Number of stocks already successfully analyzed under an existing_batch_job_id
+        # before this run started (0 for a first attempt) - added to the in-run counter
+        # so retries/resumes don't clobber the original run's progress count. See
+        # _attach_to_existing_batch_job / _update_batch_job_progress.
+        self._baseline_completed = 0
+
         self.orchestrator = AnalysisOrchestrator(
             self.data_provider, self.classifier, self.quality_calculator
         )
@@ -134,18 +140,32 @@ class BatchAnalysisService:
                 self._log_failure(ticker, "EXCEPTION", str(e))
             return ('failed', ticker, csv_row)
     
-    def process_csv(self, input_csv_path: str, output_csv_path: str, max_stocks: int = None, exchange: str = None, created_by: str = "system"):
-        """Process stocks from CSV using multiple threads"""
-        
+    def process_csv(self, input_csv_path: str, output_csv_path: str, max_stocks: int = None, exchange: str = None,
+                     created_by: str = "system", existing_batch_job_id: Optional[Union[str, uuid.UUID]] = None):
+        """Process stocks from CSV using multiple threads.
+
+        `existing_batch_job_id`, when provided, attaches this run to an already-existing
+        BatchJob row (created ahead of time by the Batch Analysis UI's trigger/queue
+        mechanism) instead of creating a new one - used for both queue-promoted first
+        runs and retries/resumes, which reuse the same batch_job_id so all their
+        AnalysisHistory rows and progress counts roll up under one job. Left as None,
+        behavior is unchanged from before this parameter existed (still creates a fresh
+        BatchJob via _create_batch_job) - this is what test_batch_analysis.py/the cron
+        job use, and neither needs to change.
+        """
+
         df = pd.read_csv(input_csv_path, keep_default_na=False, na_values=[''])
-        
+
         if max_stocks:
             df = df.head(max_stocks)
-        
+
         total_stocks = len(df)
         print(f"Processing {total_stocks} stocks with {self.max_workers} threads...")
-        
-        if self.save_to_db and self.storage_service:
+
+        if existing_batch_job_id is not None:
+            self._attach_to_existing_batch_job(existing_batch_job_id)
+            print(f"Attached to existing batch job: {self.batch_job_id} (baseline completed: {self._baseline_completed})")
+        elif self.save_to_db and self.storage_service:
             self.batch_job_id = self._create_batch_job(
                 name=f"{exchange or 'Mixed'} Analysis {datetime.now().strftime('%Y-%m-%d %H:%M')}",
                 exchange=exchange or "Mixed",
@@ -155,7 +175,7 @@ class BatchAnalysisService:
                 created_by=created_by
             )
             print(f"Batch job created: {self.batch_job_id}")
-        
+
         self._initialize_csv(output_csv_path)
         self._initialize_failure_log(output_csv_path)
         
@@ -329,6 +349,11 @@ class BatchAnalysisService:
                 total_stocks=total_stocks,
                 completed_stocks=0,
                 failed_stocks=0,
+                # started_at no longer auto-populates via a column default (queued jobs
+                # need created_at/started_at to differ) - this path goes straight to
+                # running with no queueing, so "created" and "started" genuinely are the
+                # same moment here, same as before this column's default was removed.
+                started_at=datetime.utcnow(),
                 input_file=input_file,
                 output_file=output_file,
                 created_by=created_by
@@ -339,7 +364,88 @@ class BatchAnalysisService:
             return batch_job.id
         finally:
             db.close()
-    
+
+    def _attach_to_existing_batch_job(self, batch_job_id: Union[str, uuid.UUID]):
+        """Attach this run to an already-existing BatchJob row (see process_csv's
+        existing_batch_job_id docstring) - marks it running, records when this attempt
+        actually started, and computes how many stocks were already successfully
+        analyzed under this batch_job_id before now, so progress reporting doesn't
+        regress on a retry/resume."""
+        from ...models.database import SessionLocal
+        from ...models.strategy_models import BatchJob, AnalysisHistory
+        from sqlalchemy import func
+
+        self.batch_job_id = batch_job_id
+
+        db = SessionLocal()
+        try:
+            self._baseline_completed = (
+                db.query(func.count(func.distinct(AnalysisHistory.ticker)))
+                .filter(AnalysisHistory.batch_job_id == batch_job_id)
+                .scalar()
+            ) or 0
+
+            batch_job = db.query(BatchJob).filter(BatchJob.id == batch_job_id).first()
+            if batch_job:
+                batch_job.status = "running"
+                batch_job.started_at = datetime.utcnow()
+                db.commit()
+        finally:
+            db.close()
+
+    def build_run_input_csv(self, batch_job_id: Union[str, uuid.UUID]) -> Optional[str]:
+        """Compute which tickers from a BatchJob's original input file still need to be
+        run - anything not yet successfully analyzed under this batch_job_id, whether
+        because it failed or was never attempted (job cancelled/crashed mid-run). This
+        single formula covers both "retry failed tickers" and "resume a stopped run"
+        with no special-casing, and (since a fresh batch_job_id has no AnalysisHistory
+        rows yet) also covers a completely first-time run the same way - so the same
+        diffed-CSV path is used uniformly regardless of why a job is being (re)started.
+
+        Returns the path to a freshly-written CSV containing just the remaining
+        tickers, or None if nothing is left to run (every ticker already succeeded).
+        """
+        from ...models.database import SessionLocal
+        from ...models.strategy_models import BatchJob, AnalysisHistory
+
+        db = SessionLocal()
+        try:
+            batch_job = db.query(BatchJob).filter(BatchJob.id == batch_job_id).first()
+            if not batch_job or not batch_job.input_file:
+                raise ValueError(f"No BatchJob (or input_file) found for batch_job_id={batch_job_id}")
+
+            input_df = pd.read_csv(batch_job.input_file, keep_default_na=False, na_values=[''])
+            all_tickers = {
+                str(s).strip().upper() for s in input_df['Symbol']
+                if isinstance(s, str) and s.strip()
+            }
+
+            already_succeeded = {
+                row[0] for row in
+                db.query(AnalysisHistory.ticker).filter(AnalysisHistory.batch_job_id == batch_job_id).distinct().all()
+            }
+
+            remaining = sorted(all_tickers - already_succeeded)
+            if not remaining:
+                return None
+
+            # __file__ = .../src/share_insights_v1/services/batch/batch_analysis_service_quant.py
+            # -> 3 dirname() calls reaches .../src/share_insights_v1
+            share_insights_v1_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            run_dir = os.path.join(share_insights_v1_dir, "resources", "tmp", "batch_runs")
+            os.makedirs(run_dir, exist_ok=True)
+            run_csv_path = os.path.join(run_dir, f"{batch_job_id}.csv")
+
+            with open(run_csv_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['Symbol'])
+                for ticker in remaining:
+                    writer.writerow([ticker])
+
+            return run_csv_path
+        finally:
+            db.close()
+
     def _update_batch_job_progress(self, completed: int, failed: int):
         """Update batch job progress"""
         from ...models.database import SessionLocal
@@ -349,7 +455,10 @@ class BatchAnalysisService:
         try:
             batch_job = db.query(BatchJob).filter(BatchJob.id == self.batch_job_id).first()
             if batch_job:
-                batch_job.completed_stocks = completed
+                # baseline_completed is 0 on a first attempt, so this is a no-op change
+                # for that case; on a retry/resume it preserves the prior attempt's
+                # successful count instead of overwriting it with just this run's own.
+                batch_job.completed_stocks = self._baseline_completed + completed
                 batch_job.failed_stocks = failed
                 db.commit()
         finally:

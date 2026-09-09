@@ -292,8 +292,16 @@ def show_bulk_analysis():
                 key="bulk_exchange_selector"
             )
             
+            show_cancelled = st.checkbox(
+                "Show cancelled jobs", value=False, key="bulk_show_cancelled_jobs",
+                help="Cancelled runs have incomplete results and are hidden by default."
+            )
+
             # Get batch jobs list for selected exchange
-            batch_jobs = get_batch_jobs_list(selected_exchange if selected_exchange != 'All Exchanges' else None)
+            batch_jobs = get_batch_jobs_list(
+                selected_exchange if selected_exchange != 'All Exchanges' else None,
+                include_cancelled=show_cancelled
+            )
             
             if batch_jobs:
                 # Batch job selection
@@ -375,13 +383,13 @@ def get_bulk_analysis_data(exchange: str = None, batch_job_id: str = None):
     except:
         return {}
 
-def get_batch_jobs_list(exchange: str = None):
+def get_batch_jobs_list(exchange: str = None, include_cancelled: bool = False):
     """Get list of all batch jobs for an exchange"""
     try:
-        url = "http://localhost:8000/api/history/bulk/jobs"
+        params = {'include_cancelled': include_cancelled}
         if exchange:
-            url += f"?exchange={exchange}"
-        response = requests.get(url)
+            params['exchange'] = exchange
+        response = requests.get("http://localhost:8000/api/history/bulk/jobs", params=params)
         if response.status_code == 200:
             return response.json()
         return []

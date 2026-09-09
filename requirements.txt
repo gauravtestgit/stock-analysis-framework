@@ -35,6 +35,7 @@ langchain-groq
 langchain-openai
 psycopg2-binary
 sqlalchemy
+psutil
 # beautifulsoup4
 # langchain-ollama
 # langchain-huggingface
