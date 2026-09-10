@@ -352,9 +352,9 @@ def display_detailed_results(ticker, data):
         
         with col2:
             ai_insights = ai_data.get('ai_insights', {})
-            st.write("**Market Position:**", ai_insights.get('market_position', 'N/A'))
-            st.write("**Growth Prospects:**", ai_insights.get('growth_prospects', 'N/A'))
-            st.write("**Competitive Advantage:**", ai_insights.get('competitive_advantage', 'N/A'))
+            st.write("**Stance:**", ai_insights.get('qualitative_stance', 'N/A'))
+            st.write("**Conviction:**", ai_insights.get('conviction', 'N/A'))
+            st.write("**Investment Thesis:**", ai_insights.get('investment_thesis', 'N/A'))
         
         # Key strengths and risks
         ai_insights = ai_data.get('ai_insights', {})
@@ -1450,7 +1450,7 @@ def display_horizontal_stock_cards(results):
                 <h5>🤖 AI Insights</h5>
                 <p><strong>Rec:</strong> {ai_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${ai_data.get('predicted_price', 0) or 0:.2f}</p>
-                <p><strong>Position:</strong> {ai_insights.get('market_position', 'N/A')}</p>
+                <p><strong>Stance:</strong> {ai_insights.get('qualitative_stance', 'N/A')}</p>
                 <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -1463,8 +1463,8 @@ def display_horizontal_stock_cards(results):
                                 <span onclick="closeModal('ai_{sanitized_ticker}')" style="color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
                             </div>
                         </div>
-                        <p><strong>Growth Prospects:</strong> {ai_insights.get('growth_prospects', 'N/A')}</p>
-                        <p><strong>Competitive Advantage:</strong> {ai_insights.get('competitive_advantage', 'N/A')}</p>
+                        <p><strong>Conviction:</strong> {ai_insights.get('conviction', 'N/A')}</p>
+                        <p><strong>Investment Thesis:</strong> {ai_insights.get('investment_thesis', 'N/A')}</p>
                         <h4>Key Strengths:</h4>
                         {strengths_html}
                         <h4>Key Risks:</h4>
@@ -1755,9 +1755,9 @@ def generate_batch_text_summary(results):
             ai_insights = ai_data.get('ai_insights', {})
             if ai_insights:
                 text_lines.append("\nAI Insights:")
-                text_lines.append(f"  Market Position: {ai_insights.get('market_position', 'N/A')}")
-                text_lines.append(f"  Growth Prospects: {ai_insights.get('growth_prospects', 'N/A')}")
-                text_lines.append(f"  Competitive Advantage: {ai_insights.get('competitive_advantage', 'N/A')}")
+                text_lines.append(f"  Stance: {ai_insights.get('qualitative_stance', 'N/A')}")
+                text_lines.append(f"  Conviction: {ai_insights.get('conviction', 'N/A')}")
+                text_lines.append(f"  Investment Thesis: {ai_insights.get('investment_thesis', 'N/A')}")
         
         if 'news_sentiment' in analyses and analyses['news_sentiment']:
             news_data = analyses['news_sentiment']

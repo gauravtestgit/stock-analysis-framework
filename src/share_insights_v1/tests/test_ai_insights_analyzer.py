@@ -51,9 +51,9 @@ def test_ai_insights_analyzer():
             
             # Print AI insights
             ai_insights = result.get('ai_insights', {})
-            print(f"Market Position: {ai_insights.get('market_position', 'N/A')}")
-            print(f"Growth Prospects: {ai_insights.get('growth_prospects', 'N/A')}")
-            print(f"Competitive Advantage: {ai_insights.get('competitive_advantage', 'N/A')}")
+            print(f"Investment Thesis: {ai_insights.get('investment_thesis', 'N/A')}")
+            print(f"Qualitative Stance: {ai_insights.get('qualitative_stance', 'N/A')}")
+            print(f"Conviction: {ai_insights.get('conviction', 'N/A')}")
             
             # Print revenue trends
             revenue_trends = result.get('revenue_trends', {})
