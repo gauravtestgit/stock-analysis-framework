@@ -57,9 +57,9 @@ def test_ai_insights_with_openai():
         
         ai_insights = result.get('ai_insights', {})
         print(f"\nAI Insights:")
-        print(f"Market Position: {ai_insights.get('market_position')}")
-        print(f"Growth Prospects: {ai_insights.get('growth_prospects')}")
-        print(f"Competitive Advantage: {ai_insights.get('competitive_advantage')}")
+        print(f"Investment Thesis: {ai_insights.get('investment_thesis')}")
+        print(f"Qualitative Stance: {ai_insights.get('qualitative_stance')}")
+        print(f"Conviction: {ai_insights.get('conviction')}")
         
         strengths = ai_insights.get('key_strengths', [])
         if strengths:

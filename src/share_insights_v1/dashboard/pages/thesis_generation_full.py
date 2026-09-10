@@ -1644,21 +1644,28 @@ def display_comparable_details(data):
 def display_ai_insights_details(data):
     """Display AI insights details"""
     st.markdown("### 🤖 AI Assessment")
-    
+
     ai_insights = data.get('ai_insights', {})
-    
+    revenue_trends = data.get('revenue_trends', {})
+
     if ai_insights:
         ai_html = ""
-        
-        # Assessment metrics
-        ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #17a2b8; background: #f8f9fa;">'
-        ai_html += '<h6 style="margin: 0 0 8px 0; color: #17a2b8;">Assessment Metrics</h6>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Market Position:</strong> {ai_insights.get("market_position", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Growth Prospects:</strong> {ai_insights.get("growth_prospects", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Competitive Advantage:</strong> {ai_insights.get("competitive_advantage", "N/A")}</p>'
-        ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• <strong>Management Quality:</strong> {ai_insights.get("management_quality", "N/A")}</p>'
-        ai_html += '</div>'
-        
+
+        # Investment thesis - the narrative synthesis, shown first since it's the
+        # actual reasoning (the old version only showed single-word categorical
+        # labels here: Market Position/Growth Prospects/Competitive Advantage/
+        # Management Quality - all removed, they duplicated dedicated analyzers
+        # elsewhere and never explained *why*).
+        thesis = ai_insights.get('investment_thesis')
+        if thesis:
+            ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #17a2b8; background: #f8f9fa;">'
+            ai_html += '<h6 style="margin: 0 0 8px 0; color: #17a2b8;">Investment Thesis</h6>'
+            ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">{thesis}</p>'
+            stance = ai_insights.get('qualitative_stance', 'N/A')
+            conviction = ai_insights.get('conviction', 'N/A')
+            ai_html += f'<p style="margin: 8px 0 0 0; font-size: 0.85em; color: #555;">Stance: <strong>{stance}</strong> &nbsp;|&nbsp; Conviction: <strong>{conviction}</strong></p>'
+            ai_html += '</div>'
+
         # Key strengths
         strengths = ai_insights.get('key_strengths', [])
         if strengths:
@@ -1667,7 +1674,7 @@ def display_ai_insights_details(data):
             for strength in strengths:
                 ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {strength}</p>'
             ai_html += '</div>'
-        
+
         # Key risks
         risks = ai_insights.get('key_risks', [])
         if risks:
@@ -1676,7 +1683,15 @@ def display_ai_insights_details(data):
             for risk in risks:
                 ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">• {risk}</p>'
             ai_html += '</div>'
-        
+
+        # Revenue trend commentary
+        trend_commentary = revenue_trends.get('trend_commentary')
+        if trend_commentary:
+            ai_html += '<div style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #6c757d; background: #f8f9fa;">'
+            ai_html += f'<h6 style="margin: 0 0 8px 0; color: #6c757d;">Revenue Trend: {revenue_trends.get("trend_assessment", "N/A")}</h6>'
+            ai_html += f'<p style="margin: 3px 0; font-size: 0.9em; color: #000;">{trend_commentary}</p>'
+            ai_html += '</div>'
+
         st.markdown(f'<div style="max-height: 500px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #fff;">{ai_html}</div>', unsafe_allow_html=True)
     else:
         st.info("No AI insights available")
@@ -2113,8 +2128,8 @@ def display_horizontal_analysis_cards(ticker, data, analyses):
                 <h5>🤖 AI Insights</h5>
                 <p><strong>Rec:</strong> {analysis_data.get('recommendation', 'N/A')}</p>
                 <p><strong>Target:</strong> ${analysis_data.get('predicted_price', 0) or 0:.2f}</p>
-                <p><strong>Position:</strong> {ai_insights.get('market_position', 'N/A')}</p>
-                <p><strong>Growth:</strong> {ai_insights.get('growth_prospects', 'N/A')}</p>
+                <p><strong>Stance:</strong> {ai_insights.get('qualitative_stance', 'N/A')}</p>
+                <p><strong>Conviction:</strong> {ai_insights.get('conviction', 'N/A')}</p>
                 <button onclick="showModal('ai_{sanitized_ticker}')" style="background: #007acc; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-top: 5px;">🔍 Details</button>
                 
                 <div id="ai_{sanitized_ticker}" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -2570,9 +2585,9 @@ def extract_thesis_components(ticker, analysis_data, analyses):
         components['strengths'].extend(ai_insights.get('key_strengths', []))
         components['risks'].extend(ai_insights.get('key_risks', []))
         components['competitive_position'] = {
-            'market_position': ai_insights.get('market_position', 'N/A'),
-            'growth_prospects': ai_insights.get('growth_prospects', 'N/A'),
-            'competitive_advantage': ai_insights.get('competitive_advantage', 'N/A')
+            'qualitative_stance': ai_insights.get('qualitative_stance', 'N/A'),
+            'conviction': ai_insights.get('conviction', 'N/A'),
+            'investment_thesis': ai_insights.get('investment_thesis', 'N/A')
         }
     
     # Extract from Business Model (including segment revenue data)

@@ -97,46 +97,59 @@ Company Details:"""
 
 # Convenience functions for common prompt patterns
 def create_company_insights_prompt(company_info: Dict[str, Any], provider_name: str = None) -> str:
-    """Create company insights analysis prompt"""
+    """Create company insights analysis prompt.
+
+    Schema asks for reasoning (investment_thesis) and a directly-stated price view
+    (target_price_multiplier) rather than single-word categorical labels - the old
+    market_position/competitive_advantage/management_quality/industry_outlook fields
+    duplicated what dedicated analyzers (competitive_position, management_quality,
+    industry_analysis) already cover in more depth, and a hardcoded formula bolted onto
+    those labels ignored key_strengths/key_risks entirely when setting the price target.
+    """
     schema = {
-        "market_position": "Strong/Moderate/Weak",
-        "growth_prospects": "High/Moderate/Low", 
-        "competitive_advantage": "Strong/Moderate/Weak",
-        "management_quality": "Excellent/Good/Average/Poor",
-        "industry_outlook": "Very Positive/Positive/Neutral/Negative",
-        "key_strengths": ["strength1", "strength2"],
-        "key_risks": ["risk1", "risk2"]
+        "investment_thesis": "2-4 sentence narrative explaining the specific view on this company, referencing its actual business and the strengths/risks below - not generic boilerplate",
+        "qualitative_stance": "Bullish/Neutral/Bearish",
+        "target_price_multiplier": "e.g. 1.15 for 15% upside, 0.90 for 10% downside, 1.0 for fair value - your own reasoned view given the strengths/risks, not a fixed rule",
+        "conviction": "High/Medium/Low",
+        "key_strengths": ["strength1", "strength2", "strength3"],
+        "key_risks": ["risk1", "risk2", "risk3"]
     }
-    
+
     return PromptFormatter.create_analysis_prompt(
         company_info, "company insights", schema, provider_name
     )
 
 def create_revenue_trends_prompt(company_info: Dict[str, Any], provider_name: str = None) -> str:
-    """Create revenue trends analysis prompt"""
+    """Create revenue trends analysis prompt.
+
+    growth_rate is deliberately not asked for here - it's already known precisely from
+    the input data, and asking the LLM to echo it back invited unit mismatches (it once
+    returned "25.9" as a bare number where a 0-1 fraction was implied). trend_commentary
+    replaces that with something the LLM actually needs to reason about instead.
+    """
     schema = {
         "trend_assessment": "Strong Growth/Moderate Growth/Stable/Declining",
-        "growth_rate": 0.0,
         "growth_consistency": "Consistent/Variable/Volatile",
-        "future_outlook": "Very Positive/Positive/Neutral/Cautious/Negative"
+        "future_outlook": "Very Positive/Positive/Neutral/Cautious/Negative",
+        "trend_commentary": "1-2 sentences on what's specifically driving this trend"
     }
-    
+
     return PromptFormatter.create_analysis_prompt(
         company_info, "revenue trends", schema, provider_name
     )
 
 def create_etf_insights_prompt(etf_info: Dict[str, Any], provider_name: str = None) -> str:
-    """Create ETF-specific insights prompt"""
+    """Create ETF-specific insights prompt (same schema philosophy as
+    create_company_insights_prompt - see its docstring)."""
     schema = {
-        "market_position": "Strong/Moderate/Weak",
-        "growth_prospects": "High/Moderate/Low", 
-        "competitive_advantage": "Strong/Moderate/Weak",
-        "management_quality": "Excellent/Good/Average/Poor",
-        "industry_outlook": "Very Positive/Positive/Neutral/Negative",
+        "investment_thesis": "2-4 sentence narrative on this ETF's specific positioning - not generic boilerplate",
+        "qualitative_stance": "Bullish/Neutral/Bearish",
+        "target_price_multiplier": "e.g. 1.10 for 10% upside, 1.0 for fair value - your own reasoned view",
+        "conviction": "High/Medium/Low",
         "key_strengths": ["Low expense ratio", "Diversified holdings", "Good liquidity"],
         "key_risks": ["Market concentration risk", "Tracking error", "Currency risk"]
     }
-    
+
     return PromptFormatter.create_analysis_prompt(
         etf_info, "ETF analysis focusing on ETF-specific factors", schema, provider_name
     )
