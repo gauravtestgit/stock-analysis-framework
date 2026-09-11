@@ -216,6 +216,27 @@ Consider ETF-specific factors like:
         insights.setdefault('conviction', 'Low')
         insights.setdefault('key_strengths', [])
         insights.setdefault('key_risks', [])
+
+        # Guard against the stance and the numeric multiplier disagreeing - confirmed
+        # via live testing that a response can say "Bullish" while its
+        # target_price_multiplier is still below 1.0 (implying downside), which then
+        # mechanically produces a Sell recommendation despite a bullish thesis. This is
+        # LLM sampling variance on the numeric field specifically (more pronounced on
+        # smaller/faster models), not something the prompt wording can fully prevent,
+        # so correct the multiplier's direction to match the stated stance rather than
+        # let a stray number silently override it. Clamped to 1.0 (i.e. "no change")
+        # rather than fabricating a number in the other direction.
+        try:
+            multiplier = float(insights['target_price_multiplier'])
+        except (TypeError, ValueError):
+            multiplier = 1.0
+        stance = insights.get('qualitative_stance')
+        if stance == 'Bullish' and multiplier < 1.0:
+            multiplier = 1.0
+        elif stance == 'Bearish' and multiplier > 1.0:
+            multiplier = 1.0
+        insights['target_price_multiplier'] = multiplier
+
         return insights
 
     def _analyze_revenue_trends(self, financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
