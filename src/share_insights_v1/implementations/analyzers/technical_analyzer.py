@@ -427,14 +427,45 @@ class TechnicalAnalyzer(IAnalyzer):
         except:
             return {'support': [], 'resistance': [], 'clusters': []}
     
-    def _calculate_fibonacci_levels(self, hist: pd.DataFrame, lookback: int = 50) -> Dict[str, float]:
-        """Calculate Fibonacci retracement levels from recent swing"""
+    def _calculate_fibonacci_levels(self, hist: pd.DataFrame, lookback: int = 50, swing_window: int = 5) -> Dict[str, float]:
+        """Calculate Fibonacci retracement levels anchored to the most recent swing
+        high/low, not the raw max/min over the whole lookback window. A choppy lookback
+        window can contain several sub-swings (a decline, a bounce, another pullback);
+        taking the plain .max()/.min() over all of it anchors the retracement on whichever
+        leg happened to have the largest extreme, even if that leg is weeks stale and no
+        longer relevant to where price is now. Anchoring on the most recent confirmed
+        local high and local low (same rolling-window peak/trough detection as
+        _find_swing_points) keeps the retracement tied to the current leg instead."""
         try:
             recent_data = hist.tail(lookback)
-            swing_high = recent_data['High'].max()
-            swing_low = recent_data['Low'].min()
+            highs = recent_data['High']
+            lows = recent_data['Low']
+            n = len(recent_data)
+
+            # Scan forward so a later match overwrites an earlier one - we want the most
+            # recent confirmed swing point, not just any swing point in the window.
+            last_swing_high = None
+            last_swing_low = None
+            for i in range(swing_window, n - swing_window):
+                high_window = highs.iloc[i - swing_window:i + swing_window + 1]
+                if highs.iloc[i] == high_window.max():
+                    last_swing_high = float(highs.iloc[i])
+
+                low_window = lows.iloc[i - swing_window:i + swing_window + 1]
+                if lows.iloc[i] == low_window.min():
+                    last_swing_low = float(lows.iloc[i])
+
+            # Fall back to the trailing max/min if no interior swing point could be
+            # confirmed (e.g. a short window, or a strong trend with no reversal in it).
+            if last_swing_high is None:
+                last_swing_high = float(highs.max())
+            if last_swing_low is None:
+                last_swing_low = float(lows.min())
+
+            swing_high = max(last_swing_high, last_swing_low)
+            swing_low = min(last_swing_high, last_swing_low)
             diff = swing_high - swing_low
-            
+
             return {
                 'level_0': float(swing_high),
                 'level_23.6': float(swing_high - 0.236 * diff),
