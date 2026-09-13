@@ -105,11 +105,24 @@ def create_company_insights_prompt(company_info: Dict[str, Any], provider_name: 
     duplicated what dedicated analyzers (competitive_position, management_quality,
     industry_analysis) already cover in more depth, and a hardcoded formula bolted onto
     those labels ignored key_strengths/key_risks entirely when setting the price target.
+
+    target_price_multiplier's instruction deliberately avoids round example numbers -
+    confirmed via direct testing (same model, 6 tickers) that giving "1.15"/"0.90" as
+    examples anchors the model into reproducing those exact round 5% increments almost
+    regardless of the company (1.15 came back for both a mega-cap AI leader and an
+    unrelated volatile storage stock). Asking for 3-decimal precision and explicitly
+    naming the round increments to avoid broke that clustering in the same test.
     """
     schema = {
         "investment_thesis": "2-4 sentence narrative explaining the specific view on this company, referencing its actual business and the strengths/risks below - not generic boilerplate",
         "qualitative_stance": "Bullish/Neutral/Bearish",
-        "target_price_multiplier": "e.g. 1.15 for 15% upside, 0.90 for 10% downside, 1.0 for fair value - your own reasoned view given the strengths/risks, not a fixed rule",
+        "target_price_multiplier": (
+            "Your precise fair-value estimate as a decimal multiplier of the current price "
+            "(1.0 = fair value; above 1.0 = undervalued/upside; below 1.0 = overvalued/downside). "
+            "Use a precise value with 3 decimal places (e.g. 1.083, 0.927, 1.062, 0.941) that "
+            "reflects the actual magnitude of your conviction given the strengths/risks below - "
+            "do NOT default to round increments like 1.10, 1.15, 1.20, 0.90, or 0.85."
+        ),
         "conviction": "High/Medium/Low",
         "key_strengths": ["strength1", "strength2", "strength3"],
         "key_risks": ["risk1", "risk2", "risk3"]
@@ -140,11 +153,17 @@ def create_revenue_trends_prompt(company_info: Dict[str, Any], provider_name: st
 
 def create_etf_insights_prompt(etf_info: Dict[str, Any], provider_name: str = None) -> str:
     """Create ETF-specific insights prompt (same schema philosophy as
-    create_company_insights_prompt - see its docstring)."""
+    create_company_insights_prompt - see its docstring, including why
+    target_price_multiplier's instruction avoids round example numbers)."""
     schema = {
         "investment_thesis": "2-4 sentence narrative on this ETF's specific positioning - not generic boilerplate",
         "qualitative_stance": "Bullish/Neutral/Bearish",
-        "target_price_multiplier": "e.g. 1.10 for 10% upside, 1.0 for fair value - your own reasoned view",
+        "target_price_multiplier": (
+            "Your precise fair-value estimate as a decimal multiplier of the current price "
+            "(1.0 = fair value; above 1.0 = upside; below 1.0 = downside). Use a precise value "
+            "with 3 decimal places (e.g. 1.083, 0.927, 1.062, 0.941) - do NOT default to round "
+            "increments like 1.10, 1.15, 1.20, 0.90, or 0.85."
+        ),
         "conviction": "High/Medium/Low",
         "key_strengths": ["Low expense ratio", "Diversified holdings", "Good liquidity"],
         "key_risks": ["Market concentration risk", "Tracking error", "Currency risk"]
