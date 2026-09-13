@@ -212,30 +212,49 @@ Consider ETF-specific factors like:
                 insights['investment_thesis'] = 'No detailed thesis available for this analysis.'
 
         insights.setdefault('qualitative_stance', 'Neutral')
-        insights.setdefault('target_price_multiplier', 1.0)
         insights.setdefault('conviction', 'Low')
         insights.setdefault('key_strengths', [])
         insights.setdefault('key_risks', [])
+
+        # target_price_multiplier: prefer the LLM's own number, but fall back to a
+        # stance-aware default - not a flat 1.0 - whenever it's missing, unparseable,
+        # contradicts the stated stance, or is an out-of-range hallucination (e.g. 5.0
+        # or -0.2). A flat 1.0 ignored the one thing we still know (the stance) even for
+        # a clearly Bearish call. target_price_multiplier_source records which happened,
+        # since a fallback value should never be indistinguishable from a genuine
+        # reasoned LLM estimate to anything consuming this downstream.
+        stance = insights.get('qualitative_stance')
+        fallback_multiplier = {'Bullish': 1.05, 'Bearish': 0.95}.get(stance, 1.0)
+        used_fallback = False
+
+        if 'target_price_multiplier' not in insights:
+            multiplier = fallback_multiplier
+            used_fallback = True
+        else:
+            try:
+                multiplier = float(insights['target_price_multiplier'])
+            except (TypeError, ValueError):
+                multiplier = fallback_multiplier
+                used_fallback = True
 
         # Guard against the stance and the numeric multiplier disagreeing - confirmed
         # via live testing that a response can say "Bullish" while its
         # target_price_multiplier is still below 1.0 (implying downside), which then
         # mechanically produces a Sell recommendation despite a bullish thesis. This is
         # LLM sampling variance on the numeric field specifically (more pronounced on
-        # smaller/faster models), not something the prompt wording can fully prevent,
-        # so correct the multiplier's direction to match the stated stance rather than
-        # let a stray number silently override it. Clamped to 1.0 (i.e. "no change")
-        # rather than fabricating a number in the other direction.
-        try:
-            multiplier = float(insights['target_price_multiplier'])
-        except (TypeError, ValueError):
-            multiplier = 1.0
-        stance = insights.get('qualitative_stance')
+        # smaller/faster models), not something the prompt wording can fully prevent.
         if stance == 'Bullish' and multiplier < 1.0:
-            multiplier = 1.0
+            multiplier = fallback_multiplier
+            used_fallback = True
         elif stance == 'Bearish' and multiplier > 1.0:
-            multiplier = 1.0
+            multiplier = fallback_multiplier
+            used_fallback = True
+        elif not (0.5 <= multiplier <= 2.0):
+            multiplier = fallback_multiplier
+            used_fallback = True
+
         insights['target_price_multiplier'] = multiplier
+        insights['target_price_multiplier_source'] = 'fallback' if used_fallback else 'llm'
 
         return insights
 
@@ -502,6 +521,7 @@ Consider factors like:
             ),
             'qualitative_stance': stance,
             'target_price_multiplier': multiplier,
+            'target_price_multiplier_source': 'fallback',
             'conviction': 'Low',
             'key_strengths': ['Financial stability'],
             'key_risks': ['Market volatility']
