@@ -107,7 +107,15 @@ def _spawn_job(job: BatchJob, db: Session):
 
     popen_kwargs = dict(cwd=_REPO_ROOT, env=env)
     if os.name == 'nt':
-        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        # CREATE_NEW_PROCESS_GROUP alone only isolates the child from Ctrl+Break - it
+        # stays attached to the parent's console, so closing that console window (e.g.
+        # restarting the dev API server by closing its terminal) sends CTRL_CLOSE_EVENT
+        # to the child too and kills it outright, before it gets a chance to write
+        # anything or raise a catchable exception. DETACHED_PROCESS removes the console
+        # entirely, giving the same true independence start_new_session gives on POSIX.
+        popen_kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+        )
     else:
         popen_kwargs["start_new_session"] = True
 
@@ -135,6 +143,22 @@ def _promote_queued_jobs(db: Session):
         if job.pid is None or not psutil.pid_exists(job.pid):
             job.status = "crashed"
             job.completed_at = datetime.now(timezone.utc)
+            # No exception means no traceback - the process is simply gone (OOM, an
+            # external kill, the machine sleeping). Note that explicitly in the job's own
+            # log so an empty/truncated log doesn't read as "we failed to capture the
+            # crash reason" when there was never one to capture.
+            try:
+                log_path = os.path.join(_BATCH_LOGS_DIR, f"{job.id}.log")
+                with open(log_path, 'a', encoding='utf-8') as logfile:
+                    logfile.write(
+                        f"\n=== Marked crashed at {datetime.now(timezone.utc).isoformat()} "
+                        f"- pid {job.pid} no longer exists. No traceback above means the "
+                        f"process was killed externally (not a Python exception) - e.g. the "
+                        f"API server's console window was closed, the host slept/rebooted, "
+                        f"or it was OOM-killed. ===\n"
+                    )
+            except OSError:
+                pass
     if running_jobs:
         db.commit()
 
@@ -231,6 +255,8 @@ async def get_batch_job_failures(batch_job_id: str):
     """Ticker/error_type/error_message/timestamp rows from the job's failure CSV.
     Degrades gracefully (not an error) if the file doesn't exist yet, or predates the
     structured-CSV failure log format (still .txt for any job run before that change)."""
+    from ..models.strategy_models import AnalysisHistory
+
     db = SessionLocal()
     try:
         job = db.query(BatchJob).filter(BatchJob.id == batch_job_id).first()
@@ -251,6 +277,21 @@ async def get_batch_job_failures(batch_job_id: str):
                 # try to parse it as structured data.
                 return {"failures": [], "available": False}
             failures = list(reader)
+
+        # The failure log now persists across retries (see
+        # batch_analysis_service_quant._initialize_failure_log's fresh param) instead
+        # of being wiped on every attempt, so a ticker that failed once and then
+        # succeeded on a later retry would otherwise show up here forever as "still
+        # failing". Filter those out using the same succeeded-tickers signal
+        # build_run_input_csv already relies on for the retry diff.
+        if failures:
+            succeeded = {
+                row[0] for row in
+                db.query(AnalysisHistory.ticker).filter(AnalysisHistory.batch_job_id == batch_job_id).distinct().all()
+            }
+            if succeeded:
+                failures = [f for f in failures if f.get('Ticker') not in succeeded]
+
         return {"failures": failures, "available": True}
     finally:
         db.close()
