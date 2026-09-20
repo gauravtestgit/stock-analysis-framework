@@ -19,23 +19,121 @@ def show_historical_analysis():
         st.info("Enter a stock ticker to view historical analysis")
         return
     
+    # Snapshot table (last 5 analysis dates) - its own fragment (see
+    # show_analysis_snapshot_table) so switching dates doesn't rerun this whole page
+    # and re-trigger the timeline/method/thesis fetches and chart below.
+    show_analysis_snapshot_table(ticker)
+
     # Load historical data
     try:
         timeline_data = get_timeline_data(ticker)
         method_data = get_method_data(ticker)
         thesis_data = get_thesis_data(ticker)
-        
+
         if not timeline_data:
             st.warning(f"No historical analysis data found for {ticker}")
             return
-        
+
         # Display sections
         show_recommendation_timeline(ticker, timeline_data)
         show_method_performance(ticker, method_data)
         show_thesis_evolution(ticker, thesis_data)
-        
+
     except Exception as e:
         st.error(f"Error loading historical data: {str(e)}")
+
+def get_analysis_snapshot_dates(ticker: str, limit: int = 5):
+    """Last `limit` distinct analysis run dates for a ticker - cheap, just for
+    populating the date selector below."""
+    try:
+        response = requests.get(f"http://localhost:8000/api/history/{ticker}/snapshots", params={"limit": limit})
+        if response.status_code == 200:
+            return response.json()
+        return []
+    except:
+        return []
+
+def get_analysis_snapshot(ticker: str, batch_analysis_id: str):
+    """One analysis run pivoted into a single CSV-output-style row."""
+    try:
+        response = requests.get(f"http://localhost:8000/api/history/{ticker}/snapshot/{batch_analysis_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
+@st.fragment
+def show_analysis_snapshot_table(ticker: str):
+    """Last 5 analysis dates for `ticker`, with the selected date's full analysis
+    shown as a single-row table matching the batch output CSV's column set. Wrapped in
+    @st.fragment so picking a different date only reruns this function - not the whole
+    page (which would otherwise redo the timeline/method/thesis API calls and the
+    yfinance chart fetch below every time someone just wants to look at an older
+    date)."""
+    st.subheader("🗂️ Analysis Snapshot")
+
+    dates = get_analysis_snapshot_dates(ticker, limit=5)
+    if not dates:
+        st.info("No stored analysis snapshots found for this ticker yet.")
+        return
+
+    labels = [pd.to_datetime(d['date']).strftime('%Y-%m-%d %H:%M') for d in dates]
+    selected_idx = st.radio(
+        "Analysis date (most recent first):",
+        options=list(range(len(dates))),
+        format_func=lambda i: labels[i],
+        index=0,  # dates are already ordered latest-first, so this defaults to latest
+        horizontal=True,
+        key=f"snapshot_date_idx_{ticker}"
+    )
+
+    snapshot = get_analysis_snapshot(ticker, dates[selected_idx]['batch_analysis_id'])
+    if not snapshot:
+        st.warning("Could not load this analysis snapshot.")
+        return
+
+    def fmt_price(value):
+        return f"${value:,.2f}" if value else "$0.00"
+
+    display_row = {
+        'Ticker': snapshot.get('Ticker'),
+        'Current_Price': fmt_price(snapshot.get('Current_Price')),
+        'DCF_Price': fmt_price(snapshot.get('DCF_Price')),
+        'Technical_Price': fmt_price(snapshot.get('Technical_Price')),
+        'Comparable_Price': fmt_price(snapshot.get('Comparable_Price')),
+        'Startup_Price': fmt_price(snapshot.get('Startup_Price')),
+        'Analyst_Price': fmt_price(snapshot.get('Analyst_Price')),
+        'Professional_Analyst_Recommendation': snapshot.get('Professional_Analyst_Recommendation'),
+        'Analyst_Count': snapshot.get('Analyst_Count'),
+        'Final_Recommendation': snapshot.get('Final_Recommendation'),
+        'Company_Type': snapshot.get('Company_Type'),
+        'Sector': snapshot.get('Sector'),
+        'Industry': snapshot.get('Industry'),
+        'Quality_Grade': snapshot.get('Quality_Grade'),
+    }
+    # Shrink font size and keep each cell on one line - 14 columns (several with long
+    # names like Professional_Analyst_Recommendation) squeezed into the page width at
+    # normal size/wrapping broke words mid-way ("Curr|ent_|Price"). nowrap + horizontal
+    # scroll on the table's own container reads far better than that, same as scrolling
+    # a wide spreadsheet. Scoped to stTable specifically since it's the only st.table
+    # used anywhere in this dashboard (confirmed via grep), so this can't bleed into
+    # unrelated tables elsewhere.
+    st.markdown("""
+        <style>
+        [data-testid="stTable"] { overflow-x: auto; }
+        [data-testid="stTable"] table { font-size: 0.75rem; }
+        [data-testid="stTable"] th, [data-testid="stTable"] td {
+            padding: 0.25rem 0.5rem;
+            white-space: nowrap;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # st.table (static HTML), not st.dataframe (canvas-rendered interactive grid) - a
+    # one-row summary doesn't need sorting/scrolling, and a static table renders
+    # immediately without the grid's own async layout pass.
+    st.table(pd.DataFrame([display_row]).set_index('Ticker'))
 
 def get_timeline_data(ticker: str):
     """Get recommendation timeline data"""

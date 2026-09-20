@@ -1,8 +1,36 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from functools import lru_cache
 from ...models.database import SessionLocal
 from ...models.strategy_models import AnalysisHistory, InvestmentThesis
 from sqlalchemy import desc, and_, func
+
+
+@lru_cache(maxsize=256)
+def _fetch_live_classification(ticker: str) -> tuple:
+    """Sector/Industry/Quality_Grade aren't in AnalysisHistory at all (see
+    HistoricalAnalysisService.get_analysis_snapshot), so fetch current values live -
+    acceptable since these essentially never change day to day, unlike the
+    price/recommendation columns that method's caller doesn't touch here.
+
+    Module-level and lru_cache'd (not an instance method/cache) because
+    HistoricalAnalysisService is instantiated fresh per API request - an
+    instance-level cache would never survive between requests, defeating the point.
+    Switching between a ticker's 5 historical dates was taking ~15-20s per click
+    before this, entirely spent re-fetching identical sector/industry/grade data on
+    every single date switch."""
+    try:
+        from ...implementations.data_providers.yahoo_provider import YahooFinanceProvider
+        from ...implementations.calculators.quality_calculator import QualityScoreCalculator
+
+        metrics = YahooFinanceProvider().get_financial_metrics(ticker)
+        if 'error' in metrics:
+            return '', '', ''
+
+        grade = QualityScoreCalculator().calculate(metrics).get('grade', '')
+        return metrics.get('sector', ''), metrics.get('industry', ''), grade
+    except Exception:
+        return '', '', ''
 
 class HistoricalAnalysisService:
     """Service for retrieving historical analysis data"""
@@ -20,7 +48,86 @@ class HistoricalAnalysisService:
             return [self._format_analysis(analysis) for analysis in analyses]
         finally:
             db.close()
-    
+
+    def get_recent_analysis_dates(self, ticker: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Last `limit` distinct analysis runs (batch_analysis_id + date) for a ticker -
+        cheap and DB-only, used to populate a date selector without pivoting rows or
+        doing any live lookups until a specific date is actually selected (see
+        get_analysis_snapshot). A single "run" is every AnalysisHistory row sharing the
+        same batch_analysis_id (one row per analysis_type, all written together - see
+        DatabaseService.save_comprehensive_analysis)."""
+        db = SessionLocal()
+        try:
+            rows = db.query(AnalysisHistory.batch_analysis_id, AnalysisHistory.analysis_date)\
+                     .filter(AnalysisHistory.ticker == ticker)\
+                     .order_by(desc(AnalysisHistory.analysis_date))\
+                     .limit(500)\
+                     .all()
+
+            seen = {}
+            order = []
+            for batch_id, date in rows:
+                batch_id = str(batch_id)
+                if batch_id not in seen:
+                    seen[batch_id] = date
+                    order.append(batch_id)
+                    if len(order) >= limit:
+                        break
+
+            return [{'batch_analysis_id': batch_id, 'date': seen[batch_id]} for batch_id in order]
+        finally:
+            db.close()
+
+    def get_analysis_snapshot(self, ticker: str, batch_analysis_id: str) -> Optional[Dict[str, Any]]:
+        """One analysis run's per-analysis_type rows pivoted into a single CSV-output-
+        style row, mirroring BatchAnalysisService._extract_csv_data's column set so this
+        reads the same as the batch output CSVs. Sector/Industry/Quality_Grade were
+        never persisted per-run (confirmed against real stored rows - only
+        company_type made it into the final_recommendation row's raw_data), so those
+        three are looked up live instead of reconstructed from history."""
+        db = SessionLocal()
+        try:
+            rows = db.query(AnalysisHistory)\
+                     .filter(AnalysisHistory.ticker == ticker,
+                             AnalysisHistory.batch_analysis_id == batch_analysis_id)\
+                     .all()
+            if not rows:
+                return None
+
+            by_type = {row.analysis_type: row for row in rows}
+
+            def price(analysis_type: str) -> float:
+                row = by_type.get(analysis_type)
+                return float(row.target_price) if row and row.target_price else 0.0
+
+            analyst_row = by_type.get('analyst_consensus')
+            analyst_raw = (analyst_row.raw_data or {}) if analyst_row else {}
+            final_row = by_type.get('final_recommendation')
+            final_raw = (final_row.raw_data or {}) if final_row else {}
+            current_price = next((row.current_price for row in rows if row.current_price), 0)
+
+            sector, industry, quality_grade = _fetch_live_classification(ticker)
+
+            return {
+                'date': rows[0].analysis_date,
+                'Ticker': ticker,
+                'Current_Price': current_price,
+                'DCF_Price': price('dcf'),
+                'Technical_Price': price('technical'),
+                'Comparable_Price': price('comparable'),
+                'Startup_Price': price('startup'),
+                'Analyst_Price': price('analyst_consensus'),
+                'Professional_Analyst_Recommendation': analyst_row.recommendation if analyst_row else '',
+                'Analyst_Count': analyst_raw.get('num_analysts', 0),
+                'Final_Recommendation': final_row.recommendation if final_row else '',
+                'Company_Type': final_raw.get('company_type', ''),
+                'Sector': sector,
+                'Industry': industry,
+                'Quality_Grade': quality_grade,
+            }
+        finally:
+            db.close()
+
     def get_recommendation_timeline(self, ticker: str) -> List[Dict[str, Any]]:
         """Get recommendation changes over time"""
         db = SessionLocal()

@@ -18,6 +18,32 @@ async def get_stock_history(ticker: str, limit: int = 20) -> List[Dict[str, Any]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/history/{ticker}/snapshots")
+async def get_analysis_snapshot_dates(ticker: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Last `limit` distinct analysis run dates for a ticker - cheap, DB-only, meant
+    for populating a date selector (see /history/{ticker}/snapshot/{batch_analysis_id}
+    for the actual per-date detail row)."""
+    try:
+        service = HistoricalAnalysisService()
+        return service.get_recent_analysis_dates(ticker.upper(), limit)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history/{ticker}/snapshot/{batch_analysis_id}")
+async def get_analysis_snapshot(ticker: str, batch_analysis_id: str) -> Dict[str, Any]:
+    """One analysis run pivoted into a single CSV-output-style row (same column set as
+    the batch analysis output CSVs)."""
+    try:
+        service = HistoricalAnalysisService()
+        result = service.get_analysis_snapshot(ticker.upper(), batch_analysis_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Analysis snapshot not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/history/{ticker}/timeline")
 async def get_recommendation_timeline(ticker: str) -> List[Dict[str, Any]]:
     """Get recommendation timeline for a stock"""
