@@ -176,8 +176,16 @@ class BatchAnalysisService:
             )
             print(f"Batch job created: {self.batch_job_id}")
 
-        self._initialize_csv(output_csv_path)
-        self._initialize_failure_log(output_csv_path)
+        # A retry/resume reuses the same output_csv_path and may already have real
+        # prior rows in it from an earlier promotion of this same batch job (see
+        # build_run_input_csv) - only (re)initialize with a fresh header when the file
+        # doesn't exist yet, so a retry appends onto what's already there instead of
+        # truncating it. Previously this fired unconditionally, silently destroying
+        # every previously-successful row on every retry even though the DB's
+        # completed_stocks correctly retained the full historical count.
+        is_fresh_output = not os.path.isfile(output_csv_path)
+        self._initialize_csv(output_csv_path, fresh=is_fresh_output)
+        self._initialize_failure_log(output_csv_path, fresh=is_fresh_output)
         
         time_start = datetime.now()
         self.completed = 0
@@ -289,15 +297,22 @@ class BatchAnalysisService:
             'Error': error
         }
     
-    def _initialize_csv(self, output_path: str):
-        """Initialize CSV file with headers"""
+    def _initialize_csv(self, output_path: str, fresh: bool = True):
+        """Initialize CSV file with headers.
+
+        fresh=False (a retry/resume attaching to an output file that already has real
+        prior rows - see process_csv) skips this entirely, so those rows are left
+        intact instead of being truncated by the 'w' open below."""
+        if not fresh:
+            return
+
         fieldnames = [
             'Ticker', 'Current_Price', 'DCF_Price', 'Technical_Price', 'Comparable_Price',
-            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation', 
+            'Startup_Price', 'Analyst_Price', 'Professional_Analyst_Recommendation',
             'Analyst_Count','Final_Recommendation',
             'Company_Type', 'Sector', 'Industry', 'Quality_Grade', 'Error'
         ]
-        
+
         with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -314,11 +329,19 @@ class BatchAnalysisService:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow(row)
     
-    def _initialize_failure_log(self, output_csv_path: str):
-        """Initialize failure log as CSV - ticker is column 1 so failed tickers
-        can be copied straight out of the file and rerun."""
+    def _initialize_failure_log(self, output_csv_path: str, fresh: bool = True):
+        """Set failure_log_path and, when fresh, (re)create it as a CSV with just a
+        header - ticker is column 1 so failed tickers can be copied straight out of the
+        file and rerun.
+
+        fresh=False (see _initialize_csv/process_csv) still sets failure_log_path
+        (needed by _log_failure during this run) but leaves the file's existing rows
+        from earlier attempts at this same batch job intact instead of truncating them."""
         base_name = output_csv_path.replace('.csv', '')
         self.failure_log_path = f"{base_name}_failures.csv"
+
+        if not fresh:
+            return
 
         with open(self.failure_log_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
