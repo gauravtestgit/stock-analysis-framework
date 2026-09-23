@@ -13,10 +13,26 @@ class TechnicalAnalyzer(IAnalyzer):
         try:
             price_data = data.get('price_data', {})
             hist = price_data.get('price_history')
-            
+
             if hist is None or hist.empty:
                 return {'error': 'No price history available'}
-            
+
+            # The most recent bar can come back from the data provider with an
+            # entirely NaN OHLC row (an incomplete/not-yet-backfilled latest session -
+            # confirmed happening for real, not hypothetical: every ticker's history had
+            # a fully-NaN trailing row on 2026-09-22). .iloc[-1] elsewhere in this class
+            # isn't skipna-aware like .max()/.min(), so a NaN Close here silently
+            # corrupts current_price and, via the moving averages' rolling windows
+            # ending on the same row, ma_20/ma_50/ma_200 too - cascading into
+            # predicted_price and the trend/recommendation logic below. Dropping NaN
+            # Close rows once here, before anything reads from hist, protects every
+            # calculation in this method and _calculate_support_resistance (which
+            # receives this same cleaned hist) in one place instead of patching each
+            # individual .iloc[-1]/.rolling() site.
+            hist = hist.dropna(subset=['Close'])
+            if hist.empty:
+                return {'error': 'No price history available'}
+
             current_price = hist['Close'].iloc[-1]
             # Calculate moving averages
             ma_20 = hist['Close'].rolling(window=20).mean().iloc[-1] if len(hist) >= 20 else None
