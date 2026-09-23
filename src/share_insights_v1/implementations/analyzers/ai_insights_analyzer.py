@@ -106,9 +106,9 @@ class AIInsightsAnalyzer(IAnalyzer):
         etf_info = {
             'name': f"{fund_name} ({ticker}) ETF",
             'fund_name': fund_name,
-            'assets_under_management': f"${financial_metrics.get('market_cap', 0):,.0f}",
-            'current_price': f"${financial_metrics.get('current_price', 0):.2f}",
-            'pe_ratio': f"{financial_metrics.get('pe_ratio', 0):.2f}",
+            'assets_under_management': f"${financial_metrics.get('market_cap', 0) or 0:,.0f}",
+            'current_price': f"${financial_metrics.get('current_price', 0) or 0:.2f}",
+            'pe_ratio': financial_metrics.get('pe_ratio') or 'N/A',
             'pb_ratio': financial_metrics.get('pb_ratio', 'N/A'),
             'market_context': market_context['market_name'],
             'analysis_notes': market_context['analysis_notes']

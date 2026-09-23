@@ -1268,8 +1268,8 @@ def display_dcf_details(data, ticker=None):
             terminal_ratio = dc.get('terminal_ratio')
             rows.append({
                 'Scenario': label,
-                'Predicted Price': f"${s.get('predicted_price', 0):.2f}",
-                'Upside/Downside': f"{s.get('upside_downside_pct', 0):+.1f}%",
+                'Predicted Price': f"${s.get('predicted_price', 0) or 0:.2f}",
+                'Upside/Downside': f"{s.get('upside_downside_pct', 0) or 0:+.1f}%",
                 'Recommendation': s.get('recommendation', 'N/A'),
                 'Confidence': s.get('confidence', 'N/A'),
                 'Terminal Value Ratio': f"{terminal_ratio:.0%}" if terminal_ratio is not None else 'N/A',
@@ -1829,7 +1829,7 @@ def display_startup_details(data):
     col1, col2 = st.columns(2)
     with col1:
         st.write(f"**Stage:** {data.get('stage', 'N/A')}")
-        st.write(f"**Cash Runway:** {data.get('cash_runway_years', 0):.1f} years")
+        st.write(f"**Cash Runway:** {data.get('cash_runway_years', 0) or 0:.1f} years")
     with col2:
         st.write(f"**Risk Score:** {data.get('risk_score', 0)}/100")
         st.write(f"**Growth Quality:** {data.get('growth_quality', 'N/A')}")

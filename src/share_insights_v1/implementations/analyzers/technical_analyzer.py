@@ -484,14 +484,23 @@ class TechnicalAnalyzer(IAnalyzer):
             recent = hist.tail(5)  # Last 5 days
             high = recent['High'].max()
             low = recent['Low'].min()
+            # .iloc[-1] is a raw positional lookup, not skipna-aware like .max()/.min() -
+            # the most recent bar's Close can legitimately be NaN (an incomplete/lagging
+            # latest bar from the data provider), which silently propagates through
+            # every pivot value below without raising, so float() never catches it and
+            # this would otherwise "succeed" with a dict of NaN - which round-trips
+            # through JSON as null and crashes formatting downstream. Treat it the same
+            # as any other failure to calculate.
             close = recent['Close'].iloc[-1]
-            
+            if pd.isna(high) or pd.isna(low) or pd.isna(close):
+                return {}
+
             pivot = (high + low + close) / 3
             r1 = 2 * pivot - low
             r2 = pivot + (high - low)
             s1 = 2 * pivot - high
             s2 = pivot - (high - low)
-            
+
             return {
                 'pivot': float(pivot),
                 'r1': float(r1),

@@ -156,8 +156,8 @@ class DCFAnalyzer(IAnalyzer):
         """Run one DCF scenario against an adjusted config and shape the result -
         this is the exact logic the analyzer always ran, now reusable per-scenario."""
         dcf_calcuations = dcf_yf.get_share_price(ticker_symbol=ticker, config=cfg, ticker=ticker_obj)
-        share_price = dcf_calcuations.get('share_price', 0)
-        equity_value = dcf_calcuations.get('equity_value', 0)
+        share_price = dcf_calcuations.get('share_price', 0) or 0
+        equity_value = dcf_calcuations.get('equity_value', 0) or 0
 
         current_price = metrics.get('current_price', 0)
 
