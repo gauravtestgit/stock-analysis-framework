@@ -238,8 +238,8 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
         section_label("Support & Resistance")
         support_levels = support_resistance.get('support_levels') or []
         resistance_levels = support_resistance.get('resistance_levels') or []
-        level_pairs = [(f"Support S{i}", f"${lvl:.2f}") for i, lvl in enumerate(support_levels, 1)]
-        level_pairs += [(f"Resistance R{i}", f"${lvl:.2f}") for i, lvl in enumerate(resistance_levels, 1)]
+        level_pairs = [(f"Support S{i}", f"${(lvl or 0):.2f}") for i, lvl in enumerate(support_levels, 1)]
+        level_pairs += [(f"Resistance R{i}", f"${(lvl or 0):.2f}") for i, lvl in enumerate(resistance_levels, 1)]
         if level_pairs:
             render_kv_table(level_pairs, cols=4)
         else:
@@ -248,17 +248,17 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
         fibonacci = support_resistance.get('fibonacci') or {}
         if fibonacci:
             st.markdown("**Fibonacci Retracement**")
-            render_kv_table([(level.replace('level_', ''), f"${value:.2f}") for level, value in fibonacci.items()], cols=4)
+            render_kv_table([(level.replace('level_', ''), f"${(value or 0):.2f}") for level, value in fibonacci.items()], cols=4)
 
         pivots = support_resistance.get('pivot_points') or {}
         if pivots:
             st.markdown("**Pivot Points**")
             render_kv_table([
-                ("Pivot", f"${pivots.get('pivot', 0):.2f}"),
-                ("R1", f"${pivots.get('r1', 0):.2f}"),
-                ("R2", f"${pivots.get('r2', 0):.2f}"),
-                ("S1", f"${pivots.get('s1', 0):.2f}"),
-                ("S2", f"${pivots.get('s2', 0):.2f}"),
+                ("Pivot", f"${pivots.get('pivot', 0) or 0:.2f}"),
+                ("R1", f"${pivots.get('r1', 0) or 0:.2f}"),
+                ("R2", f"${pivots.get('r2', 0) or 0:.2f}"),
+                ("S1", f"${pivots.get('s1', 0) or 0:.2f}"),
+                ("S2", f"${pivots.get('s2', 0) or 0:.2f}"),
             ], cols=5)
 
     if ticker:
