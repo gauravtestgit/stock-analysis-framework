@@ -140,13 +140,28 @@ def _render_readable_dict(data: dict, hidden_keys=_READABLE_DICT_HIDDEN_KEYS):
         _render_value_readable(value)
 
 
-def _render_comparable_details(data: dict):
+def _render_comparable_details(data: dict, fm: dict = None):
     """Local, denser replacement for the shared display_comparable_details
     (thesis_generation_full.py) - that function renders one st.write() call
     per field (each its own paragraph-spaced block, only 2 per row), which
     reads as a long vertical list. Same fields, as kv-tables instead."""
+    fm = fm or {}
     multiples = data.get('target_multiples') or {}
     sources = data.get('multiple_sources') or {}
+
+    def _fmt_multiple(val):
+        return f"{val:.2f}x" if isinstance(val, (int, float)) else "N/A"
+
+    # Current (actual, present-day) multiples - distinct from the forward-estimated
+    # ones below, which are what the comparable-valuation price target is based on,
+    # not what the stock is trading at today.
+    section_label("Current Valuation Multiples")
+    render_kv_table([
+        ('P/E', _fmt_multiple(fm.get('pe_ratio'))),
+        ('P/S', _fmt_multiple(fm.get('ps_ratio'))),
+        ('P/B', _fmt_multiple(fm.get('pb_ratio'))),
+        ('EV/EBITDA', _fmt_multiple(fm.get('ev_ebitda_multiple'))),
+    ], cols=4)
 
     def _tagged(key, label):
         val = multiples.get(key)
@@ -154,7 +169,7 @@ def _render_comparable_details(data: dict):
         return (label, f"{val:.2f}x{tag}" if isinstance(val, (int, float)) else "N/A")
 
     if multiples:
-        section_label("Valuation Multiples")
+        section_label("Future Estimated Valuation Multiples")
         render_kv_table([_tagged('pe', 'P/E'), _tagged('ps', 'P/S'),
                           _tagged('pb', 'P/B'), _tagged('ev_ebitda', 'EV/EBITDA')], cols=4)
         if sources:
@@ -379,7 +394,7 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
 # financial_metrics) for a uniform dispatch signature even where an argument
 # goes unused.
 _LOCAL_DETAIL_RENDERERS = {
-    'comparable': lambda data, ticker, fm: _render_comparable_details(data),
+    'comparable': lambda data, ticker, fm: _render_comparable_details(data, fm),
     'technical': _render_technical_details,
     'dcf': lambda data, ticker, fm: display_dcf_details(data, ticker),
     'analyst_consensus': lambda data, ticker, fm: display_analyst_consensus_details(data),

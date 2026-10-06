@@ -79,79 +79,91 @@ class NewsSentimentAnalyzer(IAnalyzer):
         return True
     
     def _get_recent_news(self, ticker: str, company_info: Dict[str, Any]) -> Optional[List[Dict]]:
-        """Get recent news using yfinance"""
-        
+        """Get recent news using yfinance.
+
+        yf.Ticker(ticker).news started returning an empty list for every ticker
+        market-wide around early October 2026 (confirmed: AAPL/MSFT/TSLA/SPY/UBER all
+        empty, no exception raised - a Yahoo-side endpoint change/removal, not a
+        ticker-specific or data-quality issue). yf.Search(ticker, news_count=...).news
+        still works and returns real articles, confirmed against a known yfinance
+        GitHub issue reporting the same break and the same workaround. Its schema is
+        flat (title/publisher/link/providerPublishTime/relatedTickers) rather than the
+        old nested content/provider/canonicalUrl structure - mapped below. It has no
+        summary/description field at all (unlike the old schema, where it was only a
+        fallback for when scraping is disabled/fails anyway), so that gap only shows up
+        when enable_web_scraping is off or a given article's page can't be scraped.
+        """
+
         try:
             import yfinance as yf
-            stock = yf.Ticker(ticker)
-            
-            # Get news from yfinance
-            news_data = stock.news
-            
+
+            # Over-fetch since some results get filtered out below for not actually
+            # being about this ticker (yf.Search is a general search, not scoped to
+            # one ticker's own news feed the way the old Ticker.news was).
+            search = yf.Search(ticker, news_count=self.max_articles * 3)
+            news_data = search.news
+
             if not news_data:
                 debug_print(f"No news found for {ticker}")
                 return None
-            
+
+            # Keep only articles yfinance itself tags as actually about this ticker.
+            news_data = [n for n in news_data if ticker.upper() in (n.get('relatedTickers') or [])]
+            if not news_data:
+                debug_print(f"No news found for {ticker} after relatedTickers filtering")
+                return None
+
             # Sort news by date (newest first) before limiting
             try:
                 news_data_sorted = sorted(
                     news_data,
-                    key=lambda x: x.get('content', {}).get('pubDate', ''),
+                    key=lambda x: x.get('providerPublishTime', 0),
                     reverse=True
                 )
             except Exception as e:
                 debug_print(f"Warning: Could not sort news by date for {ticker}: {e}")
                 news_data_sorted = news_data  # Use unsorted if sorting fails
-            
+
             processed_news = []
             # Limit to configured number of articles for processing (now sorted by date)
             for news_item in news_data_sorted[:self.max_articles]:
-                # Extract content from nested structure
-                content = news_item.get('content', {})
-                
-                # Parse date from pubDate
-                pub_date = content.get('pubDate', '')
-                if pub_date:
+                # providerPublishTime is a Unix timestamp, not the old schema's ISO pubDate string
+                publish_time = news_item.get('providerPublishTime')
+                if publish_time:
                     try:
-                        # Parse ISO format date
-                        news_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00')).strftime('%Y-%m-%d')
+                        news_date = datetime.fromtimestamp(publish_time).strftime('%Y-%m-%d')
                     except:
                         news_date = datetime.now().strftime('%Y-%m-%d')
                 else:
                     news_date = datetime.now().strftime('%Y-%m-%d')
-                
-                # Extract provider info
-                provider = content.get('provider', {})
-                source = provider.get('displayName', 'Unknown')
-                
-                # Extract URL
-                canonical_url = content.get('canonicalUrl', {})
-                click_url = content.get('clickThroughUrl', {})
-                url = canonical_url.get('url', '') or click_url.get('url', '')
-                
+
+                source = news_item.get('publisher', 'Unknown')
+                url = news_item.get('link', '')
+                title = news_item.get('title', 'No title')
+
                 # Try to get full article content only if web scraping is enabled
                 full_content = None
                 if self.enable_web_scraping and url:
                     full_content = self._fetch_article_content(url)
-                    if self.debug_mode and full_content and 'keep an eye on' in content.get('title', '').lower():
-                        debug_print(f"DEBUG: Scraped {len(full_content)} chars for '{content.get('title', '')[:50]}...'")
-                
+                    if self.debug_mode and full_content and 'keep an eye on' in title.lower():
+                        debug_print(f"DEBUG: Scraped {len(full_content)} chars for '{title[:50]}...'")
+
                 processed_news.append({
-                    'title': content.get('title', 'No title'),
-                    'summary': full_content or content.get('summary', content.get('description', 'No summary')),
+                    'title': title,
+                    'summary': full_content or 'No summary',
                     'date': news_date,
                     'source': source,
                     'url': url,
                     'category': 'general',
                     'sentiment': 'neutral'
                 })
-            
+
             return processed_news
-            
+
         except Exception as e:
             debug_print(f"Error fetching news for {ticker}: {e}")
             import traceback
-            traceback.debug_print_exc()
+            debug_print(traceback.format_exc())
             return None
     
     def _fetch_article_content(self, url: str) -> Optional[str]:
