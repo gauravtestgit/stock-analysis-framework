@@ -13,6 +13,15 @@ from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.prompt_formatter import PromptFormatter
 from ...utils.debug_printer import debug_print
 
+# Yahoo's news relatedTickers tags dual-class shares under only one symbol of the
+# pair (confirmed for GOOG/GOOGL - every Alphabet article comes back tagged 'GOOG'
+# even when searching 'GOOGL'), so _get_recent_news's relevance filter below needs
+# to accept either symbol for tickers with a known counterpart.
+_DUAL_CLASS_TICKERS = {
+    'GOOG': {'GOOGL'},
+    'GOOGL': {'GOOG'},
+}
+
 class NewsSentimentAnalyzer(IAnalyzer):
     """Enhanced news sentiment analyzer with recent developments tracking"""
     
@@ -108,7 +117,11 @@ class NewsSentimentAnalyzer(IAnalyzer):
                 return None
 
             # Keep only articles yfinance itself tags as actually about this ticker.
-            news_data = [n for n in news_data if ticker.upper() in (n.get('relatedTickers') or [])]
+            # Dual-class shares are tagged under only one of the two symbols (confirmed:
+            # GOOGL's news all comes back tagged 'GOOG', never 'GOOGL') so an exact-match
+            # filter drops every article for the untagged class - accept either symbol.
+            accepted_tickers = {ticker.upper()} | _DUAL_CLASS_TICKERS.get(ticker.upper(), set())
+            news_data = [n for n in news_data if accepted_tickers & set(n.get('relatedTickers') or [])]
             if not news_data:
                 debug_print(f"No news found for {ticker} after relatedTickers filtering")
                 return None
