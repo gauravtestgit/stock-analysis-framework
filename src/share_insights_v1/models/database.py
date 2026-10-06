@@ -27,4 +27,5 @@ def create_tables():
     """Create all database tables"""
     # Import models to register them with Base
     from . import strategy_models
+    from . import portfolio_models
     Base.metadata.create_all(bind=engine)

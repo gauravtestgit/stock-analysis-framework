@@ -126,6 +126,8 @@ def main():
             st.Page("pages/file_dashboard.py", title="File Dashboard", icon="📁"),
             st.Page("pages/prompt_management.py", title="Prompt Management", icon="🔧"),
             st.Page("pages/thesis_generation_full.py", title="Thesis Generation Full", icon="📝"),
+            # Newly built, needs more real-world testing before promoting to Main.
+            st.Page("pages/portfolio_management.py", title="Current Portfolio", icon="💼"),
         ],
     })
     pg.run()
