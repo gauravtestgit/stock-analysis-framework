@@ -106,10 +106,18 @@ class NewsSentimentAnalyzer(IAnalyzer):
         try:
             import yfinance as yf
 
+            # yf.Search's news query doesn't match on a full exchange-suffixed ticker
+            # (confirmed: 'ANZ.AX', 'CBA.AX', 'BHP.AX', 'FPH.NZ' all return zero results
+            # as search strings) - it needs the bare base symbol. Yahoo's own relatedTickers
+            # tagging still uses the full suffixed form though (confirmed: searching 'ANZ'
+            # returns articles tagged 'ANZ.AX'), so only the query is stripped - the
+            # relevance filter below still matches against the original, full ticker.
+            search_query = ticker.rsplit('.', 1)[0] if '.' in ticker else ticker
+
             # Over-fetch since some results get filtered out below for not actually
             # being about this ticker (yf.Search is a general search, not scoped to
             # one ticker's own news feed the way the old Ticker.news was).
-            search = yf.Search(ticker, news_count=self.max_articles * 3)
+            search = yf.Search(search_query, news_count=self.max_articles * 3)
             news_data = search.news
 
             if not news_data:
