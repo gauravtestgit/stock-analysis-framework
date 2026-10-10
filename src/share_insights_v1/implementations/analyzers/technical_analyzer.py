@@ -34,9 +34,13 @@ class TechnicalAnalyzer(IAnalyzer):
                 return {'error': 'No price history available'}
 
             current_price = hist['Close'].iloc[-1]
-            # Calculate moving averages
-            ma_20 = hist['Close'].rolling(window=20).mean().iloc[-1] if len(hist) >= 20 else None
-            ma_50 = hist['Close'].rolling(window=50).mean().iloc[-1] if len(hist) >= 50 else None
+            # Calculate moving averages - 20/50-day series are kept (not just their
+            # latest value) so the trend classification below can check each MA's own
+            # slope, not just where price sits relative to it.
+            ma_20_series = hist['Close'].rolling(window=20).mean() if len(hist) >= 20 else None
+            ma_50_series = hist['Close'].rolling(window=50).mean() if len(hist) >= 50 else None
+            ma_20 = ma_20_series.iloc[-1] if ma_20_series is not None else None
+            ma_50 = ma_50_series.iloc[-1] if ma_50_series is not None else None
             ma_200 = hist['Close'].rolling(window=200).mean().iloc[-1] if len(hist) >= 200 else None
             
             # Calculate volatility
@@ -53,49 +57,63 @@ class TechnicalAnalyzer(IAnalyzer):
             avg_volume = hist['Volume'].mean()
             recent_volume = hist['Volume'].iloc[-10:].mean()
             
-            # Determine trend based on Moving averages
+            # Determine trend based on Moving averages. Price position relative to a MA
+            # is confirmed against that MA's OWN slope (is it still actually rising/
+            # falling, not just where price happens to sit against it right now) before
+            # calling it a trend - otherwise a bounce above a still-declining MA50 reads
+            # as an "Uptrend" even though the average itself, and the broader chart
+            # shape, still looks bearish. When a MA's slope can't be judged yet (not
+            # enough history for the lookback window), _slope_direction returns None and
+            # the slope check is a no-op, so short-history tickers fall back to the
+            # original price-position-only behavior rather than losing a trend label.
             price_targets = {}
             predicted_price = current_price
             ma_trend = ''
-            
+
+            ma_50_slope = self._slope_direction(ma_50_series, lookback=10, threshold_pct=0.3) if ma_50_series is not None else None
+            ma_20_slope = self._slope_direction(ma_20_series, lookback=5, threshold_pct=0.3) if ma_20_series is not None else None
+
             if ma_200 is not None and ma_50 is not None:
                 # Full trend analysis with all 3 MAs
-                if current_price > ma_50 > ma_200:
+                if current_price > ma_50 > ma_200 and ma_50_slope != 'down':
                     ma_trend = 'Strong Uptrend'
                     price_targets['short_term'] = current_price * (1 + volatility * 0.5)  # 6-month target
                     predicted_price = price_targets['medium_term'] = current_price * (1 + volatility)  # 12-month target
-                elif current_price < ma_50 < ma_200:
+                elif current_price < ma_50 < ma_200 and ma_50_slope != 'up':
                     ma_trend = 'Strong Downtrend'
                     price_targets['short_term'] = current_price * (1 - volatility * 0.3)
                     predicted_price = price_targets['medium_term'] = max(ma_200, current_price * (1 - volatility * 0.5))
-                elif current_price > ma_50:
+                elif current_price > ma_50 and ma_50_slope != 'down':
                     ma_trend = 'Uptrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 + volatility * 0.5)  # 6-month target
                     price_targets['medium_term'] = current_price * (1 + volatility)  # 12-month target
-                elif current_price < ma_50:
+                elif current_price < ma_50 and ma_50_slope != 'up':
                     ma_trend = 'Downtrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 - volatility * 0.3)
                     price_targets['medium_term'] = max(ma_50, current_price * (1 - volatility * 0.5))
                 else:
+                    # Price position and MA50's own direction disagree (e.g. price above
+                    # a still-falling MA50), or price sits right at MA50 - a genuine
+                    # mixed-signal/transitional period rather than a confirmed trend.
                     ma_trend = 'Sideways'
             elif ma_50 is not None:
                 # Simple trend analysis with just 50-day MA
-                if current_price > ma_50:
+                if current_price > ma_50 and ma_50_slope != 'down':
                     ma_trend = 'Short-term Uptrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 + volatility * 0.5)  # 6-month target
                     price_targets['medium_term'] = current_price * (1 + volatility)  # 12-month target
-                elif current_price < ma_50:
+                elif current_price < ma_50 and ma_50_slope != 'up':
                     ma_trend = 'Short-term Downtrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 - volatility * 0.3)
                     price_targets['medium_term'] = max(ma_50, current_price * (1 - volatility * 0.5))
                 else:
                     ma_trend = 'Sideways'
             elif ma_20 is not None:
-                if current_price > ma_20:
+                if current_price > ma_20 and ma_20_slope != 'down':
                     ma_trend = 'Near-term Uptrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 + volatility * 0.5)  # 6-month target
                     price_targets['medium_term'] = current_price * (1 + volatility)  # 12-month target
-                elif current_price < ma_20:
+                elif current_price < ma_20 and ma_20_slope != 'up':
                     ma_trend = 'Near-term Downtrend'
                     predicted_price = price_targets['short_term'] = current_price * (1 - volatility * 0.3)
                     price_targets['medium_term'] = max(ma_20, current_price * (1 - volatility * 0.5))
@@ -232,6 +250,26 @@ class TechnicalAnalyzer(IAnalyzer):
         except Exception as e:
             return {'error': str(e)}
     
+    def _slope_direction(self, ma_series: pd.Series, lookback: int, threshold_pct: float) -> str:
+        """Direction a moving-average series has moved over its last `lookback` bars -
+        'up'/'down' if the change exceeds threshold_pct, 'flat' otherwise, or None when
+        there isn't enough history yet to judge (fewer than lookback+1 bars, or the
+        bar at -1-lookback still falls inside the rolling window's NaN warm-up period).
+        None is deliberate, not an error case: callers treat it as "no slope opinion",
+        which keeps the original price-position-only behavior for short-history tickers
+        instead of guessing from insufficient data."""
+        if ma_series is None or len(ma_series) < lookback + 1:
+            return None
+        current, prior = ma_series.iloc[-1], ma_series.iloc[-1 - lookback]
+        if pd.isna(current) or pd.isna(prior) or prior == 0:
+            return None
+        change_pct = (current - prior) / prior * 100
+        if change_pct > threshold_pct:
+            return 'up'
+        elif change_pct < -threshold_pct:
+            return 'down'
+        return 'flat'
+
     def _analyze_technical_signals(self, indicators: Dict[str, Any]) -> Dict[str, Any]:
         """Enhanced technical analysis with multiple indicators"""
         signals = {'bullish': 0, 'bearish': 0, 'signals': [], 'categories': []}
