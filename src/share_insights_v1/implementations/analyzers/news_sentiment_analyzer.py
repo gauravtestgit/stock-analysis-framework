@@ -129,7 +129,25 @@ class NewsSentimentAnalyzer(IAnalyzer):
             # GOOGL's news all comes back tagged 'GOOG', never 'GOOGL') so an exact-match
             # filter drops every article for the untagged class - accept either symbol.
             accepted_tickers = {ticker.upper()} | _DUAL_CLASS_TICKERS.get(ticker.upper(), set())
-            news_data = [n for n in news_data if accepted_tickers & set(n.get('relatedTickers') or [])]
+
+            # Cross-exchange dual listings have the same gap (confirmed: ANZ.NZ's news
+            # all comes back tagged 'ANZ.AX', never 'ANZ.NZ' - same company, Australia's
+            # ASX is Yahoo's canonical tag for it). Accept a relatedTicker with the same
+            # base symbol on a different suffix too - but only when it's ALSO suffixed,
+            # otherwise this would match a same-named bare ticker on a totally unrelated
+            # exchange (confirmed: NZX's 'FPH' base symbol collides with the unrelated
+            # NYSE-listed Five Point Holdings, which is untagged/bare 'FPH').
+            ticker_base = ticker.upper().rsplit('.', 1)[0] if '.' in ticker.upper() else None
+
+            def _is_relevant(n):
+                related = n.get('relatedTickers') or []
+                if accepted_tickers & set(related):
+                    return True
+                if ticker_base:
+                    return any('.' in r and r.rsplit('.', 1)[0] == ticker_base for r in related)
+                return False
+
+            news_data = [n for n in news_data if _is_relevant(n)]
             if not news_data:
                 debug_print(f"No news found for {ticker} after relatedTickers filtering")
                 return None

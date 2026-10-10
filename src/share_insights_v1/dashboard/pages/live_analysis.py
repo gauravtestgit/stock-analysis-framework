@@ -1098,8 +1098,18 @@ def show_live_analysis_page():
     st.markdown("---")
 
     if mode == "Watchlist Batch" and st.session_state.get('batch_results'):
-        successful_results = {t: d for t, d in st.session_state.batch_results.items() if 'error' not in d}
-        failed_tickers = [t for t, d in st.session_state.batch_results.items() if 'error' in d]
+        batch_results = st.session_state.batch_results
+        # batch_results is keyed in completion order (analyze_watchlist_batch collects
+        # via as_completed(), not submission order), so the table would otherwise jump
+        # around run to run based on which stock's analysis happened to finish first.
+        # batch_watchlist preserves the order tickers were actually entered in - reorder
+        # by that instead, falling back to raw dict order if it's missing (e.g. stale
+        # session state from before this ordering existed).
+        ordered_tickers = st.session_state.get('batch_watchlist') or list(batch_results.keys())
+        ordered_tickers = [t for t in ordered_tickers if t in batch_results] + \
+            [t for t in batch_results if t not in ordered_tickers]
+        successful_results = {t: batch_results[t] for t in ordered_tickers if 'error' not in batch_results[t]}
+        failed_tickers = [t for t in ordered_tickers if 'error' in batch_results[t]]
 
         if not successful_results:
             st.warning("All stocks in the last batch run failed.")
