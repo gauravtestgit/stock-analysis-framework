@@ -153,7 +153,16 @@ class YahooFinanceProvider(IDataProvider):
             if forward_metrics['earnings_timestamp']:
                 from datetime import datetime
                 forward_metrics['earnings_date'] = datetime.fromtimestamp(forward_metrics['earnings_timestamp']).strftime('%Y-%m-%d')
-            
+
+            # Short interest is exchange-reported on a settlement cycle (roughly twice a
+            # month), not daily like price/volume - date_short_interest is the as-of date
+            # this data was last updated, so callers can tell a "stale-looking" value from
+            # an actual data gap.
+            date_short_interest = None
+            if info.get('dateShortInterest'):
+                from datetime import datetime
+                date_short_interest = datetime.fromtimestamp(info['dateShortInterest']).strftime('%Y-%m-%d')
+
             return {
                 'market_cap': info.get('marketCap', 0),
                 'sector': info.get('sector', ''),
@@ -182,6 +191,11 @@ class YahooFinanceProvider(IDataProvider):
                 'float_shares': info.get('floatShares', 0),
                 'current_price': info.get('currentPrice') or info.get('regularMarketPrice') or info.get('navPrice') or info.get('previousClose') or info.get('ask') or info.get('bid') or 0,
                 'beta': info.get('beta', 1.0),
+                'short_percent_of_float': info.get('shortPercentOfFloat'),
+                'short_ratio': info.get('shortRatio'),
+                'shares_short': info.get('sharesShort'),
+                'shares_short_prior_month': info.get('sharesShortPriorMonth'),
+                'date_short_interest': date_short_interest,
                 'pe_ratio': info.get('trailingPE'),
                 'pb_ratio': info.get('priceToBook'),
                 'ps_ratio': info.get('priceToSalesTrailing12Months'),
