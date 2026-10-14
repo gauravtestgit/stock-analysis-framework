@@ -248,6 +248,23 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
         ("Shares Outstanding", f"{shares_outstanding / 1e6:.0f}M"),
     ], cols=3)
 
+    short_pct = data.get('short_percent_of_float')
+    shares_short = data.get('shares_short')
+    shares_short_prior = data.get('shares_short_prior_month')
+    short_change_pct = (
+        (shares_short - shares_short_prior) / shares_short_prior * 100
+        if shares_short is not None and shares_short_prior else None
+    )
+    section_label("Short Interest & Risk")
+    render_kv_table([
+        ("Beta", _fmt_num(data.get('beta'))),
+        ("Short % of Float", _fmt_num(short_pct * 100 if short_pct is not None else None, decimals=1, suffix="%")),
+        ("Days to Cover", _fmt_num(data.get('short_ratio'), decimals=1)),
+        ("Shares Short", f"{shares_short / 1e6:.1f}M" if shares_short else "N/A"),
+        ("vs Prior Month", _fmt_num(short_change_pct, decimals=0, suffix="%") if short_change_pct is not None else "N/A"),
+        ("As of", data.get('date_short_interest') or "N/A"),
+    ], cols=3)
+
     support_resistance = data.get('support_resistance') or {}
     if support_resistance:
         section_label("Support & Resistance")

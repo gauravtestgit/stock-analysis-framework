@@ -13,6 +13,7 @@ class TechnicalAnalyzer(IAnalyzer):
         try:
             price_data = data.get('price_data', {})
             hist = price_data.get('price_history')
+            financial_metrics = data.get('financial_metrics', {})
 
             if hist is None or hist.empty:
                 return {'error': 'No price history available'}
@@ -184,7 +185,12 @@ class TechnicalAnalyzer(IAnalyzer):
                 'range_pos': range_pos,
                 'ma_trend': ma_trend,
                 'adx': adx, 'di_plus': di_plus, 'di_minus': di_minus,
-                'atr': atr, 'atr_percent': atr_percent
+                'atr': atr, 'atr_percent': atr_percent,
+                'beta': financial_metrics.get('beta'),
+                'short_percent_of_float': financial_metrics.get('short_percent_of_float'),
+                'short_ratio': financial_metrics.get('short_ratio'),
+                'shares_short': financial_metrics.get('shares_short'),
+                'shares_short_prior_month': financial_metrics.get('shares_short_prior_month'),
             })
             
             recommendation = technical_signals['recommendation']
@@ -239,6 +245,12 @@ class TechnicalAnalyzer(IAnalyzer):
                 'di_minus': di_minus,
                 'atr': atr,
                 'atr_percent': atr_percent,
+                'beta': financial_metrics.get('beta'),
+                'short_percent_of_float': financial_metrics.get('short_percent_of_float'),
+                'short_ratio': financial_metrics.get('short_ratio'),
+                'shares_short': financial_metrics.get('shares_short'),
+                'shares_short_prior_month': financial_metrics.get('shares_short_prior_month'),
+                'date_short_interest': financial_metrics.get('date_short_interest'),
                 'technical_signals': technical_signals,
                 'support_resistance': support_resistance,
                 'chart_data': chart_data,
@@ -362,6 +374,44 @@ class TechnicalAnalyzer(IAnalyzer):
                 _add('neutral', f"High volatility (ATR {atr_pct:.1f}%)")
             elif atr_pct < 2:  # Low volatility
                 _add('neutral', f"Low volatility (ATR {atr_pct:.1f}%)")
+
+        # Short Interest Signals - thresholds follow common short-interest-analysis
+        # convention (>20% of float is squeeze territory, >10% is elevated; >7 days
+        # to cover is considered slow/squeeze-prone). High short interest alongside a
+        # high days-to-cover is scored bullish (a crowded short with limited daily
+        # volume to exit through is squeeze risk, which moves price up, not down) -
+        # high short interest on its own, without that liquidity squeeze setup, is
+        # scored as bearish sentiment instead.
+        short_pct = indicators.get('short_percent_of_float')
+        short_ratio = indicators.get('short_ratio')
+        if short_pct is not None:
+            if short_pct > 0.20 and short_ratio is not None and short_ratio > 5:
+                _add('bullish', f"Short squeeze risk ({short_pct*100:.1f}% of float short, {short_ratio:.1f} days to cover)", 2)
+            elif short_pct > 0.10:
+                _add('bearish', f"Elevated short interest ({short_pct*100:.1f}% of float)", 1)
+
+        # Short Interest Trend - shares short is only reported ~twice a month, so this
+        # compares the two most recent settlement snapshots rather than a rolling window.
+        shares_short = indicators.get('shares_short')
+        shares_short_prior = indicators.get('shares_short_prior_month')
+        if shares_short is not None and shares_short_prior:
+            short_change_pct = (shares_short - shares_short_prior) / shares_short_prior * 100
+            if short_change_pct > 15:
+                _add('bearish', f"Short interest rising ({short_change_pct:+.0f}% vs prior month)", 1)
+            elif short_change_pct < -15:
+                _add('bullish', f"Short interest falling, likely covering ({short_change_pct:+.0f}% vs prior month)", 1)
+
+        # Beta Signal - beta itself isn't bullish/bearish (it's a volatility multiplier,
+        # not a direction), but in a scoring system built to surface attractive buy
+        # candidates it's treated as a risk adjustment: a materially below-market-beta
+        # stock carries less downside amplification for the same thesis, a materially
+        # above-market-beta stock carries more.
+        beta = indicators.get('beta')
+        if beta is not None:
+            if beta > 1.5:
+                _add('bearish', f"High beta ({beta:.2f}) - elevated market-relative risk", 1)
+            elif beta < 0.7:
+                _add('bullish', f"Low beta ({beta:.2f}) - defensive volatility profile", 1)
 
         # Generate recommendation based on signal strength
         net_signal = signals['bullish'] - signals['bearish']
