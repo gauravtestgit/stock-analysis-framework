@@ -18,7 +18,6 @@ from src.share_insights_v1.dashboard.pages.thesis_generation_full import (
     display_business_model_details,
     display_analyst_consensus_details,
     display_industry_analysis_details,
-    display_startup_details,
     generate_investment_thesis,
 )
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
@@ -399,6 +398,57 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
                 st.markdown(f"- {item}")
 
 
+def _render_startup_details(data: dict):
+    """Local, denser replacement for the shared display_startup_details -
+    that function only shows Stage/Runway/Risk Score/Growth Quality and
+    drops risk_factors (the actual list of concerns driving the risk score)
+    and every revenue/dilution figure entirely. Same underlying analysis
+    data, just actually surfaced."""
+    section_label("Startup Metrics")
+    render_kv_table([
+        ("Stage", data.get('stage', 'N/A')),
+        ("Cash Runway", f"{(data.get('cash_runway_years', 0) or 0):.1f} years"),
+        ("Quarterly Burn Rate", f"${(data.get('quarterly_burn_rate', 0) or 0):,.0f}"),
+        ("Risk Score", f"{data.get('risk_score', 0)}/100"),
+        ("Confidence", data.get('confidence_level', 'N/A')),
+        ("Investment Type", data.get('investment_type', 'N/A')),
+    ], cols=3)
+
+    section_label("Revenue & Growth")
+    growth_rates = data.get('revenue_growth_rates') or []
+    unreliable = data.get('unreliable_revenue_periods', 0) or 0
+    render_kv_table([
+        ("Current Revenue", f"${(data.get('current_revenue', 0) or 0):,.0f}"),
+        ("Median Growth", data.get('median_growth', 'N/A')),
+        ("Growth Quality", data.get('growth_quality', 'N/A')),
+        ("Revenue Volatility", data.get('revenue_volatility', 'N/A')),
+        ("YoY Growth Rates Used", ", ".join(growth_rates) if growth_rates else "None reliable"),
+        ("Dilution Rate (Annual)", data.get('dilution_rate_annual') or "N/A"),
+    ], cols=3)
+    if unreliable:
+        st.caption(
+            f"⚠️ {unreliable} revenue comparison(s) excluded as unreliable "
+            "(isolated near-zero period, likely one-time/non-recurring revenue)"
+        )
+
+    section_label("Valuation Projection")
+    multiple_breakdown = data.get('revenue_multiple_breakdown') or {}
+    render_kv_table([
+        ("Implied Value Estimate", f"${(data.get('implied_value_estimate', 0) or 0):,.0f}"),
+        ("Projected Revenue (1y)", f"${(data.get('projected_revenue_1yr', 0) or 0):,.0f}"),
+        ("Projected Revenue (2y)", f"${(data.get('projected_revenue_2yr', 0) or 0):,.0f}"),
+        ("Base Multiple", f"{multiple_breakdown.get('base_multiple', 0):.2f}x"),
+        ("Risk Adjustment", f"{multiple_breakdown.get('risk_adjustment', 0):.2f}x"),
+        ("Stage Adjustment", f"{multiple_breakdown.get('stage_adjustment', 0):.2f}x"),
+    ], cols=3)
+
+    risk_factors = data.get('risk_factors') or []
+    if risk_factors:
+        section_label("Risk Factors")
+        for factor in risk_factors:
+            st.markdown(f"- {factor}")
+
+
 # Analyzers with a local, denser renderer replacing the shared page's version -
 # same underlying analysis data and (for dcf/analyst_consensus/business_model/
 # industry_analysis/ai_insights/news_sentiment/startup) the exact same body
@@ -419,7 +469,7 @@ _LOCAL_DETAIL_RENDERERS = {
     'industry_analysis': lambda data, ticker, fm: display_industry_analysis_details(data),
     'ai_insights': lambda data, ticker, fm: display_ai_insights_details(data),
     'news_sentiment': lambda data, ticker, fm: display_news_details(data),
-    'startup': lambda data, ticker, fm: display_startup_details(data),
+    'startup': lambda data, ticker, fm: _render_startup_details(data),
 }
 
 
