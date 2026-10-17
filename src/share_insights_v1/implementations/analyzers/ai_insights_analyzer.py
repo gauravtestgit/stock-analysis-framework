@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta
 from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.prompt_formatter import PromptFormatter, create_company_insights_prompt, create_revenue_trends_prompt, create_etf_insights_prompt
+from ...utils.json_extractor import extract_json_from_llm_response
 
 class AIInsightsAnalyzer(IAnalyzer):
     """AI-powered analyzer for market insights and revenue trends"""
@@ -449,27 +450,7 @@ Consider factors like:
     
     def _extract_json_from_response(self, response: str) -> str:
         """Extract JSON from LLM response that may contain markdown code blocks"""
-        import re
-        
-        # First try to find JSON in markdown code blocks
-        json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            return json_match.group(1).strip()
-        
-        # Try to find JSON in regular code blocks
-        json_match = re.search(r'```\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            potential_json = json_match.group(1).strip()
-            if potential_json.startswith('{') and potential_json.endswith('}'):
-                return potential_json
-        
-        # Try to find JSON object in the text
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
-        if json_match:
-            return json_match.group(0)
-        
-        # If no JSON found, return original response
-        return response
+        return extract_json_from_llm_response(response) or response
     
     def _assess_market_position(self, financial_metrics: Dict) -> str:
         """Assess market position based on financial metrics"""
