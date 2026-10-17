@@ -15,9 +15,7 @@ from src.share_insights_v1.dashboard.pages.thesis_generation_full import (
     display_dcf_details,
     display_ai_insights_details,
     display_news_details,
-    display_business_model_details,
     display_analyst_consensus_details,
-    display_industry_analysis_details,
     generate_investment_thesis,
 )
 from src.share_insights_v1.dashboard.components.disclaimer import show_disclaimer
@@ -67,11 +65,11 @@ TAB_GROUPS = {
     "Thesis": [],
 }
 
-# financial_health/competitive_position/management_quality have no dedicated
-# renderer upstream (display_analyzer_tab falls back to a raw st.json() dump
-# for these, which is hard to scan) - they're the analyzer keys absent from
-# _LOCAL_DETAIL_RENDERERS below, so _render_analyzer_tab's dispatch falls
-# through to _render_readable_dict for them instead.
+# competitive_position has no dedicated renderer upstream (display_analyzer_tab
+# falls back to a raw st.json() dump for it, which is hard to scan) - it's the
+# only analyzer key absent from _LOCAL_DETAIL_RENDERERS below, so
+# _render_analyzer_tab's dispatch falls through to _render_readable_dict for
+# it instead.
 _READABLE_DICT_HIDDEN_KEYS = {
     'method', 'applicable', 'recommendation', 'predicted_price', 'confidence',
     'error', 'upside_downside_pct', 'current_price', 'total_equity_value',
@@ -449,6 +447,324 @@ def _render_startup_details(data: dict):
             st.markdown(f"- {factor}")
 
 
+def _render_business_model_details(data: dict):
+    """Local, denser replacement for the shared display_business_model_details -
+    that function only shows type/moat/scalability/strengths/risks and drops
+    product_portfolio, competitive_differentiation, and segment_revenue_data
+    entirely, even though the analyzer already computes and returns all three."""
+    section_label("Business Model")
+    recurring_pct = data.get('recurring_percentage')
+    render_kv_table([
+        ("Type", data.get('business_model_type', 'N/A')),
+        ("Primary Revenue Stream", data.get('primary_revenue_stream', 'N/A')),
+        ("Revenue Quality", data.get('revenue_quality', 'N/A')),
+        ("Recurring Revenue", f"{recurring_pct*100:.0f}%" if recurring_pct is not None else "N/A"),
+        ("Scalability Score", f"{data.get('scalability_score', 0):.1f}/10"),
+        ("Competitive Moat", data.get('competitive_moat', 'N/A')),
+    ], cols=3)
+
+    product = data.get('product_portfolio') or {}
+    if product:
+        section_label("Product Portfolio")
+        render_kv_table([
+            ("Breadth", product.get('product_breadth', 'N/A')),
+            ("Depth", product.get('product_depth', 'N/A')),
+            ("Innovation Level", product.get('innovation_level', 'N/A')),
+            ("Cross-Selling Potential", product.get('cross_selling_potential', 'N/A')),
+        ], cols=4)
+        core_products = product.get('core_products') or []
+        if core_products:
+            st.caption("**Core Products:** " + ", ".join(core_products))
+        for label, key in [("Product Strengths", 'product_strengths'), ("Product Weaknesses", 'product_weaknesses')]:
+            items = product.get(key) or []
+            if items:
+                st.markdown(f"**{label}**")
+                for item in items:
+                    st.markdown(f"- {item}")
+
+    comp = data.get('competitive_differentiation') or {}
+    if comp:
+        section_label("Competitive Differentiation")
+        render_kv_table([
+            ("Strategy", comp.get('differentiation_strategy', 'N/A')),
+            ("Positioning", comp.get('competitive_positioning', 'N/A')),
+            ("Switching Costs", comp.get('switching_costs', 'N/A')),
+            ("Brand Strength", comp.get('brand_strength', 'N/A')),
+            ("Technology Moat", comp.get('technology_moat', 'N/A')),
+        ], cols=3)
+        key_competitors = comp.get('key_competitors') or []
+        if key_competitors:
+            st.caption("**Key Competitors:** " + ", ".join(key_competitors))
+        for label, key in [
+            ("Competitive Advantages", 'competitive_advantages'),
+            ("Unique Value Propositions", 'unique_value_propositions'),
+            ("Barriers to Entry", 'barriers_to_entry'),
+            ("Competitive Threats", 'competitive_threats'),
+        ]:
+            items = comp.get(key) or []
+            if items:
+                st.markdown(f"**{label}**")
+                for item in items:
+                    st.markdown(f"- {item}")
+
+    segments = data.get('segment_revenue_data') or {}
+    primary_segments = segments.get('primary_segments') or []
+    if primary_segments:
+        section_label("Revenue Segments")
+        render_kv_table([
+            (seg.get('segment_name', 'N/A'), f"{seg.get('revenue_percentage', 0):.1f}% · {seg.get('growth_trend', 'N/A')} · {seg.get('margin_profile', 'N/A')} margin")
+            for seg in primary_segments
+        ], cols=2)
+        st.caption(
+            f"Diversification: {segments.get('revenue_diversification', 'N/A')} · "
+            f"Largest: {segments.get('largest_segment', 'N/A')} · "
+            f"Fastest Growing: {segments.get('fastest_growing_segment', 'N/A')}"
+        )
+
+    strengths = data.get('strengths') or []
+    risks = data.get('risks') or []
+    if strengths:
+        section_label("Strengths")
+        for s in strengths:
+            st.markdown(f"- {s}")
+    if risks:
+        section_label("Risks")
+        for r in risks:
+            st.markdown(f"- {r}")
+
+
+def _render_financial_health_details(data: dict):
+    """Local renderer for Financial Health - this analyzer key had no dedicated
+    renderer at all and fell through to the generic readable-dict fallback.
+    Also surfaces the raw cash-flow/debt/revenue-growth figures the analyzer
+    computes internally but used to discard, keeping only derived
+    Excellent/Good/Poor labels with nothing backing them."""
+    section_label("Financial Health")
+    render_kv_table([
+        ("Overall Grade", data.get('overall_grade', 'N/A')),
+        ("Filing Date", data.get('filing_date') or 'N/A'),
+        ("Cash Flow", data.get('cash_flow_score', 'N/A')),
+        ("Debt", data.get('debt_score', 'N/A')),
+        ("Revenue Quality", data.get('revenue_score', 'N/A')),
+    ], cols=3)
+
+    capex_intensity = data.get('capex_intensity')
+    section_label("Cash Flow")
+    render_kv_table([
+        ("Operating Cash Flow", format_currency(data['operating_cash_flow']) if data.get('operating_cash_flow') else "N/A"),
+        ("Free Cash Flow", format_currency(data['free_cash_flow']) if data.get('free_cash_flow') else "N/A"),
+        ("Cash Conversion Ratio", _fmt_num(data.get('cash_conversion_ratio'))),
+        ("Capex Intensity", f"{capex_intensity*100:.1f}%" if capex_intensity is not None else "N/A"),
+    ], cols=4)
+
+    section_label("Debt")
+    render_kv_table([
+        ("Total Debt", format_currency(data['total_debt']) if data.get('total_debt') else "N/A"),
+        ("Net Debt", format_currency(data['net_debt']) if data.get('net_debt') else "N/A"),
+        ("Debt/Equity", _fmt_num(data.get('debt_to_equity'))),
+        ("Interest Coverage", _fmt_num(data.get('interest_coverage'), suffix="x")),
+    ], cols=4)
+
+    revenue_growth_3yr = data.get('revenue_growth_3yr')
+    if revenue_growth_3yr is not None:
+        section_label("Revenue")
+        render_kv_table([("3-Year Revenue CAGR", f"{revenue_growth_3yr*100:.1f}%")], cols=1)
+
+    strengths = data.get('strengths') or []
+    risks = data.get('key_risks') or []
+    if strengths:
+        section_label("Strengths")
+        for s in strengths:
+            st.markdown(f"- {s}")
+    if risks:
+        section_label("Key Risks")
+        for r in risks:
+            st.markdown(f"- {r}")
+
+
+def _render_management_quality_details(data: dict):
+    """Local renderer for Management Quality - this analyzer key had no
+    dedicated renderer at all and fell through to the generic readable-dict
+    fallback. Surfaces the actual executive roster (name/title/compensation)
+    and the individual governance risk components, which the analyzer
+    computes but used to collapse down to a bare executive_count and a single
+    blended risk label."""
+    section_label("Management Quality")
+    insider_pct = data.get('insider_ownership')
+    institutional_pct = data.get('institutional_ownership')
+    render_kv_table([
+        ("Overall Score", f"{data.get('overall_quality_score', 0):.1f}/10"),
+        ("Management Quality", data.get('management_quality', 'N/A')),
+        ("Governance Risk", data.get('governance_risk', 'N/A')),
+        ("Insider Ownership", f"{insider_pct*100:.1f}%" if insider_pct is not None else "N/A"),
+        ("Institutional Ownership", f"{institutional_pct*100:.1f}%" if institutional_pct is not None else "N/A"),
+    ], cols=3)
+
+    section_label("Governance Risk Breakdown")
+    render_kv_table([
+        ("Compensation Risk", _fmt_num(data.get('compensation_risk'), decimals=0)),
+        ("Board Risk", _fmt_num(data.get('board_risk'), decimals=0)),
+        ("Audit Risk", _fmt_num(data.get('audit_risk'), decimals=0)),
+        ("Overall Risk Score", _fmt_num(data.get('overall_governance_risk_score'), decimals=0)),
+    ], cols=4)
+    st.caption("Governance risk components are on a 0 (low risk) to 10 (high risk) scale")
+
+    executives = data.get('executive_profiles') or []
+    if executives:
+        section_label("Executive Team")
+        render_kv_table([
+            (e.get('name', 'N/A'), f"{e.get('title', 'N/A')}" + (f" · ${e['total_compensation']:,.0f}" if e.get('total_compensation') else ""))
+            for e in executives
+        ], cols=1)
+
+    strengths = data.get('strengths') or []
+    concerns = data.get('concerns') or []
+    insights = data.get('key_insights') or []
+    if strengths:
+        section_label("Strengths")
+        for s in strengths:
+            st.markdown(f"- {s}")
+    if concerns:
+        section_label("Concerns")
+        for c in concerns:
+            st.markdown(f"- {c}")
+    if insights:
+        section_label("Key Insights")
+        for i in insights:
+            st.markdown(f"- {i}")
+
+
+def _render_industry_analysis_details(data: dict):
+    """Local renderer for Industry Analysis - the shared
+    display_industry_analysis_details only showed 4 scalar fields and dumped
+    porters_five_forces as a raw st.json(), and ignored industry_insights/
+    competitive_analysis/regulatory_analysis/market_catalysts/key_risks
+    entirely even though the analyzer computes rich, reasoned detail for
+    every one of them. Porter's forces and the LLM sub-analyses can each come
+    back in either a full LLM-success shape or a shorter, differently-keyed
+    fallback shape (when the LLM call failed) - .get(a) or .get(b) pairs below
+    handle both without erroring on whichever one is actually present."""
+    section_label("Industry Overview")
+    growth_rate = data.get('industry_growth_rate')
+    render_kv_table([
+        ("Sector", data.get('sector', 'N/A')),
+        ("Industry", data.get('industry', 'N/A')),
+        ("Outlook", data.get('industry_outlook', 'N/A')),
+        ("Competitive Position", data.get('competitive_position', 'N/A')),
+        ("Regulatory Risk", data.get('regulatory_risk', 'N/A')),
+        ("ESG Score", f"{data.get('esg_score', 0):.1f}/10"),
+        ("Market Size", data.get('market_size_estimate', 'N/A')),
+        ("Industry Growth Rate", f"{growth_rate*100:.1f}%" if growth_rate is not None else "N/A"),
+    ], cols=4)
+
+    porters = data.get('porters_five_forces') or {}
+    if porters:
+        section_label("Porter's Five Forces")
+        st.caption(
+            f"Overall Attractiveness: {porters.get('overall_attractiveness', 'N/A')} · "
+            f"Profitability Outlook: {porters.get('industry_profitability_outlook', 'N/A')}"
+        )
+        for key, label in [
+            ('supplier_power', 'Supplier Power'), ('buyer_power', 'Buyer Power'),
+            ('competitive_rivalry', 'Competitive Rivalry'), ('threat_of_substitutes', 'Threat of Substitutes'),
+            ('barriers_to_entry', 'Barriers to Entry'),
+        ]:
+            force = porters.get(key) or {}
+            if not force:
+                continue
+            with st.expander(f"{label}: {force.get('level', 'N/A')}"):
+                assessment = force.get('detailed_assessment')
+                if assessment:
+                    st.write(assessment)
+                for factor in (force.get('key_factors') or force.get('factors') or []):
+                    st.markdown(f"- {factor}")
+                if force.get('impact_on_company'):
+                    st.caption(f"Impact: {force['impact_on_company']}")
+        if porters.get('strategic_implications'):
+            st.markdown(f"**Strategic Implications:** {porters['strategic_implications']}")
+
+    industry_insights = data.get('industry_insights') or {}
+    if industry_insights:
+        section_label("Industry Dynamics")
+        if industry_insights.get('outlook_reasoning'):
+            st.write(industry_insights['outlook_reasoning'])
+        growth_drivers = industry_insights.get('growth_drivers') or []
+        if growth_drivers:
+            st.markdown("**Growth Drivers**")
+            for d in growth_drivers:
+                if isinstance(d, dict):
+                    st.markdown(f"- **{d.get('driver', 'N/A')}:** {d.get('explanation', '')}")
+                else:
+                    st.markdown(f"- {d}")
+        headwinds = industry_insights.get('headwinds') or []
+        if headwinds:
+            st.markdown("**Headwinds**")
+            for h in headwinds:
+                if isinstance(h, dict):
+                    st.markdown(f"- **{h.get('headwind', 'N/A')}:** {h.get('explanation', '')}")
+                else:
+                    st.markdown(f"- {h}")
+        dynamics_pairs = [
+            (label, industry_insights[key]) for key, label in [
+                ('maturity', 'Maturity'), ('cyclicality', 'Cyclicality'),
+                ('technology_disruption', 'Tech Disruption'), ('pricing_power', 'Pricing Power'),
+                ('capital_intensity', 'Capital Intensity'), ('innovation_pace', 'Innovation Pace'),
+            ] if industry_insights.get(key)
+        ]
+        if dynamics_pairs:
+            render_kv_table(dynamics_pairs, cols=3)
+
+    competitive_analysis = data.get('competitive_analysis') or {}
+    if competitive_analysis:
+        section_label("Competitive Analysis")
+        render_kv_table([
+            ("Position", competitive_analysis.get('position', 'N/A')),
+            ("Market Share", competitive_analysis.get('market_share_estimate', 'N/A')),
+            ("Moat Strength", competitive_analysis.get('moat_strength', 'N/A')),
+            ("Brand Recognition", competitive_analysis.get('brand_recognition', 'N/A')),
+        ], cols=4)
+        for label, key in [("Competitive Advantages", 'competitive_advantages'), ("Competitive Disadvantages", 'competitive_disadvantages')]:
+            items = competitive_analysis.get(key) or []
+            if items:
+                st.markdown(f"**{label}**")
+                for item in items:
+                    st.markdown(f"- {item}")
+
+    regulatory_analysis = data.get('regulatory_analysis') or {}
+    if regulatory_analysis:
+        section_label("Regulatory Environment")
+        if regulatory_analysis.get('detailed_assessment'):
+            st.write(regulatory_analysis['detailed_assessment'])
+        key_regulations = regulatory_analysis.get('key_regulations') or []
+        if key_regulations:
+            st.markdown("**Key Regulations**")
+            for reg in key_regulations:
+                if isinstance(reg, dict):
+                    st.markdown(f"- **{reg.get('regulation', 'N/A')}:** {reg.get('impact', '')}")
+                else:
+                    st.markdown(f"- {reg}")
+        policy_risks = regulatory_analysis.get('policy_risks') or []
+        if policy_risks:
+            st.markdown("**Policy Risks**")
+            for pr in policy_risks:
+                if isinstance(pr, dict):
+                    st.markdown(f"- **{pr.get('risk', 'N/A')}** ({pr.get('probability', 'N/A')}): {pr.get('impact', '')}")
+                else:
+                    st.markdown(f"- {pr}")
+
+    market_catalysts = data.get('market_catalysts') or []
+    if market_catalysts:
+        section_label("Market Catalysts")
+        for c in market_catalysts:
+            st.markdown(f"- {c}")
+
+    key_risks = data.get('key_risks') or []
+    if key_risks:
+        section_label("Key Risks")
+        for r in key_risks:
+            st.markdown(f"- {r}")
+
+
 # Analyzers with a local, denser renderer replacing the shared page's version -
 # same underlying analysis data and (for dcf/analyst_consensus/business_model/
 # industry_analysis/ai_insights/news_sentiment/startup) the exact same body
@@ -465,11 +781,13 @@ _LOCAL_DETAIL_RENDERERS = {
     'technical': _render_technical_details,
     'dcf': lambda data, ticker, fm: display_dcf_details(data, ticker),
     'analyst_consensus': lambda data, ticker, fm: display_analyst_consensus_details(data),
-    'business_model': lambda data, ticker, fm: display_business_model_details(data),
-    'industry_analysis': lambda data, ticker, fm: display_industry_analysis_details(data),
+    'business_model': lambda data, ticker, fm: _render_business_model_details(data),
+    'industry_analysis': lambda data, ticker, fm: _render_industry_analysis_details(data),
     'ai_insights': lambda data, ticker, fm: display_ai_insights_details(data),
     'news_sentiment': lambda data, ticker, fm: display_news_details(data),
     'startup': lambda data, ticker, fm: _render_startup_details(data),
+    'financial_health': lambda data, ticker, fm: _render_financial_health_details(data),
+    'management_quality': lambda data, ticker, fm: _render_management_quality_details(data),
 }
 
 

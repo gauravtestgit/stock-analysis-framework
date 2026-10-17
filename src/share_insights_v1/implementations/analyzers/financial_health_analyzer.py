@@ -21,7 +21,15 @@ class FinancialHealthAnalyzer(IAnalyzer):
             if not health_report:
                 return {'error': 'Could not analyze financial health'}
             
-            # Convert to standardized format
+            # Convert to standardized format. The _score_* helpers below only return
+            # a derived Excellent/Good/Poor label - the raw numbers behind them
+            # (computed in _extract_cash_flow_metrics/_extract_debt_metrics/
+            # _extract_revenue_quality above) were never included in this dict at
+            # all, so a UI showing "Debt: Good" had no way to also show the actual
+            # debt-to-equity ratio that grade came from.
+            cash_flow = health_report.cash_flow_metrics
+            debt = health_report.debt_metrics
+            revenue = health_report.revenue_quality
             return {
                 'method': 'Financial Health Analysis',
                 'applicable': True,
@@ -30,6 +38,15 @@ class FinancialHealthAnalyzer(IAnalyzer):
                 'cash_flow_score': self._score_cash_flow(health_report.cash_flow_metrics),
                 'debt_score': self._score_debt(health_report.debt_metrics),
                 'revenue_score': self._score_revenue(health_report.revenue_quality),
+                'operating_cash_flow': cash_flow.operating_cash_flow if cash_flow else None,
+                'free_cash_flow': cash_flow.free_cash_flow if cash_flow else None,
+                'cash_conversion_ratio': cash_flow.cash_conversion_ratio if cash_flow else None,
+                'capex_intensity': cash_flow.capex_intensity if cash_flow else None,
+                'total_debt': debt.total_debt if debt else None,
+                'net_debt': debt.net_debt if debt else None,
+                'debt_to_equity': debt.debt_to_equity if debt else None,
+                'interest_coverage': debt.interest_coverage if debt else None,
+                'revenue_growth_3yr': revenue.revenue_growth_3yr if revenue else None,
                 'key_risks': health_report.key_risks or [],
                 'strengths': health_report.strengths or [],
                 'confidence': 'High',
