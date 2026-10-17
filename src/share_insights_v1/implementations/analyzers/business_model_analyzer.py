@@ -11,6 +11,7 @@ import numpy as np
 import json
 from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.debug_printer import debug_print
+from ...utils.json_extractor import extract_json_from_llm_response
 
 class BusinessModelAnalyzer(IAnalyzer):
     """Analyzer for business model and revenue stream analysis"""
@@ -745,58 +746,11 @@ Analyze competitive positioning and respond with JSON:
     
     def _extract_json_from_response(self, response: str) -> str:
         """Extract JSON from LLM response with robust error handling"""
-        import re
-        import json
-        
         debug_print(f"[BM_DEBUG] Raw LLM response: {response[:200]}...")
-        
-        # Try to find JSON in markdown code blocks
-        json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1).strip()
-            try:
-                json.loads(json_str)  # Validate
-                return json_str
-            except json.JSONDecodeError as e:
-                debug_print(f"[BM_DEBUG] Invalid JSON in code block: {e}")
-        
-        # Try to find JSON object in the text
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0)
-            try:
-                json.loads(json_str)  # Validate
-                return json_str
-            except json.JSONDecodeError as e:
-                debug_print(f"[BM_DEBUG] Invalid JSON object: {e}")
-        
-        # Try to extract and fix common JSON issues
-        lines = response.split('\n')
-        json_lines = []
-        in_json = False
-        
-        for line in lines:
-            if '{' in line and not in_json:
-                in_json = True
-            if in_json:
-                json_lines.append(line)
-            if '}' in line and in_json:
-                break
-        
-        if json_lines:
-            json_str = '\n'.join(json_lines)
-            # Fix common issues
-            json_str = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*):([^,}\n]*)', r'"\1":\2', json_str)  # Add quotes to keys
-            json_str = re.sub(r':\s*([a-zA-Z][^,}\n]*)', r': "\1"', json_str)  # Add quotes to string values
-            
-            try:
-                json.loads(json_str)
-                return json_str
-            except json.JSONDecodeError as e:
-                debug_print(f"[BM_DEBUG] Failed to fix JSON: {e}")
-        
-        debug_print(f"[BM_DEBUG] No valid JSON found in response")
-        return None
+        result = extract_json_from_llm_response(response)
+        if result is None:
+            debug_print(f"[BM_DEBUG] No valid JSON found in response")
+        return result
     
     def _get_fallback_product_analysis(self, sector: str, industry: str) -> Dict[str, Any]:
         """Fallback product analysis when LLM fails"""
