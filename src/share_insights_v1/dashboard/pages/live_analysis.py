@@ -636,21 +636,30 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
 
 
 def _financial_figures_pairs(fm):
-    """Revenue/Gross Income/Net Income/Op CF/Free CF as kv-table pairs (not
-    rendered directly) so they can be prepended as the first row of the main
-    metrics table instead of living in their own separately-aligned table -
-    two kv-tables with different column counts never line up column-for-column."""
+    """Revenue/Gross Income/Net Income/Op CF/Free CF plus Gross/Operating/Net
+    margins (all derived from the same annual income statement figures above
+    them) as kv-table pairs (not rendered directly) so they can be prepended
+    as the first row of the main metrics table instead of living in their own
+    separately-aligned table - two kv-tables with different column counts
+    never line up column-for-column."""
     revenue_data_statements = fm.get('revenue_data_statements') or {}
     annual_income = revenue_data_statements.get('annual_income_stmt', {})
     cashflow_data = revenue_data_statements.get('cashflow', {})
 
-    latest_revenue = latest_gross_income = latest_net_income = 0
+    latest_revenue = latest_gross_income = latest_operating_income = latest_net_income = 0
     if annual_income:
         latest_year = list(annual_income.keys())[0]
         annual_data = annual_income[latest_year]
         latest_revenue = annual_data.get('Total Revenue', 0) or 0
         latest_gross_income = annual_data.get('Gross Profit', 0) or 0
+        latest_operating_income = annual_data.get('Operating Income', 0) or 0
         latest_net_income = annual_data.get('Net Income', 0) or 0
+
+    # Margins as % of the same annual revenue figure above (not yfinance's separate
+    # TTM profitMargins field) so these line up with the dollar figures shown
+    # alongside them instead of silently mixing reporting periods.
+    def _margin_pct(value):
+        return f"{value / latest_revenue * 100:.1f}%" if latest_revenue else "N/A"
 
     latest_op_cf = latest_free_cf = 0
     if cashflow_data:
@@ -666,6 +675,9 @@ def _financial_figures_pairs(fm):
         ("Net Income", format_currency(latest_net_income)),
         ("Op Cash Flow", format_currency(latest_op_cf)),
         ("Free Cash Flow", format_currency(latest_free_cf)),
+        ("Gross Margin", _margin_pct(latest_gross_income)),
+        ("Operating Margin", _margin_pct(latest_operating_income)),
+        ("Net Margin", _margin_pct(latest_net_income)),
     ]
 
 
