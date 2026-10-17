@@ -842,51 +842,7 @@ Provide 5-7 most impactful catalysts with comprehensive analysis."""
     def is_applicable(self, company_type: str) -> bool:
         """Enhanced industry analysis applicable to all company types"""
         return True
-    
-    def _extract_json_from_response(self, response: str) -> str:
-        """Extract JSON from LLM response"""
-        import re
-        
-        json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            return json_match.group(1).strip()
-        
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
-        if json_match:
-            return json_match.group(0)
-        
-        return response
-    
-    def _get_fallback_industry_analysis(self, sector: str, industry: str) -> Dict:
-        """Fallback industry analysis when LLM fails"""
-        return {
-            'outlook': 'Neutral',
-            'growth_drivers': ['Market expansion', 'Innovation'],
-            'headwinds': ['Competition', 'Regulation'],
-            'market_size': 'Medium',
-            'maturity': 'Mature',
-            'cyclicality': 'Medium',
-            'regulatory_environment': 'Neutral',
-            'technology_disruption': 'Medium',
-            'supply_demand_balance': 'Balanced'
-        }
-    
-    def _get_fallback_competitive_analysis(self) -> Dict:
-        """Fallback competitive analysis when LLM fails"""
-        return {
-            'position': 'Average',
-            'market_share': 'Unknown',
-            'competitive_advantages': ['Established operations'],
-            'competitive_disadvantages': ['Market competition'],
-            'barriers_to_entry': 'Medium',
-            'switching_costs': 'Medium',
-            'brand_strength': 'Average',
-            'cost_position': 'Average',
-            'innovation_capability': 'Following'
-        }
-    
 
-    
     def _get_recent_news(self, ticker: str) -> List[str]:
         """Get recent news titles for context"""
         try:
@@ -896,16 +852,3 @@ Provide 5-7 most impactful catalysts with comprehensive analysis."""
             return []
         except:
             return []
-    
-    def _get_fallback_catalysts(self, sector: str, industry: str) -> List[str]:
-        """Fallback catalysts when LLM fails"""
-        return [
-            'Market expansion opportunities',
-            'Regulatory clarity',
-            'Technology adoption',
-            'Economic recovery'
-        ]
-    
-    def is_applicable(self, company_type: str) -> bool:
-        """Industry analysis applicable to all company types"""
-        return True
