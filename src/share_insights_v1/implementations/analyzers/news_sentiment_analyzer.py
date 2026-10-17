@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.prompt_formatter import PromptFormatter
 from ...utils.debug_printer import debug_print
+from ...utils.json_extractor import extract_json_from_llm_response
 
 # Yahoo's news relatedTickers tags dual-class shares under only one symbol of the
 # pair (confirmed for GOOG/GOOGL - every Alphabet article comes back tagged 'GOOG'
@@ -500,27 +501,7 @@ Sentiment score: -1.0 (very negative) to 1.0 (very positive)"""
     
     def _extract_json_from_response(self, response: str) -> str:
         """Extract JSON from LLM response that may contain markdown code blocks"""
-        import re
-        
-        # First try to find JSON in markdown code blocks
-        json_match = re.search(r'```json\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            return json_match.group(1).strip()
-        
-        # Try to find JSON in regular code blocks
-        json_match = re.search(r'```\s*\n(.*?)\n```', response, re.DOTALL)
-        if json_match:
-            potential_json = json_match.group(1).strip()
-            if potential_json.startswith('{') and potential_json.endswith('}'):
-                return potential_json
-        
-        # Try to find JSON object in the text
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
-        if json_match:
-            return json_match.group(0)
-        
-        # If no JSON found, return original response
-        return response
+        return extract_json_from_llm_response(response) or response
     
     def _categorize_news(self, news: Dict) -> NewsCategory:
         """Categorize news item"""
