@@ -34,19 +34,42 @@ class StartupAnalyzer(IAnalyzer):
                         runway_quarters = metrics['total_cash'] / burn_rate
             
             # Enhanced revenue growth analysis
-           
+
             revenue_growth_rates = []
             current_revenue = 0
             revenue_volatility = 0
+            unreliable_revenue_periods = 0
 
             if not income_stmt.empty and 'Total Revenue' in income_stmt.index:
                 revenue_data = income_stmt.loc['Total Revenue'].dropna()
                 current_revenue = revenue_data.iloc[0]
-                for i in range(1, min(len(revenue_data), 4)):
-                    if revenue_data.iloc[i] > 0:
-                        growth = (revenue_data.iloc[i-1] - revenue_data.iloc[i]) / revenue_data.iloc[i]
+                window = revenue_data.iloc[:min(len(revenue_data), 4)]
+
+                # Lumpy, non-recurring revenue (common in pre-revenue biotech/startups -
+                # a one-time licensing or milestone payment landing in one period and not
+                # the next) makes YoY growth arithmetically correct but practically
+                # meaningless. Confirmed on FDMT: a $37K year sandwiched between $20.7M
+                # and $85.2M years produced a +230,195% YoY growth rate that got
+                # classified as "Hypergrowth" and fed straight into the valuation
+                # multiple. A period that's a sharp, isolated dip relative to BOTH its
+                # neighbors (collapsed, then fully recovered the very next period) is a
+                # reporting-timing artifact, not organic growth or decline - flag it and
+                # exclude both growth comparisons that touch it, rather than let one bad
+                # data point drive the whole revenue multiple.
+                unreliable_idx = set()
+                for i in range(1, len(window) - 1):
+                    value, newer, older = window.iloc[i], window.iloc[i - 1], window.iloc[i + 1]
+                    if newer > 0 and older > 0 and value < newer * 0.10 and value < older * 0.10:
+                        unreliable_idx.add(i)
+
+                for i in range(1, len(window)):
+                    if i in unreliable_idx or (i - 1) in unreliable_idx:
+                        unreliable_revenue_periods += 1
+                        continue
+                    if window.iloc[i] > 0:
+                        growth = (window.iloc[i - 1] - window.iloc[i]) / window.iloc[i]
                         revenue_growth_rates.append(growth)
-                
+
                 # Calculate revenue volatility as risk factor
                 if len(revenue_growth_rates) > 1:
                     revenue_volatility = np.std(revenue_growth_rates)
@@ -95,7 +118,38 @@ class StartupAnalyzer(IAnalyzer):
             if len(revenue_growth_rates) < 2:
                 risk_factors.append("HIGH: Insufficient revenue history")
                 risk_score += 15
-            
+
+            if unreliable_revenue_periods > 0:
+                risk_factors.append(
+                    f"DATA QUALITY: Excluded {unreliable_revenue_periods} revenue comparison(s) "
+                    "distorted by an isolated near-zero period - likely one-time/non-recurring revenue"
+                )
+                risk_score += 10
+
+            # Dilution risk - a cash-burning company can extend its runway by issuing new
+            # shares rather than ever technically running out of cash, which the burn-rate/
+            # runway figures alone don't capture. Confirmed real on FDMT: share count grew
+            # from 32.6M to 57.6M (+76.6%) over the 4 annual periods yfinance returns.
+            dilution_rate = None
+            try:
+                balance_sheet = stock.balance_sheet
+                if not balance_sheet.empty and 'Ordinary Shares Number' in balance_sheet.index:
+                    shares_history = balance_sheet.loc['Ordinary Shares Number'].dropna()
+                    if len(shares_history) >= 2 and shares_history.iloc[-1] > 0:
+                        years_span = len(shares_history) - 1
+                        total_change = (shares_history.iloc[0] - shares_history.iloc[-1]) / shares_history.iloc[-1]
+                        dilution_rate = total_change / years_span
+            except Exception:
+                dilution_rate = None
+
+            if dilution_rate is not None:
+                if dilution_rate > 0.20:
+                    risk_factors.append(f"HIGH: Heavy share dilution (~{dilution_rate:.0%}/year)")
+                    risk_score += 15
+                elif dilution_rate > 0.10:
+                    risk_factors.append(f"MODERATE: Notable share dilution (~{dilution_rate:.0%}/year)")
+                    risk_score += 8
+
             # Sector-specific risks
             high_risk_sectors = ['Biotechnology', 'Energy', 'Materials']
             if sector in high_risk_sectors:
@@ -239,9 +293,11 @@ class StartupAnalyzer(IAnalyzer):
                 'price_2y': forward_price_2yr,
                 'quarterly_burn_rate': burn_rate,
                 'revenue_growth_rates': [f"{rate:.1%}" for rate in revenue_growth_rates],
+                'unreliable_revenue_periods': unreliable_revenue_periods,
                 'median_growth': f"{median_growth:.1%}",
                 'revenue_volatility': f"{revenue_volatility:.1%}",
                 'growth_quality': growth_quality,
+                'dilution_rate_annual': f"{dilution_rate:.1%}" if dilution_rate is not None else None,
                 'risk_factors': risk_factors,
                 'risk_score': risk_score,
                 'recommendation': get_startup_recommendation(),
