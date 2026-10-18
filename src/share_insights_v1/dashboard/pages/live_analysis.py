@@ -65,11 +65,10 @@ TAB_GROUPS = {
     "Thesis": [],
 }
 
-# competitive_position has no dedicated renderer upstream (display_analyzer_tab
-# falls back to a raw st.json() dump for it, which is hard to scan) - it's the
-# only analyzer key absent from _LOCAL_DETAIL_RENDERERS below, so
-# _render_analyzer_tab's dispatch falls through to _render_readable_dict for
-# it instead.
+# Every current analyzer key in AVAILABLE_ANALYZERS has a dedicated entry in
+# _LOCAL_DETAIL_RENDERERS below. _render_readable_dict is kept as a defensive
+# fallback (auto-formatted label/value pairs instead of a raw st.json() dump)
+# for any analyzer added later without one yet, not for a key that hits it today.
 _READABLE_DICT_HIDDEN_KEYS = {
     'method', 'applicable', 'recommendation', 'predicted_price', 'confidence',
     'error', 'upside_downside_pct', 'current_price', 'total_equity_value',
@@ -765,6 +764,54 @@ def _render_industry_analysis_details(data: dict):
             st.markdown(f"- {r}")
 
 
+def _render_competitive_position_details(data: dict):
+    """Local renderer for Competitive Position - this analyzer key had no
+    dedicated renderer at all and fell through to the generic readable-dict
+    fallback. competitive_advantages/competitive_threats were also collapsed
+    down to bare type-name strings in the analyzer's own output (fixed
+    alongside this renderer) - the strength/description/sustainability
+    (advantages) and level/description/timeline (threats) computed internally
+    are now exposed as *_detail lists and rendered here."""
+    section_label("Competitive Position")
+    market_share = data.get('market_share_estimate')
+    growth_vs_market = data.get('growth_vs_market')
+    render_kv_table([
+        ("Overall Score", f"{data.get('overall_position_score', 0):.1f}/10"),
+        ("Competitive Strength", data.get('competitive_strength', 'N/A')),
+        ("Position Trend", data.get('position_trend', 'N/A')),
+        ("Market Share (Est.)", f"{market_share*100:.1f}%" if market_share is not None else "N/A"),
+        ("Market Rank (Est.)", data.get('market_rank_estimate') or 'N/A'),
+        ("Growth vs Market", f"{growth_vs_market*100:.1f}%" if growth_vs_market is not None else "N/A"),
+    ], cols=3)
+
+    advantages = data.get('competitive_advantages_detail') or []
+    if advantages:
+        section_label("Competitive Advantages")
+        for adv in advantages:
+            st.markdown(f"**{adv.get('advantage_type', 'N/A')}** · {adv.get('strength', 'N/A')} strength · {(adv.get('sustainability') or 0)*100:.0f}% sustainability")
+            if adv.get('description'):
+                st.caption(adv['description'])
+
+    threats = data.get('competitive_threats_detail') or []
+    if threats:
+        section_label("Competitive Threats")
+        for t in threats:
+            st.markdown(f"**{t.get('threat_type', 'N/A')}** · {t.get('level', 'N/A')} · {t.get('timeline', 'N/A')}")
+            if t.get('description'):
+                st.caption(t['description'])
+
+    differentiators = data.get('key_differentiators') or []
+    risks = data.get('strategic_risks') or []
+    if differentiators:
+        section_label("Key Differentiators")
+        for d in differentiators:
+            st.markdown(f"- {d}")
+    if risks:
+        section_label("Strategic Risks")
+        for r in risks:
+            st.markdown(f"- {r}")
+
+
 # Analyzers with a local, denser renderer replacing the shared page's version -
 # same underlying analysis data and (for dcf/analyst_consensus/business_model/
 # industry_analysis/ai_insights/news_sentiment/startup) the exact same body
@@ -788,6 +835,7 @@ _LOCAL_DETAIL_RENDERERS = {
     'startup': lambda data, ticker, fm: _render_startup_details(data),
     'financial_health': lambda data, ticker, fm: _render_financial_health_details(data),
     'management_quality': lambda data, ticker, fm: _render_management_quality_details(data),
+    'competitive_position': lambda data, ticker, fm: _render_competitive_position_details(data),
 }
 
 
