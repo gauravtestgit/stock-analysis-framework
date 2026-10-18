@@ -47,16 +47,41 @@ class CompetitivePositionAnalyzer(IAnalyzer):
             if not report:
                 return {'error': 'Could not analyze competitive position'}
             
+            # competitive_advantages/competitive_threats were collapsed down to bare
+            # advantage_type/threat_type strings - the strength/description/
+            # sustainability (advantages) and level/description/timeline (threats)
+            # computed alongside them in _identify_competitive_advantages/
+            # _assess_competitive_threats above were discarded before reaching here.
             return {
                 'method': 'Competitive Position Analysis',
                 'applicable': True,
                 'overall_position_score': report.overall_position_score,
                 'competitive_strength': report.market_position.competitive_strength.value,
                 'market_share_estimate': report.market_position.market_share_estimate,
+                'market_rank_estimate': report.market_position.market_rank_estimate,
+                'growth_vs_market': report.market_position.growth_vs_market,
                 'position_trend': report.position_trend,
                 'key_differentiators': report.key_differentiators,
                 'competitive_advantages': [adv.advantage_type for adv in report.competitive_advantages],
+                'competitive_advantages_detail': [
+                    {
+                        'advantage_type': adv.advantage_type,
+                        'strength': adv.strength.value,
+                        'description': adv.description,
+                        'sustainability': adv.sustainability,
+                    }
+                    for adv in report.competitive_advantages
+                ],
                 'competitive_threats': [threat.threat_type for threat in report.competitive_threats],
+                'competitive_threats_detail': [
+                    {
+                        'threat_type': threat.threat_type,
+                        'level': threat.level.value,
+                        'description': threat.description,
+                        'timeline': threat.timeline,
+                    }
+                    for threat in report.competitive_threats
+                ],
                 'strategic_risks': report.strategic_risks,
                 'confidence': 'Medium',
                 'recommendation': self._generate_recommendation(report)
