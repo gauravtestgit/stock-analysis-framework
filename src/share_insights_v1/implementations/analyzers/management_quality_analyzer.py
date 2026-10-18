@@ -29,6 +29,12 @@ class ManagementQualityAnalyzer(IAnalyzer):
             # Generate management quality report
             report = self._analyze_management_quality(ticker, management_data, financial_metrics)
             
+            # executive_profiles (actual names/titles/compensation) and the
+            # individual governance risk components were computed above in
+            # _analyze_management_quality but only ever summarized down to a
+            # bare count and a single blended risk label - exposing them here so
+            # a UI can actually show who the executives are, not just how many.
+            gov = report.governance_metrics
             return {
                 'method': 'Management Quality Analysis',
                 'applicable': True,
@@ -36,7 +42,16 @@ class ManagementQualityAnalyzer(IAnalyzer):
                 'management_quality': report.management_quality.value,
                 'governance_risk': report.governance_risk.value,
                 'executive_count': len(report.executive_profiles),
-                'insider_ownership': report.governance_metrics.insider_ownership_pct,
+                'executive_profiles': [
+                    {'name': e.name, 'title': e.title, 'total_compensation': e.total_compensation, 'age': e.age}
+                    for e in report.executive_profiles
+                ],
+                'insider_ownership': gov.insider_ownership_pct,
+                'institutional_ownership': gov.institutional_ownership_pct,
+                'compensation_risk': gov.compensation_risk,
+                'board_risk': gov.board_risk,
+                'audit_risk': gov.audit_risk,
+                'overall_governance_risk_score': gov.overall_risk,
                 'strengths': report.strengths,
                 'concerns': report.concerns,
                 'key_insights': report.key_insights,
