@@ -671,14 +671,14 @@ def _render_industry_analysis_details(data: dict):
             force = porters.get(key) or {}
             if not force:
                 continue
-            with st.expander(f"{label}: {force.get('level', 'N/A')}"):
-                assessment = force.get('detailed_assessment')
-                if assessment:
-                    st.write(assessment)
-                for factor in (force.get('key_factors') or force.get('factors') or []):
-                    st.markdown(f"- {factor}")
-                if force.get('impact_on_company'):
-                    st.caption(f"Impact: {force['impact_on_company']}")
+            st.markdown(f"**{label}: {force.get('level', 'N/A')}**")
+            assessment = force.get('detailed_assessment')
+            if assessment:
+                st.write(assessment)
+            for factor in (force.get('key_factors') or force.get('factors') or []):
+                st.markdown(f"- {factor}")
+            if force.get('impact_on_company'):
+                st.caption(f"Impact: {force['impact_on_company']}")
         if porters.get('strategic_implications'):
             st.markdown(f"**Strategic Implications:** {porters['strategic_implications']}")
 
