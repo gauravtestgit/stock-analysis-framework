@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from ...interfaces.llm_provider import ILLMProvider
+from ...interfaces.llm_provider import ILLMProvider, MAX_COMPLETION_TOKENS
 from ...utils.debug_printer import debug_print
 class OpenAIProvider(ILLMProvider):
     """OpenAI LLM provider using LangChain"""
@@ -17,7 +17,8 @@ class OpenAIProvider(ILLMProvider):
                 self.llm = ChatOpenAI(
                     model=model_name,
                     temperature=0.1,
-                    api_key=self.api_key
+                    api_key=self.api_key,
+                    max_tokens=MAX_COMPLETION_TOKENS
                 )
                 debug_print(f"[OPENAI_DEBUG] LLM initialized successfully with model {model_name}")
             except Exception as e:
@@ -76,7 +77,8 @@ class OpenAIProvider(ILLMProvider):
             self.llm = ChatOpenAI(
                 model=model,
                 temperature=0.1,
-                api_key=self.api_key
+                api_key=self.api_key,
+                max_tokens=MAX_COMPLETION_TOKENS
             )
             debug_print(f"[OPENAI_DEBUG] Switched to model {model}")
             return True

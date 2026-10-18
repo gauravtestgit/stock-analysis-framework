@@ -4,7 +4,7 @@ import threading
 from typing import Dict, Any
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-from ...interfaces.llm_provider import ILLMProvider
+from ...interfaces.llm_provider import ILLMProvider, MAX_COMPLETION_TOKENS
 from ...utils.debug_printer import debug_print
 class GroqProvider(ILLMProvider):
     """Groq LLM provider with rate limiting"""
@@ -14,12 +14,13 @@ class GroqProvider(ILLMProvider):
         self.max_retries = max_retries
         self.last_request_time = 0
         self.min_request_interval = 1.0  # Minimum seconds between requests
-        
+
         try:
             self.llm = ChatGroq(
                 groq_api_key=os.getenv("GROQ_API_KEY"),
                 model_name=model_name,
-                temperature=0.1
+                temperature=0.1,
+                max_tokens=MAX_COMPLETION_TOKENS
             )
         except Exception as e:
             self.llm = None
@@ -115,7 +116,8 @@ class GroqProvider(ILLMProvider):
             self.llm = ChatGroq(
                 groq_api_key=os.getenv("GROQ_API_KEY"),
                 model_name=model,
-                temperature=0.1
+                temperature=0.1,
+                max_tokens=MAX_COMPLETION_TOKENS
             )
             return True
         except Exception as e:

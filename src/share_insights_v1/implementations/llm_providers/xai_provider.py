@@ -1,7 +1,7 @@
 import os
 import requests
 from typing import Optional
-from ...interfaces.llm_provider import ILLMProvider
+from ...interfaces.llm_provider import ILLMProvider, MAX_COMPLETION_TOKENS
 from ...utils.debug_printer import debug_print
 class XAIProvider(ILLMProvider):
     """XAI (Grok) LLM provider"""
@@ -33,7 +33,7 @@ class XAIProvider(ILLMProvider):
                 ],
                 "model": self.model_name,
                 "temperature": 0.1,
-                "max_tokens": 2000
+                "max_tokens": MAX_COMPLETION_TOKENS
             }
             
             response = requests.post(
