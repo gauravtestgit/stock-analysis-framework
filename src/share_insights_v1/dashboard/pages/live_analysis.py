@@ -79,11 +79,25 @@ def _humanize_key(key: str) -> str:
     return key.replace('_', ' ').title()
 
 
-def _fmt_num(value, decimals=2, suffix=""):
+def _fmt_num(value, decimals=2, suffix="", prefix=""):
     """Round a raw numeric indicator (e.g. RSI 51.559723317858584) to a
-    readable precision; passes non-numeric values through as-is."""
-    if isinstance(value, (int, float)):
-        return f"{value:.{decimals}f}{suffix}"
+    readable precision; passes non-numeric values through as-is.
+
+    Also treats non-finite numbers as unavailable. A ratio computed from a
+    near-zero denominator (e.g. forward P/E for a company with ~$0 forward
+    EPS) comes back as float('inf'); FastAPI's jsonable_encoder then
+    stringifies that to the literal string "Infinity" so the JSON response
+    stays valid - confirmed directly for BOT.AX, whose forward_pe arrived as
+    the string 'Infinity' and crashed every f"{x:.2f}" site with
+    ValueError: Unknown format code 'f' for object of type 'str'. Both the
+    raw float and its stringified form are handled here so the UI shows
+    "N/A" instead of crashing or printing the raw token.
+    """
+    import math
+    if isinstance(value, (int, float)) and math.isfinite(value):
+        return f"{prefix}{value:.{decimals}f}{suffix}"
+    if isinstance(value, str) and value.lstrip('-') in ("Infinity", "NaN"):
+        return "N/A"
     return value if value is not None else "N/A"
 
 
@@ -862,7 +876,7 @@ def _analyzer_expander_label(analyses, key):
     target = analysis_data.get('predicted_price', 0) or 0
     rec = analysis_data.get('recommendation', 'N/A')
     conf = analysis_data.get('confidence', 'N/A')
-    target_str = f"${target:.2f}" if target else "N/A"
+    target_str = _fmt_num(target, prefix="$")
     emoji = _REC_CLASS_EMOJI.get(rec_pill_class(rec), '⚪')
     return f"{label}  —  {emoji} {rec} · {target_str} · {conf}"
 
@@ -886,7 +900,7 @@ def _render_analyzer_tab(ticker, analyses, key, fm, show_header=True):
         target = analysis_data.get('predicted_price', 0) or 0
         render_kv_table([
             ("Recommendation", rec_pill_html(analysis_data.get('recommendation', 'N/A'))),
-            ("Target Price", f"${target:.2f}" if target else "N/A"),
+            ("Target Price", _fmt_num(target, prefix="$")),
             ("Confidence", analysis_data.get('confidence', 'N/A')),
         ], cols=3)
 
@@ -1162,17 +1176,17 @@ def _render_overview_compact(ticker, data, analyses):
     render_kv_table(_financial_figures_pairs(fm) + [
         ("Market Cap", format_currency(market_cap) if market_cap else "N/A"),
         ("P/E Ratio", fm.get('pe_ratio', 'N/A')),
-        ("Forward P/E", f"{forward_pe:.2f}" if forward_pe else "N/A"),
+        ("Forward P/E", _fmt_num(forward_pe)),
         ("ROE", f"{roe*100:.1f}%" if isinstance(roe, (int, float)) else "N/A"),
         ("Revenue Growth", f"{revenue_growth*100:.1f}%" if isinstance(revenue_growth, (int, float)) else "N/A"),
-        ("Forward EPS", f"${forward_eps:.2f}" if forward_eps else "N/A"),
-        ("Current EPS", f"${current_eps:.2f}" if current_eps else "N/A"),
-        ("Dividend Yield", f"{div_yield:.2f}%" if div_yield else "N/A"),
-        ("Annual Div Rate", f"${div_rate:.2f}" if div_rate else "N/A"),
-        ("Payout Ratio", f"{payout_ratio:.1f}%" if payout_ratio else "N/A"),
+        ("Forward EPS", _fmt_num(forward_eps, prefix="$")),
+        ("Current EPS", _fmt_num(current_eps, prefix="$")),
+        ("Dividend Yield", _fmt_num(div_yield, suffix="%")),
+        ("Annual Div Rate", _fmt_num(div_rate, prefix="$")),
+        ("Payout Ratio", _fmt_num(payout_ratio, decimals=1, suffix="%")),
         ("Debt/Equity", fm.get('debt_to_equity', 'N/A')),
         ("Current Ratio", fm.get('current_ratio', 'N/A')),
-        ("Target Median", f"${target_median:.2f}" if target_median else "N/A"),
+        ("Target Median", _fmt_num(target_median, prefix="$")),
         ("Next Earnings", earnings_date if earnings_date and earnings_date != 'N/A' else "N/A"),
     ], cols=3)
 
@@ -1409,8 +1423,8 @@ def render_summary_table(successful_results):
             with st.container(key=f"la_ticker_link_{ticker}"):
                 if st.button(ticker, key=f"la_open_{ticker}", use_container_width=True):
                     st.session_state.la_open_ticker_dialog = ticker
-        row_cols[1].markdown(f'<div class="la-linktable-c">{f"${current_price:.2f}" if current_price else "N/A"}</div>', unsafe_allow_html=True)
-        row_cols[2].markdown(f'<div class="la-linktable-c">{f"${target_price:.2f}" if target_price else "N/A"}</div>', unsafe_allow_html=True)
+        row_cols[1].markdown(f'<div class="la-linktable-c">{_fmt_num(current_price, prefix="$")}</div>', unsafe_allow_html=True)
+        row_cols[2].markdown(f'<div class="la-linktable-c">{_fmt_num(target_price, prefix="$")}</div>', unsafe_allow_html=True)
         row_cols[3].markdown(f'<div class="la-linktable-c">{upside_html}</div>', unsafe_allow_html=True)
         row_cols[4].markdown(f'<div class="la-linktable-c">{rec_pill_html(rec.get("recommendation", "N/A"))}</div>', unsafe_allow_html=True)
         row_cols[5].markdown(f'<div class="la-linktable-c">{rec.get("confidence", "N/A")}</div>', unsafe_allow_html=True)
@@ -1429,7 +1443,8 @@ def render_stock_detail(ticker, data):
 
     current_price = fm.get('current_price') or 0
     target_price = rec.get('target_price') or 0
-    upside = ((target_price - current_price) / current_price * 100) if current_price and target_price else None
+    _prices_numeric = isinstance(current_price, (int, float)) and isinstance(target_price, (int, float))
+    upside = ((target_price - current_price) / current_price * 100) if _prices_numeric and current_price and target_price else None
     upside_html = (
         f'<span class="{"la-upside-pos" if upside >= 0 else "la-upside-neg"}">{upside:+.1f}%</span>'
         if upside is not None else 'N/A'
@@ -1444,8 +1459,8 @@ def render_stock_detail(ticker, data):
         )
     with col2:
         render_kv_table([
-            ("Current Price", f"${current_price:.2f}" if current_price else "N/A"),
-            ("Target Price", f"${target_price:.2f}" if target_price else "N/A"),
+            ("Current Price", _fmt_num(current_price, prefix="$")),
+            ("Target Price", _fmt_num(target_price, prefix="$")),
             ("Upside", upside_html),
             ("Recommendation", rec_pill_html(rec.get("recommendation", "N/A"))),
         ], cols=2)
