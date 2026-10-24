@@ -130,6 +130,7 @@ class YahooPeerProvider(PeerComparisonProvider):
                 info = stock.info
                 
                 peer_data[ticker] = {
+                    'name': info.get('longName') or info.get('shortName'),
                     'pe_ratio': info.get('trailingPE'),
                     'ev_ebitda': info.get('enterpriseToEbitda'),
                     'price_to_sales': info.get('priceToSalesTrailing12Months'),
