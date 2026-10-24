@@ -66,9 +66,9 @@ class ComparableAnalyzer(IAnalyzer):
             market_cap = metrics.get('market_cap', 0) or 0
             market = metrics.get('market', '')
             if self.use_peer_comparison:
-                peer_tickers, peer_averages = self._get_peer_data(ticker, sector, industry, market_cap, market)
+                peer_tickers, peer_averages, peer_names = self._get_peer_data(ticker, sector, industry, market_cap, market)
             else:
-                peer_tickers, peer_averages = [], {}
+                peer_tickers, peer_averages, peer_names = [], {}, {}
             target_multiples, multiple_sources = self._blend_multiples(config_multiples, peer_averages)
 
             # Calculate fair values using different multiples
@@ -151,6 +151,7 @@ class ComparableAnalyzer(IAnalyzer):
                 'sector': sector,
                 'industry': industry,
                 'peer_tickers': peer_tickers,
+                'peer_names': peer_names,
                 'peer_averages': peer_averages,
                 'relative_position': relative_position,
                 'peer_insights': peer_insights,
@@ -197,18 +198,22 @@ class ComparableAnalyzer(IAnalyzer):
         else:
             return "Hold"
 
-    def _get_peer_data(self, ticker: str, sector: str, industry: str, market_cap: float = 0, market: str = '') -> Tuple[List[str], Dict[str, float]]:
+    def _get_peer_data(self, ticker: str, sector: str, industry: str, market_cap: float = 0, market: str = '') -> Tuple[List[str], Dict[str, float], Dict[str, str]]:
         """Fetch live peer tickers and their averaged valuation/performance metrics"""
         try:
             peer_tickers = self.peer_provider.get_industry_peers(ticker, sector, industry, market_cap, market)
             if not peer_tickers:
-                return [], {}
+                return [], {}, {}
 
             peer_metrics = self.peer_provider.get_peer_metrics(peer_tickers)
             peer_averages = self._average_peer_metrics(peer_metrics)
-            return peer_tickers, peer_averages
+            # get_peer_metrics already fetches each peer's .info for the valuation
+            # fields above - 'name' rides along on that same call rather than a
+            # separate lookup just to label the ticker in the UI.
+            peer_names = {t: d.get('name') for t, d in peer_metrics.items() if d.get('name')}
+            return peer_tickers, peer_averages, peer_names
         except Exception:
-            return [], {}
+            return [], {}, {}
 
     # Valuation ratios yfinance occasionally returns nonsensically for foreign
     # ADR/OTC listings (e.g. price-to-sales near 0, negative EV/EBITDA) - likely

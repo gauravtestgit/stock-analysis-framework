@@ -188,7 +188,9 @@ def _render_comparable_details(data: dict, fm: dict = None):
     peers = data.get('peer_tickers') or []
     if peers:
         section_label("Peer Companies")
-        st.write(", ".join(peers[:10]))
+        peer_names = data.get('peer_names') or {}
+        peer_labels = [f"{t} ({peer_names[t]})" if peer_names.get(t) else t for t in peers[:10]]
+        st.write(", ".join(peer_labels))
 
     peer_averages = data.get('peer_averages') or {}
     if peer_averages:
