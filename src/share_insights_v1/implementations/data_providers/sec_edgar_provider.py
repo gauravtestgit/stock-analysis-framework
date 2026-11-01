@@ -244,29 +244,79 @@ class SECEdgarProvider(SECDataProvider):
             return None
     
     def _extract_business_section(self, content: str) -> str:
-        """Extract Item 1 - Business section from 10-K filing"""
+        """Extract Item 1 - Business section from 10-K filing.
+
+        A 10-K's table of contents also contains an "Item 1. Business" entry,
+        immediately followed by a page number and the next item's title - and
+        textually that's indistinguishable from a real heading to a simple
+        first-match regex, which is what this used to do. Confirmed directly
+        on KEX's real 10-K: "item 1. business" occurs exactly once, in the
+        TOC; the TOC then separately lists "Item 1A. Risk Factors" and
+        "Item 2. Properties" entries only ~900 chars later (the TOC also
+        lists many non-Item subsection titles in between, so entry-to-entry
+        gaps within the TOC aren't tiny, but confirmed to stay under ~1000
+        chars) - so taking the NEAREST following "Item 1A"/"Item 2" match (the
+        previous fix's bug) still lands inside the TOC. The real "Item 1A.
+        Risk Factors" heading is ~96,000 characters further on, immediately
+        preceded by real prose (confirmed: executive bios) and followed by
+        real Risk Factors prose - i.e. the real section is identifiable by a
+        genuinely large gap from the start marker, not just any gap. 3000
+        chars is comfortably larger than any TOC entry-to-entry span and
+        comfortably smaller than a real Business section (tens of thousands
+        of characters), so picking the first following end-marker past that
+        threshold - rather than the nearest one, or always the farthest one
+        (which risks overshooting past the real section into Risk
+        Factors/Properties/etc on a filing with a later spurious match) -
+        reliably separates the TOC from the real body.
+
+        One more wrinkle, also confirmed on KEX: SEC's inline-tagged HTML
+        occasionally splits a heading word in two once tags are stripped
+        (the real heading came through as "Item 1. Busi ness", not
+        "Business" - a stray space left behind by a tag boundary that used
+        to sit mid-word). start_pattern tolerates that split; without it, the
+        real heading's start position would never be found at all, and only
+        the TOC's (unsplit) occurrence would be in `starts`, so the gap-based
+        logic below would still select the TOC as the start - same bug,
+        different cause. Once there are two valid start candidates (TOC and
+        real), the real one is the LATEST start that still reaches a
+        genuinely distant end marker - the TOC's start reaches that same end
+        marker too (spanning a nominally larger range), but that range is
+        mostly TOC noise, not real content.
+        """
         import re
         from html import unescape
-        
+
         # Remove HTML tags and decode entities
         text = re.sub(r'<[^>]+>', ' ', content)
         text = unescape(text)
         text = re.sub(r'\s+', ' ', text).strip()
-        
-        # Look for Item 1 Business section
-        patterns = [
-            r'Item\s*1[\s\.].*?Business.*?(?=Item\s*1A|Item\s*2|$)',
-            r'ITEM\s*1[\s\.].*?BUSINESS.*?(?=ITEM\s*1A|ITEM\s*2|$)',
-            r'Part\s*I.*?Item\s*1.*?Business.*?(?=Item\s*1A|Item\s*2|$)'
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
-            if match:
-                business_text = match.group(0)
-                # Limit to reasonable length (first 5000 chars)
-                return business_text[:5000] if len(business_text) > 5000 else business_text
-        
+
+        start_pattern = re.compile(r'item\s*1\.?\s*busi\s*ness', re.IGNORECASE)
+        end_pattern = re.compile(r'item\s*1a\.?\s*risk\s*factors|item\s*2\.?\s*properties', re.IGNORECASE)
+        TOC_GAP_THRESHOLD = 3000
+
+        starts = [m.start() for m in start_pattern.finditer(text)]
+        end_positions = [m.start() for m in end_pattern.finditer(text)]
+
+        candidates = []
+        for s in starts:
+            qualifying_ends = [e for e in end_positions if e > s and e - s > TOC_GAP_THRESHOLD]
+            if qualifying_ends:
+                candidates.append((s, qualifying_ends[0]))
+
+        best_start, best_end, best_len = None, None, 0
+        if candidates:
+            best_start, best_end = max(candidates, key=lambda pair: pair[0])
+            best_len = best_end - best_start
+
+        # A real Business section runs to thousands of characters; a TOC line
+        # (title + page number) does not - 200 chars is a generous floor that
+        # rejects TOC matches without risking rejecting a genuinely short
+        # section.
+        if best_start is not None and best_len > 200:
+            business_text = text[best_start:best_end]
+            return business_text[:5000] if len(business_text) > 5000 else business_text
+
         # Fallback: look for business-related keywords
         business_keywords = ['products', 'services', 'operations', 'segments', 'revenue']
         for keyword in business_keywords:
@@ -274,7 +324,7 @@ class SECEdgarProvider(SECDataProvider):
             matches = re.findall(pattern, text[:10000], re.IGNORECASE)
             if matches:
                 return ' '.join(matches[:3])  # First 3 relevant sentences
-        
+
         return "Business description not found in filing"
     
     def get_segment_revenue_data(self, ticker: str) -> Optional[Dict[str, Any]]:

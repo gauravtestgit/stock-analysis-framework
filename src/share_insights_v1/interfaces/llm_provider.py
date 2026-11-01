@@ -14,7 +14,17 @@ from typing import Dict, Any, Optional
 # finish_reason: 'length' - confirmed directly on a live call. This constant
 # raises the ceiling; it does not force responses to use it - the model still
 # stops on its own once a response is complete.
-MAX_COMPLETION_TOKENS = 8000
+#
+# Raised again from 8000 to 16000: confirmed directly on Business Model's
+# competitive_differentiation call (after adding business_description context
+# and the business_drivers field) that reasoning_tokens alone hit 5803 of a
+# 6622-token completion on one successful run (88%) - comfortably under 8000
+# that time, but non-deterministic, and a repeat run with the same prompt
+# returned an empty completion (0 chars, no exception) consistent with
+# reasoning having consumed the entire budget that time. 8000 was already
+# generous for the original truncation bug; a single complex prompt now
+# needs more headroom than that on its own.
+MAX_COMPLETION_TOKENS = 16000
 
 class ILLMProvider(ABC):
     """Interface for LLM providers"""

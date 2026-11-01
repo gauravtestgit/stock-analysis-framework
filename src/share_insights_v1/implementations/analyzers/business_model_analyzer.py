@@ -132,11 +132,25 @@ class BusinessModelAnalyzer(IAnalyzer):
         
         # Calculate key metrics
         key_metrics = self._calculate_key_metrics(financial_metrics, business_model_type)
-        
+
+        # Fetch the SEC 10-K Item 1 Business section once, up front - used as
+        # grounding context for product portfolio, competitive differentiation,
+        # and segment revenue below. Previously only product portfolio fetched
+        # this (each other call either got no filing context or only Yahoo's
+        # shorter business_summary), and the extraction itself was broken (see
+        # SECEdgarProvider._extract_business_section) - confirmed this is why
+        # competitor/segment output for ALTO and KEX was generic-to-wrong.
+        sec_business_data = None
+        if self.sec_provider:
+            try:
+                sec_business_data = self.sec_provider.get_business_description(ticker)
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] SEC business data fetch failed for {ticker}: {e}")
+
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
-        product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics)
-        competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics)
-        segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics, product_analysis)
+        product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data)
+        competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics, sec_business_data)
+        segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics, product_analysis, sec_business_data)
         
         # Collect SEC Edgar data
         sec_edgar_data = self._collect_sec_edgar_data(ticker)
@@ -617,18 +631,60 @@ Respond with JSON:
         
         return metrics
     
-    def _analyze_product_portfolio(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_business_context_text(self, sec_business_data: Optional[Dict[str, Any]], financial_metrics: Dict[str, Any]) -> str:
+        """Prefer the SEC 10-K Item 1 Business text (longer, filing-sourced)
+        over Yahoo's shorter business_summary; falls back to the latter for
+        tickers with no SEC filing (e.g. non-US-listed, confirmed elsewhere
+        in this app for ASX/NZX tickers)."""
+        if sec_business_data and sec_business_data.get('business_description'):
+            return sec_business_data['business_description']
+        return financial_metrics.get('business_summary', '') or ''
+
+    def _validate_competitors(self, competitors: List[Dict[str, Any]]) -> None:
+        """Validate each competitor's LLM-supplied ticker via a live yfinance
+        lookup, mutating the list in place. Confirmed directly that the LLM
+        will supply a wrong ticker with full confidence (Tidewater given as
+        "TDE" instead of the real "TDW") or a ticker for a completely
+        different company sharing similar words in its name ("American
+        Marine Transportation" given ticker "AMT" - which is American Tower
+        Corporation). yfinance resolving to a real company isn't enough on
+        its own to accept the ticker - the resolved company name is also
+        cross-checked against the LLM's claimed name, since a wrong-but-real
+        ticker (like AMT) would otherwise pass a bare existence check.
+        """
+        import re as _re
+        import difflib
+        import yfinance as yf
+
+        suffix_pattern = _re.compile(r'\b(inc|incorporated|corp|corporation|company|co|ltd|limited|llc|plc|group|holdings?)\b\.?', _re.IGNORECASE)
+
+        def normalize(name: str) -> str:
+            name = suffix_pattern.sub('', name or '')
+            name = _re.sub(r'[^a-z0-9\s]', '', name.lower())
+            return _re.sub(r'\s+', ' ', name).strip()
+
+        for comp in competitors:
+            ticker = comp.get('ticker')
+            if not isinstance(ticker, str) or not ticker.strip():
+                comp['ticker'] = None
+                continue
+            ticker = ticker.strip().upper()
+            try:
+                info = yf.Ticker(ticker).info
+                resolved_name = info.get('longName') or info.get('shortName') or ''
+                claimed_norm = normalize(comp.get('name', ''))
+                resolved_norm = normalize(resolved_name)
+                similarity = difflib.SequenceMatcher(None, claimed_norm, resolved_norm).ratio() if claimed_norm and resolved_norm else 0
+                if similarity < 0.5:
+                    debug_print(f"[BM_DEBUG] Rejecting competitor ticker {ticker}: claimed '{comp.get('name')}' vs resolved '{resolved_name}' (similarity {similarity:.2f})")
+                    comp['ticker'] = None
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] Could not validate competitor ticker {ticker}: {e}")
+                comp['ticker'] = None
+
+    def _analyze_product_portfolio(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze product portfolio using SEC filing data + LLM analysis"""
         try:
-            # First, try to get SEC business description
-            sec_business_data = None
-            if self.sec_provider:
-                try:
-                    sec_business_data = self.sec_provider.get_business_description(ticker)
-                    debug_print(f"[BM_DEBUG] SEC business data for {ticker}: {'Found' if sec_business_data else 'Not found'}")
-                except Exception as e:
-                    debug_print(f"[BM_DEBUG] SEC business data error for {ticker}: {e}")
-            
             # Use injected LLM manager if available, otherwise create new one
             llm_manager = self.llm_manager or LLMManager()
             
@@ -704,28 +760,31 @@ Respond with ONLY valid JSON:
             debug_print(f"[BM_DEBUG] Error in product analysis for {ticker}: {e}")
             return self._get_fallback_product_analysis(sector, industry)
     
-    def _analyze_competitive_differentiation(self, ticker: str, company_info: Dict[str, Any], product_analysis: Dict[str, Any], financial_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_competitive_differentiation(self, ticker: str, company_info: Dict[str, Any], product_analysis: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze competitive differentiation and positioning"""
         try:
             # Use injected LLM manager if available, otherwise create new one
             llm_manager = self.llm_manager or LLMManager()
-            
+
             company_name = financial_metrics.get('long_name', company_info.get('long_name', ticker))
             sector = company_info.get('sector', '')
             industry = company_info.get('industry', '')
             core_products = product_analysis.get('core_products', [])
             # sector/industry alone (e.g. "Basic Materials"/"Specialty Chemicals" for
             # Alto Ingredients, a corn-ethanol producer) is too generic for the LLM to
-            # identify a company's actual external dependencies - confirmed directly:
-            # without the business summary this call either hallucinated an unrelated
-            # specialty-polymer/adhesives business or fell back to generic placeholders
-            # for ALTO. The summary is what actually names the real feedstock/inputs.
-            business_summary = financial_metrics.get('business_summary', '') or ''
+            # identify a company's actual external dependencies or real competitors -
+            # confirmed directly: without real business context this call hallucinated
+            # an unrelated specialty-polymer/adhesives business for ALTO, and invented
+            # a wrong ticker (TDE instead of TDW) and a wrong company entirely (AMT,
+            # American Tower, instead of a real tank-barge competitor) for KEX. The SEC
+            # 10-K Business section (when available) is preferred over Yahoo's shorter
+            # summary - it's what actually names real segments/competitors/customers.
+            business_context = self._get_business_context_text(sec_business_data, financial_metrics)
 
             prompt = f"""
 Analyze competitive differentiation for {company_name} ({ticker}) in the {industry} industry.
 
-Business Summary: {business_summary}
+Business Description: {business_context}
 
 Core Products: {', '.join(core_products)}
 Sector: {sector}
@@ -735,7 +794,9 @@ Analyze competitive positioning and respond with JSON:
     "differentiation_strategy": "Cost Leadership/Differentiation/Focus/Hybrid",
     "competitive_advantages": ["Advantage 1", "Advantage 2", "Advantage 3"],
     "unique_value_propositions": ["UVP 1", "UVP 2"],
-    "key_competitors": ["Competitor 1", "Competitor 2", "Competitor 3"],
+    "key_competitors": [
+        {{"name": "Competitor Company Name", "ticker": "TICK or null if private/unknown"}}
+    ],
     "competitive_positioning": "Leader/Challenger/Follower/Niche",
     "barriers_to_entry": ["Barrier 1", "Barrier 2"],
     "switching_costs": "Low/Moderate/High",
@@ -747,22 +808,36 @@ Analyze competitive positioning and respond with JSON:
         {{
             "driver_name": "Corn prices",
             "driver_type": "commodity_input",
-            "exposure": "cost_headwind",
+            "channel": "cost",
+            "effect_of_increase": "negative",
             "relationship": "Corn is the company's primary ethanol feedstock; rising corn prices compress production margins.",
             "ticker_symbol": "ZC=F"
         }}
     ]
 }}
 
+For key_competitors: take real, named competitors from the business description above
+(e.g. a filing's Competition section) where possible. Only supply a ticker you are
+confident is correct for that exact company - if you're not certain, use null rather
+than guess (a wrong ticker is worse than none; it will be independently verified and
+dropped if wrong).
+
 For business_drivers: identify the company's real external business drivers based on
-the business summary above - the specific commodities, currencies, interest rates, or
-other macro/input factors it is economically exposed to (e.g. corn for an ethanol
+the business description above - the specific commodities, currencies, interest rates,
+or other macro/input factors it is economically exposed to (e.g. corn for an ethanol
 producer, sugar/aluminum for a beverage bottler, ad pricing or cloud compute costs for
 an internet platform - these vary enormously by company, infer from the actual
 business, don't default to generic industry boilerplate).
 driver_type is one of: commodity_input, commodity_output, fx, rate, regulatory,
 demand_side, other.
-exposure is one of: cost_headwind, cost_tailwind, revenue_headwind, revenue_tailwind.
+channel is "cost" if this driver primarily affects the company's costs, or "revenue" if
+it primarily affects revenue/demand.
+effect_of_increase is "positive" or "negative": if this driver's own value RISES, does
+that help ("positive") or hurt ("negative") the company's profitability? Answer this
+for a RISE specifically, not a fall - e.g. for a commodity input cost, a price RISE is
+almost always "negative" (channel "cost"); don't describe what a fall would do instead.
+Keep "relationship" consistent with effect_of_increase: it must explain why a RISE in
+the driver has that effect, not why a fall would have the opposite one.
 List the most significant drivers, typically 3-5, but include more than 5 only if the
 company genuinely has that many materially significant external dependencies - do not
 omit a real driver just to stay at 5.
@@ -774,17 +849,57 @@ real and correctly matched to the driver - an incorrect symbol is worse than nul
 
             response = llm_manager.generate_response(prompt)
             json_str = self._extract_json_from_response(response)
+            if not json_str:
+                # This is the largest, most reasoning-heavy prompt in this
+                # analyzer (business_description context + the direction-
+                # consistency ask for business_drivers). Confirmed directly:
+                # reasoning_tokens alone hit 5803 of a 6622-token completion
+                # on one successful run (88%), and a repeat run with the
+                # identical prompt came back with 0 visible chars - reasoning
+                # had consumed the entire budget that time. This is
+                # non-deterministic per attempt, not a hard ceiling problem
+                # (confirmed: retrying the exact same prompt succeeded in
+                # every observed case), so one retry is a more reliable fix
+                # here than raising MAX_COMPLETION_TOKENS further.
+                debug_print(f"[BM_DEBUG] Empty/unparseable competitive_differentiation response for {ticker}, retrying once")
+                response = llm_manager.generate_response(prompt)
+                json_str = self._extract_json_from_response(response)
             result = json.loads(json_str) if json_str else self._get_fallback_competitive_analysis(industry)
+
+            # key_competitors moved from list[str] to list[{"name","ticker"}] -
+            # a fallback/older-cached result may still be the old flat-string
+            # shape, so normalize before validating.
+            competitors = result.get('key_competitors') or []
+            normalized_competitors = []
+            for c in competitors:
+                if isinstance(c, dict):
+                    normalized_competitors.append({'name': c.get('name', 'Unknown'), 'ticker': c.get('ticker')})
+                elif isinstance(c, str):
+                    normalized_competitors.append({'name': c, 'ticker': None})
+            result['key_competitors'] = normalized_competitors
+            self._validate_competitors(result['key_competitors'])
+
             result.setdefault('business_drivers', [])
-            self._attach_driver_price_trends(result['business_drivers'])
+            exposure_map = {
+                ('cost', 'negative'): 'cost_headwind',
+                ('cost', 'positive'): 'cost_tailwind',
+                ('revenue', 'negative'): 'revenue_headwind',
+                ('revenue', 'positive'): 'revenue_tailwind',
+            }
+            for driver in result['business_drivers']:
+                driver['exposure'] = exposure_map.get(
+                    (driver.get('channel'), driver.get('effect_of_increase')), driver.get('exposure', 'unknown')
+                )
+            self._attach_driver_price_trends(ticker, result['business_drivers'])
             return result
 
         except Exception:
             return self._get_fallback_competitive_analysis(industry)
 
-    def _attach_driver_price_trends(self, business_drivers: List[Dict[str, Any]]) -> None:
+    def _attach_driver_price_trends(self, ticker: str, business_drivers: List[Dict[str, Any]]) -> None:
         """Fetch a live 3-month price trend for each driver's LLM-supplied
-        ticker_symbol, mutating each driver dict in place.
+        ticker_symbol, plus the stock's own actual 3-month return correlation
+        against it, mutating each driver dict in place.
 
         The LLM is asked to only supply a symbol it's confident is real (see
         the prompt above), but trusting that without a safety net would let a
@@ -792,8 +907,23 @@ real and correctly matched to the driver - an incorrect symbol is worse than nul
         another instrument's price to the wrong driver. yfinance is the net:
         an invalid or delisted symbol simply returns an empty history here,
         which is treated as "no live data" for that driver rather than raised.
+
+        The correlation is a real computed number, not an LLM assertion - it
+        exists because an LLM-stated "headwind"/"tailwind" label can be
+        internally inconsistent with its own relationship text (confirmed
+        directly on KEX: crude oil labeled a headwind while described as
+        moving the same direction as revenue), and a computed correlation is
+        independent evidence a reader can use to judge that claim themselves.
         """
         import yfinance as yf
+        import pandas as pd
+
+        stock_returns = None
+        try:
+            stock_hist = yf.Ticker(ticker).history(period='3mo')
+            stock_returns = stock_hist['Close'].pct_change().dropna()
+        except Exception as e:
+            debug_print(f"[BM_DEBUG] Could not fetch {ticker}'s own price history for driver correlation: {e}")
 
         for driver in business_drivers:
             symbol = driver.get('ticker_symbol')
@@ -809,6 +939,16 @@ real and correctly matched to the driver - an incorrect symbol is worse than nul
                 start_price, end_price = float(closes.iloc[0]), float(closes.iloc[-1])
                 driver['current_price'] = end_price
                 driver['price_change_3mo_pct'] = ((end_price - start_price) / start_price * 100) if start_price else None
+
+                if stock_returns is not None and len(stock_returns) >= 5:
+                    driver_returns = hist['Close'].pct_change().dropna()
+                    aligned = pd.concat(
+                        [stock_returns.rename('stock'), driver_returns.rename('driver')], axis=1, join='inner'
+                    ).dropna()
+                    if len(aligned) >= 5:
+                        corr = aligned['stock'].corr(aligned['driver'])
+                        if corr is not None and corr == corr:  # NaN != NaN, cheap isnan check with no extra import
+                            driver['correlation_3mo'] = float(corr)
             except Exception as e:
                 debug_print(f"[BM_DEBUG] Could not fetch price trend for driver ticker {symbol}: {e}")
 
@@ -864,7 +1004,7 @@ real and correctly matched to the driver - an incorrect symbol is worse than nul
             "competitive_threats": ["New entrants", "Technology disruption"]
         }
     
-    def _extract_segment_revenue_data(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], product_analysis: Dict[str, Any] = None) -> Dict[str, Any]:
+    def _extract_segment_revenue_data(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], product_analysis: Dict[str, Any] = None, sec_business_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Extract segment revenue breakdown and growth trends"""
         # Try SEC data first if provider is available
         if self.sec_provider:
@@ -881,28 +1021,43 @@ real and correctly matched to the driver - an incorrect symbol is worse than nul
                     debug_print(f"[BM_DEBUG] No SEC segment data for {ticker}, using LLM")
             except Exception as e:
                 debug_print(f"[BM_DEBUG] SEC segment data failed for {ticker}: {e}")
-        
+
         # Fallback to LLM analysis
         try:
             llm_manager = self.llm_manager or LLMManager()
-            
+
             company_name = financial_metrics.get('long_name', ticker)
             sector = company_info.get('sector', '')
             industry = company_info.get('industry', '')
             total_revenue = financial_metrics.get('total_revenue', 0)
-            
+            # SEC's companyfacts XBRL API has no segment-dimensional data at all
+            # (confirmed directly: no 'segment' key in any real data point, only
+            # a NumberOfReportableSegments count) - get_segment_revenue_data above
+            # can never actually return real segments, it's a dead code path that
+            # always falls through to here. The business description is the best
+            # available grounding until that's addressed with real filing-segment
+            # parsing (tracked separately, not a quick fix - see prior discussion).
+            # The previous version of this prompt also hardcoded "For APPLE:
+            # iPhone, Services... For TESLA: Automotive sales..." examples, which
+            # push the model toward recognizable archetype segment shapes rather
+            # than this company's actual ones - confirmed wrong for both ALTO
+            # ("Pet Food"/"Food & Beverage Ingredients") and KEX ("Bulk Carrier
+            # Operations"/"Container Shipping", which KEX doesn't even operate).
+            business_context = self._get_business_context_text(sec_business_data, financial_metrics)
+
             prompt = f"""
 Analyze revenue segments for {company_name} ({ticker}) in {industry}.
 
-For APPLE: iPhone, Services, Mac, iPad, Wearables
-For MICROSOFT: Productivity, Intelligent Cloud, More Personal Computing
-For AMAZON: AWS, Online stores, Physical stores, Advertising, Subscriptions
-For TESLA: Automotive sales, Energy generation, Services
+Business Description: {business_context}
 
 Company: {company_name}
 Sector: {sector}
 Industry: {industry}
 Total Revenue: ${total_revenue:,.0f}
+
+Base the segment names and breakdown on the business description above - use this
+company's own actual reporting segments if the description names them, rather than
+generic industry categories.
 
 Respond with JSON containing segment breakdown:
 {{
