@@ -473,7 +473,10 @@ def _render_business_model_details(data: dict):
         ("Type", data.get('business_model_type', 'N/A')),
         ("Primary Revenue Stream", data.get('primary_revenue_stream', 'N/A')),
         ("Revenue Quality", data.get('revenue_quality', 'N/A')),
-        ("Recurring Revenue", f"{recurring_pct*100:.0f}%" if recurring_pct is not None else "N/A"),
+        # Always a derived/heuristic estimate (weighted by revenue-stream type,
+        # e.g. subscription=0.95, product_sales=0.20), never a figure quoted
+        # directly from a filing - labeled as such so it isn't read as fact.
+        ("Recurring Revenue (est.)", f"{recurring_pct*100:.0f}%" if recurring_pct is not None else "N/A"),
         ("Scalability Score", f"{data.get('scalability_score', 0):.1f}/10"),
         ("Competitive Moat", data.get('competitive_moat', 'N/A')),
     ], cols=3)
@@ -509,7 +512,14 @@ def _render_business_model_details(data: dict):
         ], cols=3)
         key_competitors = comp.get('key_competitors') or []
         if key_competitors:
-            st.caption("**Key Competitors:** " + ", ".join(key_competitors))
+            # Older/cached results predate the name+ticker shape and may still
+            # be flat strings - handle both rather than erroring on replay.
+            competitor_labels = [
+                (f"{c['name']} ({c['ticker']})" if c.get('ticker') else c.get('name', 'Unknown'))
+                if isinstance(c, dict) else str(c)
+                for c in key_competitors
+            ]
+            st.caption("**Key Competitors:** " + ", ".join(competitor_labels))
         for label, key in [
             ("Competitive Advantages", 'competitive_advantages'),
             ("Unique Value Propositions", 'unique_value_propositions'),
@@ -537,7 +547,15 @@ def _render_business_model_details(data: dict):
                 price = driver.get('current_price')
                 pct = driver.get('price_change_3mo_pct')
                 price_str = f" · {_fmt_num(price)} ({pct:+.1f}% / 3mo)" if isinstance(price, (int, float)) and isinstance(pct, (int, float)) else ""
-                st.markdown(f"**{name}** — {exposure_label}{price_str}")
+                corr = driver.get('correlation_3mo')
+                # An actual computed correlation between the stock's and the
+                # driver's own 3mo returns - independent of the LLM's stated
+                # exposure label, which can be internally inconsistent (e.g.
+                # labeled a headwind while described as moving the same way
+                # as revenue). Shown so a reader can sanity-check the label
+                # against real co-movement rather than trusting it blindly.
+                corr_str = f" · corr {corr:+.2f} (3mo)" if isinstance(corr, (int, float)) else ""
+                st.markdown(f"**{name}** — {exposure_label}{price_str}{corr_str}")
                 st.caption(driver.get('relationship', ''))
 
     segments = data.get('segment_revenue_data') or {}
