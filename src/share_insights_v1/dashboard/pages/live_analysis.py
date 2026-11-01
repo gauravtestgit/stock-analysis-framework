@@ -522,6 +522,24 @@ def _render_business_model_details(data: dict):
                 for item in items:
                     st.markdown(f"- {item}")
 
+        business_drivers = comp.get('business_drivers') or []
+        if business_drivers:
+            section_label("Business Drivers")
+            _EXPOSURE_LABELS = {
+                'cost_headwind': '🔴 Cost Headwind',
+                'cost_tailwind': '🟢 Cost Tailwind',
+                'revenue_headwind': '🔴 Revenue Headwind',
+                'revenue_tailwind': '🟢 Revenue Tailwind',
+            }
+            for driver in business_drivers:
+                name = driver.get('driver_name', 'N/A')
+                exposure_label = _EXPOSURE_LABELS.get(driver.get('exposure'), driver.get('exposure', 'N/A'))
+                price = driver.get('current_price')
+                pct = driver.get('price_change_3mo_pct')
+                price_str = f" · {_fmt_num(price)} ({pct:+.1f}% / 3mo)" if isinstance(price, (int, float)) and isinstance(pct, (int, float)) else ""
+                st.markdown(f"**{name}** — {exposure_label}{price_str}")
+                st.caption(driver.get('relationship', ''))
+
     segments = data.get('segment_revenue_data') or {}
     primary_segments = segments.get('primary_segments') or []
     if primary_segments:

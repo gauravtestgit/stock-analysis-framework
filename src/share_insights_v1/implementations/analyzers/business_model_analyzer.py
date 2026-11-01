@@ -714,9 +714,18 @@ Respond with ONLY valid JSON:
             sector = company_info.get('sector', '')
             industry = company_info.get('industry', '')
             core_products = product_analysis.get('core_products', [])
-            
+            # sector/industry alone (e.g. "Basic Materials"/"Specialty Chemicals" for
+            # Alto Ingredients, a corn-ethanol producer) is too generic for the LLM to
+            # identify a company's actual external dependencies - confirmed directly:
+            # without the business summary this call either hallucinated an unrelated
+            # specialty-polymer/adhesives business or fell back to generic placeholders
+            # for ALTO. The summary is what actually names the real feedstock/inputs.
+            business_summary = financial_metrics.get('business_summary', '') or ''
+
             prompt = f"""
 Analyze competitive differentiation for {company_name} ({ticker}) in the {industry} industry.
+
+Business Summary: {business_summary}
 
 Core Products: {', '.join(core_products)}
 Sector: {sector}
@@ -733,17 +742,76 @@ Analyze competitive positioning and respond with JSON:
     "brand_strength": "Weak/Moderate/Strong",
     "technology_moat": "None/Moderate/Strong",
     "distribution_advantages": ["Advantage 1", "Advantage 2"],
-    "competitive_threats": ["Threat 1", "Threat 2"]
+    "competitive_threats": ["Threat 1", "Threat 2"],
+    "business_drivers": [
+        {{
+            "driver_name": "Corn prices",
+            "driver_type": "commodity_input",
+            "exposure": "cost_headwind",
+            "relationship": "Corn is the company's primary ethanol feedstock; rising corn prices compress production margins.",
+            "ticker_symbol": "ZC=F"
+        }}
+    ]
 }}
+
+For business_drivers: identify the company's real external business drivers based on
+the business summary above - the specific commodities, currencies, interest rates, or
+other macro/input factors it is economically exposed to (e.g. corn for an ethanol
+producer, sugar/aluminum for a beverage bottler, ad pricing or cloud compute costs for
+an internet platform - these vary enormously by company, infer from the actual
+business, don't default to generic industry boilerplate).
+driver_type is one of: commodity_input, commodity_output, fx, rate, regulatory,
+demand_side, other.
+exposure is one of: cost_headwind, cost_tailwind, revenue_headwind, revenue_tailwind.
+List the most significant drivers, typically 3-5, but include more than 5 only if the
+company genuinely has that many materially significant external dependencies - do not
+omit a real driver just to stay at 5.
+ticker_symbol: a real Yahoo Finance ticker for a tradeable futures/FX/rate instrument
+tracking that driver (e.g. "ZC=F" for corn, "SB=F" for sugar, "DX-Y.NYB" for the US
+dollar index), if one exists; otherwise null. Only supply a symbol you are confident is
+real and correctly matched to the driver - an incorrect symbol is worse than null.
 """
-            
+
             response = llm_manager.generate_response(prompt)
             json_str = self._extract_json_from_response(response)
-            return json.loads(json_str) if json_str else self._get_fallback_competitive_analysis(industry)
-            
+            result = json.loads(json_str) if json_str else self._get_fallback_competitive_analysis(industry)
+            result.setdefault('business_drivers', [])
+            self._attach_driver_price_trends(result['business_drivers'])
+            return result
+
         except Exception:
             return self._get_fallback_competitive_analysis(industry)
-    
+
+    def _attach_driver_price_trends(self, business_drivers: List[Dict[str, Any]]) -> None:
+        """Fetch a live 3-month price trend for each driver's LLM-supplied
+        ticker_symbol, mutating each driver dict in place.
+
+        The LLM is asked to only supply a symbol it's confident is real (see
+        the prompt above), but trusting that without a safety net would let a
+        wrong/hallucinated symbol either crash this call or silently attach
+        another instrument's price to the wrong driver. yfinance is the net:
+        an invalid or delisted symbol simply returns an empty history here,
+        which is treated as "no live data" for that driver rather than raised.
+        """
+        import yfinance as yf
+
+        for driver in business_drivers:
+            symbol = driver.get('ticker_symbol')
+            if not isinstance(symbol, str) or not symbol.strip() or symbol.strip().lower() in ('null', 'none', 'n/a'):
+                driver['ticker_symbol'] = None
+                continue
+            symbol = symbol.strip()
+            try:
+                hist = yf.Ticker(symbol).history(period='3mo')
+                closes = hist['Close'].dropna()
+                if len(closes) < 2:
+                    continue
+                start_price, end_price = float(closes.iloc[0]), float(closes.iloc[-1])
+                driver['current_price'] = end_price
+                driver['price_change_3mo_pct'] = ((end_price - start_price) / start_price * 100) if start_price else None
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] Could not fetch price trend for driver ticker {symbol}: {e}")
+
     def _extract_json_from_response(self, response: str) -> str:
         """Extract JSON from LLM response with robust error handling"""
         debug_print(f"[BM_DEBUG] Raw LLM response: {response[:200]}...")
