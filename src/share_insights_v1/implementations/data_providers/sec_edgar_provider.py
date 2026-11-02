@@ -20,6 +20,24 @@ class SECEdgarProvider(SECDataProvider):
         }
         self.rate_limit_delay = 0.1  # SEC requires 10 requests per second max
     
+    def get_company_sic(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """SIC code + description from the submissions endpoint - confirmed
+        free (the same endpoint get_latest_10k/get_latest_10q already fetch
+        for filing lists), used as a deterministic classification hint."""
+        try:
+            cik = self._get_cik(ticker)
+            if not cik:
+                return None
+            response = requests.get(f"{self.base_url}/submissions/CIK{cik:010d}.json", headers=self.headers)
+            time.sleep(self.rate_limit_delay)
+            if response.status_code != 200:
+                return None
+            data = response.json()
+            return {'sic': data.get('sic'), 'sic_description': data.get('sicDescription')}
+        except Exception as e:
+            debug_print(f"[SEC_DEBUG] Error fetching SIC for {ticker}: {e}")
+            return None
+
     def get_latest_10k(self, ticker: str) -> Optional[Dict[str, Any]]:
         """Get latest 10-K filing data"""
         try:
