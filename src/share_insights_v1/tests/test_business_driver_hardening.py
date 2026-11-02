@@ -119,6 +119,10 @@ def test_kex_golden_assertions():
           all(d.get('ticker_symbol') is None for d in demand_side_drivers),
           demand_side_drivers)
 
+    check("KEX classified as pass_through_operator archetype",
+          result.get('archetype', {}).get('company_archetype') == 'pass_through_operator',
+          result.get('archetype'))
+
 
 def test_ko_golden_assertions():
     """KO's 10-K uses a different XBRL rendering convention than KEX's for
@@ -151,6 +155,10 @@ def test_ko_golden_assertions():
     competitor_names = ' '.join(c.get('name', '') for c in comp.get('key_competitors') or []).lower()
     check("KO's real named competitor (PepsiCo) is found, not the 'no competitors' fallback",
           'pepsi' in competitor_names, comp.get('key_competitors') or comp.get('key_competitors_note'))
+
+    archetype = result.get('archetype', {})
+    check("KO classified as branded_staples_franchise archetype",
+          archetype.get('company_archetype') == 'branded_staples_franchise', archetype)
 
 
 def test_determinism():
