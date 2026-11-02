@@ -89,20 +89,25 @@ def test_kex_golden_assertions():
         other_margin = other['profit'] / other['revenue']
         check("Marine margin > Distribution & Services margin", marine_margin > other_margin, f"{marine_margin:.3f} vs {other_margin:.3f}")
 
+    # The LLM is free to name a Jones Act driver as a headwind in the first
+    # place (that's its own call, not something to prevent) - what this
+    # check actually verifies is the consistency validator's job: WHEN that
+    # happens alongside Jones Act also being listed as an advantage, it must
+    # be flagged, not silently left looking like two parts of the report
+    # disagree with each other.
     comp = result.get('competitive_differentiation', {})
     advantages_text = ' '.join(comp.get('competitive_advantages') or []).lower()
     jones_act_in_advantages = 'jones act' in advantages_text
-    jones_act_as_headwind = any(
-        'jones' in (d.get('driver_name') or '').lower() and d.get('exposure') in ('cost_headwind', 'revenue_headwind')
-        for d in comp.get('business_drivers') or []
-    )
-    check("Jones Act not simultaneously an advantage and an unflagged headwind",
-          not (jones_act_in_advantages and jones_act_as_headwind),
-          "contradiction not flagged" if (jones_act_in_advantages and jones_act_as_headwind) else "")
-
-    for driver in comp.get('business_drivers') or []:
-        if 'jones' in (driver.get('driver_name') or '').lower() and driver.get('exposure') in ('cost_headwind', 'revenue_headwind'):
-            check(f"Jones Act headwind driver is flagged inconsistent", 'consistency_flags' in driver, driver)
+    jones_act_headwind_drivers = [
+        d for d in comp.get('business_drivers') or []
+        if 'jones' in (d.get('driver_name') or '').lower() and d.get('exposure') in ('cost_headwind', 'revenue_headwind')
+    ]
+    if jones_act_in_advantages and jones_act_headwind_drivers:
+        for driver in jones_act_headwind_drivers:
+            check("Jones Act headwind driver is flagged inconsistent with the advantages list",
+                  'consistency_flags' in driver, driver)
+    else:
+        check("No Jones Act advantage/headwind contradiction present this run (nothing to flag)", True)
 
     diesel_like = [d for d in comp.get('business_drivers') or [] if any(
         term in (d.get('driver_name') or '').lower() for term in ['fuel', 'diesel', 'bunker']
