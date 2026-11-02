@@ -23,8 +23,11 @@ class BusinessModelAnalyzer(IAnalyzer):
     # Bump whenever this analyzer's logic changes meaningfully (prompt
     # schema, slice selection, consistency checks, etc.) - a cached result
     # keyed by an old version is never read, so a logic change can't be
-    # silently masked by a stale cache hit.
-    _ANALYZER_VERSION = 'v2-structured-segments-and-drivers'
+    # silently masked by a stale cache hit. Confirmed this was missed for
+    # the batch-2 fixes (segment window, KO extraction, name normalization,
+    # etc.) - the version string was never bumped, so a KEX result cached
+    # under batch 1 kept being served unchanged through all of batch 2.
+    _ANALYZER_VERSION = 'v3-batch2-fixes'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
@@ -1288,14 +1291,23 @@ so do not include a ticker_symbol field.
             exposure = driver.get('exposure')
 
             if exposure in headwind_exposures and driver_name:
-                # Require ALL significant words, not just one - confirmed
-                # directly this matters: a one-word match alone flagged
-                # "Environmental regulation" (headwind) against an advantage
-                # that separately praised "environmental... standards" - a
-                # coincidental shared word, not the same contradiction as
-                # Jones Act appearing as BOTH an advantage and a headwind.
-                name_words = [w for w in re.sub(r'[^a-z0-9\s]', '', driver_name.lower()).split() if len(w) > 3]
-                if name_words and all(w in advantages_text for w in name_words):
+                # Match on adjacent-word phrases (bigrams), not single words
+                # or the full name - confirmed both of those get it wrong in
+                # opposite directions. A single shared word ("environmental"
+                # in both "Environmental regulation" and an unrelated
+                # "...environmental... standards" advantage) is a coincidence,
+                # not a contradiction - but requiring EVERY word in the full
+                # driver name ALSO fails: "Jones Act compliance costs" vs an
+                # advantage mentioning "Jones Act compliance" is a genuine
+                # contradiction, yet "costs" (part of this driver's own
+                # framing, not the overlapping concept) never needed to
+                # appear in the advantage text at all. A 2-word phrase like
+                # "jones act" is specific enough to signal real overlap
+                # without demanding every word in a longer driver name match.
+                name_words = re.sub(r'[^a-z0-9\s]', '', driver_name.lower()).split()
+                bigrams = [f"{name_words[i]} {name_words[i+1]}" for i in range(len(name_words) - 1)]
+                single_word_fallback = name_words if len(name_words) == 1 and len(name_words[0]) > 5 else []
+                if any(phrase in advantages_text for phrase in bigrams + single_word_fallback):
                     flags.append('contradicts competitive_advantages')
 
             corr = driver.get('correlation_3mo')
