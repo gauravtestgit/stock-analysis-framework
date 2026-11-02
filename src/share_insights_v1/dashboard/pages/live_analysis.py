@@ -520,6 +520,8 @@ def _render_business_model_details(data: dict):
                 for c in key_competitors
             ]
             st.caption("**Key Competitors:** " + ", ".join(competitor_labels))
+        elif comp.get('key_competitors_note'):
+            st.caption(f"**Key Competitors:** {comp['key_competitors_note']}")
         for label, key in [
             ("Competitive Advantages", 'competitive_advantages'),
             ("Unique Value Propositions", 'unique_value_propositions'),
@@ -555,8 +557,19 @@ def _render_business_model_details(data: dict):
                 # as revenue). Shown so a reader can sanity-check the label
                 # against real co-movement rather than trusting it blindly.
                 corr_str = f" · corr {corr:+.2f} (3mo)" if isinstance(corr, (int, float)) else ""
-                st.markdown(f"**{name}** — {exposure_label}{price_str}{corr_str}")
+                confirm_flag = driver.get('confirmation_flag')
+                flag_str = f" ⚠️ {confirm_flag}" if confirm_flag else ""
+                st.markdown(f"**{name}** — {exposure_label}{price_str}{corr_str}{flag_str}")
                 st.caption(driver.get('relationship', ''))
+
+                consistency_flags = driver.get('consistency_flags') or []
+                for flag in consistency_flags:
+                    st.caption(f"⚠️ {flag}")
+
+                pass_through = driver.get('pass_through')
+                if pass_through:
+                    lag_str = f", lag {pass_through['lag']}" if pass_through.get('lag') else ""
+                    st.caption(f"Pass-through: {pass_through.get('strength', 'N/A')}{lag_str} — “{pass_through['evidence'][0]}”" if pass_through.get('evidence') else f"Pass-through: {pass_through.get('strength', 'N/A')}{lag_str}")
 
     segments = data.get('segment_revenue_data') or {}
     primary_segments = segments.get('primary_segments') or []

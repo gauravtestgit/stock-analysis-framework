@@ -16,6 +16,9 @@ token.json
 logs/
 *.log
 
+# Analyzer result cache (filing-keyed, regenerable)
+/cache/
+
 # Python cache
 __pycache__/
 **/__pycache__/

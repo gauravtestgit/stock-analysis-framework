@@ -1,0 +1,70 @@
+# Maintained mapping from a business driver's name to a real, tradeable
+# Yahoo Finance ticker that tracks it. Business drivers are LLM-inferred
+# (they vary enormously by company - see business_model_analyzer.py), but
+# the LLM is no longer trusted to also supply the ticker_symbol directly:
+# confirmed directly that it mapped a "petrochemical demand" driver to
+# NG=F (natural gas futures) - a real, valid ticker, just the wrong one for
+# that driver. A driver whose name/synonyms don't match any alias below
+# gets no ticker ("no proxy") rather than borrowing an unrelated series.
+#
+# Each entry's `aliases` are matched case-insensitively as substrings
+# against the driver's name and its LLM-supplied synonyms - add more
+# aliases here as new phrasings are seen, rather than guessing up front.
+
+corn:
+  ticker: "ZC=F"
+  aliases: ["corn"]
+wheat:
+  ticker: "ZW=F"
+  aliases: ["wheat"]
+soybeans:
+  ticker: "ZS=F"
+  aliases: ["soybean"]
+sugar:
+  ticker: "SB=F"
+  aliases: ["sugar"]
+cotton:
+  ticker: "CT=F"
+  aliases: ["cotton"]
+coffee:
+  ticker: "KC=F"
+  aliases: ["coffee"]
+cocoa:
+  ticker: "CC=F"
+  aliases: ["cocoa"]
+crude_oil:
+  ticker: "CL=F"
+  aliases: ["crude oil", "oil price", "petroleum", "crude"]
+diesel:
+  ticker: "HO=F"
+  aliases: ["diesel", "heating oil", "distillate fuel", "bunker fuel", "bunker", "marine gasoil", "marine fuel"]
+natural_gas:
+  ticker: "NG=F"
+  aliases: ["natural gas"]
+gasoline:
+  ticker: "RB=F"
+  aliases: ["gasoline", "rbob"]
+gold:
+  ticker: "GC=F"
+  aliases: ["gold"]
+silver:
+  ticker: "SI=F"
+  aliases: ["silver"]
+copper:
+  ticker: "HG=F"
+  aliases: ["copper"]
+aluminum:
+  ticker: "ALI=F"
+  aliases: ["aluminum", "aluminium"]
+lumber:
+  ticker: "LBR=F"
+  aliases: ["lumber", "timber"]
+usd_index:
+  ticker: "DX-Y.NYB"
+  aliases: ["us dollar index", "dollar index", "dollar strength", "usd strength"]
+eur_usd:
+  ticker: "EURUSD=X"
+  aliases: ["euro", "eur/usd", "eur usd"]
+ten_year_treasury_yield:
+  ticker: "^TNX"
+  aliases: ["interest rate", "interest rates", "treasury yield", "borrowing cost", "borrowing costs"]
