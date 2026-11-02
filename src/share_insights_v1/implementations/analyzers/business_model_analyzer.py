@@ -720,9 +720,22 @@ Respond with JSON:
 
     def _select_segment_overview_slice(self, full_text: str, segment_financials: Optional[Dict[str, Any]], cap: int = 5000) -> Tuple[str, Dict[str, Any]]:
         """For each real segment name (from get_segment_financials), grab the
-        text starting at its first mention in the filing - the paragraph(s)
-        that actually introduce what that segment does, not generic
-        boilerplate from wherever the document happens to start."""
+        text around its first mention in the filing - the paragraph(s) that
+        actually introduce what that segment does, not generic boilerplate
+        from wherever the document happens to start.
+
+        Confirmed directly on KEX why this needs a BEFORE window, not just
+        forward from the match: "KMT" is first mentioned as the close of its
+        own parenthetical abbreviation definition - '...marine transportation
+        segment ("KMT")' - so a forward-only window starting at that match
+        skips the real marine-transportation description (which precedes the
+        abbreviation) and instead captures whatever comes after, which here
+        transitions straight into the Distribution & Services paragraph. That
+        also made both segments' windows nearly duplicate each other. Matches
+        are processed in position order with a forward-only cursor so a
+        later segment's window can't re-include text an earlier one already
+        covered.
+        """
         if not full_text:
             return '', {'method': 'empty_source'}
         annual = (segment_financials or {}).get('annual') or {}
@@ -731,8 +744,11 @@ Respond with JSON:
             return full_text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_segment_names'}
 
         per_segment_cap = max(500, cap // len(segment_names))
-        chunks, used_names = [], []
+        before_chars = int(per_segment_cap * 0.4)
+        after_chars = per_segment_cap - before_chars
+
         text_lower = full_text.lower()
+        positions = []
         for name in segment_names:
             # Case-insensitive: the segment name as parsed from XBRL is
             # Title Case (e.g. "Distribution and Services Segment"), but
@@ -740,14 +756,68 @@ Respond with JSON:
             # in lowercase ("...through its distribution and services
             # segment..."), which a case-sensitive find() never matches.
             idx = text_lower.find(name.lower())
-            if idx == -1:
+            if idx != -1:
+                positions.append((idx, name))
+        positions.sort(key=lambda p: p[0])
+
+        chunks, used_names = [], []
+        cursor = 0
+        for idx, name in positions:
+            window_start = max(cursor, idx - before_chars)
+            window_end = idx + after_chars
+            if window_end <= window_start:
                 continue
-            chunks.append(full_text[idx:idx + per_segment_cap])
+            chunks.append(full_text[window_start:window_end])
             used_names.append(name)
+            cursor = window_end
         if not chunks:
             return full_text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'segment_names_not_found_in_text'}
         slice_text = ' '.join(chunks)[:cap]
         return slice_text, {'method': 'segment_overview_paragraphs', 'segment_names_used': used_names, 'chars_used': len(slice_text)}
+
+    @staticmethod
+    def _filter_evidence_or_drop(items: Optional[List[Any]], source_text: str) -> List[str]:
+        """Keep only {claim, evidence_quote} items whose quote is actually
+        found in source_text (normalized: lowercased, whitespace-collapsed),
+        returning plain claim strings - drops a claim the LLM can't (or
+        didn't) ground in the filing rather than trusting it on faith.
+
+        Confirmed directly why this matters: a product weakness claiming
+        "limited presence in... data-center power solutions" contradicted
+        the company's own reported results elsewhere (power-generation
+        revenue growth) - the same "could state anything" gap as the
+        business_drivers field had before pass-through scanning and
+        correlation flags were added for that field specifically.
+
+        Falls back to passing plain strings through unchanged (nothing to
+        verify them against) for an older/cached result's shape, or a
+        caller with no source text.
+        """
+        if not items:
+            return []
+        if not source_text:
+            return [i.get('claim', '') if isinstance(i, dict) else str(i) for i in items]
+
+        normalized_source = re.sub(r'\s+', ' ', source_text.lower())
+        kept = []
+        for item in items:
+            if isinstance(item, str):
+                kept.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            claim = item.get('claim', '')
+            quote = item.get('evidence_quote', '')
+            if not claim:
+                continue
+            if not quote:
+                continue
+            normalized_quote = re.sub(r'\s+', ' ', quote.lower()).strip()
+            if len(normalized_quote) >= 8 and normalized_quote in normalized_source:
+                kept.append(claim)
+            else:
+                debug_print(f"[BM_DEBUG] Dropping unverified claim '{claim}': quote not found in source")
+        return kept
 
     @staticmethod
     def _normalize_company_name(name: str) -> str:
@@ -872,14 +942,23 @@ Industry: {industry}
 Based on the official SEC filing above, analyze the product portfolio and respond with ONLY valid JSON:
 {{
     "product_breadth": "Narrow/Moderate/Broad",
-    "product_depth": "Shallow/Moderate/Deep", 
+    "product_depth": "Shallow/Moderate/Deep",
     "core_products": ["Specific Product 1", "Specific Product 2", "Specific Product 3"],
     "innovation_level": "Low/Moderate/High",
     "cross_selling_potential": "Low/Moderate/High",
-    "product_strengths": ["Strength 1", "Strength 2"],
-    "product_weaknesses": ["Weakness 1", "Weakness 2"],
+    "product_strengths": [
+        {{"claim": "Strength 1", "evidence_quote": "a short phrase copied verbatim from the filing text above that supports this"}}
+    ],
+    "product_weaknesses": [
+        {{"claim": "Weakness 1", "evidence_quote": "a short phrase copied verbatim from the filing text above that supports this"}}
+    ],
     "data_source": "SEC Filing + LLM Analysis"
 }}
+
+Each evidence_quote must be copied exactly from the filing text above (not paraphrased) -
+a claim whose quote can't be found in the source text will be dropped, so don't invent
+one just to fill the field. If a genuinely true claim has no supporting quote available,
+leave it out rather than fabricate a quote for it.
 """
             else:
                 # Fallback to general analysis if no SEC data
@@ -907,12 +986,16 @@ Respond with ONLY valid JSON:
             
             response = llm_manager.generate_response(prompt, temperature=0)
             debug_print(f"[BM_DEBUG] LLM response for {ticker}: {response[:100]}...")
-            
+
             json_str = self._extract_json_from_response(response)
             if json_str:
                 import json
                 result = json.loads(json_str)
                 debug_print(f"[BM_DEBUG] Parsed JSON for {ticker}: {result}")
+                has_filing_text = bool(sec_business_data and sec_business_data.get('business_description'))
+                if has_filing_text:
+                    result['product_strengths'] = self._filter_evidence_or_drop(result.get('product_strengths'), business_context)
+                    result['product_weaknesses'] = self._filter_evidence_or_drop(result.get('product_weaknesses'), business_context)
                 return result
             else:
                 debug_print(f"[BM_DEBUG] No JSON found for {ticker}, using fallback")
@@ -999,7 +1082,10 @@ the business description above - the specific commodities, currencies, interest 
 or other macro/input factors it is economically exposed to (e.g. corn for an ethanol
 producer, sugar/aluminum for a beverage bottler, ad pricing or cloud compute costs for
 an internet platform - these vary enormously by company, infer from the actual
-business, don't default to generic industry boilerplate).
+business, don't default to generic industry boilerplate). Name each driver using the
+business description's OWN terminology where it uses one (e.g. if the filing says
+"fuel", name the driver "Fuel price", not a different term like "Bunker fuel" that the
+filing itself never uses).
 driver_type is one of: commodity_input, commodity_output, fx, rate, regulatory,
 demand_side, other.
 channel is "cost" if this driver primarily affects the company's costs, or "revenue" if
@@ -1126,6 +1212,17 @@ so do not include a ticker_symbol field.
             debug_print(f"[BM_DEBUG] Could not fetch {ticker}'s own price history for driver correlation: {e}")
 
         for driver in business_drivers:
+            # A demand-side driver ("demand for refined petroleum transport")
+            # describes VOLUME/demand, not a price - it should never resolve
+            # to a commodity price proxy. Confirmed directly: without this
+            # exclusion, "Demand for refined petroleum transport" matched the
+            # same crude-oil alias as a separate, legitimate "Oil price"
+            # driver, producing two drivers showing the identical price/%
+            # change as if they were the same thing.
+            if driver.get('driver_type') == 'demand_side':
+                driver['ticker_symbol'] = None
+                driver['proxy_status'] = 'no_proxy'
+                continue
             symbol, proxy_status = self._resolve_driver_proxy(driver.get('driver_name', ''), driver.get('synonyms'))
             driver['ticker_symbol'] = symbol
             driver['proxy_status'] = proxy_status
@@ -1261,7 +1358,39 @@ so do not include a ticker_symbol field.
             "competitive_threats": ["New entrants", "Technology disruption"]
         }
     
-    def _build_segment_data_from_financials(self, segment_financials: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def _normalize_segment_name(name: str, full_text: str = '') -> str:
+        """XBRL member names are sometimes a company-internal abbreviation
+        (e.g. "KMT") or carry a redundant "Segment" suffix (e.g.
+        "Distribution and Services Segment") rather than a name a reader
+        would recognize. Strips the suffix, and for a short all-caps
+        abbreviation, looks for the filing's own "<descriptive name>
+        ("ABBREV")" pattern that defines it (confirmed this exact pattern on
+        KEX: '...marine transportation segment ("KMT")...') and uses that
+        instead. Falls back to the suffix-stripped original name if no such
+        definition is found in the given text.
+        """
+        cleaned = re.sub(r'\s+segment$', '', name, flags=re.IGNORECASE).strip()
+        if full_text and cleaned.isupper() and 2 <= len(cleaned) <= 5:
+            # Anchored on the literal word "segment" immediately before the
+            # parenthetical, not just "whatever precedes the paren" - a lazy
+            # class allowing commas/spaces otherwise over-captures the whole
+            # preceding clause (confirmed: matched "The Company, through its
+            # marine transportation segment (\"KMT\")" in full instead of
+            # just "marine transportation").
+            pattern = re.compile(
+                r"([A-Za-z][A-Za-z \-]{3,40}?)\s+segment\s*\(\s*[\"“]" + re.escape(cleaned) + r"[\"”]",
+                re.IGNORECASE,
+            )
+            m = pattern.search(full_text)
+            if m:
+                descriptive = m.group(1).strip()
+                descriptive = re.sub(r'^(?:the\s+company,?\s*)?(?:through\s+)?(?:its\s+)?', '', descriptive, flags=re.IGNORECASE).strip()
+                if descriptive:
+                    return descriptive.title()
+        return cleaned
+
+    def _build_segment_data_from_financials(self, segment_financials: Dict[str, Any], full_text: str = '') -> Optional[Dict[str, Any]]:
         """Build primary_segments and its derived fields entirely from real
         filing numbers (get_segment_financials) - no LLM involved, so the
         model can't output a percentage, margin ranking, or growth label
@@ -1273,6 +1402,13 @@ so do not include a ticker_symbol field.
         wrong (confirmed: KEX showed 78%/22% with margins reversed vs the
         real 58%/42% with Marine having the HIGHER margin), and are the
         focus of this fix.
+
+        Every growth label carries its own period (annual AND, when
+        available, the latest quarter) - confirmed directly why this
+        matters: KEX's FY2025 growth (Marine +1%, D&S +6%) and its most
+        recent quarter's growth (Marine +9%, D&S +6%) tell a different
+        story, and a bare "Growing"/"Stable" with no period lets the two
+        get silently conflated.
         """
         annual = (segment_financials or {}).get('annual')
         if not annual or len(annual.get('segments') or {}) < 2:
@@ -1282,6 +1418,9 @@ so do not include a ticker_symbol field.
         total_revenue = annual.get('total_revenue') or sum(d['revenue'] for d in segments.values())
         if not total_revenue:
             return None
+
+        quarterly = (segment_financials or {}).get('quarterly') or {}
+        quarterly_segments = quarterly.get('segments') or {}
 
         margins = {name: (d['profit'] / d['revenue']) for name, d in segments.items() if d.get('profit') is not None and d.get('revenue')}
         margin_rank = sorted(margins, key=lambda n: margins[n], reverse=True)
@@ -1296,10 +1435,10 @@ so do not include a ticker_symbol field.
                 return 'Low'
             return 'Medium'
 
-        def growth_trend(d: Dict[str, Any]) -> str:
+        def growth_label(d: Dict[str, Any]) -> Optional[str]:
             rev, prior = d.get('revenue'), d.get('revenue_prior')
             if not rev or not prior:
-                return 'Unknown'
+                return None
             growth = (rev - prior) / prior
             if growth > 0.05:
                 return 'Growing'
@@ -1311,11 +1450,21 @@ so do not include a ticker_symbol field.
         growth_by_name = {}
         for name, d in segments.items():
             pct = (d['revenue'] / total_revenue) * 100
+            growth = growth_label(d)
             growth_by_name[name] = ((d['revenue'] - d['revenue_prior']) / d['revenue_prior']) if d.get('revenue_prior') else None
+            annual_period = f"Annual, {annual.get('source', '10-K')} filed {annual.get('filing_date', 'unknown')}"
+            growth_trend = f"{growth or 'Unknown'} ({annual_period})"
+
+            q_data = quarterly_segments.get(name)
+            if q_data:
+                q_growth = growth_label(q_data)
+                quarter_period = f"Latest Quarter, {quarterly.get('source', '10-Q')} filed {quarterly.get('filing_date', 'unknown')}"
+                growth_trend += f"; {q_growth or 'Unknown'} ({quarter_period})"
+
             primary_segments.append({
-                'segment_name': name,
+                'segment_name': self._normalize_segment_name(name, full_text),
                 'revenue_percentage': round(pct, 1),
-                'growth_trend': growth_trend(d),
+                'growth_trend': growth_trend,
                 'margin_profile': margin_profile(name),
                 'revenue': d['revenue'],
                 'profit': d.get('profit'),
@@ -1327,12 +1476,13 @@ so do not include a ticker_symbol field.
         fastest_growing = max(growable, key=growable.get) if growable else largest
         largest_share = segments[largest]['revenue'] / total_revenue
         diversification = 'Low' if largest_share > 0.70 else ('Medium' if largest_share > 0.50 else 'High')
+        annual_label = f"FY, {annual.get('source', '10-K')} filed {annual.get('filing_date', 'unknown')}"
 
         return {
             'primary_segments': primary_segments,
             'revenue_diversification': diversification,
-            'fastest_growing_segment': fastest_growing,
-            'largest_segment': largest,
+            'fastest_growing_segment': f"{self._normalize_segment_name(fastest_growing, full_text)} ({annual_label})",
+            'largest_segment': f"{self._normalize_segment_name(largest, full_text)} ({annual_label})",
             'segment_risks': [],
             'cross_segment_synergies': [],
             'data_source': f"SEC {annual.get('source', '10-K')} filing (filed {annual.get('filing_date', 'unknown')})",
@@ -1340,7 +1490,8 @@ so do not include a ticker_symbol field.
 
     def _extract_segment_revenue_data(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], product_analysis: Dict[str, Any] = None, sec_business_data: Optional[Dict[str, Any]] = None, segment_financials: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Extract segment revenue breakdown and growth trends"""
-        real_data = self._build_segment_data_from_financials(segment_financials) if segment_financials else None
+        full_text_for_names = self._get_business_context_text(sec_business_data, financial_metrics)
+        real_data = self._build_segment_data_from_financials(segment_financials, full_text_for_names) if segment_financials else None
         if real_data:
             debug_print(f"[BM_DEBUG] Using real filing-sourced segment financials for {ticker}")
             self._slice_log['segment_revenue_data'] = {'method': 'structured_filing_data_no_llm'}

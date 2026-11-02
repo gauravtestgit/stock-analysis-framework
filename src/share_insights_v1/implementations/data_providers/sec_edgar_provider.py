@@ -295,11 +295,26 @@ class SECEdgarProvider(SECDataProvider):
         real heading's start position would never be found at all, and only
         the TOC's (unsplit) occurrence would be in `starts`, so the gap-based
         logic below would still select the TOC as the start - same bug,
-        different cause. Once there are two valid start candidates (TOC and
-        real), the real one is the LATEST start that still reaches a
-        genuinely distant end marker - the TOC's start reaches that same end
-        marker too (spanning a nominally larger range), but that range is
-        mostly TOC noise, not real content.
+        different cause.
+
+        A further wrinkle, confirmed on KO's 10-K specifically: its Risk
+        Factors section repeatedly cross-references Item 1 by name ('...refer
+        to the heading "Competition" set forth in Part I, "Item 1. Business"
+        of this report.'), five separate times. Each of those matches the
+        same start_pattern, and because they're spread far apart, the gap to
+        the next end-marker from one of them can ALSO look "genuinely large"
+        by the same test that correctly identifies the real heading on a
+        simpler filing - confirmed this made the LAST such cross-reference
+        get selected as if it were the real heading on KO, pulling in ~38K
+        chars of unrelated Risk Factors prose (ending mid-cybersecurity-risk
+        discussion) instead of Item 1's own Competition subsection.
+        A real heading is reliably followed by a fresh capitalized sentence
+        ("ITEM 1. BUSINESS In this report..."); a cross-reference is reliably
+        followed by the lowercase tail of the sentence that was quoting it
+        ('"Item 1. Business" of this report.'); a TOC entry is followed by a
+        page number. Filtering start candidates on this before the gap check
+        removes both false-positive classes without weakening the gap check
+        itself, which still does the TOC-vs-real-section job it was built for.
         """
         import re
         from html import unescape
@@ -312,8 +327,18 @@ class SECEdgarProvider(SECDataProvider):
         start_pattern = re.compile(r'item\s*1\.?\s*busi\s*ness', re.IGNORECASE)
         end_pattern = re.compile(r'item\s*1a\.?\s*risk\s*factors|item\s*2\.?\s*properties', re.IGNORECASE)
         TOC_GAP_THRESHOLD = 3000
+        # Skips whitespace/quotes AND a trailing period - confirmed needed on
+        # ALTO, whose real heading reads "Item 1. Business. Business
+        # Overview..." (a period right after "Business" before the real
+        # sentence starts), which the bare whitespace/quote class missed
+        # entirely, incorrectly rejecting ALTO's genuine heading.
+        FOLLOWING_TEXT_RE = re.compile(r'^[\s".”’\']*([A-Za-z])')
 
-        starts = [m.start() for m in start_pattern.finditer(text)]
+        def _followed_by_fresh_sentence(match_end: int) -> bool:
+            following = FOLLOWING_TEXT_RE.match(text[match_end:match_end + 20])
+            return bool(following and following.group(1).isupper())
+
+        starts = [m.start() for m in start_pattern.finditer(text) if _followed_by_fresh_sentence(m.end())]
         end_positions = [m.start() for m in end_pattern.finditer(text)]
 
         candidates = []
@@ -501,20 +526,28 @@ class SECEdgarProvider(SECDataProvider):
         # cell) - only the first one is the actual segment name, the rest is
         # the same "which axis" qualifier repeated on every member's own row.
         member_pattern = _re.compile(r'^(.*?)\[Member\]', _re.IGNORECASE)
+        # A second, different member-header convention, confirmed on KO: no
+        # "[Member]" suffix anywhere - instead pandas merges the segment name
+        # and a bare axis qualifier into one cell, "EMEA | Operating
+        # Segments" (same rowspan-flattening quirk already seen elsewhere in
+        # this file, just with a different qualifier word), which the
+        # "[Member]" pattern never matches - why KO returned zero segments.
+        axis_qualifier_pattern = _re.compile(r'^(.*?)\s*\|\s*(?:operating segments?|reportable segments?)$', _re.IGNORECASE)
         # A profit/earnings measure is preferred in this priority order - the
         # company's own disclosed measure (e.g. "earnings before taxes on
         # income") over a generic one, matching how the filing itself frames
         # segment performance rather than imposing an external definition.
         profit_label_priority = [
             'earnings before taxes on income', 'segment profit', 'operating income',
-            'income from operations', 'operating income loss', 'net income',
-            'income (loss) before provision (benefit) for income taxes',
+            'operating income (loss)', 'income from operations', 'operating income loss',
+            'net income', 'income (loss) before provision (benefit) for income taxes',
         ]
         # Revenue line-item wording varies by filer too - confirmed directly:
         # KEX uses "Revenues", ALTO uses "Net Sales".
         revenue_label_priority = [
-            'revenues', 'revenue', 'net sales', 'net revenues', 'total revenue',
-            'total revenues', 'total net sales', 'sales',
+            'net operating revenues', 'revenues', 'revenue', 'net sales', 'net revenues',
+            'total revenue', 'total revenues', 'total net sales', 'sales',
+            'revenue for reportable segments',
         ]
 
         segments: Dict[str, Dict[str, Any]] = {}
@@ -524,10 +557,12 @@ class SECEdgarProvider(SECDataProvider):
         for i in range(len(t)):
             label_cell = t.iloc[i, 0]
             label = '' if pd.isna(label_cell) else str(label_cell).strip()
+
             m = member_pattern.match(label)
-            if m:
+            m2 = axis_qualifier_pattern.match(label) if not m else None
+            if m or m2:
                 seen_any_member = True
-                name = m.group(1).strip()
+                name = (m or m2).group(1).strip()
                 if name.lower() in self._AGGREGATE_MEMBER_NAMES:
                     current_member = None
                 else:
