@@ -1,7 +1,7 @@
 import os
 import time
 import threading
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from ...interfaces.llm_provider import ILLMProvider, MAX_COMPLETION_TOKENS
@@ -26,13 +26,20 @@ class GroqProvider(ILLMProvider):
             self.llm = None
             debug_print(f"Failed to initialize Groq: {e}")
     
-    def generate_response(self, prompt: str, **kwargs) -> str:
-        """Generate response with rate limiting and retries"""
+    def generate_response(self, prompt: str, temperature: Optional[float] = None, **kwargs) -> str:
+        """Generate response with rate limiting and retries.
+
+        temperature overrides this provider's construction-time default
+        (0.1) for just this call, via LangChain's .bind() - added so a
+        caller that needs deterministic output (e.g. BusinessModelAnalyzer,
+        for repeatable segment/driver labeling) can request temperature=0
+        without a second provider instance.
+        """
         if not self.llm:
             raise Exception("Groq provider not available")
-        
+
         debug_print(f"[GROQ_DEBUG] Starting Groq request, attempt 1/{self.max_retries}")
-        
+
         for attempt in range(self.max_retries):
             try:
                 # Rate limiting
@@ -42,12 +49,13 @@ class GroqProvider(ILLMProvider):
                     sleep_time = self.min_request_interval - time_since_last
                     debug_print(f"[GROQ_DEBUG] Rate limiting: sleeping {sleep_time:.2f}s")
                     time.sleep(sleep_time)
-                
+
                 # Make request
                 debug_print(f"[GROQ_DEBUG] Making API request to {self.model_name}")
                 request_start = time.time()
                 prompt_template = ChatPromptTemplate.from_template("{prompt}")
-                chain = prompt_template | self.llm
+                llm = self.llm.bind(temperature=temperature) if temperature is not None else self.llm
+                chain = prompt_template | llm
                 response = chain.invoke({"prompt": prompt})
                 request_end = time.time()
                 self.last_request_time = time.time()
