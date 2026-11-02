@@ -545,10 +545,34 @@ def _render_business_model_details(data: dict):
             }
             for driver in business_drivers:
                 name = driver.get('driver_name', 'N/A')
-                exposure_label = _EXPOSURE_LABELS.get(driver.get('exposure'), driver.get('exposure', 'N/A'))
+                exposure = driver.get('exposure')
+                exposure_label = _EXPOSURE_LABELS.get(exposure, exposure or 'N/A')
+                # The plain headwind/tailwind label ignores whether the scan
+                # below found the company can actually pass the cost through
+                # to customers - confirmed directly on KEX: a driver with a
+                # confirmed partial pass-through (an escalation clause) still
+                # showed as a flat 🔴 Cost Headwind, same as a driver with no
+                # such protection at all. The label is driven by the scan
+                # result instead, when one exists.
+                pass_through = driver.get('pass_through')
+                if pass_through and exposure in ('cost_headwind', 'revenue_headwind'):
+                    side = 'cost' if exposure == 'cost_headwind' else 'revenue'
+                    strength = pass_through.get('strength')
+                    if strength == 'full':
+                        exposure_label = f"🟢 {side.capitalize()} headwind, fully recovered"
+                    elif strength == 'partial':
+                        exposure_label = f"🟡 Short-term {side} headwind, partially recovered"
+                    # strength == 'none' means the filing explicitly says this
+                    # ISN'T recovered - the plain headwind label already says
+                    # that correctly, so it's left as-is.
                 price = driver.get('current_price')
                 pct = driver.get('price_change_3mo_pct')
-                price_str = f" · {_fmt_num(price)} ({pct:+.1f}% / 3mo)" if isinstance(price, (int, float)) and isinstance(pct, (int, float)) else ""
+                ticker_symbol = driver.get('ticker_symbol')
+                price_str = (
+                    f" · {ticker_symbol}: {_fmt_num(price)} ({pct:+.1f}% / 3mo)"
+                    if isinstance(price, (int, float)) and isinstance(pct, (int, float))
+                    else ""
+                )
                 corr = driver.get('correlation_3mo')
                 # An actual computed correlation between the stock's and the
                 # driver's own 3mo returns - independent of the LLM's stated

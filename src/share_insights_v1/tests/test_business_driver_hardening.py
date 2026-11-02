@@ -109,6 +109,44 @@ def test_kex_golden_assertions():
     )]
     check("A fuel/diesel/bunker driver was identified", len(diesel_like) > 0, [d.get('driver_name') for d in comp.get('business_drivers') or []])
 
+    demand_side_drivers = [d for d in comp.get('business_drivers') or [] if d.get('driver_type') == 'demand_side']
+    check("No demand-side driver is given a commodity ticker",
+          all(d.get('ticker_symbol') is None for d in demand_side_drivers),
+          demand_side_drivers)
+
+
+def test_ko_golden_assertions():
+    """KO's 10-K uses a different XBRL rendering convention than KEX's for
+    both the segment-detail table (no "[Member]" suffix at all - a bare
+    "EMEA | Operating Segments" merged cell instead) and the Item 1 Business
+    heading (surrounded by cross-references to itself from Risk Factors) -
+    confirmed both were silently returning nothing/wrong before the fix."""
+    print("\n=== KO golden assertions (live SEC/Yahoo/LLM data) ===")
+    sec_provider = SECEdgarProvider()
+    yahoo_provider = YahooFinanceProvider()
+    llm_manager = LLMManager()
+    analyzer = BusinessModelAnalyzer(yahoo_provider, llm_manager, sec_provider)
+
+    fm = yahoo_provider.get_financial_metrics("KO")
+    result = analyzer.analyze("KO", {
+        'financial_metrics': fm,
+        'company_info': {'sector': fm.get('sector', ''), 'industry': fm.get('industry', '')},
+    })
+
+    segments = result.get('segment_revenue_data', {}).get('primary_segments', [])
+    check("KO has at least 4 real geographic/operating segments (not the LLM-estimate fallback)",
+          len(segments) >= 4, [s.get('segment_name') for s in segments])
+    check("KO segments include EMEA (a real reported segment, not invented)",
+          any('emea' in s.get('segment_name', '').lower() for s in segments))
+    check("KO's structured-data path was used (not the LLM-estimate fallback)",
+          result.get('slice_log', {}).get('segment_revenue_data', {}).get('method') == 'structured_filing_data_no_llm',
+          result.get('slice_log', {}).get('segment_revenue_data'))
+
+    comp = result.get('competitive_differentiation', {})
+    competitor_names = ' '.join(c.get('name', '') for c in comp.get('key_competitors') or []).lower()
+    check("KO's real named competitor (PepsiCo) is found, not the 'no competitors' fallback",
+          'pepsi' in competitor_names, comp.get('key_competitors') or comp.get('key_competitors_note'))
+
 
 def test_determinism():
     print("\n=== Determinism via filing-keyed cache ===")
@@ -126,6 +164,7 @@ def test_determinism():
 if __name__ == "__main__":
     test_filing_text_tools_units()
     test_kex_golden_assertions()
+    test_ko_golden_assertions()
     test_determinism()
 
     print(f"\n{'='*60}")
