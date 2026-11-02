@@ -1,0 +1,57 @@
+id: branded_staples_franchise
+name: Branded Staples Franchise
+description: >
+  A company that owns consumer brands and sells concentrate/formulations to
+  independent manufacturing or distribution partners (bottlers, franchisees,
+  licensees), who bear most direct input-cost exposure for finished goods -
+  the company's own direct exposure is concentrated in its company-operated
+  operations and FX translation of overseas royalty/concentrate revenue.
+  Confirmed case: Coca-Cola (KO) - sugar/corn/aluminum/can costs are borne
+  mostly by independent bottlers, not KO directly.
+
+sic_hints: [2080, 2086, 2060, 2064]  # Beverages, bottled soft drinks, sugar, candy
+
+description_cues:
+  - bottling partner
+  - bottler
+  - bottling investments
+  - concentrate
+  - franchise
+  - franchisee
+  - licensee
+  - licensing arrangement
+
+checklist:
+  - id: brand_portfolio
+    question: "List the company's main brands or brand families mentioned in the filing."
+    where_to_look: ["brands", "products", "portfolio", "trademarks"]
+    answer_type: list
+    required: true
+  - id: price_mix_vs_volume
+    question: "Does the filing discuss price/mix (pricing and product mix) as a growth driver separately from volume growth? Quote the relevant statement."
+    where_to_look: ["price", "mix", "volume", "net operating revenues"]
+    answer_type: text
+    required: false
+  - id: cost_bearer_split
+    question: "For the company's main input costs (e.g. sweeteners, packaging materials), does the filing state whether the company itself bears these costs directly, or whether bottling/franchise partners bear them? Quote the relevant statement and name which segment/operation (if any) bears the cost directly."
+    where_to_look: ["bottling", "concentrate", "cost of goods sold", "raw material"]
+    answer_type: text
+    required: true
+  - id: international_revenue_and_fx
+    question: "What share of revenue is international, and does the filing quote a specific reported currency/FX impact on revenue or earnings (e.g. 'currency headwinds reduced revenue by X%')?"
+    where_to_look: ["international", "foreign currency", "translation", "exchange rate"]
+    answer_type: text
+    required: true
+  - id: health_regulatory_demand_risk
+    question: "Does the filing mention health-conscious consumer trends, sugar taxes, or similar regulatory/demand risks to the core product category? Quote the relevant statement."
+    where_to_look: ["health", "sugar tax", "regulatory", "wellness"]
+    answer_type: text
+    required: false
+
+expected_drivers:
+  - fx_translation
+  - input_cost_bearer_split
+
+validation_rules:
+  - "must have an answered cost_bearer_split checklist item"
+  - "must have an answered international_revenue_and_fx checklist item"

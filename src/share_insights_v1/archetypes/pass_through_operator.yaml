@@ -1,0 +1,47 @@
+id: pass_through_operator
+name: Pass-Through Cost Operator
+description: >
+  A company whose contracts typically let it recover changes in a specific
+  input cost (most often fuel) from customers via escalation/adjustment
+  clauses, with some lag - so a headline cost headwind (e.g. "fuel price")
+  is only partially a real headwind once the pass-through mechanism is
+  accounted for. Confirmed case: Kirby Corp's Marine Transportation segment
+  (KEX) - fuel escalation clauses recover most fuel cost changes, with a
+  30-120 day lag.
+
+sic_hints: [4400, 4412, 4480]  # Water transportation, deep sea/coastal freight
+
+description_cues:
+  - escalation clause
+  - escalation provision
+  - pass-through
+  - pass through
+  - term contract
+  - spot contract
+  - contract rate
+  - fuel surcharge
+  - cost recovery
+
+checklist:
+  - id: utilization
+    question: "Does the filing state a fleet/asset utilization rate or similar capacity-usage metric? Quote it."
+    where_to_look: ["utilization", "utilisation", "fleet", "capacity"]
+    answer_type: text
+    required: false
+  - id: term_vs_spot_mix
+    question: "Does the filing state or imply the mix between term (multi-period) contracts and spot contracts? Quote the relevant statement."
+    where_to_look: ["term contract", "spot contract", "contracts of affreightment", "time charter"]
+    answer_type: text
+    required: true
+  - id: contract_renewal_timing
+    question: "Does the filing mention when a significant portion of contracts are scheduled to renew or reprice (e.g. a specific quarter)? Quote it."
+    where_to_look: ["renewal", "reprice", "scheduled for renewal", "contract rates"]
+    answer_type: text
+    required: false
+
+expected_drivers:
+  - cost_pass_through
+
+validation_rules:
+  - "must have an answered term_vs_spot_mix checklist item"
+  - "must have a pass-through scan result (deterministic, injected as fact, not re-asked)"

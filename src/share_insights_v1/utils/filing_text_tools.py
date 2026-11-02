@@ -25,9 +25,22 @@ def split_sentences(text: str) -> List[str]:
 
 def select_keyword_context(text: str, keywords: List[str], cap: int = 5000, context_sentences: int = 1) -> Tuple[str, Dict[str, Any]]:
     """Select sentences (plus `context_sentences` of surrounding context)
-    that mention any of `keywords`, in order of appearance, up to `cap`
-    characters. Falls back to the first `cap` characters if nothing matches,
+    that mention any of `keywords`, up to `cap` characters, prioritizing the
+    most SPECIFIC keyword each sentence matches when the budget can't fit
+    everything. Falls back to the first `cap` characters if nothing matches,
     so a caller always gets a usable (if less targeted) slice.
+
+    Confirmed directly why specificity-based priority (not just document
+    order) matters: given both a generic single word ("fleet", "capacity")
+    and a specific multi-word phrase ("contracts of affreightment", "term
+    contract") as keywords, the generic ones matched many early, irrelevant
+    sentences and consumed the entire budget before reaching the specific
+    phrase's real matches later in the document - the caller received a
+    slice about rental equipment instead of the contract-structure
+    discussion it actually asked for. Longer keyword = more specific =
+    filled first; the final slice is still presented in natural reading
+    order once selected, so the LLM reads coherent prose, not priority-sorted
+    fragments.
 
     Returns (slice_text, meta) where meta records which path was taken, for
     debugging/grounding-transparency purposes (per-prompt slice logging).
@@ -39,31 +52,44 @@ def select_keyword_context(text: str, keywords: List[str], cap: int = 5000, cont
     if not sentences:
         return text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_sentences'}
 
-    pattern = re.compile('|'.join(re.escape(k) for k in keywords if k), re.IGNORECASE)
-    matched_indices = sorted({
-        j
-        for i, s in enumerate(sentences) if pattern.search(s)
-        for j in range(max(0, i - context_sentences), min(len(sentences), i + context_sentences + 1))
-    })
+    sorted_keywords = sorted({k for k in keywords if k}, key=len, reverse=True)
+    if not sorted_keywords:
+        return text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_keywords'}
 
-    if not matched_indices:
+    # Longest keyword each sentence matches = that sentence's priority.
+    sentence_priority: Dict[int, int] = {}
+    for i, s in enumerate(sentences):
+        s_lower = s.lower()
+        for kw in sorted_keywords:  # already longest-first
+            if kw.lower() in s_lower:
+                sentence_priority[i] = len(kw)
+                break
+
+    if not sentence_priority:
         return text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_keyword_matches', 'keywords': keywords}
 
-    selected = []
-    total_len = 0
-    for idx in matched_indices:
-        sentence = sentences[idx]
-        if total_len + len(sentence) > cap:
-            break
-        selected.append(sentence)
-        total_len += len(sentence) + 1
+    # Fill the budget highest-priority match first; ties broken by document
+    # order so otherwise-equal sentences still read in a natural sequence.
+    ranked = sorted(sentence_priority.keys(), key=lambda i: (-sentence_priority[i], i))
 
-    slice_text = ' '.join(selected)
+    selected_indices: set = set()
+    total_len = 0
+    for i in ranked:
+        window = range(max(0, i - context_sentences), min(len(sentences), i + context_sentences + 1))
+        new_indices = [j for j in window if j not in selected_indices]
+        added_len = sum(len(sentences[j]) + 1 for j in new_indices)
+        if total_len + added_len > cap:
+            continue  # this match doesn't fit - a smaller, lower-priority one still might
+        selected_indices.update(new_indices)
+        total_len += added_len
+
+    selected_in_order = sorted(selected_indices)
+    slice_text = ' '.join(sentences[i] for i in selected_in_order)[:cap]
     return slice_text, {
         'method': 'keyword_sentences',
         'keywords': keywords,
-        'sentences_matched': len(matched_indices),
-        'sentences_used': len(selected),
+        'sentences_matched': len(sentence_priority),
+        'sentences_used': len(selected_in_order),
         'chars_used': len(slice_text),
     }
 
