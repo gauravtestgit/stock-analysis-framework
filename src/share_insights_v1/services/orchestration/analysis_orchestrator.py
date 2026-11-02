@@ -76,7 +76,22 @@ class AnalysisOrchestrator:
             # Determine which analyses to run (only registered ones that are applicable)
             applicable_analyses = self._get_applicable_analyses_for_type(company_type)
             analyses_to_run = [analysis_type for analysis_type in applicable_analyses if analysis_type in self.analyzers]
-            
+
+            # Warm the archetype classification cache up front, same reasoning
+            # as fetching financial_metrics/price_data above rather than inside
+            # the timed parallel block below: this step alone can take 10-15s
+            # of sequential LLM calls (confirmed on PEP/DPZ), which otherwise
+            # eats into BUSINESS_MODEL's 30s per-analyzer timeout below.
+            if AnalysisType.BUSINESS_MODEL in analyses_to_run:
+                business_model_analyzer = self.analyzers.get(AnalysisType.BUSINESS_MODEL)
+                if hasattr(business_model_analyzer, 'prefetch_archetype'):
+                    start_time = datetime.now()
+                    try:
+                        business_model_analyzer.prefetch_archetype(ticker, financial_metrics)
+                    except Exception as e:
+                        debug_print(f"[Analysis_Orchestrator]: {ticker}: archetype prefetch failed: {e}")
+                    self.time_calculations['archetype_prefetch'] = (datetime.now() - start_time).total_seconds()
+
             # Run registered analyses in parallel
             results = {
                 'ticker': ticker,

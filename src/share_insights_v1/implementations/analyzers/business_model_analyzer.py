@@ -242,18 +242,16 @@ class BusinessModelAnalyzer(IAnalyzer):
         # returns has known reliability gaps (see that module's docstrings),
         # so only checklist items with status "answered" (a verified quote)
         # ever get used downstream.
-        archetype_result = None
-        if self.sec_provider:
-            try:
-                archetype_classifier = self._get_archetype_classifier()
-                full_text_for_archetype = self._get_business_context_text(sec_business_data, financial_metrics)
-                accession_number = sec_business_data.get('accession_number') if sec_business_data else None
-                archetype_result = archetype_classifier.classify(
-                    ticker, financial_metrics.get('long_name', ticker), full_text_for_archetype,
-                    segment_financials, financial_metrics, accession_number
-                )
-            except Exception as e:
-                debug_print(f"[BM_DEBUG] Archetype classification failed for {ticker}: {e}")
+        #
+        # This call is a disk-cache read when AnalysisOrchestrator has
+        # already called prefetch_archetype() for this ticker up front
+        # (same pattern as fetching financial_metrics/price_data before the
+        # per-analyzer timeout window starts) - confirmed directly that
+        # without that prefetch, this classification+checklist step alone
+        # adds ~10-15s of sequential LLM calls (PEP, DPZ both matched
+        # branded_staples_franchise), pushing the whole analyzer well past
+        # the orchestrator's 30s per-analyzer timeout.
+        archetype_result = self._compute_archetype(ticker, sec_business_data, segment_financials, financial_metrics)
 
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
         product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data, segment_financials)
@@ -756,6 +754,46 @@ Respond with JSON:
         if self._archetype_classifier is None:
             self._archetype_classifier = ArchetypeClassifier(self.sec_provider, self.llm_manager or LLMManager())
         return self._archetype_classifier
+
+    def _compute_archetype(self, ticker: str, sec_business_data: Optional[Dict[str, Any]],
+                            segment_financials: Optional[Dict[str, Any]],
+                            financial_metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self.sec_provider:
+            return None
+        try:
+            archetype_classifier = self._get_archetype_classifier()
+            full_text_for_archetype = self._get_business_context_text(sec_business_data, financial_metrics)
+            accession_number = sec_business_data.get('accession_number') if sec_business_data else None
+            return archetype_classifier.classify(
+                ticker, financial_metrics.get('long_name', ticker), full_text_for_archetype,
+                segment_financials, financial_metrics, accession_number
+            )
+        except Exception as e:
+            debug_print(f"[BM_DEBUG] Archetype classification failed for {ticker}: {e}")
+            return None
+
+    def prefetch_archetype(self, ticker: str, financial_metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Run archetype classification (and its checklist Q&A) up front,
+        before AnalysisOrchestrator's per-analyzer timeout window starts -
+        same reasoning as fetching financial_metrics/price_data once up
+        front rather than inside the timed parallel block. ArchetypeClassifier
+        caches its result to disk keyed by (ticker, accession_number), so
+        the later call to the same classification inside
+        analyze_business_model() (made from within the timed thread) is
+        just a cache read, not a repeat of these LLM calls."""
+        if not self.sec_provider:
+            return None
+        try:
+            sec_business_data = self.sec_provider.get_business_description(ticker)
+        except Exception as e:
+            debug_print(f"[BM_DEBUG] Prefetch: SEC business data fetch failed for {ticker}: {e}")
+            sec_business_data = None
+        try:
+            segment_financials = self.sec_provider.get_segment_financials(ticker)
+        except Exception as e:
+            debug_print(f"[BM_DEBUG] Prefetch: segment financials fetch failed for {ticker}: {e}")
+            segment_financials = None
+        return self._compute_archetype(ticker, sec_business_data, segment_financials, financial_metrics)
 
     def _select_segment_overview_slice(self, full_text: str, segment_financials: Optional[Dict[str, Any]], cap: int = 5000) -> Tuple[str, Dict[str, Any]]:
         """For each real segment name (from get_segment_financials), grab the
