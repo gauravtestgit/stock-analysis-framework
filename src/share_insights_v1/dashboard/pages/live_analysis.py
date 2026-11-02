@@ -481,6 +481,13 @@ def _render_business_model_details(data: dict):
         ("Competitive Moat", data.get('competitive_moat', 'N/A')),
     ], cols=3)
 
+    archetype = data.get('archetype') or {}
+    archetype_name = archetype.get('company_archetype')
+    if archetype_name and archetype_name != 'other':
+        confidence = archetype.get('confidence')
+        confidence_str = f" (confidence {confidence:.0%})" if isinstance(confidence, (int, float)) else ""
+        st.caption(f"**Business Model Archetype:** {archetype_name.replace('_', ' ').title()}{confidence_str}")
+
     product = data.get('product_portfolio') or {}
     if product:
         section_label("Product Portfolio")

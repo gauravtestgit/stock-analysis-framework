@@ -16,6 +16,7 @@ from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.debug_printer import debug_print
 from ...utils.json_extractor import extract_json_from_llm_response
 from ...utils.filing_text_tools import select_keyword_context, scan_pass_through
+from ...services.archetype.archetype_classifier import ArchetypeClassifier
 
 class BusinessModelAnalyzer(IAnalyzer):
     """Analyzer for business model and revenue stream analysis"""
@@ -27,7 +28,7 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v3-batch2-fixes'
+    _ANALYZER_VERSION = 'v4-archetype-integration'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
@@ -39,7 +40,8 @@ class BusinessModelAnalyzer(IAnalyzer):
             self.sec_provider = SECEdgarProvider()
         else:
             self.sec_provider = sec_provider
-        
+        self._archetype_classifier: Optional[ArchetypeClassifier] = None
+
         # Industry to business model mappings
         self.industry_business_models = {
             'Software - Application': BusinessModelType.B2B_SAAS,
@@ -146,7 +148,10 @@ class BusinessModelAnalyzer(IAnalyzer):
             
             if hasattr(report, 'segment_revenue_data') and report.segment_revenue_data:
                 result['segment_revenue_data'] = report.segment_revenue_data
-            
+
+            if hasattr(report, 'archetype') and report.archetype:
+                result['archetype'] = report.archetype
+
             # Add complete SEC Edgar data
             if hasattr(report, 'sec_edgar_data') and report.sec_edgar_data:
                 result['sec_edgar_data'] = report.sec_edgar_data
@@ -227,9 +232,32 @@ class BusinessModelAnalyzer(IAnalyzer):
         # for grounding transparency/debugging - reset per analysis run.
         self._slice_log: Dict[str, Any] = {}
 
+        # Business-model archetype classification (POC - 2 archetypes, see
+        # services/archetype/archetype_classifier.py and
+        # ARCHETYPE_MODULE_SPEC.md). Returns "other" for most tickers right
+        # now given the taxonomy is only 2 archetypes - that's expected, not
+        # a failure, and _analyze_competitive_differentiation below adds no
+        # extra context/cost for an "other" result. Classification itself
+        # has been reliably accurate in testing; the checklist Q&A it also
+        # returns has known reliability gaps (see that module's docstrings),
+        # so only checklist items with status "answered" (a verified quote)
+        # ever get used downstream.
+        archetype_result = None
+        if self.sec_provider:
+            try:
+                archetype_classifier = self._get_archetype_classifier()
+                full_text_for_archetype = self._get_business_context_text(sec_business_data, financial_metrics)
+                accession_number = sec_business_data.get('accession_number') if sec_business_data else None
+                archetype_result = archetype_classifier.classify(
+                    ticker, financial_metrics.get('long_name', ticker), full_text_for_archetype,
+                    segment_financials, financial_metrics, accession_number
+                )
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] Archetype classification failed for {ticker}: {e}")
+
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
         product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data, segment_financials)
-        competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics, sec_business_data)
+        competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics, sec_business_data, archetype_result)
         segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics, product_analysis, sec_business_data, segment_financials)
         
         # Collect SEC Edgar data
@@ -267,6 +295,7 @@ class BusinessModelAnalyzer(IAnalyzer):
         report.segment_revenue_data = segment_revenue_data
         report.sec_edgar_data = sec_edgar_data
         report.slice_log = self._slice_log
+        report.archetype = archetype_result
 
         return report
     
@@ -721,6 +750,13 @@ Respond with JSON:
             return sec_business_data['business_description']
         return financial_metrics.get('business_summary', '') or ''
 
+    def _get_archetype_classifier(self) -> ArchetypeClassifier:
+        """Lazy singleton - avoids reloading/re-hashing the archetype YAMLs
+        on every analyze_business_model() call."""
+        if self._archetype_classifier is None:
+            self._archetype_classifier = ArchetypeClassifier(self.sec_provider, self.llm_manager or LLMManager())
+        return self._archetype_classifier
+
     def _select_segment_overview_slice(self, full_text: str, segment_financials: Optional[Dict[str, Any]], cap: int = 5000) -> Tuple[str, Dict[str, Any]]:
         """For each real segment name (from get_segment_financials), grab the
         text around its first mention in the filing - the paragraph(s) that
@@ -1008,7 +1044,7 @@ Respond with ONLY valid JSON:
             debug_print(f"[BM_DEBUG] Error in product analysis for {ticker}: {e}")
             return self._get_fallback_product_analysis(sector, industry)
     
-    def _analyze_competitive_differentiation(self, ticker: str, company_info: Dict[str, Any], product_analysis: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _analyze_competitive_differentiation(self, ticker: str, company_info: Dict[str, Any], product_analysis: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None, archetype_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze competitive differentiation and positioning"""
         try:
             # Use injected LLM manager if available, otherwise create new one
@@ -1037,6 +1073,31 @@ Respond with ONLY valid JSON:
                 business_context, slice_meta = full_business_text, {'method': 'yahoo_summary_no_slice'}
             self._slice_log['competitive_differentiation'] = slice_meta
 
+            # Verified (evidence-or-drop) facts from the archetype classifier,
+            # e.g. KO's cost_bearer_split answer naming the bottling partner
+            # vs. the company itself. Only "answered" items are used - a
+            # "not_disclosed" item has no verified quote behind it. This is
+            # the mechanism that fixes the original KO review's complaint
+            # that business_drivers treated franchise-partner costs as a
+            # full direct cost exposure on the parent.
+            business_model_context = ''
+            if archetype_result and archetype_result.get('company_archetype') not in (None, 'other'):
+                context_lines = [
+                    f"Business model archetype: {archetype_result['company_archetype']} "
+                    f"(confidence {archetype_result.get('confidence')})"
+                ]
+                for item in archetype_result.get('checklist', []):
+                    if item.get('status') == 'answered':
+                        quote = item['quotes'][0] if item.get('quotes') else ''
+                        context_lines.append(f"- {item['question']} -> {item['value']} (\"{quote}\")")
+                if len(context_lines) > 1:
+                    business_model_context = "\n".join(context_lines)
+            business_model_context_block = (
+                f"\n\nBusiness Model Context (verified from the filing - use this to judge who actually "
+                f"bears a cost or receives a revenue, not just who sells the branded product):\n{business_model_context}\n"
+                if business_model_context else ''
+            )
+
             prompt = f"""
 Analyze competitive differentiation for {company_name} ({ticker}) in the {industry} industry.
 
@@ -1044,7 +1105,7 @@ Business Description: {business_context}
 
 Core Products: {', '.join(core_products)}
 Sector: {sector}
-
+{business_model_context_block}
 Analyze competitive positioning and respond with JSON:
 {{
     "differentiation_strategy": "Cost Leadership/Differentiation/Focus/Hybrid",
@@ -1107,6 +1168,7 @@ factor (e.g. for "Diesel fuel price": "fuel", "fuel costs", "bunker fuel") - use
 to match this driver against filing text elsewhere in the document; a ticker is
 resolved independently afterward from a maintained list, not taken from you directly,
 so do not include a ticker_symbol field.
+{"If the Business Model Context above identifies that a cost (e.g. a commodity input) is borne directly by a third party - a franchise/bottling partner, an operator, a licensee - rather than by the company itself, reflect that explicitly in the driver's relationship text (e.g. note the cost sits with the partner and only reaches the company indirectly, such as through concentrate/royalty pricing or a franchise fee) instead of describing it as a full direct cost exposure on the company." if business_model_context else ""}
 """
 
             response = llm_manager.generate_response(prompt, temperature=0)
