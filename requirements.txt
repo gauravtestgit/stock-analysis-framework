@@ -33,6 +33,7 @@ wikipedia
 groq
 langchain-groq
 langchain-openai
+langchain-anthropic==0.3.22
 psycopg2-binary
 sqlalchemy
 psutil

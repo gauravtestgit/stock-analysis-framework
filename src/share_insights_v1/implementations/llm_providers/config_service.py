@@ -38,7 +38,7 @@ class LLMConfigService:
             return self._plugin_manager.get_available_providers()
         
         # Fallback
-        return ["groq", "openai", "xai"]
+        return ["groq", "openai", "xai", "claude"]
     
     def get_available_models(self, provider_name: str) -> List[str]:
         """Get available models for a provider"""
@@ -49,7 +49,8 @@ class LLMConfigService:
         fallback_models = {
             "groq": ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "qwen/qwen3.6-27b"],
             "openai": ["gpt-3.5-turbo", "gpt-4"],
-            "xai": ["grok-beta"]
+            "xai": ["grok-beta"],
+            "claude": ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5"]
         }
         return fallback_models.get(provider_name, [])
     

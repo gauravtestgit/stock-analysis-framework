@@ -68,9 +68,19 @@ def select_keyword_context(text: str, keywords: List[str], cap: int = 5000, cont
     if not sentence_priority:
         return text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_keyword_matches', 'keywords': keywords}
 
-    # Fill the budget highest-priority match first; ties broken by document
-    # order so otherwise-equal sentences still read in a natural sequence.
-    ranked = sorted(sentence_priority.keys(), key=lambda i: (-sentence_priority[i], i))
+    # Fill the budget highest-priority match first. Among sentences tied on
+    # keyword-length priority, a sentence containing a digit is preferred
+    # before falling back to document order - confirmed directly why this
+    # matters on PRDO: "Title IV" appears 125 times across the filing, and
+    # with document-order as the only tiebreak, the first ~9 matches
+    # (faculty bios, Dept. of Education reorg news) consumed the whole
+    # budget before reaching the one sentence far later that actually
+    # states the required 90/10 Title IV revenue percentage. A qualitative
+    # mention rarely carries a number; the actual disclosure (a percentage,
+    # dollar figure, or count) almost always does, so this is a general
+    # retrieval improvement, not a PRDO-specific keyword tweak.
+    has_digit = lambda i: any(c.isdigit() for c in sentences[i])
+    ranked = sorted(sentence_priority.keys(), key=lambda i: (-sentence_priority[i], 0 if has_digit(i) else 1, i))
 
     selected_indices: set = set()
     total_len = 0
@@ -92,6 +102,174 @@ def select_keyword_context(text: str, keywords: List[str], cap: int = 5000, cont
         'sentences_used': len(selected_in_order),
         'chars_used': len(slice_text),
     }
+
+
+_STOPWORDS = {
+    'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'per', 'via', 'its', 'own',
+    'does', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'has', 'have', 'had',
+    'what', 'which', 'who', 'how', 'when', 'where', 'why', 'of', 'to', 'in', 'on',
+    'as', 'at', 'by', 'or', 'not', 'no', 'if', 'than', 'then', 'so', 'but', 'also', 'any',
+    'quote', 'quoted', 'filing', 'state', 'states', 'statement', 'question', 'answer',
+    'company', 'companys', 'disclose', 'disclosed',
+}
+_WORD_RE = re.compile(r"[A-Za-z][A-Za-z'-]+")
+
+
+def _content_words(text: str) -> List[str]:
+    return [w.lower() for w in _WORD_RE.findall(text or '') if len(w) > 2 and w.lower() not in _STOPWORDS]
+
+
+def select_ranked_windows(
+    text: str, question_text: str, keywords: List[str], cap: int = 2000, max_windows: int = 3,
+    context_sentences: int = 1,
+) -> List[Tuple[str, Dict[str, Any]]]:
+    """Rank every sentence by relevance to the QUESTION ITSELF (not just
+    where_to_look keyword presence), and return up to `max_windows`
+    non-overlapping candidate slices in rank order - the caller tries
+    window 1 first and only moves to window 2+ if window 1 doesn't yield a
+    verified answer, instead of ever sending just one fixed slice.
+
+    Why this exists: select_keyword_context above is itself fully
+    deterministic, but confirmed directly that a question's real answer
+    can still land outside the single window it builds when a where_to_look
+    keyword is very common (PRDO: "regulator" alone matched 73 sentences,
+    "government program" matched 109, with only a handful fitting the
+    cap) - whichever few sentences happen to win the keyword-length/digit
+    tiebreak are not guaranteed to be the ones that actually answer the
+    question, and there was no second attempt at a different slice if the
+    first one came up empty, which an LLM call used to silently read as
+    "not disclosed" even when the real sentence was in the document, just
+    not in that one slice.
+
+    The ranking here is a lightweight relevance heuristic, not real BM25
+    (no corpus-wide document-frequency table to compute a true IDF from) -
+    it scores each sentence by word overlap with the question's own content
+    words, overlap with the archetype's where_to_look keywords (weighted
+    higher, since those are known-relevant terms), and a small bonus for
+    containing a digit (an actual disclosure is usually a number). Ranking
+    is by (score, sentence index) only - no sets involved in the ordering
+    itself, so it's deterministic across runs for the same input, unlike
+    relying on Python's per-process string-hash randomization anywhere in
+    the sort key.
+    """
+    if not text:
+        return [('', {'method': 'empty_source'})]
+    sentences = split_sentences(text)
+    if not sentences:
+        return [(text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_sentences'})]
+
+    question_words = _content_words(question_text)
+    keyword_words: List[str] = []
+    for kw in keywords:
+        keyword_words.extend(_content_words(kw))
+    if not question_words and not keyword_words:
+        return [(text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_keywords'})]
+
+    # Real IDF (inverse sentence-frequency), computed once over this
+    # filing's own sentences - confirmed directly why plain word/keyword
+    # overlap isn't enough on its own: a where_to_look term like "Title IV"
+    # repeats in ~125 sentences of mostly generic regulatory boilerplate,
+    # so sentences dense with several SUCH common terms scored far higher
+    # than the one sentence that actually states the required disclosure
+    # ("...preliminary calculations... remain in compliance with the
+    # 90/10 threshold...", which only contains "90/10" once and no other
+    # repeated keyword) - that sentence ranked 162nd despite being the
+    # right one. IDF down-weights a term by how common it already is
+    # across THIS filing's sentences, so a rare, specific term like
+    # "90/10" (appearing once) counts for far more than a common one like
+    # "Title IV" - the same principle BM25 uses, without needing a
+    # corpus-wide document-frequency table (there's only one document here).
+    import math
+    sentence_word_sets = [set(_content_words(s)) for s in sentences]
+    doc_freq: Dict[str, int] = {}
+    for sw in sentence_word_sets:
+        for w in sw:
+            doc_freq[w] = doc_freq.get(w, 0) + 1
+    n_sentences = len(sentences)
+
+    def idf(word: str) -> float:
+        return math.log((n_sentences + 1) / (doc_freq.get(word, 0) + 1)) + 1.0
+
+    keywords_lower = [kw.lower() for kw in keywords if kw]
+    # Document frequency for a keyword PHRASE (substring match, not just
+    # its tokenized words) - same IDF treatment: "90/10" appearing in 2
+    # sentences scores far higher per-hit than "Title IV" appearing in 125.
+    keyword_doc_freq = {kw: sum(1 for s in sentences if kw in s.lower()) for kw in keywords_lower}
+
+    scored = []
+    for i, s in enumerate(sentences):
+        s_lower = s.lower()
+        s_words = sentence_word_sets[i]
+        matching_kws = [kw for kw in keywords_lower if kw in s_lower]
+        q_overlap = sum(idf(w) for w in question_words if w in s_words)
+        kw_overlap = sum(idf(w) * 2.0 for w in keyword_words if w in s_words)
+        kw_substring_hits = sum(
+            (math.log((n_sentences + 1) / (keyword_doc_freq.get(kw, 0) + 1)) + 1.0) * 2.0
+            for kw in matching_kws
+        )
+        has_digit = any(c.isdigit() for c in s)
+        # A sentence that pairs a digit with a RARE keyword match (one that
+        # appears in only a handful of sentences across the whole filing)
+        # is the strongest possible signal of being the actual disclosure,
+        # as opposed to one of many generic boilerplate mentions of a common
+        # keyword - confirmed directly this needed to be a much bigger,
+        # keyword-rarity-scaled bonus than a flat "has a digit" one: with
+        # only a flat bonus, a sentence repeating a COMMON keyword ("Title
+        # IV", matching ~100 sentences) several different ways still
+        # outscored the one sentence with a genuinely rare keyword match
+        # ("90/10", matching 1 sentence) plus the real percentage figure.
+        rarity_digit_bonus = 0.0
+        if has_digit and matching_kws:
+            rarest_df = min(keyword_doc_freq.get(kw, n_sentences) for kw in matching_kws)
+            rarity_digit_bonus = 40.0 / (rarest_df + 1)
+        digit_bonus = 3.0 if has_digit else 0.0
+        scored.append((i, q_overlap + kw_overlap + kw_substring_hits + digit_bonus + rarity_digit_bonus))
+
+    ranked_indices = [i for i, score in sorted(scored, key=lambda pair: (-pair[1], pair[0])) if score > 0]
+    if not ranked_indices:
+        return [(text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_keyword_matches', 'keywords': keywords})]
+
+    windows: List[Tuple[str, Dict[str, Any]]] = []
+    used: set = set()
+    pos = 0
+    for window_num in range(max_windows):
+        selected: set = set()
+        total_len = 0
+        added_any = False
+        while pos < len(ranked_indices):
+            i = ranked_indices[pos]
+            if i in used:
+                pos += 1
+                continue
+            ctx_range = range(max(0, i - context_sentences), min(len(sentences), i + context_sentences + 1))
+            new_idx = [j for j in ctx_range if j not in selected and j not in used]
+            added_len = sum(len(sentences[j]) + 1 for j in new_idx)
+            if total_len + added_len > cap:
+                if added_any:
+                    break
+                pos += 1
+                continue
+            selected.update(new_idx)
+            total_len += added_len
+            pos += 1
+            added_any = True
+        if not selected:
+            break
+        used.update(selected)
+        ordered = sorted(selected)
+        slice_text = ' '.join(sentences[i] for i in ordered)[:cap]
+        windows.append((slice_text, {
+            'method': 'ranked_sentences',
+            'window': window_num + 1,
+            'keywords': keywords,
+            'sentences_matched': len(ranked_indices),
+            'sentences_used': len(ordered),
+            'chars_used': len(slice_text),
+        }))
+
+    if not windows:
+        return [(text[:cap], {'method': 'fallback_first_n_chars', 'reason': 'no_windows_built'})]
+    return windows
 
 
 # Mechanism keywords are deliberately generic (no commodity name baked in,
@@ -124,6 +302,21 @@ _STRENGTH_PATTERNS = [
 ]
 
 _LAG_RE = re.compile(r'\b(\d+\s*(?:to\s*\d+\s*)?days?|monthly|quarterly|annual(?:ly)?)\b', re.IGNORECASE)
+
+
+def extract_lag(text: str) -> Optional[str]:
+    """Pull a recovery-lag phrase ("30 to 120 days", "quarterly", ...) out
+    of arbitrary text, same pattern scan_pass_through uses internally.
+    Exposed separately so a caller with its OWN already-verified text (e.g.
+    an archetype checklist's cost_recovery_mechanism quote) can extract a
+    lag from it directly, without re-running the full pass-through scan -
+    useful when the scan's own evidence sentences didn't happen to state a
+    lag but a DIFFERENT verified source (the checklist answer) did.
+    """
+    if not text:
+        return None
+    match = _LAG_RE.search(text)
+    return match.group(0) if match else None
 
 
 def scan_pass_through(full_text: str, driver_terms: List[str]) -> Optional[Dict[str, Any]]:

@@ -63,6 +63,41 @@ def test_filing_text_tools_units():
     check("scan_pass_through filters overly generic terms like 'rate'", generic_term_result is None, generic_term_result)
 
 
+# Invented placeholder strings that must never reach a real report - found
+# leaking into KEX's core_products on a run where the LLM call failed and
+# silently fell through to _get_fallback_product_analysis, with nothing
+# distinguishing "Primary Product"/"Secondary Product" from a real,
+# filing-sourced answer like "tank barges, generators, electric fracturing
+# systems". _get_fallback_product_analysis no longer invents any of these
+# (core_products is now an empty list there), but this check guards against
+# a regression reintroducing placeholder text in that function or any other
+# fallback path.
+_KNOWN_PLACEHOLDER_STRINGS = {
+    'primary product', 'secondary product', 'software platform', 'cloud services',
+    'consumer products', 'brand portfolio', 'industry peers', 'market position',
+}
+
+
+def check_no_placeholders(label: str, values) -> None:
+    found = [v for v in (values or []) if isinstance(v, str) and v.strip().lower() in _KNOWN_PLACEHOLDER_STRINGS]
+    check(f"{label} contains no known placeholder strings", not found, found)
+
+
+def test_no_placeholder_values():
+    """No network calls - exercises the fallback path directly rather than
+    relying on a live LLM call happening to fail during this test run."""
+    print("\n=== Placeholder-value regression check (no network) ===")
+    sec_provider = SECEdgarProvider()
+    analyzer = BusinessModelAnalyzer(YahooFinanceProvider(), None, sec_provider)
+
+    for sector in ['Industrials', 'Technology', 'Consumer Defensive', 'Unknown']:
+        fallback = analyzer._get_fallback_product_analysis(sector, 'Some Industry')
+        check_no_placeholders(f"_get_fallback_product_analysis({sector!r}).core_products", fallback.get('core_products'))
+
+    comp_fallback = analyzer._get_fallback_competitive_analysis('Some Industry')
+    check_no_placeholders("_get_fallback_competitive_analysis.key_competitors", comp_fallback.get('key_competitors'))
+
+
 def test_kex_golden_assertions():
     print("\n=== KEX golden assertions (live SEC/Yahoo/LLM data) ===")
     sec_provider = SECEdgarProvider()
@@ -175,13 +210,21 @@ def test_ko_golden_assertions():
           result.get('slice_log', {}).get('segment_revenue_data', {}).get('method') == 'structured_filing_data_no_llm',
           result.get('slice_log', {}).get('segment_revenue_data'))
 
-    # KO's segment table sums to slightly more than its real consolidated
+    # KO's reported segments sum to slightly more than its real consolidated
     # revenue (confirmed directly: $48.806B segment sum vs $47.941B
-    # consolidated - a ~1.8% intersegment-elimination gap), so percentages
-    # against the real consolidated total shouldn't land on exactly 100%.
+    # consolidated - a ~1.8% intersegment-elimination gap) - that gap is now
+    # surfaced as its own explicit "Corporate / Eliminations" line (rather
+    # than left as unexplained rounding error), so the full set of segments
+    # sums to ~100% of consolidated revenue, and the reconciling line itself
+    # should be visible and negative (KO's segment sum exceeds its real
+    # consolidated total).
     segment_pct_sum = sum(s.get('revenue_percentage', 0) for s in segments)
-    check("KO's segment percentages are against consolidated revenue (net of eliminations), not just the parsed segments' own sum",
-          abs(segment_pct_sum - 100) > 0.5, segment_pct_sum)
+    check("KO's segment percentages (incl. the Corporate/Eliminations reconciling line) sum to ~100% of consolidated revenue",
+          abs(segment_pct_sum - 100) < 0.5, segment_pct_sum)
+    reconciliation_line = next((s for s in segments if s.get('segment_name') == 'Corporate / Eliminations'), None)
+    check("KO's segment breakdown surfaces an explicit Corporate/Eliminations reconciling line",
+          reconciliation_line is not None and reconciliation_line.get('revenue_percentage', 0) < 0,
+          reconciliation_line)
 
     # KO's segment names (EMEA etc.) are first mentioned in an unrelated
     # Costa/innocent/dogadan corporate-restructuring footnote, not near the
@@ -263,6 +306,7 @@ def test_determinism():
 
 if __name__ == "__main__":
     test_filing_text_tools_units()
+    test_no_placeholder_values()
     test_kex_golden_assertions()
     test_ko_golden_assertions()
     test_determinism()

@@ -15,7 +15,7 @@ import yaml
 from ...implementations.llm_providers.llm_manager import LLMManager
 from ...utils.debug_printer import debug_print
 from ...utils.json_extractor import extract_json_from_llm_response
-from ...utils.filing_text_tools import select_keyword_context, scan_pass_through
+from ...utils.filing_text_tools import select_keyword_context, scan_pass_through, extract_lag
 from ...services.archetype.archetype_classifier import ArchetypeClassifier
 
 class BusinessModelAnalyzer(IAnalyzer):
@@ -28,20 +28,29 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v10-generic-expected-drivers-gap-check'
+    _ANALYZER_VERSION = 'v13-ranked-retrieval-and-stability-fixes'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     # A confident archetype classification is a more specific business-model
     # label than the generic sector/industry heuristic in
     # _classify_business_model - e.g. KO was previously typed "Manufacturing"
     # (a weak-moat default) despite being a licensing/concentrate business
-    # whose bottling partners do the actual manufacturing. Only archetypes
-    # with their own BusinessModelType below are overridden here; "other"
-    # (most tickers, given the taxonomy is only 2 archetypes) leaves the
-    # existing sector/industry classification untouched.
+    # whose bottling partners do the actual manufacturing. Built generically
+    # from BusinessModelType's own members (one per archetypes.md archetype,
+    # named after that archetype's id - see models/business_model.py) rather
+    # than a hand-maintained dict, so every archetype gets a Type override
+    # the moment it's added to the roster, not just whichever ones someone
+    # remembered to wire up by hand. Confirmed this mattered beyond the
+    # original 2: PRDO classified as policy_funded_service at 0.95
+    # confidence but still showed Type "B2C Subscription" (the generic
+    # sector/industry default) because nothing beyond
+    # branded_staples_franchise/pass_through_operator was ever mapped.
+    # Archetypes with no matching enum member (shouldn't happen once every
+    # archetypes.md id has one - see models/business_model.py) are simply
+    # absent from this dict, same effect as "other": the sector/industry
+    # Type is left untouched.
     _ARCHETYPE_BUSINESS_MODEL_TYPES = {
-        'branded_staples_franchise': BusinessModelType.BRANDED_STAPLES_FRANCHISE,
-        'pass_through_operator': BusinessModelType.PASS_THROUGH_OPERATOR,
+        member.name.lower(): member for member in BusinessModelType
     }
 
     # A required+answered checklist item should show up somewhere in the
@@ -60,32 +69,12 @@ class BusinessModelAnalyzer(IAnalyzer):
         ),
         'international_revenue_and_fx': lambda d: d.get('driver_type') == 'fx',
         'cost_recovery_mechanism': lambda d: bool(d.get('pass_through')),
+        # Universal checklist item (runs for every archetype, not just
+        # branded_staples_franchise) - either labeling mechanism counts:
+        # cost_bearer (a bottler/franchisee/licensee bears it) or
+        # pass_through (a customer-facing escalation/surcharge recovers it).
+        'who_bears_key_costs': lambda d: bool(d.get('cost_bearer') or d.get('pass_through')),
     }
-
-    _EXPECTED_DRIVER_STOPWORDS = {
-        'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'per', 'via', 'its', 'own',
-        'rates', 'rate', 'events', 'event', 'basket', 'peer', 'peers', 'policy',
-    }
-
-    @classmethod
-    def _expected_driver_covered(cls, phrase: str, business_drivers: List[Dict[str, Any]]) -> bool:
-        """Generic keyword-overlap check used for archetypes that don't have
-        a hand-coded entry in _CHECKLIST_DRIVER_SATISFIED_BY above (i.e.
-        every archetype beyond the original 2) - matches a short archetype-
-        level `expected_drivers` phrase (e.g. "unit cost inputs (energy,
-        labour)") against each driver's own name+synonyms, rather than
-        requiring an exact id. A phrase with no meaningful keywords (all
-        stopwords, or a parenthetical-only fragment) is treated as covered
-        rather than flagged - there's nothing specific enough to check."""
-        words = [w.strip('(),.') for w in phrase.lower().split()]
-        keywords = [w for w in words if len(w) >= 4 and w not in cls._EXPECTED_DRIVER_STOPWORDS]
-        if not keywords:
-            return True
-        driver_text = ' '.join(
-            (d.get('driver_name') or '') + ' ' + ' '.join(d.get('synonyms') or [])
-            for d in business_drivers
-        ).lower()
-        return any(kw in driver_text for kw in keywords)
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
         self.data_provider = data_provider
@@ -251,6 +240,16 @@ class BusinessModelAnalyzer(IAnalyzer):
         # Determine business model type
         business_model_type = self._classify_business_model(sector, industry, financial_metrics)
         
+        # Per-prompt slice selection log (which method/slice each prompt got),
+        # for grounding transparency/debugging - reset per analysis run.
+        # Reset here (before the first thing that writes to it) rather than
+        # further down, so _analyze_revenue_streams below can also record
+        # how it derived recurring_percentage - that figure is a weighted
+        # heuristic estimate (see _calculate_recurring_from_streams), never
+        # a number quoted directly from a filing, and had no visible source
+        # anywhere in the output.
+        self._slice_log: Dict[str, Any] = {}
+
         # Analyze revenue streams (SEC Edgar first, then LLM fallback)
         try:
             revenue_stream_analysis = self._analyze_revenue_streams(
@@ -291,10 +290,6 @@ class BusinessModelAnalyzer(IAnalyzer):
             except Exception as e:
                 debug_print(f"[BM_DEBUG] Segment financials fetch failed for {ticker}: {e}")
 
-        # Per-prompt slice selection log (which method/slice each prompt got),
-        # for grounding transparency/debugging - reset per analysis run.
-        self._slice_log: Dict[str, Any] = {}
-
         # Business-model archetype classification (POC - 2 archetypes, see
         # services/archetype/archetype_classifier.py and
         # ARCHETYPE_MODULE_SPEC.md). Returns "other" for most tickers right
@@ -333,7 +328,7 @@ class BusinessModelAnalyzer(IAnalyzer):
                     business_model_type = archetype_business_model_type
 
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
-        product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data, segment_financials)
+        product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data, segment_financials, archetype_result)
         competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics, sec_business_data, archetype_result)
         segment_revenue_data = self._extract_segment_revenue_data(ticker, company_info, financial_metrics, product_analysis, sec_business_data, segment_financials)
         
@@ -383,6 +378,15 @@ class BusinessModelAnalyzer(IAnalyzer):
         report.consistency_flags = self._apply_report_level_consistency_checks(
             business_model_type, archetype_result, competitive_moat, competitive_differentiation
         )
+        # Fold the per-driver flags in too, so the top-level list is the one
+        # place a reader (or the "no issues found" summary) needs to check -
+        # confirmed directly this was missing: KEX's Jones Act driver carried
+        # 'contradicts competitive_advantages' in its own consistency_flags,
+        # while report.consistency_flags (and the dashboard's "Consistency
+        # Checks" summary built from it) stayed an empty list regardless.
+        for driver in (competitive_differentiation or {}).get('business_drivers', []):
+            for flag in driver.get('consistency_flags', []):
+                report.consistency_flags.append(f"{driver.get('driver_name', 'driver')}: {flag}")
 
         return report
     
@@ -611,7 +615,11 @@ Respond with ONLY the business model type (e.g., "PLATFORM", "B2B_SAAS", etc.)
             
             # Calculate recurring percentage based on stream types
             recurring_percentage = self._calculate_recurring_from_streams(revenue_components, total_revenue)
-            
+            self._slice_log['recurring_percentage'] = {
+                'method': 'revenue_stream_weighted_heuristic',
+                'note': 'weighted by SEC-filing-sourced revenue-stream composition (see _calculate_recurring_from_streams) - an estimate, not a figure quoted directly from a filing',
+            }
+
             debug_print(f"[BM_DEBUG] SEC revenue analysis for {ticker}: Primary={primary_stream.value}, Components={len(revenue_components)}, Total=${total_revenue:,.0f}, Recurring={recurring_percentage:.2f}")
             
             return RevenueStreamAnalysis(
@@ -680,7 +688,11 @@ Respond with JSON:
                 secondary_streams = [RevenueStreamType(s) for s in result.get('secondary_streams', [])]
                 
                 debug_print(f"[BM_DEBUG] LLM revenue streams: Primary={primary_stream.value}, Recurring={result.get('recurring_percentage', 0):.2f}")
-                
+                self._slice_log['recurring_percentage'] = {
+                    'method': 'llm_estimate_no_sec_data',
+                    'note': 'the LLM\'s own direct estimate (no SEC filing data was available to weight it) - not grounded in a quoted figure',
+                }
+
                 return RevenueStreamAnalysis(
                     primary_stream=primary_stream,
                     secondary_streams=secondary_streams,
@@ -812,20 +824,35 @@ Respond with JSON:
     def _calculate_key_metrics(self, financial_metrics: Dict[str, Any],
                              business_model_type: BusinessModelType) -> Dict[str, float]:
         """Calculate key business model metrics"""
-        
+
         metrics = {}
-        
+
         # Common metrics
         metrics['revenue_growth'] = financial_metrics.get('revenue_growth', 0)
-        metrics['profit_margin'] = financial_metrics.get('profit_margins', 0)
-        metrics['asset_turnover'] = financial_metrics.get('total_revenue', 0) / max(financial_metrics.get('total_assets', 1), 1)
-        
-        # Business model specific metrics
-        if business_model_type in [BusinessModelType.B2B_SAAS, BusinessModelType.B2C_SUBSCRIPTION]:
-            # Estimate customer metrics (would need more data for accuracy)
-            metrics['estimated_ltv_cac'] = 3.0  # Placeholder
-            metrics['churn_estimate'] = 0.05  # Placeholder
-        
+        # Key was 'profit_margins' (plural) - YahooFinanceProvider stores it
+        # as 'profit_margin' (singular), so this always silently fell back
+        # to the 0 default regardless of the real figure. YahooFinanceProvider
+        # also stores it as a PERCENTAGE (e.g. 15.3, from `* 100` at the
+        # source), while every consumer of this dict's profit_margin within
+        # this analyzer (_generate_insights, _calculate_scalability_score,
+        # _generate_recommendation) compares it against fraction thresholds
+        # like > 0.2 - dividing by 100 here keeps this analyzer's own
+        # fraction convention without touching financial_metrics' own
+        # percentage convention, which other analyzers may depend on.
+        metrics['profit_margin'] = (financial_metrics.get('profit_margin', 0) or 0) / 100
+        # total_assets is real balance-sheet data now (YahooFinanceProvider
+        # fetches it from the balance sheet) - previously there was no such
+        # key at all, so `max(financial_metrics.get('total_assets', 1), 1)`
+        # always evaluated to 1, and this "ratio" was actually just
+        # total_revenue itself (confirmed: KEX showed asset_turnover =
+        # 3,595,480,064, its own total_revenue, not a ratio). No real
+        # total_assets (e.g. data not available for this ticker) now
+        # returns None rather than a nonsensical ratio against a denominator
+        # of 1.
+        total_assets = financial_metrics.get('total_assets', 0)
+        total_revenue = financial_metrics.get('total_revenue', 0)
+        metrics['asset_turnover'] = (total_revenue / total_assets) if total_assets else None
+
         return metrics
     
     def _get_business_context_text(self, sec_business_data: Optional[Dict[str, Any]], financial_metrics: Dict[str, Any]) -> str:
@@ -852,7 +879,29 @@ Respond with JSON:
         try:
             archetype_classifier = self._get_archetype_classifier()
             full_text_for_archetype = self._get_business_context_text(sec_business_data, financial_metrics)
+            # The checklist/universal-checklist Q&A previously only ever
+            # searched the 10-K's Item 1 Business text - confirmed directly
+            # why that's a real gap: FX impact, price/mix commentary, and
+            # "latest quarter" KPI moves are routinely disclosed in MD&A,
+            # never in Item 1, so those questions could never be answered no
+            # matter how good retrieval got. Appended (not swapped in) so
+            # the quote-verification step (which checks a quote against this
+            # same full_text) still accepts quotes from either filing.
+            mdna_accession = None
+            try:
+                mdna_data = self.sec_provider.get_mdna_section(ticker)
+                if mdna_data and mdna_data.get('mdna_text'):
+                    full_text_for_archetype = f"{full_text_for_archetype}\n\n{mdna_data['mdna_text']}"
+                    mdna_accession = mdna_data.get('accession_number')
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] MD&A fetch failed for {ticker}: {e}")
             accession_number = sec_business_data.get('accession_number') if sec_business_data else None
+            # The classifier's disk cache is keyed by this one identifier -
+            # folding the 10-Q's own accession number in means a new 10-Q
+            # (new MD&A text, same 10-K) invalidates the cache too, not just
+            # a new 10-K.
+            if mdna_accession:
+                accession_number = f"{accession_number}_{mdna_accession}"
             return archetype_classifier.classify(
                 ticker, financial_metrics.get('long_name', ticker), full_text_for_archetype,
                 segment_financials, financial_metrics, accession_number
@@ -992,19 +1041,53 @@ Respond with JSON:
         name = re.sub(r'[^a-z0-9\s]', '', name.lower())
         return re.sub(r'\s+', ' ', name).strip()
 
-    def _validate_competitors(self, competitors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Dedupe by normalized name, then validate each remaining
-        competitor's LLM-supplied ticker via a live yfinance lookup.
+    _competitor_tickers_cache: Optional[Dict[str, Any]] = None
 
-        Confirmed directly that the LLM will supply a wrong ticker with full
-        confidence (Tidewater given as "TDE" instead of the real "TDW") or a
-        ticker for a completely different company sharing similar words in
-        its name ("American Marine Transportation" given ticker "AMT" -
-        which is American Tower Corporation). yfinance resolving to a real
-        company isn't enough on its own to accept the ticker - the resolved
-        company name is also cross-checked against the LLM's claimed name,
-        since a wrong-but-real ticker (like AMT) would otherwise pass a bare
-        existence check.
+    @classmethod
+    def _load_competitor_tickers(cls) -> Dict[str, Any]:
+        if cls._competitor_tickers_cache is None:
+            path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'competitor_tickers.yaml')
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    cls._competitor_tickers_cache = yaml.safe_load(f) or {}
+            except Exception as e:
+                debug_print(f"[BM_DEBUG] Could not load competitor_tickers.yaml: {e}")
+                cls._competitor_tickers_cache = {}
+        return cls._competitor_tickers_cache
+
+    @classmethod
+    def _lookup_competitor_ticker(cls, claimed_name: str) -> Optional[str]:
+        name_lower = (claimed_name or '').lower()
+        for entry in cls._load_competitor_tickers().values():
+            if any(alias in name_lower for alias in entry.get('aliases', [])):
+                return entry.get('ticker')
+        return None
+
+    def _validate_competitors(self, competitors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Dedupe by normalized name, then resolve/validate each remaining
+        competitor's ticker.
+
+        A well-known name (see competitor_tickers.yaml) resolves straight
+        from that maintained alias list and skips the live lookup below
+        entirely - confirmed directly why that stability matters: the SAME
+        real competitor (e.g. "Danone S.A." / "Anheuser-Busch InBev" /
+        "Heineken N.V.") had its ticker resolve correctly on one run and
+        come back null on another, even with the company correctly named
+        both times - most likely the live yfinance+name-similarity check
+        below being sensitive to small wording differences in how the LLM
+        happened to phrase the name that call.
+
+        For anything not in that list, falls back to a live yfinance
+        lookup cross-checked against the LLM's claimed name - confirmed
+        directly the LLM will supply a wrong ticker with full confidence
+        (Tidewater given as "TDE" instead of the real "TDW") or a ticker
+        for a completely different company sharing similar words in its
+        name ("American Marine Transportation" given ticker "AMT" - which
+        is American Tower Corporation). yfinance resolving to a real
+        company isn't enough on its own to accept the ticker - the
+        resolved company name is also cross-checked against the LLM's
+        claimed name, since a wrong-but-real ticker (like AMT) would
+        otherwise pass a bare existence check.
 
         Also confirmed directly (KEX): the LLM can list the exact same
         competitor name twice in one response - deduped here rather than
@@ -1023,6 +1106,11 @@ Respond with JSON:
             deduped.append(dict(comp))
 
         for comp in deduped:
+            known_ticker = self._lookup_competitor_ticker(comp.get('name', ''))
+            if known_ticker:
+                comp['ticker'] = known_ticker
+                continue
+
             ticker = comp.get('ticker')
             if not isinstance(ticker, str) or not ticker.strip():
                 comp['ticker'] = None
@@ -1077,7 +1165,7 @@ Respond with JSON:
                     return entry.get('ticker'), 'mapped'
         return None, 'no_proxy'
 
-    def _analyze_product_portfolio(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None, segment_financials: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _analyze_product_portfolio(self, ticker: str, company_info: Dict[str, Any], financial_metrics: Dict[str, Any], sec_business_data: Optional[Dict[str, Any]] = None, segment_financials: Optional[Dict[str, Any]] = None, archetype_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze product portfolio using SEC filing data + LLM analysis"""
         try:
             # Use injected LLM manager if available, otherwise create new one
@@ -1102,8 +1190,28 @@ Respond with JSON:
                 # the segment-overview slice for a company with no
                 # brand/trademark language at all (e.g. KEX), where that
                 # slice already does the right thing.
+                #
+                # The base list is consumer-brand vocabulary and is a poor
+                # fit on its own for an archetype with no "products" to
+                # brand at all - confirmed on PRDO (policy_funded_service):
+                # "brand"/"trademark"/"principal products" matched exactly 1
+                # sentence in a 155K-char filing. The matched archetype's own
+                # description_cues (e.g. "tuition", "students", "enrollment"
+                # for policy_funded_service) are real, archetype-specific
+                # vocabulary for what this company actually offers, so they're
+                # added as extra keywords rather than replacing the base list -
+                # a company that IS a branded-product business still benefits
+                # from the base list even when it also matched an archetype.
+                archetype_cues = []
+                if archetype_result and archetype_result.get('company_archetype'):
+                    matched_archetype = self._get_archetype_classifier()._archetypes.get(archetype_result['company_archetype'])
+                    if matched_archetype:
+                        archetype_cues = matched_archetype.get('description_cues', [])
                 business_context, slice_meta = select_keyword_context(
-                    full_text, ['brand', 'trademark', 'Products and Brands', 'our products', 'principal products', 'product line'], cap=5000
+                    full_text,
+                    ['brand', 'trademark', 'Products and Brands', 'our products', 'principal products', 'product line', 'service', 'program', 'offering']
+                    + archetype_cues,
+                    cap=5000
                 )
                 if slice_meta.get('method') != 'keyword_sentences':
                     business_context, slice_meta = self._select_segment_overview_slice(
@@ -1207,12 +1315,42 @@ Respond with ONLY valid JSON:
             # American Tower, instead of a real tank-barge competitor) for KEX.
             full_business_text = self._get_business_context_text(sec_business_data, financial_metrics)
             if sec_business_data and sec_business_data.get('business_description'):
-                # Select the Competition-subsection/Jones-Act/competitor-mention
-                # slice out of the full filing rather than always sending
-                # whatever the first 5k characters happen to be.
+                # Select the Competition-subsection/competitor-mention slice
+                # out of the full filing rather than always sending whatever
+                # the first 5k characters happen to be. "Jones Act" used to
+                # be hardcoded into this one keyword list - that's KEX-
+                # specific regulatory language leaking into the generic
+                # slice for every ticker (including non-transport companies
+                # like KO and PRDO, where it obviously never matches
+                # anything useful) - moved to pass_through_operator.yaml's
+                # own description_cues instead, where it only applies to
+                # companies that matched that archetype.
+                #
+                # Run as two SEPARATE budget passes rather than one combined
+                # keyword list - confirmed directly on KO why that matters:
+                # mixing the archetype's cues into the same priority-ranked
+                # pool as the generic terms let high-frequency archetype
+                # vocabulary ("concentrate", "bottling", "franchise" each
+                # appear dozens of times) outrank and crowd out the specific,
+                # lower-frequency sentence that actually names a real
+                # competitor ("PepsiCo, Inc. is a primary competitor"). The
+                # generic pass gets most of the budget and always runs
+                # first; the archetype-cue pass only fills what's left over,
+                # so it can add KEX's Jones Act discussion without ever
+                # being able to push out PepsiCo.
                 business_context, slice_meta = select_keyword_context(
-                    full_business_text, ['Jones Act', 'competitor', 'compete', 'Competition'], cap=5000
+                    full_business_text, ['competitor', 'compete', 'Competition', 'regulation', 'regulatory', 'barriers to entry'], cap=4000
                 )
+                archetype_cues = []
+                if archetype_result and archetype_result.get('company_archetype'):
+                    matched_archetype = self._get_archetype_classifier()._archetypes.get(archetype_result['company_archetype'])
+                    if matched_archetype:
+                        archetype_cues = matched_archetype.get('description_cues', [])
+                if archetype_cues:
+                    cue_context, cue_meta = select_keyword_context(full_business_text, archetype_cues, cap=1500)
+                    if cue_meta.get('method') == 'keyword_sentences' and cue_context not in business_context:
+                        business_context = f"{business_context}\n\n{cue_context}"
+                        slice_meta = {**slice_meta, 'archetype_cue_supplement': cue_meta}
             else:
                 business_context, slice_meta = full_business_text, {'method': 'yahoo_summary_no_slice'}
             self._slice_log['competitive_differentiation'] = slice_meta
@@ -1421,19 +1559,163 @@ so do not include a ticker_symbol field.
                             if driver.get('driver_type') == 'commodity_input' and driver.get('channel') == 'cost':
                                 driver['cost_bearer'] = {'strength': bearer_strength, 'quote': quote}
 
-            # Surface the gap explicitly rather than letting a required
-            # checklist fact silently vanish when business_drivers doesn't
-            # happen to include a matching driver this run.
+            # net_cash_vs_debt is already computed (from real XBRL
+            # total_cash/total_debt figures) in the archetype evidence
+            # pack, but nothing read it - confirmed the LLM's own freeform
+            # "Interest rates" driver direction is really just a guess
+            # (PRDO: "higher interest rates increase borrowing costs for
+            # Perdoceo" despite PRDO sitting on ~$620M of NET CASH, where
+            # higher rates are a mild tailwind via interest income, not a
+            # borrowing-cost headwind). Overriding the direction from the
+            # real balance-sheet figure removes that guess for any company
+            # whose business_drivers call happens to produce an interest-
+            # rate driver, not just these three tickers.
+            net_cash_vs_debt = (archetype_result or {}).get('evidence_pack', {}).get('net_cash_vs_debt')
+            if isinstance(net_cash_vs_debt, (int, float)):
+                for driver in result['business_drivers']:
+                    name_and_synonyms = (driver.get('driver_name', '') + ' ' + ' '.join(driver.get('synonyms') or [])).lower()
+                    if 'interest rate' not in name_and_synonyms:
+                        continue
+                    if net_cash_vs_debt >= 0:
+                        driver['channel'] = 'revenue'
+                        driver['effect_of_increase'] = 'positive'
+                        driver['exposure'] = 'revenue_tailwind'
+                        driver['relationship'] = (
+                            f"Net cash position (${net_cash_vs_debt:,.0f}) means higher rates are a mild tailwind "
+                            "via increased interest income, not a borrowing-cost headwind."
+                        )
+                    else:
+                        driver['channel'] = 'cost'
+                        driver['effect_of_increase'] = 'negative'
+                        driver['exposure'] = 'cost_headwind'
+                        driver['relationship'] = (
+                            f"Net debt position (${net_cash_vs_debt:,.0f}) means higher rates increase borrowing/interest costs."
+                        )
+
+            # Inject the deterministic pass-through scan's / cost_bearer
+            # override's own result straight into the archetype checklist's
+            # cost_recovery_mechanism/who_bears_key_costs items, instead of
+            # leaving them to a separate LLM call that never sees this scan
+            # at all. Confirmed on KEX: scan_pass_through above found the
+            # real escalation-clause quote for Fuel, but
+            # cost_recovery_mechanism - an independent LLM Q&A call inside
+            # archetype_classifier.py's _answer_checklist - still came back
+            # "not disclosed", because nothing told it the scan had already
+            # found the answer. A verified fact computed once should settle
+            # the question, not get re-asked of a second LLM call that may
+            # fail where the deterministic scan already succeeded.
             if archetype_result:
+                scanned_pass_through = next(
+                    (d['pass_through'] for d in result['business_drivers']
+                     if d.get('pass_through') and d['pass_through'].get('evidence')),
+                    None
+                )
+                scanned_cost_bearer = next(
+                    (d['cost_bearer'] for d in result['business_drivers']
+                     if d.get('cost_bearer') and d['cost_bearer'].get('quote')),
+                    None
+                )
+
+                # The pass-through scan's own evidence sentences don't
+                # always happen to state a lag (scan_pass_through only
+                # extracts one FROM the specific sentences it matched) even
+                # when the archetype checklist's OWN, independently-
+                # retrieved cost_recovery_mechanism answer does - confirmed
+                # directly on KEX: the checklist's quote named the "30 to
+                # 120 days" lag while the scan's own evidence didn't
+                # mention a lag at all, leaving pass_through.lag null on
+                # the driver despite the real figure being available right
+                # next to it. Cross-pollinates in whichever direction has
+                # the lag the other is missing, rather than trusting only
+                # one retrieval path's evidence sentences.
+                if scanned_pass_through and not scanned_pass_through.get('lag'):
+                    cost_recovery_item = next(
+                        (item for item in archetype_result.get('checklist', [])
+                         if item.get('question_id') == 'cost_recovery_mechanism' and item.get('status') == 'answered'),
+                        None
+                    )
+                    if cost_recovery_item and cost_recovery_item.get('quotes'):
+                        lag = extract_lag(cost_recovery_item['quotes'][0])
+                        if lag:
+                            scanned_pass_through['lag'] = lag
+
+                if scanned_pass_through or scanned_cost_bearer:
+                    for item in (
+                        list(archetype_result.get('checklist', []))
+                        + list(archetype_result.get('universal_checklist', []))
+                    ):
+                        if item.get('status') == 'answered':
+                            continue
+                        if item.get('question_id') == 'cost_recovery_mechanism' and scanned_pass_through:
+                            item['status'] = 'answered'
+                            item['value'] = f"Recovered via escalation/surcharge clause ({scanned_pass_through.get('strength')})"
+                            item['quotes'] = [scanned_pass_through['evidence'][0]]
+                        elif item.get('question_id') == 'who_bears_key_costs':
+                            if scanned_pass_through:
+                                item['status'] = 'answered'
+                                item['value'] = f"Recovered from customers via escalation/surcharge ({scanned_pass_through.get('strength')})"
+                                item['quotes'] = [scanned_pass_through['evidence'][0]]
+                            elif scanned_cost_bearer:
+                                item['status'] = 'answered'
+                                item['value'] = f"Shared with/borne by bottling/franchise partners ({scanned_cost_bearer.get('strength')})"
+                                item['quotes'] = [scanned_cost_bearer['quote']]
+
+            # Surface the gap explicitly rather than letting a required
+            # checklist fact silently vanish, in ONE list keyed by
+            # question_id - previously this ran two independent checks that
+            # could disagree with each other: this one (checklist-answered
+            # but no matching driver) and a second, now-removed one that
+            # matched each archetype's free-text `expected_drivers` phrases
+            # against driver name/synonym text. Confirmed that second check
+            # was actively wrong, not just redundant: branded_staples_
+            # franchise's expected_drivers entries are written as bare
+            # identifiers ("input_cost_bearer_split", "fx_translation"), not
+            # natural-language phrases, so the keyword-overlap match could
+            # never succeed - it always reported KO's cost-bearer driver as
+            # "not found" even on a run where cost_bearer_split was
+            # correctly answered ("Shared") AND that exact answer was
+            # already attached to every input-cost driver's own cost_bearer
+            # field a few lines above. A single checklist-keyed check avoids
+            # that whole class of mismatch.
+            if archetype_result:
+                # Two genuinely different situations, kept in separate
+                # lists rather than one - confirmed this was a real source
+                # of confusion merged together: "expected_but_not_found"
+                # literally says a required fact was never found anywhere,
+                # but PRDO's who_bears_key_costs had a real value AND quote
+                # (just not also reflected as a structured driver) and still
+                # showed up under that label. status == 'answered' now can
+                # never land in expected_but_not_found - at most it lands in
+                # answered_but_no_driver, which is explicit about what's
+                # actually missing (a driver entry, not the fact itself).
                 expected_but_not_found = []
-                for item in archetype_result.get('checklist', []):
-                    if not item.get('required') or item.get('status') != 'answered':
+                answered_but_no_driver = []
+                all_checklist_items = (
+                    list(archetype_result.get('checklist', []))
+                    + list(archetype_result.get('universal_checklist', []))
+                )
+                for item in all_checklist_items:
+                    if not item.get('required'):
+                        continue
+                    if item.get('status') != 'answered':
+                        # Never disclosed in the filing at all - the
+                        # archetype classifier's own validation.missing_
+                        # expected (refreshed below) already says this;
+                        # surfacing it here too means one list to read
+                        # instead of two.
+                        expected_but_not_found.append({
+                            'question_id': item['question_id'],
+                            'label': item['question_id'].replace('_', ' '),
+                            'value': None,
+                            'quote': '',
+                            'source': 'not_disclosed_in_filing',
+                        })
                         continue
                     predicate = self._CHECKLIST_DRIVER_SATISFIED_BY.get(item['question_id'])
                     if predicate is None:
                         continue
                     if not any(predicate(d) for d in result['business_drivers']):
-                        expected_but_not_found.append({
+                        answered_but_no_driver.append({
                             'question_id': item['question_id'],
                             'label': item['question_id'].replace('_', ' '),
                             'value': item.get('value'),
@@ -1441,26 +1723,27 @@ so do not include a ticker_symbol field.
                             'source': 'checklist_required_item',
                         })
 
-                # Generic counterpart to the hand-coded predicates above -
-                # covers every archetype's own `expected_drivers` list
-                # (archetypes.md rule 6) without needing a bespoke
-                # per-archetype predicate written for each one. Matches on
-                # keyword overlap against each driver's name+synonyms
-                # rather than a verified quote, since an expected_drivers
-                # entry isn't tied to one specific checklist answer - it's
-                # inferred from the archetype match itself.
-                for phrase in archetype_result.get('expected_drivers', []):
-                    if not self._expected_driver_covered(phrase, result['business_drivers']):
-                        expected_but_not_found.append({
-                            'question_id': None,
-                            'label': f"expected driver: {phrase}",
-                            'value': None,
-                            'quote': '',
-                            'source': 'archetype_expected_drivers',
-                        })
-
                 if expected_but_not_found:
                     result['expected_but_not_found'] = expected_but_not_found
+                if answered_but_no_driver:
+                    result['answered_but_no_driver'] = answered_but_no_driver
+
+                # The deterministic-fact injection above (cost_recovery_
+                # mechanism/who_bears_key_costs from the pass-through scan
+                # and interest-rate direction from net_cash_vs_debt) mutates
+                # checklist item statuses AFTER archetype_result['validation']
+                # was already computed inside ArchetypeClassifier.classify() -
+                # confirmed directly this left missing_expected stale: KEX's
+                # cost_recovery_mechanism showed there as missing even on a
+                # run where the injection above had just set its status to
+                # 'answered' two screens up. Recomputed here from the
+                # checklist's current (post-injection) state instead of
+                # trusting the snapshot taken before that mutation happened.
+                archetype_result['validation']['missing_expected'] = [
+                    f"{item['question_id']} ({item['question']})"
+                    for item in all_checklist_items
+                    if item.get('required') and item.get('status') != 'answered'
+                ]
 
             self._apply_consistency_checks(result)
             return result
@@ -1657,47 +1940,69 @@ so do not include a ticker_symbol field.
         return result
     
     def _get_fallback_product_analysis(self, sector: str, industry: str) -> Dict[str, Any]:
-        """Fallback product analysis when LLM fails"""
-        # Industry-specific fallbacks
-        if 'Technology' in sector:
-            return {
-                "product_breadth": "Broad",
-                "product_depth": "Deep",
-                "core_products": ["Software Platform", "Cloud Services"],
-                "innovation_level": "High",
-                "cross_selling_potential": "High"
-            }
-        elif 'Consumer' in sector:
-            return {
-                "product_breadth": "Moderate",
-                "product_depth": "Moderate",
-                "core_products": ["Consumer Products", "Brand Portfolio"],
-                "innovation_level": "Moderate",
-                "cross_selling_potential": "Moderate"
-            }
-        else:
-            return {
-                "product_breadth": "Moderate",
-                "product_depth": "Moderate",
-                "core_products": ["Primary Product", "Secondary Product"],
-                "innovation_level": "Moderate",
-                "cross_selling_potential": "Moderate"
-            }
+        """Fallback product analysis when the LLM call fails or returns
+        unparseable JSON.
+
+        core_products used to be invented placeholder text here
+        ("Primary Product", "Secondary Product" in the generic case,
+        "Software Platform"/"Cloud Services" for any Technology-sector
+        company regardless of what it actually makes) - confirmed directly
+        this isn't a hypothetical: KEX (Industrials, not Technology/
+        Consumer) hit this exact fallback on one run and "Primary Product"/
+        "Secondary Product" went straight into the report with nothing
+        marking them as placeholders, a regression from the real,
+        filing-sourced "tank barges, generators, electric fracturing
+        systems" the normal path had found. None of these three variants
+        were ever grounded in a specific company's real products, so an
+        empty list (nothing claimed) is strictly more honest than any of
+        them, consistent with this app's evidence-or-drop approach
+        elsewhere. data_source marks this as a fallback so a reader (or
+        the dashboard) can tell it apart from the normal filing-grounded
+        path.
+        """
+        breadth_depth_by_sector = {
+            'Technology': ("Broad", "Deep", "High", "High"),
+            'Consumer': ("Moderate", "Moderate", "Moderate", "Moderate"),
+        }
+        breadth, depth, innovation, cross_selling = next(
+            (v for k, v in breadth_depth_by_sector.items() if k in sector),
+            ("Moderate", "Moderate", "Moderate", "Moderate"),
+        )
+        return {
+            "product_breadth": breadth,
+            "product_depth": depth,
+            "core_products": [],
+            "innovation_level": innovation,
+            "cross_selling_potential": cross_selling,
+            "data_source": "Fallback - LLM call failed or returned no usable data",
+        }
     
     def _get_fallback_competitive_analysis(self, industry: str) -> Dict[str, Any]:
-        """Fallback competitive analysis when LLM fails"""
+        """Fallback competitive analysis when the LLM call fails or
+        returns unparseable JSON.
+
+        Same fix as _get_fallback_product_analysis above: every list here
+        used to be invented placeholder text ("Market position",
+        "Industry peers", "Established channels" - none of it specific to
+        any real company), with nothing marking it as a fallback. Empty
+        lists (nothing claimed) rather than fabricated-sounding defaults;
+        data_source marks this as a fallback.
+        """
         return {
             "differentiation_strategy": "Differentiation",
-            "competitive_advantages": ["Market position", "Experience"],
-            "unique_value_propositions": ["Industry expertise"],
-            "key_competitors": ["Industry peers"],
+            "competitive_advantages": [],
+            "unique_value_propositions": [],
+            "key_competitors": [],
+            "key_competitors_note": "LLM call failed or returned no usable data - competitors not assessed",
             "competitive_positioning": "Challenger",
-            "barriers_to_entry": ["Capital requirements"],
+            "barriers_to_entry": [],
             "switching_costs": "Moderate",
             "brand_strength": "Moderate",
             "technology_moat": "Moderate",
-            "distribution_advantages": ["Established channels"],
-            "competitive_threats": ["New entrants", "Technology disruption"]
+            "distribution_advantages": [],
+            "competitive_threats": [],
+            "business_drivers": [],
+            "data_source": "Fallback - LLM call failed or returned no usable data",
         }
     
     @staticmethod
@@ -1820,6 +2125,32 @@ so do not include a ticker_symbol field.
                 'revenue': d['revenue'],
                 'profit': d.get('profit'),
                 'profit_measure': d.get('profit_measure'),
+            })
+
+        # The parsed segment rows are each company's own reportable-segment
+        # revenue, which routinely includes intersegment/intercompany sales
+        # that get eliminated at the consolidated level - so segment_sum can
+        # legitimately differ from total_revenue (the real consolidated
+        # total) in either direction, and dividing each segment by
+        # total_revenue alone then leaves the percentages summing to
+        # something other than 100% (confirmed on KO: 24.0+13.2+40.9+11.8+
+        # 12.0 = 101.9%, from an $865M gap between the $48.806B segment sum
+        # and the $47.941B real consolidated total). Surfacing that gap as
+        # its own line - rather than leaving it as unexplained rounding
+        # error - makes the percentages sum to exactly 100% and makes the
+        # elimination/unallocated-corporate amount visible instead of
+        # silently absorbed. Skipped below 0.5% of total_revenue since that's
+        # indistinguishable from ordinary rounding noise across 2+ segments.
+        reconciliation = total_revenue - segment_sum
+        if total_revenue and abs(reconciliation) / total_revenue > 0.005:
+            primary_segments.append({
+                'segment_name': 'Corporate / Eliminations',
+                'revenue_percentage': round((reconciliation / total_revenue) * 100, 1),
+                'growth_trend': 'N/A (reconciling item, not a reported segment)',
+                'margin_profile': 'N/A',
+                'revenue': reconciliation,
+                'profit': None,
+                'profit_measure': None,
             })
 
         largest = max(segments, key=lambda n: segments[n]['revenue'])
@@ -1965,11 +2296,22 @@ Respond with JSON containing segment breakdown:
                     'data_source': business_desc.get('data_source')
                 }
             
-            # Get segment revenue data - summary only
-            segment_data = self.sec_provider.get_segment_revenue_data(ticker)
-            if segment_data:
-                sec_data['segment_data'] = segment_data
-            
+            # get_segment_revenue_data (the companyfacts-API-based method)
+            # used to be surfaced here as sec_edgar_data.segment_data - it's
+            # already documented as structurally unreliable (no real segment
+            # dimension in that API's data points at all, see
+            # get_segment_financials's own docstring above), and sorting its
+            # company-total revenue fact by 'end' date alone - without
+            # checking duration/fiscal-period - can silently grab a
+            # quarterly or YTD figure instead of the real annual total.
+            # Confirmed directly on KO: it surfaced "Total Company" revenue
+            # of $39.232B here while the real, reconciled figure
+            # (segment_revenue_data, from get_segment_financials) correctly
+            # showed $47.941B - two disagreeing "Total Company" numbers in
+            # the same report. Removed rather than fixed: there's no second
+            # reliable number to show here, and segment_revenue_data already
+            # has the real one.
+
             # Get management data
             mgmt_data = self.sec_provider.get_management_data(ticker)
             if mgmt_data and 'error' not in mgmt_data:

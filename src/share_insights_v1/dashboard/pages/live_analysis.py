@@ -657,18 +657,25 @@ def _render_business_model_details(data: dict):
                 for flag in consistency_flags:
                     st.caption(f"⚠️ {flag}")
 
+            # Two different situations, shown separately rather than
+            # merged - confirmed that merging them was actively confusing:
+            # a required checklist item with a real answered value/quote
+            # (just not also reflected as a structured driver) used to show
+            # up under a heading that said "not found", when it plainly had
+            # been found.
             expected_but_not_found = comp.get('expected_but_not_found') or []
             if expected_but_not_found:
-                st.markdown("**Expected but not found as a driver**")
+                st.markdown("**Required but not found in filing**")
                 for item in expected_but_not_found:
+                    st.caption(f"⚠️ {item.get('label', '')} — not disclosed anywhere in the filing")
+
+            answered_but_no_driver = comp.get('answered_but_no_driver') or []
+            if answered_but_no_driver:
+                st.markdown("**Answered in checklist, not shown as a separate driver**")
+                for item in answered_but_no_driver:
                     value = item.get('value') or ''
                     quote = item.get('quote') or ''
-                    st.caption(f"⚠️ {item.get('label', '')}: {value} (\"{quote}\")")
-
-                pass_through = driver.get('pass_through')
-                if pass_through:
-                    lag_str = f", lag {pass_through['lag']}" if pass_through.get('lag') else ""
-                    st.caption(f"Pass-through: {pass_through.get('strength', 'N/A')}{lag_str} — “{pass_through['evidence'][0]}”" if pass_through.get('evidence') else f"Pass-through: {pass_through.get('strength', 'N/A')}{lag_str}")
+                    st.caption(f"ℹ️ {item.get('label', '')}: {value} (\"{quote}\")")
 
     segments = data.get('segment_revenue_data') or {}
     primary_segments = segments.get('primary_segments') or []

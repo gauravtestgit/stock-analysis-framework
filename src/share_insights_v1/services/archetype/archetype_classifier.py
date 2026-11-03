@@ -18,10 +18,11 @@ gets the Universal Checklist's Q&A (see _UNIVERSAL_CHECKLIST below) - that's
 what catches a company-specific fact (government payer, regulator, FX)
 even when no archetype's own checklist applies.
 
-Known remaining scope gap: Item-1-Business-only checklist slicing (no MD&A/
-Item 7A/8-K yet - a separate, larger piece of work), and company-level
-checklist answering only (segments are classified but their own checklist
-isn't separately answered).
+Known remaining scope gap: no 8-K earnings-exhibit text yet (10-K Item 1
+Business + latest 10-Q MD&A are both in scope - see
+BusinessModelAnalyzer._compute_archetype), and company-level checklist
+answering only (segments are classified but their own checklist isn't
+separately answered).
 """
 import hashlib
 import json
@@ -32,7 +33,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from ...utils.debug_printer import debug_print
-from ...utils.filing_text_tools import select_keyword_context
+from ...utils.filing_text_tools import select_ranked_windows
 from ...utils.json_extractor import extract_json_from_llm_response
 
 _ARCHETYPES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'archetypes')
@@ -185,8 +186,38 @@ class ArchetypeClassifier:
 
     # ---------- Pass B: one small LLM call ----------
 
+    @staticmethod
+    def _build_segment_context(full_text: str, segment_names: List[str], per_segment_cap: int = 700) -> str:
+        """A short text snippet around each segment's own first mention in
+        the filing - without this, _classify_with_llm's prompt previously
+        gave the LLM nothing but a bare list of segment NAMES plus the
+        company-level overview, with no segment-specific text to actually
+        distinguish them. Confirmed directly on KO: all five segments
+        (EMEA, Latin America, North America, Asia Pacific, Bottling
+        Investments) came back classified as branded_staples_franchise at
+        an identical 0.9 confidence - the LLM had no way to tell that
+        Bottling Investments (a majority-owned manufacturing/bottling
+        operation) is a materially different business from the four sales
+        regions, which really do share the parent's franchise model.
+        """
+        if not full_text or not segment_names:
+            return ''
+        text_lower = full_text.lower()
+        blocks = []
+        for name in segment_names:
+            idx = text_lower.find(name.lower())
+            if idx == -1:
+                continue
+            start = max(0, idx - 100)
+            end = min(len(full_text), idx + per_segment_cap)
+            snippet = full_text[start:end].strip()
+            if snippet:
+                blocks.append(f"[{name}]: {snippet}")
+        return "\n\n".join(blocks)
+
     def _classify_with_llm(self, ticker: str, company_name: str, evidence_pack: Dict[str, Any],
-                            business_overview: str, segment_names: List[str]) -> Dict[str, Any]:
+                            business_overview: str, segment_names: List[str],
+                            segment_context: str = '') -> Dict[str, Any]:
         archetype_list = "\n".join(
             f"- {a['id']}: {a['name']} - {a['description'].strip()}" for a in self._archetypes.values()
         )
@@ -213,6 +244,7 @@ Business Overview (start of the filing's Business section):
 {business_overview}
 
 Segments to also classify individually (same archetype list, or "other"): {segment_names}
+{f"Segment-specific context - use this, not just the company-level overview above, to classify each segment on its own merits. A segment can genuinely differ from the company as a whole (e.g. a geographic sales region selling the parent's products under its usual model vs. a majority-owned manufacturing/bottling operation):{chr(10)}{segment_context}" if segment_context else ""}
 
 Respond with JSON:
 {{
@@ -258,31 +290,61 @@ confidence and runner_up_confidence are both 0-1. Quotes must be copied exactly 
         normalized_text = re.sub(r'\s+', ' ', full_text.lower())
         return len(normalized_quote) >= 8 and normalized_quote in normalized_text
 
-    _CHECKLIST_BATCH_SIZE = 2
+    # Was 2 - confirmed directly on real runs (KO, PRDO) that even a
+    # 2-question batch still only answers one of its two questions in
+    # nearly every batch (e.g. KO's brand_portfolio+price_mix batch: both
+    # "not disclosed" despite KO's filing plainly naming its brands a few
+    # paragraphs away; PRDO's government_payer_share+regulators_and_
+    # accreditors batch: only the second answered). Batching also pools
+    # every question's where_to_look keywords into one combined list for
+    # slice selection (see _answer_checklist_batch below), so a single
+    # question's budget gets diluted by - and can lose entirely to - the
+    # other question's keywords (confirmed on PRDO: 149 sentences matched
+    # the combined regulatory keyword list, only 10 made the cut, and the
+    # one with the real 90/10 answer wasn't among them). One question per
+    # call costs more LLM calls but removes both failure modes at once.
+    _CHECKLIST_BATCH_SIZE = 1
+
+    # How many ranked windows (see select_ranked_windows) to try before
+    # giving up on a question. Confirmed directly why one window wasn't
+    # enough even after moving to one-question-per-call and digit-aware
+    # ranking: a very common where_to_look keyword (PRDO's "regulator"
+    # alone matched 73 sentences, "government program" matched 109) still
+    # left only a handful fitting one cap-sized window, and the single
+    # window that happened to win the ranking wasn't always the one
+    # containing the real answer. Each window costs its own LLM call, so
+    # this only escalates past window 1 when window 1 didn't produce a
+    # verified quote - most questions resolve in one call either way.
+    _MAX_RETRIEVAL_WINDOWS = 3
 
     def _answer_checklist_batch(self, questions: List[Dict[str, Any]], full_text: str) -> Dict[str, Any]:
-        """Answer a small batch of checklist questions in one call, with
-        retry. Confirmed empirically why batching matters, not just retry
-        count: asking the model to answer ALL of a 3-5 question checklist
-        at once (each requiring a careful verbatim quote, under a strict
-        "don't invent" instruction) had an estimated ~79% per-attempt
-        failure rate (every answer silently coming back "Not disclosed"
-        with a null quote, including questions confirmed to have real
-        answers) - raw provider metadata showed 91.7% of that call's
-        completion tokens went to hidden reasoning on one observed attempt.
-        3 retries on a ~79%-failure task still only succeeds end-to-end
-        about half the time. Splitting into smaller batches (2 questions)
-        is the mitigation actually used in production code elsewhere in
-        this app for reasoning-heavy prompts (ILLMProvider's shared
-        MAX_COMPLETION_TOKENS docstring), and it's what the original spec
-        asked for ("batch 2-4 questions per call") - this POC had collapsed
-        that into one call per archetype instead.
+        """Answer a checklist question (or small batch - see
+        _CHECKLIST_BATCH_SIZE), trying successive ranked text windows until
+        one produces a verified quote or the windows run out.
+
+        Confirmed empirically why ONE question per call wasn't by itself
+        enough to make answers stable across runs: asking the model to
+        answer ALL of a 3-5 question checklist at once (each requiring a
+        careful verbatim quote, under a strict "don't invent" instruction)
+        had an estimated ~79% per-attempt failure rate originally,
+        improved by dropping to one question per call - but a single fixed
+        text window built from keyword-length priority alone could still
+        miss the sentence that actually answers the question, with no
+        second attempt at a DIFFERENT slice when the first one came up
+        empty. select_ranked_windows below ranks sentences against the
+        question's own words (not just where_to_look) and returns multiple
+        non-overlapping candidate windows in rank order for exactly that
+        retry.
         """
         keywords = [kw for q in questions for kw in q.get('where_to_look', [])]
-        slice_text, slice_meta = select_keyword_context(full_text, keywords, cap=2000)
+        question_text = ' '.join(q['question'] for q in questions)
+        windows = select_ranked_windows(full_text, question_text, keywords, cap=2000, max_windows=self._MAX_RETRIEVAL_WINDOWS)
         questions_block = "\n".join(f"{i + 1}. [{q['id']}] {q['question']}" for i, q in enumerate(questions))
 
-        prompt = f"""
+        parsed_answers: Dict[str, Any] = {}
+        slice_meta: Dict[str, Any] = {}
+        for window_idx, (slice_text, window_meta) in enumerate(windows):
+            prompt = f"""
 Using ONLY the filing text below, answer each question. For each, give a value and a short quote copied EXACTLY
 from the text that supports it. If the text doesn't address a question, respond with value "Not disclosed" and
 quote null - do not guess, estimate, or invent a number.
@@ -300,13 +362,10 @@ Respond with JSON:
     ]
 }}
 """
-        MAX_ATTEMPTS = 3
-        parsed_answers: Dict[str, Any] = {}
-        for attempt in range(MAX_ATTEMPTS):
             try:
                 response = self.llm_manager.generate_response(prompt, temperature=0)
             except Exception as e:
-                debug_print(f"[ARCHETYPE_DEBUG] Checklist batch call failed (attempt {attempt + 1}): {e}")
+                debug_print(f"[ARCHETYPE_DEBUG] Checklist call failed (window {window_idx + 1}): {e}")
                 response = None
             json_str = extract_json_from_llm_response(response) if response else None
             answers_list = []
@@ -316,10 +375,11 @@ Respond with JSON:
                 except Exception:
                     answers_list = []
             any_real_quote = any(a.get('quote') for a in answers_list)
-            if any_real_quote or attempt == MAX_ATTEMPTS - 1:
+            slice_meta = {**window_meta, 'window_tried': window_idx + 1, 'windows_available': len(windows)}
+            if any_real_quote or window_idx == len(windows) - 1:
                 parsed_answers = {a.get('id'): a for a in answers_list}
                 break
-            debug_print(f"[ARCHETYPE_DEBUG] Checklist batch had no real quotes (attempt {attempt + 1}), retrying")
+            debug_print(f"[ARCHETYPE_DEBUG] Window {window_idx + 1}/{len(windows)} had no real quotes, trying next window")
 
         return parsed_answers, slice_meta
 
@@ -375,8 +435,11 @@ Respond with JSON:
         evidence_pack = self._build_evidence_pack(ticker, full_text, segment_financials, financial_metrics)
         business_overview = (full_text or '')[:2000]
         segment_names = list((segment_financials or {}).get('annual', {}).get('segments', {}).keys())
+        segment_context = self._build_segment_context(full_text, segment_names)
 
-        classification = self._classify_with_llm(ticker, company_name, evidence_pack, business_overview, segment_names)
+        classification = self._classify_with_llm(
+            ticker, company_name, evidence_pack, business_overview, segment_names, segment_context
+        )
 
         company_archetype_id = classification.get('company_archetype', 'other')
         archetype = self._archetypes.get(company_archetype_id)

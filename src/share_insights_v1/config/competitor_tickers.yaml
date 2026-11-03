@@ -1,0 +1,54 @@
+# Maintained mapping from a well-known company name to its real ticker,
+# checked by _validate_competitors BEFORE the live yfinance+fuzzy-name-match
+# path. Competitors are LLM-inferred per call (they vary by company and by
+# run), and confirmed directly that the SAME real competitor's ticker
+# resolution flips between "answered" and null across runs even when the
+# company itself is correctly named - e.g. "Danone S.A." / "BN.PA",
+# "Anheuser-Busch InBev" / "BUD" and "Heineken N.V." / "HEIA.AS" each
+# resolved correctly on one run and came back null on another, most likely
+# from a combination of the LLM's own name wording varying call to call and
+# yfinance/difflib's live name-similarity check being sensitive to that
+# wording. A name matched here skips the live lookup entirely, so the same
+# well-known company always resolves to the same ticker regardless of how
+# the LLM happened to word its name that call.
+#
+# Each entry's `aliases` are matched case-insensitively as substrings
+# against the LLM-claimed competitor name - add more aliases here as new
+# phrasings are seen, rather than guessing up front.
+
+pepsico:
+  ticker: "PEP"
+  aliases: ["pepsico", "pepsi"]
+keurig_dr_pepper:
+  ticker: "KDP"
+  aliases: ["keurig dr pepper", "dr pepper"]
+nestle:
+  ticker: "NESN.SW"
+  aliases: ["nestle", "nestl"]
+danone:
+  ticker: "BN.PA"
+  aliases: ["danone"]
+suntory:
+  ticker: "2587.T"
+  aliases: ["suntory"]
+anheuser_busch_inbev:
+  ticker: "BUD"
+  aliases: ["anheuser-busch inbev", "anheuser busch inbev", "ab inbev"]
+kirin:
+  ticker: "2503.T"
+  aliases: ["kirin"]
+heineken:
+  ticker: "HEIA.AS"
+  aliases: ["heineken"]
+diageo:
+  ticker: "DEO"
+  aliases: ["diageo"]
+constellation_brands:
+  ticker: "STZ"
+  aliases: ["constellation brands"]
+molson_coors:
+  ticker: "TAP"
+  aliases: ["molson coors"]
+monster_beverage:
+  ticker: "MNST"
+  aliases: ["monster beverage"]
