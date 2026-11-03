@@ -28,7 +28,7 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v4-archetype-integration'
+    _ANALYZER_VERSION = 'v5-archetype-cost-bearer-wording'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
@@ -1206,7 +1206,7 @@ factor (e.g. for "Diesel fuel price": "fuel", "fuel costs", "bunker fuel") - use
 to match this driver against filing text elsewhere in the document; a ticker is
 resolved independently afterward from a maintained list, not taken from you directly,
 so do not include a ticker_symbol field.
-{"If the Business Model Context above identifies that a cost (e.g. a commodity input) is borne directly by a third party - a franchise/bottling partner, an operator, a licensee - rather than by the company itself, reflect that explicitly in the driver's relationship text (e.g. note the cost sits with the partner and only reaches the company indirectly, such as through concentrate/royalty pricing or a franchise fee) instead of describing it as a full direct cost exposure on the company." if business_model_context else ""}
+{"If the Business Model Context above gives verified evidence that a cost is shared with, or substantially recovered from, a party other than the company - a franchise/bottling partner bearing input costs directly, or customers absorbing part of a cost increase via a contractual escalation/surcharge/adjustment clause - reflect that specific mechanism (name it, and the share/lag if the evidence gives one) in the driver's relationship text, instead of describing it as a full, unmitigated direct cost exposure on the company. If the evidence instead says the company itself bears a cost directly, don't infer the opposite for other, different costs the evidence doesn't address." if business_model_context else ""}
 """
 
             response = llm_manager.generate_response(prompt, temperature=0)

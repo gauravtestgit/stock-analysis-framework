@@ -33,8 +33,21 @@ checklist:
     answer_type: text
     required: false
   - id: cost_bearer_split
-    question: "For the company's main input costs (e.g. sweeteners, packaging materials), does the filing state whether the company itself bears these costs directly, or whether bottling/franchise partners bear them? Quote the relevant statement and name which segment/operation (if any) bears the cost directly."
-    where_to_look: ["bottling", "concentrate", "cost of goods sold", "raw material"]
+    question: >
+      For the company's main input costs (sweeteners/sugar, packaging
+      materials), does the filing describe them as used/purchased by the
+      company alone, by its bottling/franchise partners alone, or by BOTH
+      (shared exposure)? Specifically look for phrasing like "We and our
+      bottling partners use/purchase..." or "our bottling partners
+      purchase..." - that kind of joint or partner-only phrasing means the
+      cost is NOT borne solely by the company, even if a different, more
+      specific raw material is separately described as purchased directly
+      by the company (e.g. one specialty ingredient bought in-house doesn't
+      override a broader shared-cost statement about the main inputs -
+      prefer the sentence about the dominant/main inputs over a narrower
+      one about a single specialty ingredient). Quote the exact statement
+      and answer with one of: "Company", "Partners", or "Shared".
+    where_to_look: ["bottling partners use", "bottling partners purchase", "we and our bottling", "cost of goods sold", "raw material", "sugar", "sweetener", "packaging"]
     answer_type: text
     required: true
   - id: international_revenue_and_fx
