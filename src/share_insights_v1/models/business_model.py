@@ -23,6 +23,8 @@ class BusinessModelType(Enum):
     ADVERTISING_BASED = "Advertising Based"
     ASSET_HEAVY = "Asset Heavy"
     PLATFORM = "Platform"
+    BRANDED_STAPLES_FRANCHISE = "Branded Staples Franchise"
+    PASS_THROUGH_OPERATOR = "Pass-Through Operator"
 
 class RevenueQuality(Enum):
     EXCELLENT = "Excellent"  # High recurring, predictable

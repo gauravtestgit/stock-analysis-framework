@@ -122,6 +122,30 @@ def test_kex_golden_assertions():
     check("KEX classified as pass_through_operator archetype",
           result.get('archetype', {}).get('company_archetype') == 'pass_through_operator',
           result.get('archetype'))
+    check("KEX's Type derives from the archetype, not a generic sector/industry default",
+          result.get('business_model_type') == 'Pass-Through Operator', result.get('business_model_type'))
+
+    # KEX's required cost_recovery_mechanism answer must show up somewhere -
+    # either covered by a driver's pass_through scan, or explicitly listed
+    # as a gap - never silently absent from the report either way.
+    required_answered = [i for i in result.get('archetype', {}).get('checklist', []) if i.get('required') and i.get('status') == 'answered']
+    expected_but_not_found_ids = {i['question_id'] for i in comp.get('expected_but_not_found') or []}
+    drivers_with_pass_through = [d for d in comp.get('business_drivers') or [] if d.get('pass_through')]
+    for item in required_answered:
+        if item['question_id'] == 'cost_recovery_mechanism':
+            check("KEX's cost_recovery_mechanism is covered by a pass_through driver or listed as expected-but-not-found",
+                  len(drivers_with_pass_through) > 0 or item['question_id'] in expected_but_not_found_ids,
+                  {"drivers": comp.get('business_drivers'), "expected_but_not_found": comp.get('expected_but_not_found')})
+
+    check("KEX's report-level consistency_flags is present (ran, even if empty)",
+          'consistency_flags' in result, result.get('consistency_flags'))
+    check("KEX's Type matches its archetype - no 'Type vs archetype' consistency flag",
+          not any('Type is' in f for f in result.get('consistency_flags') or []),
+          result.get('consistency_flags'))
+
+    segment_archetypes = result.get('archetype', {}).get('segment_archetypes') or []
+    check("KEX has a per-segment archetype for both KMT and the Distribution and Services segment",
+          len(segment_archetypes) >= 2, segment_archetypes)
 
 
 def test_ko_golden_assertions():
@@ -151,6 +175,14 @@ def test_ko_golden_assertions():
           result.get('slice_log', {}).get('segment_revenue_data', {}).get('method') == 'structured_filing_data_no_llm',
           result.get('slice_log', {}).get('segment_revenue_data'))
 
+    # KO's segment table sums to slightly more than its real consolidated
+    # revenue (confirmed directly: $48.806B segment sum vs $47.941B
+    # consolidated - a ~1.8% intersegment-elimination gap), so percentages
+    # against the real consolidated total shouldn't land on exactly 100%.
+    segment_pct_sum = sum(s.get('revenue_percentage', 0) for s in segments)
+    check("KO's segment percentages are against consolidated revenue (net of eliminations), not just the parsed segments' own sum",
+          abs(segment_pct_sum - 100) > 0.5, segment_pct_sum)
+
     # KO's segment names (EMEA etc.) are first mentioned in an unrelated
     # Costa/innocent/dogadan corporate-restructuring footnote, not near the
     # real brand list - confirmed this fed core_products a mid-sentence
@@ -173,6 +205,47 @@ def test_ko_golden_assertions():
     archetype = result.get('archetype', {})
     check("KO classified as branded_staples_franchise archetype",
           archetype.get('company_archetype') == 'branded_staples_franchise', archetype)
+    check("KO's Type derives from the archetype, not the generic sector/industry 'Manufacturing' default",
+          result.get('business_model_type') == 'Branded Staples Franchise', result.get('business_model_type'))
+
+    # KO's cost_bearer_split answer (bottling partners bear the main input
+    # costs) should structurally mute the input-cost drivers' exposure
+    # label, not rely on the LLM's own driver text to mention it - confirmed
+    # directly that the LLM's relationship text for these drivers didn't
+    # mention bottling partners even with the same verified answer in its
+    # prompt context.
+    input_cost_drivers = [
+        d for d in comp.get('business_drivers') or []
+        if d.get('driver_type') == 'commodity_input' and d.get('channel') == 'cost'
+    ]
+    check("KO has at least one input-cost driver to check cost_bearer muting on",
+          len(input_cost_drivers) > 0, input_cost_drivers)
+    check("KO's input-cost drivers carry a cost_bearer field (bottling partners bear the cost)",
+          all(d.get('cost_bearer', {}).get('strength') in ('full', 'partial') for d in input_cost_drivers),
+          input_cost_drivers)
+
+    # KO's required international_revenue_and_fx answer must show up
+    # somewhere - either as an actual "fx" driver, or explicitly listed as
+    # a gap - confirmed directly this answer was previously just dropped
+    # with no fx driver anywhere in the report and nothing flagging that.
+    fx_drivers = [d for d in comp.get('business_drivers') or [] if d.get('driver_type') == 'fx']
+    expected_but_not_found_ids = {i['question_id'] for i in comp.get('expected_but_not_found') or []}
+    for item in archetype.get('checklist', []):
+        if item.get('required') and item.get('status') == 'answered' and item['question_id'] == 'international_revenue_and_fx':
+            check("KO's international_revenue_and_fx is covered by an fx driver or listed as expected-but-not-found",
+                  len(fx_drivers) > 0 or 'international_revenue_and_fx' in expected_but_not_found_ids,
+                  {"drivers": comp.get('business_drivers'), "expected_but_not_found": comp.get('expected_but_not_found')})
+
+    check("KO's report-level consistency_flags is present (ran, even if empty)",
+          'consistency_flags' in result, result.get('consistency_flags'))
+    check("KO's Type matches its archetype - no 'Type vs archetype' consistency flag",
+          not any('Type is' in f for f in result.get('consistency_flags') or []),
+          result.get('consistency_flags'))
+
+    segment_archetypes = archetype.get('segment_archetypes') or []
+    check("KO has a per-segment archetype including its Bottling Investments segment",
+          any('bottling' in (seg.get('segment') or '').lower() for seg in segment_archetypes),
+          segment_archetypes)
 
 
 def test_determinism():
