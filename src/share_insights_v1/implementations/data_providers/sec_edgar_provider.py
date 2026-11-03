@@ -462,7 +462,17 @@ class SECEdgarProvider(SECDataProvider):
                     'filing_date': filing_data.get('filing_date'),
                     'accession_number': filing_data.get('accession_number'),
                     'report_file': html_filename,
+                    # Sum of the parsed per-segment rows - NOT the same thing
+                    # as consolidated revenue (it excludes any unallocated
+                    # "Corporate" amount and intersegment eliminations, and
+                    # would silently absorb a dropped/unparsed segment's
+                    # share into the other segments' percentages if used as
+                    # the % denominator). Kept for the sanity-gate/legacy
+                    # fallback use, but total_company_revenue below - the
+                    # table's own consolidated total line - is the correct
+                    # denominator for "% of consolidated revenue".
                     'total_revenue': total_revenue,
+                    'total_company_revenue': total_company_revenue,
                     'segments': segments_with_revenue,
                 }
             debug_print(f"[SEC_DEBUG] No usable segment-detail report found for {ticker} {source} among {len(candidates)} candidates")

@@ -28,8 +28,39 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v6-product-slice-and-context-trim'
+    _ANALYZER_VERSION = 'v9-segment-pct-of-consolidated-revenue'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
+
+    # A confident archetype classification is a more specific business-model
+    # label than the generic sector/industry heuristic in
+    # _classify_business_model - e.g. KO was previously typed "Manufacturing"
+    # (a weak-moat default) despite being a licensing/concentrate business
+    # whose bottling partners do the actual manufacturing. Only archetypes
+    # with their own BusinessModelType below are overridden here; "other"
+    # (most tickers, given the taxonomy is only 2 archetypes) leaves the
+    # existing sector/industry classification untouched.
+    _ARCHETYPE_BUSINESS_MODEL_TYPES = {
+        'branded_staples_franchise': BusinessModelType.BRANDED_STAPLES_FRANCHISE,
+        'pass_through_operator': BusinessModelType.PASS_THROUGH_OPERATOR,
+    }
+
+    # A required+answered checklist item should show up somewhere in the
+    # report even when the business_drivers LLM call's own freeform list
+    # happens not to include it (confirmed: KO's required
+    # international_revenue_and_fx answer has no corresponding "fx" driver
+    # in business_drivers on some runs, with nothing surfacing that gap).
+    # Each predicate decides whether a given driver counts as "covering"
+    # that checklist item - term_vs_spot_mix/utilization/
+    # contract_renewal_timing have no predicate here since they describe
+    # contract structure, not something a commodity/fx/regulatory driver
+    # represents; they're still visible via the checklist table itself.
+    _CHECKLIST_DRIVER_SATISFIED_BY = {
+        'cost_bearer_split': lambda d: (
+            d.get('driver_type') == 'commodity_input' and d.get('channel') == 'cost' and d.get('cost_bearer')
+        ),
+        'international_revenue_and_fx': lambda d: d.get('driver_type') == 'fx',
+        'cost_recovery_mechanism': lambda d: bool(d.get('pass_through')),
+    }
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
         self.data_provider = data_provider
@@ -161,6 +192,13 @@ class BusinessModelAnalyzer(IAnalyzer):
             if hasattr(report, 'slice_log') and report.slice_log:
                 result['slice_log'] = report.slice_log
 
+            # Always present (an empty list is a real result: the checks
+            # ran and found nothing), not gated on truthiness like the
+            # fields above - a reader shouldn't have to infer "no issues"
+            # from the key's absence.
+            if hasattr(report, 'consistency_flags'):
+                result['consistency_flags'] = report.consistency_flags
+
             self._write_cache(ticker, accession_number, result)
             debug_print(f"[BM_DEBUG] Returning result for {ticker}: {result.get('business_model_type')}")
             return result
@@ -253,6 +291,22 @@ class BusinessModelAnalyzer(IAnalyzer):
         # the orchestrator's 30s per-analyzer timeout.
         archetype_result = self._compute_archetype(ticker, sec_business_data, segment_financials, financial_metrics)
 
+        # Let a confident archetype classification override the generic
+        # sector/industry-derived Type - e.g. KO shouldn't be labeled
+        # "Manufacturing" when it's actually a branded concentrate/licensing
+        # business. Skipped when the classifier itself flagged the call as
+        # ambiguous (confidence < 0.6, or too close to the runner-up) - that
+        # flag exists precisely to mark classifications not solid enough to
+        # act on, so the safer sector/industry default is kept instead.
+        if archetype_result:
+            validation_flags = (archetype_result.get('validation') or {}).get('flags') or []
+            if 'ambiguous classification' not in validation_flags:
+                archetype_business_model_type = self._ARCHETYPE_BUSINESS_MODEL_TYPES.get(
+                    archetype_result.get('company_archetype')
+                )
+                if archetype_business_model_type:
+                    business_model_type = archetype_business_model_type
+
         # Enhanced: Analyze product portfolio, competitive differentiation, and segment revenue
         product_analysis = self._analyze_product_portfolio(ticker, company_info, financial_metrics, sec_business_data, segment_financials)
         competitive_differentiation = self._analyze_competitive_differentiation(ticker, company_info, product_analysis, financial_metrics, sec_business_data, archetype_result)
@@ -294,6 +348,16 @@ class BusinessModelAnalyzer(IAnalyzer):
         report.sec_edgar_data = sec_edgar_data
         report.slice_log = self._slice_log
         report.archetype = archetype_result
+        # Report-level consistency flags - distinct from the per-driver
+        # flags _apply_consistency_checks already attaches above, since
+        # these compare fields that live in different parts of the report
+        # (Type vs. archetype; moat vs. brand/positioning/advantages) rather
+        # than two things about a single driver. Computed on every report,
+        # not just when something's wrong - an empty list means the checks
+        # ran and found nothing, not that they didn't run.
+        report.consistency_flags = self._apply_report_level_consistency_checks(
+            business_model_type, archetype_result, competitive_moat, competitive_differentiation
+        )
 
         return report
     
@@ -1299,6 +1363,60 @@ so do not include a ticker_symbol field.
                 if pass_through:
                     driver['pass_through'] = pass_through
 
+            # branded_staples_franchise's verified cost_bearer_split answer
+            # ("Partners"/"Shared") means the company's main input-cost
+            # drivers (sweeteners/sugar, packaging - what that checklist
+            # question is specifically about) aren't a full direct cost
+            # exposure on the company itself. The business_drivers prompt
+            # already asks the LLM to reflect this in the driver's
+            # "relationship" text, but that's not reliable enough to carry
+            # the exposure LABEL on its own - confirmed directly on KO: the
+            # LLM's relationship text for HFCS/Sugar/Aluminum/PET didn't
+            # mention bottling partners at all despite the same verified
+            # answer being available to it. Structurally overriding the
+            # label here, the same way the pass_through scan above overrides
+            # it for escalation-clause costs, doesn't depend on the LLM
+            # choosing to apply the instruction.
+            if archetype_result and archetype_result.get('company_archetype') == 'branded_staples_franchise':
+                cost_bearer_item = next(
+                    (item for item in archetype_result.get('checklist', [])
+                     if item.get('question_id') == 'cost_bearer_split' and item.get('status') == 'answered'),
+                    None
+                )
+                if cost_bearer_item:
+                    bearer_value = (cost_bearer_item.get('value') or '').lower()
+                    bearer_strength = (
+                        'full' if 'partner' in bearer_value
+                        else 'partial' if 'shared' in bearer_value
+                        else None
+                    )
+                    if bearer_strength:
+                        quote = cost_bearer_item['quotes'][0] if cost_bearer_item.get('quotes') else ''
+                        for driver in result['business_drivers']:
+                            if driver.get('driver_type') == 'commodity_input' and driver.get('channel') == 'cost':
+                                driver['cost_bearer'] = {'strength': bearer_strength, 'quote': quote}
+
+            # Surface the gap explicitly rather than letting a required
+            # checklist fact silently vanish when business_drivers doesn't
+            # happen to include a matching driver this run.
+            if archetype_result:
+                expected_but_not_found = []
+                for item in archetype_result.get('checklist', []):
+                    if not item.get('required') or item.get('status') != 'answered':
+                        continue
+                    predicate = self._CHECKLIST_DRIVER_SATISFIED_BY.get(item['question_id'])
+                    if predicate is None:
+                        continue
+                    if not any(predicate(d) for d in result['business_drivers']):
+                        expected_but_not_found.append({
+                            'question_id': item['question_id'],
+                            'label': item['question_id'].replace('_', ' '),
+                            'value': item.get('value'),
+                            'quote': item['quotes'][0] if item.get('quotes') else '',
+                        })
+                if expected_but_not_found:
+                    result['expected_but_not_found'] = expected_but_not_found
+
             self._apply_consistency_checks(result)
             return result
 
@@ -1385,6 +1503,48 @@ so do not include a ticker_symbol field.
     # driver correlations in the 0.1-0.2 range turn up even for drivers with
     # no real relationship, from pure market-wide co-movement).
     _CORRELATION_CONTRADICTION_THRESHOLD = 0.3
+
+    def _apply_report_level_consistency_checks(
+        self, business_model_type: BusinessModelType, archetype_result: Optional[Dict[str, Any]],
+        competitive_moat: str, competitive_differentiation: Dict[str, Any]
+    ) -> List[str]:
+        """Two checks that compare fields from different parts of the
+        report, so they don't fit _apply_consistency_checks below (which is
+        about one driver contradicting itself):
+
+        1. Moat vs. brand/positioning: a 'Leader' competitive_positioning or
+           'Strong' brand_strength shouldn't coexist with a moat assessment
+           that's still "Weak" after _assess_competitive_moat's own
+           upgrade/downgrade pass - if it is, that pass didn't fully
+           reconcile the two, which is worth surfacing rather than leaving
+           a reader to notice the mismatch themselves.
+        2. Type vs. archetype: a confident (non-"ambiguous classification")
+           archetype should have already set business_model_type via
+           _ARCHETYPE_BUSINESS_MODEL_TYPES above - if it didn't, that's a
+           real bug in this analyzer, not a judgment call, so it's flagged
+           rather than silently shown as two disagreeing fields.
+        """
+        flags = []
+
+        positioning = competitive_differentiation.get('competitive_positioning')
+        brand_strength = competitive_differentiation.get('brand_strength')
+        if (positioning == 'Leader' or brand_strength == 'Strong') and 'Weak' in competitive_moat and 'Moderate' not in competitive_moat:
+            flags.append(
+                f"Competitive Moat ('{competitive_moat}') looks inconsistent with competitive_positioning "
+                f"('{positioning}') / brand_strength ('{brand_strength}')"
+            )
+
+        if archetype_result:
+            validation_flags = (archetype_result.get('validation') or {}).get('flags') or []
+            archetype_id = archetype_result.get('company_archetype')
+            expected_type = self._ARCHETYPE_BUSINESS_MODEL_TYPES.get(archetype_id)
+            if expected_type and 'ambiguous classification' not in validation_flags and business_model_type != expected_type:
+                flags.append(
+                    f"Archetype classified as '{archetype_id}' but Type is '{business_model_type.value}', "
+                    f"not '{expected_type.value}'"
+                )
+
+        return flags
 
     def _apply_consistency_checks(self, result: Dict[str, Any]) -> None:
         """Deterministic checks the LLM output must not contradict itself
@@ -1552,7 +1712,16 @@ so do not include a ticker_symbol field.
             return None
 
         segments = annual['segments']
-        total_revenue = annual.get('total_revenue') or sum(d['revenue'] for d in segments.values())
+        # total_company_revenue is the filing's own consolidated total line
+        # (before any per-segment "[Member]" row) - the correct denominator
+        # for "% of consolidated revenue", since it's distinct from the sum
+        # of the parsed segments below (which excludes any unallocated
+        # "Corporate" amount, intersegment eliminations, and would silently
+        # absorb a dropped/unparsed segment's share into the others'
+        # percentages). Falls back to the segment sum only when the table
+        # didn't have a usable consolidated total row.
+        segment_sum = sum(d['revenue'] for d in segments.values())
+        total_revenue = annual.get('total_company_revenue') or annual.get('total_revenue') or segment_sum
         if not total_revenue:
             return None
 
@@ -1904,7 +2073,14 @@ Respond with JSON containing segment breakdown:
             BusinessModelType.MANUFACTURING: "Weak to Moderate - Scale and brand advantages",
             BusinessModelType.TRADITIONAL_RETAIL: "Weak - Low barriers to entry",
             BusinessModelType.ADVERTISING_BASED: "Weak to Moderate - Scale and data advantages",
-            BusinessModelType.B2C_SUBSCRIPTION: "Moderate - Brand loyalty and content"
+            BusinessModelType.B2C_SUBSCRIPTION: "Moderate - Brand loyalty and content",
+            # Grounded in each archetype YAML's own description, not a
+            # generic default - a licensing/concentrate franchise (KO) has a
+            # materially different moat than a plain manufacturer, and a
+            # pass-through operator's contract/regulatory moat is undercut by
+            # the cost pass-through itself removing pricing-power upside.
+            BusinessModelType.BRANDED_STAPLES_FRANCHISE: "Strong - Iconic brand portfolio and bottling/franchise distribution network",
+            BusinessModelType.PASS_THROUGH_OPERATOR: "Moderate - Regulatory barriers (e.g. Jones Act) and term-contract relationships, limited by cost pass-through dynamics",
         }
         
         base_moat = moat_strength.get(business_model_type, "Moderate")
@@ -1945,7 +2121,14 @@ Respond with JSON containing segment breakdown:
             BusinessModelType.FINANCIAL_SERVICES: 6.0,
             BusinessModelType.MANUFACTURING: 4.0,
             BusinessModelType.TRADITIONAL_RETAIL: 3.0,
-            BusinessModelType.ASSET_HEAVY: 2.0
+            BusinessModelType.ASSET_HEAVY: 2.0,
+            # Branded staples franchise: asset-light relative to plain
+            # MANUFACTURING (4.0) since bottling/franchise partners carry the
+            # capex, but still a physical-goods business, not SaaS-scalable.
+            BusinessModelType.BRANDED_STAPLES_FRANCHISE: 5.5,
+            # Pass-through operator: fleet/asset-heavy with a roughly linear
+            # capacity-to-revenue relationship, close to ASSET_HEAVY.
+            BusinessModelType.PASS_THROUGH_OPERATOR: 3.0,
         }
         
         base_score = base_scores.get(business_model_type, 5.0)

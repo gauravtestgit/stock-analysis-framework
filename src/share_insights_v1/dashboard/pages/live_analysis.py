@@ -488,6 +488,53 @@ def _render_business_model_details(data: dict):
         confidence_str = f" (confidence {confidence:.0%})" if isinstance(confidence, (int, float)) else ""
         st.caption(f"**Business Model Archetype:** {archetype_name.replace('_', ' ').title()}{confidence_str}")
 
+    # The classifier already computes a per-segment archetype (e.g. KEX's
+    # KMT segment vs. its Distribution and Services segment can land on
+    # different archetypes) - this data existed but was never rendered
+    # anywhere, so a company with a genuine archetype mix across segments
+    # looked identical to one with a single uniform archetype.
+    segment_archetypes = archetype.get('segment_archetypes') or []
+    if segment_archetypes:
+        st.caption("**Segment Archetype Mix:** " + "; ".join(
+            f"{seg.get('segment', 'N/A')} — {(seg.get('archetype') or 'other').replace('_', ' ').title()}"
+            + (f" ({seg['confidence']:.0%})" if isinstance(seg.get('confidence'), (int, float)) else "")
+            for seg in segment_archetypes
+        ))
+
+    # The archetype classifier's checklist Q&A (each item's verified
+    # quote/status) was computed all along but never shown anywhere in the
+    # report - a reader had no way to see what evidence the archetype
+    # classification and the driver-label overrides above are actually
+    # grounded in.
+    checklist = archetype.get('checklist') or []
+    if checklist:
+        st.markdown("**Archetype Checklist**")
+        st.dataframe(
+            pd.DataFrame([
+                {
+                    'Question': item.get('question_id', '').replace('_', ' ').title(),
+                    'Required': 'Yes' if item.get('required') else 'No',
+                    'Status': item.get('status', ''),
+                    'Value': item.get('value', ''),
+                    'Quote': (item.get('quotes') or [''])[0],
+                }
+                for item in checklist
+            ]),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    # Shown either way - an empty list means the checks ran and found
+    # nothing, not that nothing ran, so it's worth saying "no issues" too.
+    if 'consistency_flags' in data:
+        consistency_flags = data.get('consistency_flags') or []
+        if consistency_flags:
+            st.markdown("**Consistency Checks**")
+            for flag in consistency_flags:
+                st.caption(f"⚠️ {flag}")
+        else:
+            st.caption("✅ Consistency checks: no issues found")
+
     product = data.get('product_portfolio') or {}
     if product:
         section_label("Product Portfolio")
@@ -572,6 +619,19 @@ def _render_business_model_details(data: dict):
                     # strength == 'none' means the filing explicitly says this
                     # ISN'T recovered - the plain headwind label already says
                     # that correctly, so it's left as-is.
+                # A different real-world mechanism from pass_through above:
+                # for branded_staples_franchise, a verified cost_bearer_split
+                # answer means a bottling/franchise partner bears the cost
+                # directly, not that the company recovers it from customers -
+                # mutually exclusive with pass_through in practice (different
+                # archetypes), so no precedence conflict between the two.
+                cost_bearer = driver.get('cost_bearer')
+                if cost_bearer and exposure == 'cost_headwind' and not pass_through:
+                    bearer_strength = cost_bearer.get('strength')
+                    if bearer_strength == 'full':
+                        exposure_label = "🟢 Cost headwind, borne by bottling/franchise partners"
+                    elif bearer_strength == 'partial':
+                        exposure_label = "🟡 Cost headwind, shared with bottling/franchise partners"
                 price = driver.get('current_price')
                 pct = driver.get('price_change_3mo_pct')
                 ticker_symbol = driver.get('ticker_symbol')
@@ -596,6 +656,14 @@ def _render_business_model_details(data: dict):
                 consistency_flags = driver.get('consistency_flags') or []
                 for flag in consistency_flags:
                     st.caption(f"⚠️ {flag}")
+
+            expected_but_not_found = comp.get('expected_but_not_found') or []
+            if expected_but_not_found:
+                st.markdown("**Expected but not found as a driver**")
+                for item in expected_but_not_found:
+                    value = item.get('value') or ''
+                    quote = item.get('quote') or ''
+                    st.caption(f"⚠️ {item.get('label', '')}: {value} (\"{quote}\")")
 
                 pass_through = driver.get('pass_through')
                 if pass_through:
