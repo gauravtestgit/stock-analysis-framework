@@ -1,0 +1,72 @@
+id: telecom_operator
+name: Telecom Operator
+description: 'A wireless/wireline carrier whose economics turn on subscriber net adds/churn, ARPU, and
+  capex-heavy network builds - a regulated-adjacent, capital-intensive subscription business. Confirmed-shape
+  case: T-Mobile US (TMUS).'
+sic_hints:
+- 4810
+- 4899
+description_cues:
+- postpaid
+- ARPU
+- churn
+- spectrum
+- fiber
+- net additions
+checklist:
+- id: net_adds_and_churn
+  question: What subscriber net additions (postpaid/prepaid/broadband) and churn does the filing disclose?
+  where_to_look:
+  - net additions
+  - postpaid
+  - prepaid
+  - churn
+  answer_type: text
+  required: true
+- id: arpu_trend
+  question: What ARPU/ARPA trend and pricing actions does the filing disclose?
+  where_to_look:
+  - ARPU
+  - ARPA
+  - pricing action
+  answer_type: text
+  required: true
+- id: capex_and_network_build
+  question: What capex intensity and network build (5G, fiber) does the filing describe?
+  where_to_look:
+  - capex
+  - 5G
+  - fiber
+  - network build
+  answer_type: text
+  required: false
+- id: spectrum
+  question: What spectrum holdings or auctions does the filing disclose?
+  where_to_look:
+  - spectrum
+  - auction
+  answer_type: text
+  required: false
+- id: leverage_buybacks
+  question: What leverage and buyback activity does the filing disclose?
+  where_to_look:
+  - leverage
+  - buyback
+  answer_type: text
+  required: false
+- id: non_us_fx_tariff
+  question: For non-US operators, what inflation/FX/regulated tariff exposure does the filing describe?
+  where_to_look:
+  - inflation
+  - FX
+  - regulated tariff
+  answer_type: text
+  required: false
+expected_drivers:
+- competition/pricing events
+- interest rates (net debt)
+- FX/inflation (international)
+- capex cycle
+validation_rules:
+- must have an answered net_adds_and_churn checklist item
+- must have an answered arpu_trend checklist item

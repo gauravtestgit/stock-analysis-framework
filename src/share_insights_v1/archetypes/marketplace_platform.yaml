@@ -1,0 +1,68 @@
+id: marketplace_platform
+name: Marketplace Platform
+description: 'A two-sided marketplace earning a take rate on gross bookings/GMV rather than selling its
+  own inventory - supply-side and demand-side economics are both load-bearing. Confirmed-shape case: Uber
+  (UBER).'
+sic_hints:
+- 7370
+- 7389
+description_cues:
+- gross bookings
+- take rate
+- GMV
+- marketplace
+- dealers
+- leads
+- active users
+checklist:
+- id: gross_bookings_and_take_rate
+  question: What gross bookings/GMV and take rate does the filing state?
+  where_to_look:
+  - gross bookings
+  - GMV
+  - take rate
+  answer_type: text
+  required: true
+- id: supply_demand_economics
+  question: What does the filing describe about supply-side vs demand-side economics (drivers, dealers,
+    advertisers)?
+  where_to_look:
+  - supply side
+  - demand side
+  - drivers
+  - dealers
+  answer_type: text
+  required: true
+- id: active_users_and_frequency
+  question: What active users/customers and frequency does the filing disclose?
+  where_to_look:
+  - active users
+  - frequency
+  answer_type: text
+  required: false
+- id: partner_concentration
+  question: What customer/partner concentration does the filing mention (e.g. a few insurance carriers
+    for lead-gen)?
+  where_to_look:
+  - concentration
+  - partner
+  - carrier
+  answer_type: text
+  required: false
+- id: regulatory_classification_risk
+  question: What regulatory classification risks does the filing describe (worker status, data/privacy)?
+  where_to_look:
+  - worker status
+  - classification
+  - privacy
+  - data
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer activity
+- partner ad budgets
+- fuel (gig)
+- regulatory events
+validation_rules:
+- must have an answered gross_bookings_and_take_rate checklist item
+- must have an answered supply_demand_economics checklist item

@@ -1,0 +1,61 @@
+id: clinical_stage_biotech
+name: Clinical-Stage Biotech
+description: 'A pre-commercial biotech with no meaningful product revenue - cash runway and trial/regulatory
+  milestone dates are the entire investment case. Confirmed-shape case: 4D Molecular Therapeutics (FDMT).'
+sic_hints:
+- 2836
+- 8731
+description_cues:
+- clinical trial
+- Phase 2
+- topline data
+- cash runway
+- collaboration revenue
+checklist:
+- id: lead_programs_and_phase
+  question: What are the lead programs, their indication, and development phase?
+  where_to_look:
+  - lead program
+  - indication
+  - Phase 2
+  - Phase 1
+  - Phase 3
+  answer_type: text
+  required: true
+- id: next_milestones
+  question: What are the next data readouts/regulatory milestones, and when are they expected?
+  where_to_look:
+  - topline data
+  - readout
+  - milestone
+  answer_type: text
+  required: true
+- id: cash_runway
+  question: What cash, burn rate, and runway (in months) does the filing disclose?
+  where_to_look:
+  - cash runway
+  - burn rate
+  answer_type: text
+  required: false
+- id: partnership_economics
+  question: What partnerships and milestone/royalty economics does the filing describe?
+  where_to_look:
+  - collaboration revenue
+  - milestone payment
+  - royalty
+  answer_type: text
+  required: false
+- id: dilution_risk
+  question: What dilution risk (ATM, shelf registration) does the filing disclose?
+  where_to_look:
+  - ATM
+  - shelf
+  - dilution
+  answer_type: text
+  required: false
+expected_drivers:
+- trial/regulatory events
+- financing conditions (XBI, rates)
+validation_rules:
+- must have an answered lead_programs_and_phase checklist item
+- must have an answered next_milestones checklist item

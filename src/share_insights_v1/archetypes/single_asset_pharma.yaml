@@ -1,0 +1,71 @@
+id: single_asset_pharma
+name: Single-Asset Pharma
+description: 'A commercial-stage pharma company where one or two products dominate revenue - exclusivity/patent-expiry
+  timing and payer/reimbursement risk are existential, not incremental. Confirmed-shape case: Harmony
+  Biosciences (HRMY).'
+sic_hints:
+- 2834
+- 2836
+description_cues:
+- net product revenue
+- patients
+- exclusivity
+- ANDA
+- PDUFA
+- CHMP
+checklist:
+- id: product_revenue_concentration
+  question: What product revenue concentration does the filing disclose (how much of revenue comes from
+    the lead product)?
+  where_to_look:
+  - net product revenue
+  - product concentration
+  answer_type: text
+  required: true
+- id: patient_kpis
+  question: What patient/script KPIs and sales ramp does the filing describe?
+  where_to_look:
+  - patients
+  - script
+  - sales ramp
+  answer_type: text
+  required: false
+- id: exclusivity_and_litigation
+  question: What exclusivity/patent expiry and related litigation (ANDA filers, settlements) does the
+    filing disclose?
+  where_to_look:
+  - exclusivity
+  - patent expiry
+  - ANDA
+  - litigation
+  answer_type: text
+  required: true
+- id: regulatory_dates
+  question: What regulatory dates (PDUFA, EU opinions/CHMP) does the filing disclose?
+  where_to_look:
+  - PDUFA
+  - CHMP
+  answer_type: text
+  required: false
+- id: pricing_reimbursement_risk
+  question: What pricing/reimbursement risk (Medicare negotiation, payer access) does the filing describe?
+  where_to_look:
+  - Medicare negotiation
+  - reimbursement
+  - payer
+  answer_type: text
+  required: false
+- id: cash_and_runway
+  question: What cash position and runway does the filing disclose?
+  where_to_look:
+  - cash
+  - runway
+  answer_type: text
+  required: false
+expected_drivers:
+- regulatory/patent events
+- payer policy
+- pipeline readouts
+validation_rules:
+- must have an answered product_revenue_concentration checklist item
+- must have an answered exclusivity_and_litigation checklist item

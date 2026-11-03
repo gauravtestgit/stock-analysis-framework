@@ -1,0 +1,61 @@
+id: payments_fintech
+name: Payments / Fintech
+description: 'A payments processor or fintech earning a take rate on payment volume, with credit exposure
+  (BNPL, loans) as a distinct, loss-rate-driven risk separate from the processing business. Confirmed-shape
+  case: Block (XYZ).'
+sic_hints:
+- 6099
+- 7374
+description_cues:
+- gross payment volume
+- take rate
+- transaction losses
+- interchange
+- merchants
+checklist:
+- id: payment_volume_and_take_rate
+  question: What payment volume and take rate by segment does the filing state?
+  where_to_look:
+  - gross payment volume
+  - take rate
+  - payment volume
+  answer_type: text
+  required: true
+- id: consumer_vs_merchant_mix
+  question: What is the consumer vs merchant revenue mix?
+  where_to_look:
+  - consumer revenue
+  - merchant revenue
+  answer_type: text
+  required: false
+- id: credit_exposure_and_losses
+  question: What credit exposure (BNPL, loans) and loss rates does the filing disclose?
+  where_to_look:
+  - BNPL
+  - loan loss
+  - transaction loss
+  - credit exposure
+  answer_type: text
+  required: true
+- id: crypto_revenue
+  question: Does the filing disclose bitcoin/crypto revenue, gross vs net?
+  where_to_look:
+  - bitcoin
+  - crypto
+  answer_type: text
+  required: false
+- id: interchange_regulatory
+  question: What interchange or regulatory exposure does the filing describe?
+  where_to_look:
+  - interchange
+  - regulatory
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer spending
+- credit cycle
+- rates/funding
+- crypto prices (if relevant)
+validation_rules:
+- must have an answered payment_volume_and_take_rate checklist item
+- must have an answered credit_exposure_and_losses checklist item

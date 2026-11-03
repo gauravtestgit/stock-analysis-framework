@@ -1,0 +1,68 @@
+id: diversified_pharma_medtech
+name: Diversified Pharma / Medtech
+description: 'A multi-product pharma or medtech company where no single asset dominates - loss-of-exclusivity
+  schedule and pipeline catalysts across the portfolio drive the outlook. Confirmed-shape case: Eli Lilly
+  (LLY).'
+sic_hints:
+- 2834
+- 3851
+description_cues:
+- product portfolio
+- loss of exclusivity
+- pipeline
+- procedure volumes
+- plasma
+checklist:
+- id: revenue_by_product
+  question: What is the revenue by product/franchise, and what are the growth drivers?
+  where_to_look:
+  - product portfolio
+  - franchise
+  - revenue by product
+  answer_type: text
+  required: true
+- id: loss_of_exclusivity_schedule
+  question: What loss-of-exclusivity schedule does the filing disclose?
+  where_to_look:
+  - loss of exclusivity
+  - patent expiry
+  answer_type: text
+  required: true
+- id: pricing_pressure
+  question: What pricing pressure does the filing describe (Medicare negotiation, rebates, tariffs on
+    pharma)?
+  where_to_look:
+  - Medicare negotiation
+  - rebate
+  - tariff
+  answer_type: text
+  required: false
+- id: pipeline_catalysts
+  question: What pipeline catalysts with dates does the filing disclose?
+  where_to_look:
+  - pipeline
+  - catalyst
+  answer_type: text
+  required: false
+- id: manufacturing_constraints
+  question: What manufacturing/supply constraints does the filing describe?
+  where_to_look:
+  - manufacturing constraint
+  - supply constraint
+  answer_type: text
+  required: false
+- id: leverage
+  question: What leverage does the filing disclose, if relevant?
+  where_to_look:
+  - leverage
+  - debt
+  answer_type: text
+  required: false
+expected_drivers:
+- product launches/approvals (events)
+- pricing policy
+- procedure volumes
+- FX
+validation_rules:
+- must have an answered revenue_by_product checklist item
+- must have an answered loss_of_exclusivity_schedule checklist item

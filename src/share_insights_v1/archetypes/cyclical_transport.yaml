@@ -1,0 +1,68 @@
+id: cyclical_transport
+name: Cyclical Transport
+description: 'Spot-exposed shipping/trucking/airline operator whose revenue swings with freely-quoted
+  market rates (TCE, charter rates), unlike a term-contracted pass-through operator. Confirmed-shape case:
+  Star Bulk Carriers (SBLK) - dry-bulk spot/charter rates, not escalation-clause-protected contracts.'
+sic_hints:
+- 4210
+- 4522
+description_cues:
+- charter rates
+- TCE
+- spot market
+- load factor
+- fleet supply
+- orderbook
+checklist:
+- id: spot_vs_period_mix
+  question: What is the mix between spot and period/charter business, and how much forward coverage is
+    booked?
+  where_to_look:
+  - spot market
+  - charter
+  - term
+  - booked
+  answer_type: text
+  required: true
+- id: rate_kpi
+  question: What rate KPI (TCE, yield, rate per mile) does the filing state, and its trend?
+  where_to_look:
+  - TCE
+  - yield
+  - rate per mile
+  - charter rate
+  answer_type: text
+  required: true
+- id: fleet_and_orderbook
+  question: What is the fleet size, age, and newbuild delivery schedule, and the industry orderbook?
+  where_to_look:
+  - fleet
+  - newbuild
+  - orderbook
+  - delivery
+  answer_type: text
+  required: false
+- id: fuel_cost_and_recovery
+  question: What does the filing say about fuel cost and recovery (bunker clauses, surcharges)?
+  where_to_look:
+  - bunker
+  - fuel surcharge
+  - fuel cost
+  answer_type: text
+  required: false
+- id: capital_return_policy
+  question: What is the company's dividend/capital return policy?
+  where_to_look:
+  - dividend
+  - capital return
+  - buyback
+  answer_type: text
+  required: false
+expected_drivers:
+- freight/charter rates
+- fuel
+- trade volumes
+- geopolitical rerouting
+validation_rules:
+- must have an answered spot_vs_period_mix checklist item
+- must have an answered rate_kpi checklist item

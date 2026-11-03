@@ -1,0 +1,72 @@
+id: retailer
+name: Retailer
+description: 'A multi-store/e-commerce retailer whose economics turn on comparable sales, gross margin
+  drivers (freight, promotions, sourcing), and import/tariff exposure rather than brand ownership. Confirmed-shape
+  case: The Lovesac Company (LOVE).'
+sic_hints:
+- 5200
+- 5999
+description_cues:
+- comparable sales
+- inventory
+- gross margin
+- stores
+- e-commerce
+- tariffs
+checklist:
+- id: comparable_sales_drivers
+  question: What comparable sales does the filing state, and what drives it (traffic/ticket)?
+  where_to_look:
+  - comparable sales
+  - traffic
+  - ticket
+  answer_type: text
+  required: true
+- id: channel_mix_and_store_count
+  question: What is the channel mix (stores vs online), and what store count does the filing disclose?
+  where_to_look:
+  - stores
+  - online
+  - e-commerce
+  - store count
+  answer_type: text
+  required: false
+- id: gross_margin_drivers
+  question: What drives gross margin (freight, promotions, sourcing)?
+  where_to_look:
+  - gross margin
+  - freight
+  - promotion
+  - sourcing
+  answer_type: text
+  required: true
+- id: inventory_levels
+  question: What inventory levels/turns does the filing disclose?
+  where_to_look:
+  - inventory
+  - turns
+  answer_type: text
+  required: false
+- id: tariff_and_sourcing
+  question: What import/tariff exposure and sourcing countries does the filing describe?
+  where_to_look:
+  - tariff
+  - import
+  - sourcing country
+  answer_type: text
+  required: false
+- id: seasonality
+  question: What seasonality does the filing describe?
+  where_to_look:
+  - seasonality
+  - seasonal
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer spending/sentiment
+- tariffs/freight
+- interest rates (housing-linked categories)
+- FX (sourcing)
+validation_rules:
+- must have an answered comparable_sales_drivers checklist item
+- must have an answered gross_margin_drivers checklist item

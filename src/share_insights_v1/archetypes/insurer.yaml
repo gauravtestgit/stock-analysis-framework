@@ -1,0 +1,59 @@
+id: insurer
+name: Insurer
+description: An underwriter whose profitability depends on the combined ratio and reserve adequacy, catastrophe/reinsurance
+  exposure, and investment income on float - not a product-sales business. No confirmed example in this
+  codebase's regression set yet; included for taxonomy coverage.
+sic_hints:
+- 6300
+- 6399
+description_cues:
+- combined ratio
+- reserves
+- catastrophe
+- net investment income
+- premiums written
+checklist:
+- id: premium_mix
+  question: What lines of business and premium mix does the filing disclose?
+  where_to_look:
+  - premiums written
+  - line of business
+  - premium mix
+  answer_type: text
+  required: true
+- id: combined_ratio_and_reserves
+  question: What combined ratio and reserve development does the filing state?
+  where_to_look:
+  - combined ratio
+  - reserve development
+  answer_type: text
+  required: true
+- id: catastrophe_and_reinsurance
+  question: What catastrophe exposure and reinsurance does the filing describe?
+  where_to_look:
+  - catastrophe
+  - reinsurance
+  answer_type: text
+  required: false
+- id: investment_portfolio
+  question: What investment portfolio yield and duration does the filing disclose?
+  where_to_look:
+  - investment portfolio
+  - net investment income
+  - duration
+  answer_type: text
+  required: false
+- id: rate_increases
+  question: What rate (pricing) increases does the filing describe?
+  where_to_look:
+  - rate increase
+  - pricing
+  answer_type: text
+  required: false
+expected_drivers:
+- catastrophe events
+- interest rates (investment income)
+- pricing cycle
+validation_rules:
+- must have an answered premium_mix checklist item
+- must have an answered combined_ratio_and_reserves checklist item

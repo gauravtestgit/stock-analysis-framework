@@ -1,0 +1,67 @@
+id: commodity_processor
+name: Commodity Processor
+description: 'A company that converts one commodity into another and earns a margin/spread (crush margin,
+  crack spread) rather than selling either input or output at a controlled price. Confirmed-shape case:
+  Alto Ingredients (ALTO) - corn-to-ethanol crush economics, not a branded consumer product.'
+sic_hints:
+- 2000
+- 3399
+description_cues:
+- crush
+- crack spread
+- margin per gallon
+- feedstock
+- co-products
+- throughput
+checklist:
+- id: inputs_outputs_and_margin_formula
+  question: What are the company's main inputs and outputs, and what margin/spread formula does the filing
+    describe (e.g. crush margin, crack spread)?
+  where_to_look:
+  - crush
+  - crack spread
+  - margin
+  - feedstock
+  answer_type: text
+  required: true
+- id: throughput_and_utilization
+  question: What throughput/capacity and utilisation rate does the filing state?
+  where_to_look:
+  - throughput
+  - capacity
+  - utilization
+  - utilisation
+  answer_type: text
+  required: false
+- id: hedging_inputs_outputs
+  question: Does the filing describe hedging of inputs or outputs?
+  where_to_look:
+  - hedge
+  - hedging
+  answer_type: text
+  required: false
+- id: co_products
+  question: What co-products does the filing mention, and how are they priced?
+  where_to_look:
+  - co-product
+  - byproduct
+  - co product
+  answer_type: text
+  required: false
+- id: policy_credits
+  question: What policy credits or mandates affect margin (e.g. RFS, tax credits)?
+  where_to_look:
+  - RFS
+  - tax credit
+  - mandate
+  - policy
+  answer_type: text
+  required: true
+expected_drivers:
+- input commodity
+- output commodity (or its benchmark)
+- energy cost
+- policy events
+validation_rules:
+- must have an answered inputs_outputs_and_margin_formula checklist item
+- must have an answered policy_credits checklist item

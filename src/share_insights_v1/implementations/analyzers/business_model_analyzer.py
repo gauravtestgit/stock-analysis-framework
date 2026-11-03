@@ -28,7 +28,7 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v9-segment-pct-of-consolidated-revenue'
+    _ANALYZER_VERSION = 'v10-generic-expected-drivers-gap-check'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     # A confident archetype classification is a more specific business-model
@@ -61,6 +61,31 @@ class BusinessModelAnalyzer(IAnalyzer):
         'international_revenue_and_fx': lambda d: d.get('driver_type') == 'fx',
         'cost_recovery_mechanism': lambda d: bool(d.get('pass_through')),
     }
+
+    _EXPECTED_DRIVER_STOPWORDS = {
+        'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'per', 'via', 'its', 'own',
+        'rates', 'rate', 'events', 'event', 'basket', 'peer', 'peers', 'policy',
+    }
+
+    @classmethod
+    def _expected_driver_covered(cls, phrase: str, business_drivers: List[Dict[str, Any]]) -> bool:
+        """Generic keyword-overlap check used for archetypes that don't have
+        a hand-coded entry in _CHECKLIST_DRIVER_SATISFIED_BY above (i.e.
+        every archetype beyond the original 2) - matches a short archetype-
+        level `expected_drivers` phrase (e.g. "unit cost inputs (energy,
+        labour)") against each driver's own name+synonyms, rather than
+        requiring an exact id. A phrase with no meaningful keywords (all
+        stopwords, or a parenthetical-only fragment) is treated as covered
+        rather than flagged - there's nothing specific enough to check."""
+        words = [w.strip('(),.') for w in phrase.lower().split()]
+        keywords = [w for w in words if len(w) >= 4 and w not in cls._EXPECTED_DRIVER_STOPWORDS]
+        if not keywords:
+            return True
+        driver_text = ' '.join(
+            (d.get('driver_name') or '') + ' ' + ' '.join(d.get('synonyms') or [])
+            for d in business_drivers
+        ).lower()
+        return any(kw in driver_text for kw in keywords)
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
         self.data_provider = data_provider
@@ -1413,7 +1438,27 @@ so do not include a ticker_symbol field.
                             'label': item['question_id'].replace('_', ' '),
                             'value': item.get('value'),
                             'quote': item['quotes'][0] if item.get('quotes') else '',
+                            'source': 'checklist_required_item',
                         })
+
+                # Generic counterpart to the hand-coded predicates above -
+                # covers every archetype's own `expected_drivers` list
+                # (archetypes.md rule 6) without needing a bespoke
+                # per-archetype predicate written for each one. Matches on
+                # keyword overlap against each driver's name+synonyms
+                # rather than a verified quote, since an expected_drivers
+                # entry isn't tied to one specific checklist answer - it's
+                # inferred from the archetype match itself.
+                for phrase in archetype_result.get('expected_drivers', []):
+                    if not self._expected_driver_covered(phrase, result['business_drivers']):
+                        expected_but_not_found.append({
+                            'question_id': None,
+                            'label': f"expected driver: {phrase}",
+                            'value': None,
+                            'quote': '',
+                            'source': 'archetype_expected_drivers',
+                        })
+
                 if expected_but_not_found:
                     result['expected_but_not_found'] = expected_but_not_found
 

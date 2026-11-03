@@ -1,0 +1,63 @@
+id: software_saas
+name: Software / SaaS
+description: 'A subscription or usage-based software business where ARR/RPO, net retention, and cloud-hosting
+  gross margin are the real economics - not unit sales. Confirmed-shape case: Fastly (FSLY).'
+sic_hints:
+- 7370
+- 7379
+description_cues:
+- ARR
+- net retention
+- RPO
+- subscription
+- usage-based
+- customers >$100k
+checklist:
+- id: revenue_mix
+  question: What is the mix between subscription, usage-based, and services revenue?
+  where_to_look:
+  - subscription
+  - usage-based
+  - services revenue
+  answer_type: text
+  required: true
+- id: arr_rpo_and_retention
+  question: What ARR/RPO does the filing state, and what growth and net revenue retention?
+  where_to_look:
+  - ARR
+  - RPO
+  - net revenue retention
+  - net retention
+  answer_type: text
+  required: true
+- id: customer_concentration
+  question: What customer count and large-customer cohort/concentration does the filing disclose?
+  where_to_look:
+  - customer count
+  - large customer
+  - concentration
+  answer_type: text
+  required: false
+- id: gross_margin_drivers
+  question: What gross margin does the filing state, and what drives it (e.g. cloud hosting costs)?
+  where_to_look:
+  - gross margin
+  - cloud hosting
+  - hosting cost
+  answer_type: text
+  required: false
+- id: sbc_and_fcf_margin
+  question: What stock-based compensation and free-cash-flow margin does the filing disclose?
+  where_to_look:
+  - stock-based compensation
+  - free cash flow
+  answer_type: text
+  required: false
+expected_drivers:
+- IT spending (peer basket)
+- cloud/hosting costs
+- interest rates (valuation)
+- competition events
+validation_rules:
+- must have an answered revenue_mix checklist item
+- must have an answered arr_rpo_and_retention checklist item

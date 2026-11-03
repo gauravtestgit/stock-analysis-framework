@@ -1,0 +1,75 @@
+id: industrial_cyclical
+name: Industrial Cyclical Manufacturer
+description: 'A manufacturer of durable/capital goods selling into cyclical end markets (auto, aerospace,
+  energy, construction) - backlog/book-to-bill and metals pass-through matter more than branding. Confirmed-shape
+  case: Kirby''s Distribution and Services segment (KEX D&S).'
+sic_hints:
+- 3300
+- 3799
+description_cues:
+- backlog
+- orders
+- OEM
+- end markets
+- book-to-bill
+- metal price lag
+checklist:
+- id: end_markets_and_revenue_share
+  question: What end markets does the company serve and what share of revenue does each represent (auto,
+    aerospace, energy, construction, data center, etc.)?
+  where_to_look:
+  - end market
+  - auto
+  - aerospace
+  - construction
+  answer_type: text
+  required: true
+- id: backlog_and_book_to_bill
+  question: What backlog/orders and book-to-bill ratio does the filing state?
+  where_to_look:
+  - backlog
+  - book-to-bill
+  - orders
+  answer_type: text
+  required: true
+- id: customer_concentration
+  question: What customer concentration (top customers' % of revenue) does the filing disclose?
+  where_to_look:
+  - customer concentration
+  - largest customer
+  answer_type: text
+  required: false
+- id: metals_pass_through
+  question: What key input metals/energy costs does the filing mention, and is there a pass-through mechanism?
+  where_to_look:
+  - metal
+  - steel
+  - aluminum
+  - pass-through
+  - pass through
+  answer_type: text
+  required: false
+- id: tariff_and_footprint
+  question: What tariff exposure and manufacturing footprint does the filing describe?
+  where_to_look:
+  - tariff
+  - manufacturing footprint
+  answer_type: text
+  required: false
+- id: utilization_and_restructuring
+  question: What does the filing say about capacity utilisation and restructuring?
+  where_to_look:
+  - utilization
+  - utilisation
+  - restructuring
+  answer_type: text
+  required: false
+expected_drivers:
+- end-market demand
+- metals (HG=F, ALI=F, steel)
+- energy
+- tariffs
+- interest rates (customer financing)
+validation_rules:
+- must have an answered end_markets_and_revenue_share checklist item
+- must have an answered backlog_and_book_to_bill checklist item

@@ -1,0 +1,76 @@
+id: semiconductor_hardware
+name: Semiconductor / Hardware
+description: 'A chip or hardware maker exposed to unit pricing (ASP) and inventory cycles across end markets
+  (data center, PC, mobile, auto) - cyclicality and customer concentration dominate over any single product''s
+  story. Confirmed-shape case: Micron (MU).'
+sic_hints:
+- 3570
+- 3679
+description_cues:
+- ASP
+- bit growth
+- wafer
+- inventory
+- hyperscaler
+- export controls
+- gross margin
+checklist:
+- id: end_market_mix
+  question: What is the product/end-market mix (data center, PC, mobile, auto) the filing describes?
+  where_to_look:
+  - data center
+  - PC
+  - mobile
+  - auto
+  - end market
+  answer_type: text
+  required: true
+- id: pricing_and_cycle_position
+  question: What pricing (ASP) and volume trends, and cycle position (inventory days, utilisation) does
+    the filing state?
+  where_to_look:
+  - ASP
+  - average selling price
+  - inventory days
+  - utilization
+  answer_type: text
+  required: true
+- id: customer_concentration
+  question: What customer concentration does the filing disclose (hyperscalers, OEMs)?
+  where_to_look:
+  - hyperscaler
+  - OEM
+  - customer concentration
+  answer_type: text
+  required: false
+- id: capex_and_capacity
+  question: What capex and capacity additions does the filing mention?
+  where_to_look:
+  - capex
+  - capacity addition
+  answer_type: text
+  required: false
+- id: export_controls
+  question: What export control or China exposure does the filing describe?
+  where_to_look:
+  - export control
+  - China
+  answer_type: text
+  required: false
+- id: supply_dependencies
+  question: What supply dependencies (foundry, memory, components) does the filing mention?
+  where_to_look:
+  - foundry
+  - supply
+  - component
+  answer_type: text
+  required: false
+expected_drivers:
+- AI/cloud capex (peer basket)
+- memory/component prices
+- SMH
+- export-control events
+- FX (Asia revenue)
+validation_rules:
+- must have an answered end_market_mix checklist item
+- must have an answered pricing_and_cycle_position checklist item

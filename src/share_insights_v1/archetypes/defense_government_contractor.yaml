@@ -1,0 +1,65 @@
+id: defense_government_contractor
+name: Defense / Government Contractor
+description: 'A contractor whose revenue is dominated by government (mostly defense) programs under fixed-price
+  or cost-plus contracts - backlog composition and appropriation risk matter more than end-consumer demand.
+  Confirmed-shape case: RTX.'
+sic_hints:
+- 3720
+- 8711
+description_cues:
+- U.S. Government
+- DoD
+- backlog
+- fixed-price
+- cost-plus
+- program
+checklist:
+- id: government_vs_commercial_revenue_share
+  question: What share of revenue comes from the U.S. government, foreign military sales, and commercial
+    customers respectively?
+  where_to_look:
+  - U.S. Government
+  - foreign military sales
+  - commercial
+  answer_type: text
+  required: true
+- id: contract_type_mix
+  question: What is the contract type mix (fixed-price vs cost-plus) and the margin risk the filing describes?
+  where_to_look:
+  - fixed-price
+  - cost-plus
+  - contract type
+  answer_type: text
+  required: true
+- id: backlog_funded_unfunded
+  question: What backlog does the filing state, split into funded and unfunded?
+  where_to_look:
+  - backlog
+  - funded
+  - unfunded
+  answer_type: text
+  required: false
+- id: largest_programs
+  question: What are the largest programs, and what concentration do they represent?
+  where_to_look:
+  - program
+  - largest program
+  - concentration
+  answer_type: text
+  required: false
+- id: budget_risk
+  question: What budget/appropriation or continuing-resolution risk does the filing mention?
+  where_to_look:
+  - appropriation
+  - continuing resolution
+  - budget
+  answer_type: text
+  required: false
+expected_drivers:
+- defense budgets (events)
+- program awards
+- commercial aerospace demand (if any)
+- supply chain/labour
+validation_rules:
+- must have an answered government_vs_commercial_revenue_share checklist item
+- must have an answered contract_type_mix checklist item

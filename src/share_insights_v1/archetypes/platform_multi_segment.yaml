@@ -1,0 +1,74 @@
+id: platform_multi_segment
+name: Ad-Funded Multi-Segment Platform
+description: 'A multi-business platform substantially funded by advertising, with traffic-acquisition
+  and capex/depreciation as the major cost lines rather than cost of goods. Confirmed-shape case: Alphabet
+  (GOOGL).'
+sic_hints:
+- 7370
+- 7379
+description_cues:
+- advertising revenue
+- traffic acquisition costs
+- segments
+- capital expenditures
+- users
+checklist:
+- id: segment_table_and_revenue_model
+  question: What is the segment table and revenue weight of each segment, and what revenue model does
+    each use?
+  where_to_look:
+  - segment
+  - advertising revenue
+  - revenue model
+  answer_type: text
+  required: true
+- id: per_segment_demand_driver
+  question: What demand driver does the filing describe for each segment (ad spend, cloud demand, game
+    launches, etc.)?
+  where_to_look:
+  - ad spend
+  - cloud demand
+  - game launch
+  answer_type: text
+  required: false
+- id: major_cost_lines
+  question: What are the major cost lines (traffic acquisition costs, content, capex/depreciation)?
+  where_to_look:
+  - traffic acquisition cost
+  - content cost
+  - depreciation
+  answer_type: text
+  required: true
+- id: capex_intensity
+  question: What capex intensity and guidance does the filing state?
+  where_to_look:
+  - capital expenditures
+  - capex guidance
+  answer_type: text
+  required: false
+- id: regulatory_antitrust
+  question: What key regulatory/antitrust matters and their status does the filing describe?
+  where_to_look:
+  - antitrust
+  - regulatory
+  - litigation
+  answer_type: text
+  required: false
+- id: engagement_kpis
+  question: What user/engagement KPIs does the filing disclose?
+  where_to_look:
+  - users
+  - engagement
+  - daily active
+  - monthly active
+  answer_type: text
+  required: false
+expected_drivers:
+- ad spending (peer basket)
+- cloud demand
+- AI capex (NVDA/TSM/SMH)
+- regulatory events
+- FX
+validation_rules:
+- must have an answered segment_table_and_revenue_model checklist item
+- must have an answered major_cost_lines checklist item

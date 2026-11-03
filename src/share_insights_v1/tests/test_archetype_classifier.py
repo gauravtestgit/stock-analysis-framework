@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Verification script for the archetype classifier POC (2 archetypes:
-branded_staples_franchise, pass_through_operator). Standalone script,
-matching this repo's existing test-file convention - not pytest.
+"""Verification script for the archetype classifier - the full roster from
+archetypes.md (31 archetypes across 7 categories) plus the Universal
+Checklist that runs for every company regardless of archetype match.
+Standalone script, matching this repo's existing test-file convention - not
+pytest.
 
 Run: python -m share_insights_v1.tests.test_archetype_classifier
 """
@@ -60,6 +62,18 @@ def test_kex_classification():
     else:
         print("  NOTE: term_vs_spot_mix came back 'not_disclosed' this run - known residual flakiness, not asserting pass/fail on content")
 
+    # Regression guard for a real bug found when the roster grew from 2 to
+    # 31 archetypes: KEX was misclassified as cyclical_transport (a
+    # surface-similar but wrong transport archetype) despite
+    # pass_through_operator's cue count dominating 35-to-1 - fixed by
+    # strengthening the classification prompt to treat dominant cue counts
+    # as a real constraint, not just a hint. This checks the deterministic
+    # backstop flag that would catch a recurrence even if the prompt fix
+    # degrades again.
+    check("No cue_count_mismatch flag on KEX (deterministic cue counts agree with the LLM's pick)",
+          not any('cue_count_mismatch' in f for f in result.get('validation', {}).get('flags', [])),
+          result.get('validation'))
+
 
 def test_ko_classification():
     print("\n=== KO: expected branded_staples_franchise ===")
@@ -75,6 +89,56 @@ def test_ko_classification():
 
     answered_ids = {c['question_id'] for c in result['checklist'] if c['status'] == 'answered'}
     print(f"  NOTE: checklist items answered this run: {answered_ids or 'none'} (known residual flakiness on the harder questions)")
+
+
+def test_archetype_roster_loaded():
+    """Archetypes are auto-discovered from every *.yaml file in
+    ../../archetypes/ - this just confirms the full archetypes.md roster
+    actually made it onto disk in a loadable form, not a narrower subset."""
+    print("\n=== Archetype roster ===")
+    sec_provider = SECEdgarProvider()
+    classifier = ArchetypeClassifier(sec_provider, LLMManager())
+    check("At least 30 archetypes loaded (31 in archetypes.md minus 'other', which isn't a YAML file)",
+          len(classifier._archetypes) >= 30, sorted(classifier._archetypes.keys()))
+    for expected_id in ['branded_staples_franchise', 'pass_through_operator', 'policy_funded_service',
+                         'franchisor', 'telecom_operator', 'commodity_producer']:
+        check(f"'{expected_id}' archetype is loaded", expected_id in classifier._archetypes)
+
+
+def test_franchisor_classification():
+    print("\n=== DPZ: expected franchisor ===")
+    sec_provider = SECEdgarProvider()
+    yahoo_provider = YahooFinanceProvider()
+    classifier = ArchetypeClassifier(sec_provider, LLMManager())
+    result = run_classification(classifier, yahoo_provider, sec_provider, "DPZ")
+
+    check("DPZ classified as franchisor", result['company_archetype'] == 'franchisor', result['company_archetype'])
+    check("Classification confidence is reasonably high (>0.6)", (result.get('confidence') or 0) > 0.6, result.get('confidence'))
+    check("No cue_count_mismatch flag on DPZ",
+          not any('cue_count_mismatch' in f for f in result.get('validation', {}).get('flags', [])),
+          result.get('validation'))
+    check("universal_checklist is present and non-empty (runs regardless of archetype match)",
+          len(result.get('universal_checklist', [])) == len(_universal_checklist_ids(classifier)),
+          result.get('universal_checklist'))
+
+
+def test_telecom_classification():
+    print("\n=== TMUS: expected telecom_operator ===")
+    sec_provider = SECEdgarProvider()
+    yahoo_provider = YahooFinanceProvider()
+    classifier = ArchetypeClassifier(sec_provider, LLMManager())
+    result = run_classification(classifier, yahoo_provider, sec_provider, "TMUS")
+
+    check("TMUS classified as telecom_operator", result['company_archetype'] == 'telecom_operator', result['company_archetype'])
+    check("Classification confidence is reasonably high (>0.6)", (result.get('confidence') or 0) > 0.6, result.get('confidence'))
+    check("No cue_count_mismatch flag on TMUS",
+          not any('cue_count_mismatch' in f for f in result.get('validation', {}).get('flags', [])),
+          result.get('validation'))
+
+
+def _universal_checklist_ids(classifier) -> list:
+    from ..services.archetype.archetype_classifier import _UNIVERSAL_CHECKLIST
+    return [q['id'] for q in _UNIVERSAL_CHECKLIST]
 
 
 def test_evidence_gate():
@@ -106,8 +170,11 @@ def test_module_version_changes_with_content():
 if __name__ == "__main__":
     test_evidence_gate()
     test_module_version_changes_with_content()
+    test_archetype_roster_loaded()
     test_kex_classification()
     test_ko_classification()
+    test_franchisor_classification()
+    test_telecom_classification()
 
     print(f"\n{'=' * 60}")
     print(f"PASS: {len(PASS)}  FAIL: {len(FAIL)}")
