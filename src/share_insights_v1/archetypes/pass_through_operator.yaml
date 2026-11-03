@@ -38,6 +38,19 @@ checklist:
     where_to_look: ["renewal", "reprice", "scheduled for renewal", "contract rates"]
     answer_type: text
     required: false
+  - id: cost_recovery_mechanism
+    question: >
+      For the company's main pass-through cost (most often fuel), does the
+      filing state what share of a cost increase is recovered from
+      customers via escalation/surcharge/adjustment clauses versus absorbed
+      by the company itself, and over what lag (e.g. "recovers
+      approximately X% of fuel cost increases with a Y-day lag")? Quote the
+      exact statement. If the filing states partial/full recovery without a
+      specific number, quote that instead - don't invent a percentage or
+      lag that isn't in the text.
+    where_to_look: ["escalation", "surcharge", "recover", "pass through", "pass-through", "lag"]
+    answer_type: text
+    required: true
 
 expected_drivers:
   - cost_pass_through
