@@ -1,0 +1,54 @@
+id: staffing_business_services
+name: Staffing / Business Services
+description: 'A staffing or outsourced-services firm earning a bill/pay spread on billable hours or placements
+  - labour-market volume and wage inflation drive it directly. Confirmed-shape case: Kelly Services (KELYA).'
+sic_hints:
+- 7360
+- 8748
+description_cues:
+- billable hours
+- bill rate
+- gross profit per hour
+- placements
+- clients
+checklist:
+- id: service_mix
+  question: What is the service mix (temp, perm, outsourced, specialty)?
+  where_to_look:
+  - temp
+  - permanent placement
+  - outsourced
+  - specialty staffing
+  answer_type: text
+  required: true
+- id: bill_pay_spread
+  question: What bill/pay spread and gross margin does the filing disclose?
+  where_to_look:
+  - bill rate
+  - pay rate
+  - gross margin
+  - gross profit per hour
+  answer_type: text
+  required: true
+- id: client_concentration
+  question: What client concentration and end markets does the filing disclose?
+  where_to_look:
+  - client concentration
+  - end market
+  answer_type: text
+  required: false
+- id: volume_indicators
+  question: What volume indicators (billable hours, headcount on assignment) does the filing disclose?
+  where_to_look:
+  - billable hours
+  - headcount
+  - placements
+  answer_type: text
+  required: false
+expected_drivers:
+- labour market (payrolls, UNRATE)
+- corporate spending
+- wage inflation
+validation_rules:
+- must have an answered service_mix checklist item
+- must have an answered bill_pay_spread checklist item

@@ -1,0 +1,40 @@
+id: diversified_holding
+name: Diversified Holding Company
+description: 'A conglomerate/holding company whose consolidated numbers blend genuinely unrelated business
+  lines - each line needs its own archetype at the segment level; the parent itself is mainly a capital-allocation
+  and dividend-flow structure. Confirmed-shape case: Cresud (CRESY, agri + real estate).'
+sic_hints: []
+description_cues:
+- subsidiaries
+- equity method
+- holding
+checklist:
+- id: business_lines
+  question: What are the company's distinct business lines/subsidiaries, and what does each do?
+  where_to_look:
+  - subsidiary
+  - business line
+  - segment
+  answer_type: text
+  required: true
+- id: holding_company_debt
+  question: What holding-company debt does the filing disclose, and what dividends does it receive from
+    subsidiaries?
+  where_to_look:
+  - holding company debt
+  - dividend from subsidiary
+  answer_type: text
+  required: true
+- id: listed_stakes
+  question: What listed stakes does the filing disclose, and what are their market values?
+  where_to_look:
+  - listed stake
+  - market value
+  - equity method
+  answer_type: text
+  required: false
+expected_drivers:
+- roll-up of segment archetype drivers
+validation_rules:
+- must have an answered business_lines checklist item
+- must have an answered holding_company_debt checklist item

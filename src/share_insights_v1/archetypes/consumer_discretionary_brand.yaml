@@ -1,0 +1,61 @@
+id: consumer_discretionary_brand
+name: Consumer Discretionary Brand
+description: 'A durables/apparel/toys/firearms brand selling through concentrated retail partners or dealers,
+  exposed to tariffs and sourcing-country risk and discretionary demand swings. Confirmed-shape case:
+  JAKKS Pacific (JAKK).'
+sic_hints:
+- 2300
+- 3949
+description_cues:
+- retail partners
+- licensed properties
+- seasonality
+- dealer
+- tariffs
+checklist:
+- id: channel_concentration
+  question: What channel/customer concentration does the filing disclose (major retailers/dealers)?
+  where_to_look:
+  - retail partner
+  - dealer
+  - concentration
+  answer_type: text
+  required: true
+- id: seasonality
+  question: What seasonality does the filing describe?
+  where_to_look:
+  - seasonality
+  - seasonal
+  answer_type: text
+  required: false
+- id: licensing_dependencies
+  question: What licensing dependencies does the filing disclose?
+  where_to_look:
+  - licensed property
+  - license
+  - licensing
+  answer_type: text
+  required: false
+- id: sourcing_and_tariffs
+  question: What sourcing/manufacturing countries and tariff exposure does the filing describe?
+  where_to_look:
+  - sourcing
+  - manufacturing country
+  - tariff
+  answer_type: text
+  required: true
+- id: demand_sensitivity
+  question: What demand sensitivity (discretionary, event-driven) does the filing describe?
+  where_to_look:
+  - discretionary
+  - demand sensitivity
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer spending
+- tariffs
+- input costs
+- interest rates (financing for autos/durables)
+validation_rules:
+- must have an answered channel_concentration checklist item
+- must have an answered sourcing_and_tariffs checklist item

@@ -1,6 +1,8 @@
-"""Business-model archetype classification (POC - 2 archetypes).
+"""Business-model archetype classification, per archetypes.md at the repo
+root (the full spec: 31 archetypes across 7 categories, plus a Universal
+Checklist that runs for every company).
 
-Classifies a company (and its reported segments) into a fixed business-model
+Classifies a company (and its reported segments) into a business-model
 archetype with its own checklist of questions, answered from the filing with
 required evidence quotes. This exists because open-ended "what drives this
 business" prompts fall back on industry stereotypes once the real mechanism
@@ -9,8 +11,14 @@ KO (Coca-Cola): its real exposure to sugar/corn/aluminum is split between
 itself and independent bottlers, which a company-wide "cost_headwind" label
 can't represent at all.
 
-Scope of this POC: only 2 archetypes (branded_staples_franchise,
-pass_through_operator), Item-1-Business-only checklist slicing (no MD&A/
+Archetypes are auto-discovered from every *.yaml file in ../../archetypes/ -
+adding a new one (matching archetypes.md's schema) needs no code change
+here. A company that matches none of them classifies as "other" and still
+gets the Universal Checklist's Q&A (see _UNIVERSAL_CHECKLIST below) - that's
+what catches a company-specific fact (government payer, regulator, FX)
+even when no archetype's own checklist applies.
+
+Known remaining scope gap: Item-1-Business-only checklist slicing (no MD&A/
 Item 7A/8-K yet - a separate, larger piece of work), and company-level
 checklist answering only (segments are classified but their own checklist
 isn't separately answered).
@@ -29,6 +37,53 @@ from ...utils.json_extractor import extract_json_from_llm_response
 
 _ARCHETYPES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'archetypes')
 _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'archetype_classifier')
+
+# Per archetypes.md's "Universal Checklist" (section 0): runs for EVERY
+# company regardless of archetype match - this is what catches a
+# "PRDO-type miss" even when no archetype genuinely fits ("other"), since
+# an unmatched company otherwise got zero checklist Q&A at all. Segments,
+# balance sheet (net cash/debt), and competitors are deliberately left out
+# here - those are already computed deterministically elsewhere
+# (SECEdgarProvider's segment_financials, financial_metrics,
+# BusinessModelAnalyzer's key_competitors) with real numbers, so re-asking
+# the LLM for them here would just be a less reliable duplicate.
+_UNIVERSAL_CHECKLIST = [
+    {
+        'id': 'revenue_model', 'required': True,
+        'question': 'How does the company earn revenue (product sale, fee, royalty, rent, interest, tuition, subscription, contract)? Quote the statement.',
+        'where_to_look': ['revenue', 'we earn', 'we generate revenue', 'net sales', 'fee', 'royalty', 'subscription'],
+    },
+    {
+        'id': 'customer_concentration', 'required': False,
+        'question': 'Does the filing disclose customer concentration (any single customer over 10% of revenue), or government as a payer? Quote it.',
+        'where_to_look': ['customer concentration', '10%', 'largest customer', 'government', 'major customer'],
+    },
+    {
+        'id': 'who_bears_key_costs', 'required': True,
+        'question': 'For the company\'s major cost lines, does the filing say who bears them - the company itself, customers (via pass-through/escalation), a franchisee/bottler/licensee, or a supplier? Quote the statement.',
+        'where_to_look': ['cost of', 'bear', 'pass-through', 'pass through', 'escalation', 'franchisee', 'bottler', 'licensee', 'supplier'],
+    },
+    {
+        'id': 'geography_and_fx', 'required': False,
+        'question': 'What % of revenue is earned outside the reporting currency, and what FX impact does the filing quote (from the latest 10-Q or earnings release)?',
+        'where_to_look': ['foreign currency', 'international', 'translation', 'exchange rate', 'FX', 'outside the United States'],
+    },
+    {
+        'id': 'regulators_and_rules', 'required': False,
+        'question': 'What regulatory agencies, laws, or licenses does the filing name, including any pending actions or litigation? Quote it.',
+        'where_to_look': ['regulation', 'regulatory', 'license', 'litigation', 'agency', 'law'],
+    },
+    {
+        'id': 'company_specific_risk_factors', 'required': False,
+        'question': 'What risk factor does the filing describe that is specific to this company (not generic/boilerplate like pandemics or climate in general)? Quote it.',
+        'where_to_look': ['risk factor', 'risks', 'could adversely affect', 'material adverse'],
+    },
+    {
+        'id': 'latest_quarter_update', 'required': False,
+        'question': 'What does the most recent 10-Q or earnings release say about guidance changes or KPI moves? Quote it.',
+        'where_to_look': ['guidance', 'outlook', 'this quarter', 'year-over-year', 'compared to the prior'],
+    },
+]
 
 
 class ArchetypeClassifier:
@@ -143,7 +198,12 @@ Archetypes:
 {archetype_list}
 - other: no listed archetype genuinely fits
 
-Evidence (hints only, never decisive alone - ground your answer in the Business Overview text):
+Evidence (SIC and description-cue counts are a real constraint, not just a hint: if one archetype's
+cue count clearly dominates every other archetype's and its SIC range plausibly matches, you MUST pick
+that archetype unless the Business Overview text itself gives a clear, quotable reason to pick a
+different one instead - two archetypes can sound similar at a glance (e.g. two transport-sector
+archetypes, one contract-based and one spot-market-based) but the cue counts and the text itself are
+what actually distinguish them, not surface similarity):
 SIC: {evidence_pack.get('sic')} ({evidence_pack.get('sic_description')})
 Segment revenue weights: {json.dumps(evidence_pack.get('segment_revenue_weights'))}
 Description-cue hit counts per archetype: {json.dumps(evidence_pack.get('description_cue_counts'))}
@@ -263,8 +323,10 @@ Respond with JSON:
 
         return parsed_answers, slice_meta
 
-    def _answer_checklist(self, archetype: Dict[str, Any], full_text: str) -> List[Dict[str, Any]]:
-        checklist = archetype.get('checklist', [])
+    def _answer_checklist(self, checklist: List[Dict[str, Any]], full_text: str) -> List[Dict[str, Any]]:
+        """Generic over any plain checklist item list - an archetype's own
+        checklist, or the Universal Checklist (_UNIVERSAL_CHECKLIST above),
+        which isn't tied to any single archetype."""
         if not checklist or not full_text:
             return [{'question_id': q['id'], 'value': 'Not disclosed', 'quotes': [], 'status': 'not_disclosed'} for q in checklist], {'method': 'no_text'}
 
@@ -292,7 +354,7 @@ Respond with JSON:
         return results, {'method': 'batched_keyword_sentences', 'batches': slice_metas}
 
     @staticmethod
-    def _validate(archetype: Dict[str, Any], checklist_answers: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _validate(checklist_answers: List[Dict[str, Any]]) -> Dict[str, Any]:
         missing = [
             f"{a['question_id']} ({a['question']})"
             for a in checklist_answers
@@ -319,15 +381,54 @@ Respond with JSON:
         company_archetype_id = classification.get('company_archetype', 'other')
         archetype = self._archetypes.get(company_archetype_id)
         if archetype:
-            checklist_answers, slice_meta = self._answer_checklist(archetype, full_text)
-            validation = self._validate(archetype, checklist_answers)
+            checklist_answers, slice_meta = self._answer_checklist(archetype.get('checklist', []), full_text)
+            validation = self._validate(checklist_answers)
         else:
             checklist_answers, slice_meta, validation = [], {'method': 'no_archetype_matched'}, {'missing_expected': [], 'flags': []}
+
+        # Universal Checklist (archetypes.md section 0) runs regardless of
+        # whether an archetype matched - this is what gives an "other"
+        # company (confirmed on PRDO: no archetype in the original 2-item
+        # POC roster fit it) SOME grounded, quote-verified Q&A instead of
+        # nothing at all.
+        universal_checklist_answers, universal_slice_meta = self._answer_checklist(_UNIVERSAL_CHECKLIST, full_text)
 
         confidence = classification.get('confidence') or 0.0
         runner_up_confidence = classification.get('runner_up_confidence') or 0.0
         if confidence < 0.6 or (classification.get('runner_up') and abs(confidence - runner_up_confidence) < 0.1):
             validation['flags'].append('ambiguous classification')
+
+        # Deterministic backstop, not a re-ask: with 30+ archetypes now
+        # competing (vs. the original 2), a couple of surface-similar ones
+        # (e.g. two transport-sector archetypes, one contract-based and one
+        # spot-market-based) can read alike to the LLM even when the
+        # deterministic cue counts overwhelmingly favor one of them -
+        # confirmed directly on KEX (pass_through_operator: 35 cue hits vs.
+        # cyclical_transport's 1) picking the wrong one despite the prompt
+        # already being told cue counts are a real constraint. This doesn't
+        # override the LLM's pick - it flags a mismatch so it's visible and
+        # checkable, same philosophy as this analyzer's other confirmation
+        # flags (e.g. driver-direction vs. observed correlation).
+        cue_counts = evidence_pack.get('description_cue_counts') or {}
+        if cue_counts:
+            top_archetype_id = max(cue_counts, key=cue_counts.get)
+            top_count = cue_counts[top_archetype_id]
+            chosen_count = cue_counts.get(company_archetype_id, 0)
+            if top_archetype_id != company_archetype_id and top_count >= 5 and top_count >= 3 * max(chosen_count, 1):
+                validation['flags'].append(
+                    f"cue_count_mismatch: chosen '{company_archetype_id}' ({chosen_count} cue hits) vs. "
+                    f"'{top_archetype_id}' ({top_count} cue hits)"
+                )
+
+        # Rule 4 in archetypes.md: "'other' <= 0.5 confidence" - a weak-fit
+        # classification should resolve to "other" in the first place (the
+        # classify_with_llm prompt already says so), but this clamps the
+        # number itself so a stray high-confidence "other" never reads as a
+        # confident classification downstream (e.g. in the Type-override
+        # lookup, which already only acts on a matched archetype, but other
+        # future readers of this field shouldn't have to know that).
+        if company_archetype_id == 'other' and confidence > 0.5:
+            confidence = 0.5
 
         result = {
             'ticker': ticker,
@@ -339,6 +440,9 @@ Respond with JSON:
             'evidence_pack': evidence_pack,
             'checklist': checklist_answers,
             'checklist_slice_meta': slice_meta,
+            'universal_checklist': universal_checklist_answers,
+            'universal_checklist_slice_meta': universal_slice_meta,
+            'expected_drivers': archetype.get('expected_drivers', []) if archetype else [],
             'validation': validation,
         }
         self._write_cache(ticker, accession_number, result)

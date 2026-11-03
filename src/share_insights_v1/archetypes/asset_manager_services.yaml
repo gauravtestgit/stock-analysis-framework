@@ -1,0 +1,53 @@
+id: asset_manager_services
+name: Asset Manager / External Manager
+description: 'An externally-managed vehicle or asset manager earning base and incentive fees on assets
+  under management - fee sensitivity to client asset values matters more than its own balance sheet. Confirmed-shape
+  case: The RMR Group (RMR).'
+sic_hints:
+- 6211
+- 6798
+description_cues:
+- assets under management
+- management fees
+- incentive fees
+- managed REITs
+checklist:
+- id: aum_and_fee_rates
+  question: What assets under management (AUM) and fee rates does the filing disclose, split into base
+    and incentive fees?
+  where_to_look:
+  - assets under management
+  - AUM
+  - management fee
+  - incentive fee
+  answer_type: text
+  required: true
+- id: client_concentration
+  question: What client concentration does the filing disclose (e.g. managed vehicles)?
+  where_to_look:
+  - client concentration
+  - managed vehicle
+  answer_type: text
+  required: true
+- id: fee_sensitivity
+  question: How sensitive are fees to client share prices/asset values, per the filing?
+  where_to_look:
+  - fee sensitivity
+  - asset value
+  - share price
+  answer_type: text
+  required: false
+- id: contract_terms
+  question: What contract terms and termination provisions does the filing disclose?
+  where_to_look:
+  - contract term
+  - termination
+  answer_type: text
+  required: false
+expected_drivers:
+- asset values of managed vehicles
+- interest rates (real estate)
+- flows
+validation_rules:
+- must have an answered aum_and_fee_rates checklist item
+- must have an answered client_concentration checklist item

@@ -1,0 +1,87 @@
+id: policy_funded_service
+name: Policy-Funded Service
+description: 'An education, healthcare-services, or other provider whose revenue is substantially paid
+  by government programs (Title IV, Medicare/Medicaid) rather than consumers directly - regulatory/accreditation
+  risk and payer-mix rules (e.g. 90/10) are existential. Confirmed-shape case: Perdoceo Education (PRDO).'
+sic_hints:
+- 8000
+- 8399
+description_cues:
+- Title IV
+- tuition
+- students
+- enrollment
+- accreditation
+- Department of Education
+- 90/10
+- Medicare
+- Medicaid
+- reimbursement
+checklist:
+- id: government_payer_share
+  question: What share of revenue comes from government programmes (e.g. Title IV under the 90/10 rule,
+    or Medicare/Medicaid payer mix)?
+  where_to_look:
+  - Title IV
+  - 90/10
+  - Medicare
+  - Medicaid
+  - government program
+  answer_type: text
+  required: true
+- id: regulators_and_accreditors
+  question: What key regulators, accreditors, and rules does the filing name, including any pending rulemaking,
+    reviews, or settlements?
+  where_to_look:
+  - accreditation
+  - Department of Education
+  - regulator
+  - rulemaking
+  answer_type: text
+  required: true
+- id: enrollment_trends
+  question: What enrollment/patient volume trends (new vs total) and retention does the filing disclose?
+  where_to_look:
+  - enrollment
+  - retention
+  - new students
+  answer_type: text
+  required: false
+- id: cyclicality
+  question: Does the filing describe cyclicality (e.g. education enrollment tends to rise with unemployment)?
+  where_to_look:
+  - cyclicality
+  - unemployment
+  - enrollment trend
+  answer_type: text
+  required: false
+- id: pricing
+  question: What pricing does the filing disclose (tuition levels, reimbursement rates)?
+  where_to_look:
+  - tuition
+  - reimbursement rate
+  answer_type: text
+  required: false
+- id: acquisition_cost
+  question: What customer acquisition/marketing cost does the filing disclose?
+  where_to_look:
+  - marketing cost
+  - customer acquisition
+  answer_type: text
+  required: false
+- id: military_employer_funded_share
+  question: What military/employer-funded share (e.g. tuition assistance) does the filing disclose?
+  where_to_look:
+  - tuition assistance
+  - military
+  - employer-funded
+  answer_type: text
+  required: false
+expected_drivers:
+- policy/regulatory events
+- labour market (FRED UNRATE, lagged)
+- peer sector sentiment basket
+- interest rates (by net cash/debt)
+validation_rules:
+- must have an answered government_payer_share checklist item
+- must have an answered regulators_and_accreditors checklist item

@@ -1,0 +1,73 @@
+id: specialty_lender
+name: Specialty Lender
+description: 'A non-bank consumer/fintech/pawn lender funded via warehouse/securitization markets rather
+  than deposits - funding cost benchmark and charge-off trends drive economics more than a deposit franchise.
+  Confirmed-shape case: PayPal-adjacent BNPL and pawn lenders (PGY, EZPW).'
+sic_hints:
+- 6141
+- 6199
+description_cues:
+- funding
+- securitization
+- forward flow
+- charge-offs
+- loan balances
+- pawn
+checklist:
+- id: funding_sources_and_benchmark
+  question: What funding sources does the filing describe, and what benchmark rate do they track (e.g.
+    2-year Treasury, SOFR)?
+  where_to_look:
+  - funding
+  - SOFR
+  - Treasury
+  - benchmark
+  answer_type: text
+  required: true
+- id: credit_performance
+  question: What credit performance (delinquencies, charge-offs) does the filing disclose, vs expectations?
+  where_to_look:
+  - delinquency
+  - charge-off
+  - charge-offs
+  answer_type: text
+  required: true
+- id: securitization_dependence
+  question: What dependence on securitisation/forward-flow markets and spreads does the filing describe?
+  where_to_look:
+  - securitization
+  - forward flow
+  - spread
+  answer_type: text
+  required: false
+- id: loan_pricing
+  question: What loan pricing (APR) changes does the filing disclose?
+  where_to_look:
+  - APR
+  - loan pricing
+  answer_type: text
+  required: false
+- id: lending_regulation
+  question: What state/federal lending regulation does the filing describe?
+  where_to_look:
+  - regulation
+  - lending rule
+  - state law
+  answer_type: text
+  required: false
+- id: counter_cyclical_demand
+  question: Does the filing describe counter-cyclical demand (e.g. pawn/consumer stress)?
+  where_to_look:
+  - pawn
+  - counter-cyclical
+  - consumer stress
+  answer_type: text
+  required: false
+expected_drivers:
+- short-term rates (DGS2)
+- credit spreads
+- consumer credit health
+- securitisation market events
+validation_rules:
+- must have an answered funding_sources_and_benchmark checklist item
+- must have an answered credit_performance checklist item

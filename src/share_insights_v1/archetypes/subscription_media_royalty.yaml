@@ -1,0 +1,73 @@
+id: subscription_media_royalty
+name: Subscription Media / Royalty
+description: 'A media company earning subscription, advertising, and/or royalty revenue on a content catalog
+  - subscriber/ARPU trends and licensing renewals drive it, not unit sales. Confirmed-shape case: Warner
+  Music Group (WMG).'
+sic_hints:
+- 2741
+- 7929
+description_cues:
+- subscribers
+- ARPU
+- streaming revenue
+- royalties
+- catalog
+- churn
+checklist:
+- id: revenue_mix
+  question: What is the revenue mix (subscription, ads, licensing, royalties)?
+  where_to_look:
+  - subscription
+  - advertising
+  - licensing
+  - royalty
+  answer_type: text
+  required: true
+- id: subscriber_arpu_growth
+  question: What subscriber/ARPU or streaming growth, and price increases, does the filing disclose?
+  where_to_look:
+  - subscribers
+  - ARPU
+  - streaming growth
+  - price increase
+  answer_type: text
+  required: true
+- id: churn_retention
+  question: What churn/retention does the filing disclose, if any?
+  where_to_look:
+  - churn
+  - retention
+  answer_type: text
+  required: false
+- id: content_cost
+  question: What content/artist cost and amortisation does the filing describe?
+  where_to_look:
+  - content cost
+  - artist
+  - amortization
+  answer_type: text
+  required: false
+- id: licensing_renewals
+  question: What licensing deal renewals (DSPs, distributors) does the filing disclose?
+  where_to_look:
+  - licensing deal
+  - DSP
+  - distributor
+  - renewal
+  answer_type: text
+  required: false
+- id: international_fx
+  question: What international share and FX exposure does the filing disclose?
+  where_to_look:
+  - international
+  - FX
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer subscriptions/pricing
+- ad market
+- FX
+- licensing events
+validation_rules:
+- must have an answered revenue_mix checklist item
+- must have an answered subscriber_arpu_growth checklist item

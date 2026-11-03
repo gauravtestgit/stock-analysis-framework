@@ -1,0 +1,66 @@
+id: merchant_power_energy
+name: Merchant Power & Energy
+description: 'An unregulated power generator selling into wholesale markets at spot/hedged prices rather
+  than a regulated rate base - spark spreads and hedge coverage, not an allowed ROE, set economics. Confirmed-shape
+  case: Vistra (VST).'
+sic_hints:
+- 4911
+- 4991
+description_cues:
+- capacity auction
+- spark spread
+- hedged generation
+- MWh
+- merchant
+checklist:
+- id: generation_fleet_mix
+  question: What is the generation fleet mix (gas, nuclear, coal, renewables) and capacity?
+  where_to_look:
+  - generation
+  - fleet
+  - capacity
+  - MWh
+  answer_type: text
+  required: true
+- id: hedged_generation_share
+  question: What share of generation is hedged, and at what prices?
+  where_to_look:
+  - hedged generation
+  - hedge
+  answer_type: text
+  required: true
+- id: power_price_exposure
+  question: What power price exposure by market (e.g. ERCOT, PJM) and capacity auction results does the
+    filing state?
+  where_to_look:
+  - capacity auction
+  - ERCOT
+  - PJM
+  - spark spread
+  answer_type: text
+  required: false
+- id: fuel_and_credits
+  question: What does the filing say about fuel costs and nuclear/production tax credits?
+  where_to_look:
+  - fuel cost
+  - nuclear
+  - production credit
+  answer_type: text
+  required: false
+- id: contracted_offtakes
+  question: Does the filing mention large contracted offtakes (e.g. data centers)?
+  where_to_look:
+  - offtake
+  - contracted
+  - data center
+  answer_type: text
+  required: false
+expected_drivers:
+- power prices
+- natural gas
+- capacity prices
+- policy credits
+- interest rates
+validation_rules:
+- must have an answered generation_fleet_mix checklist item
+- must have an answered hedged_generation_share checklist item

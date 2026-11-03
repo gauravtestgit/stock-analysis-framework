@@ -1,0 +1,65 @@
+id: restaurant_operator
+name: Restaurant Operator (Company-Operated)
+description: 'A mostly company-operated restaurant chain where the company itself directly bears food/paper
+  and labour costs - unlike a franchisor, restaurant-level margin is the company''s own P&L, not a franchisee''s.
+  Confirmed-shape case: El Pollo Loco (LOCO).'
+sic_hints:
+- 5812
+- 5812
+description_cues:
+- restaurant-level margin
+- food and paper costs
+- labor costs as a percentage
+- comparable restaurant sales
+checklist:
+- id: comparable_sales
+  question: What comparable sales does the filing state, split into traffic and ticket/average check?
+  where_to_look:
+  - comparable sales
+  - traffic
+  - ticket
+  - average check
+  answer_type: text
+  required: true
+- id: food_and_labor_cost_pct
+  question: What food/paper and labour costs as a percentage of sales does the filing disclose?
+  where_to_look:
+  - food and paper
+  - labor cost
+  - '% of sales'
+  answer_type: text
+  required: true
+- id: restaurant_level_margin
+  question: What restaurant-level margin and unit economics (AUV, payback) does the filing state?
+  where_to_look:
+  - restaurant-level margin
+  - AUV
+  - payback
+  answer_type: text
+  required: false
+- id: store_growth_and_closures
+  question: What store growth and closures does the filing disclose?
+  where_to_look:
+  - store growth
+  - closures
+  - new units
+  answer_type: text
+  required: false
+- id: commodity_basket
+  question: What commodity basket (chicken, beef, cheese, etc.) and contracts does the filing describe?
+  where_to_look:
+  - chicken
+  - beef
+  - cheese
+  - commodity basket
+  - contract
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer spending
+- food commodities
+- wages
+- interest rates (if debt)
+validation_rules:
+- must have an answered comparable_sales checklist item
+- must have an answered food_and_labor_cost_pct checklist item

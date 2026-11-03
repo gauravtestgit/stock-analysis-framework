@@ -1,0 +1,63 @@
+id: real_estate_owner
+name: Real Estate Owner
+description: 'A REIT, developer, or land-owning company whose economics turn on occupancy, leasing spreads,
+  and NOI growth against a levered balance sheet - distinct from an operating business selling a product
+  or service. Confirmed-shape case: Cresud (CRESY).'
+sic_hints:
+- 6500
+- 6798
+description_cues:
+- occupancy
+- leasing spreads
+- NOI
+- FFO
+- cap rate
+- land portfolio
+checklist:
+- id: property_types_and_geography
+  question: What property/asset types and geography does the filing describe?
+  where_to_look:
+  - property type
+  - geography
+  - asset type
+  answer_type: text
+  required: true
+- id: occupancy_and_noi
+  question: What occupancy, rent/leasing spreads, and NOI growth does the filing disclose?
+  where_to_look:
+  - occupancy
+  - leasing spread
+  - NOI
+  answer_type: text
+  required: true
+- id: debt_structure
+  question: What debt maturities, fixed/floating mix, and LTV does the filing disclose?
+  where_to_look:
+  - debt maturity
+  - fixed
+  - floating
+  - LTV
+  answer_type: text
+  required: false
+- id: development_pipeline
+  question: What development pipeline does the filing describe?
+  where_to_look:
+  - development pipeline
+  answer_type: text
+  required: false
+- id: em_macro_fx
+  question: For EM real estate, what local macro/FX/inflation exposure does the filing describe?
+  where_to_look:
+  - FX
+  - inflation
+  - local macro
+  answer_type: text
+  required: false
+expected_drivers:
+- interest rates
+- local FX/inflation
+- property demand
+- commodity prices (agri-land)
+validation_rules:
+- must have an answered property_types_and_geography checklist item
+- must have an answered occupancy_and_noi checklist item

@@ -1,0 +1,87 @@
+id: franchisor
+name: Franchisor
+description: 'A restaurant/hotel/fitness/services brand earning royalties and fees from franchisees who
+  bear most store-level costs directly - system sales and franchisee health matter more than the company''s
+  own small company-operated base. Confirmed-shape case: Domino''s (DPZ).'
+sic_hints:
+- 5810
+- 7011
+description_cues:
+- franchisees
+- royalty
+- system sales
+- same-store sales
+- net unit growth
+- supply chain
+checklist:
+- id: franchised_vs_company_operated
+  question: What % of units are franchised vs company-operated, by region?
+  where_to_look:
+  - franchised
+  - company-operated
+  - '% of units'
+  answer_type: text
+  required: true
+- id: revenue_streams
+  question: What revenue streams does the filing describe (royalties/fees, company-operated sales, supply
+    chain/distribution, advertising fund)?
+  where_to_look:
+  - royalty
+  - royalties
+  - company-operated sales
+  - supply chain
+  - advertising fund
+  answer_type: text
+  required: true
+- id: system_sales_and_unit_growth
+  question: What system sales, same-store sales, and net unit growth does the filing state?
+  where_to_look:
+  - system sales
+  - same-store sales
+  - net unit growth
+  answer_type: text
+  required: false
+- id: royalty_rate
+  question: What royalty/fee rate does the filing disclose?
+  where_to_look:
+  - royalty rate
+  - fee rate
+  answer_type: text
+  required: false
+- id: who_bears_store_level_costs
+  question: Who bears store-level costs (food, labour, delivery) - the franchisee or the company - and
+    how is supply-chain priced to franchisees?
+  where_to_look:
+  - franchisee
+  - food cost
+  - labor cost
+  - supply chain pricing
+  answer_type: text
+  required: true
+- id: franchisee_health
+  question: What does the filing say about franchisee health (closures, unit economics)?
+  where_to_look:
+  - closure
+  - unit economics
+  - franchisee health
+  answer_type: text
+  required: false
+- id: leverage_securitization
+  question: What leverage/securitisation (e.g. whole-business securitization notes) does the filing disclose?
+  where_to_look:
+  - securitization
+  - whole business
+  - leverage
+  answer_type: text
+  required: false
+expected_drivers:
+- consumer spending
+- same-store sales
+- commodity costs (through franchisee margins and supply-chain pass-through)
+- labour/minimum wage
+- delivery aggregators
+- interest rates (net debt)
+- FX (international royalties, translation)
+validation_rules:
+- must have an answered franchised_vs_company_operated checklist item
+- must have an answered who_bears_store_level_costs checklist item

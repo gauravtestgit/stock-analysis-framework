@@ -1,0 +1,59 @@
+id: regulated_utility
+name: Regulated Utility
+description: A rate-regulated electric/gas utility whose earnings are set by an allowed ROE on a growing
+  rate base, not by market prices - regulatory rate-case outcomes are the primary driver. No confirmed
+  example in this codebase's regression set yet; included for taxonomy coverage.
+sic_hints:
+- 4900
+- 4949
+description_cues:
+- rate base
+- allowed ROE
+- rate case
+- regulatory commission
+checklist:
+- id: rate_base_and_growth
+  question: What is the rate base and growth plan the filing describes?
+  where_to_look:
+  - rate base
+  - growth plan
+  answer_type: text
+  required: true
+- id: allowed_vs_earned_roe
+  question: What allowed vs earned ROE does the filing disclose, and any pending rate cases?
+  where_to_look:
+  - allowed ROE
+  - earned ROE
+  - rate case
+  answer_type: text
+  required: true
+- id: fuel_cost_recovery
+  question: What fuel/purchased-power cost recovery mechanism does the filing describe?
+  where_to_look:
+  - fuel cost recovery
+  - purchased power
+  - cost recovery mechanism
+  answer_type: text
+  required: false
+- id: load_growth
+  question: What load growth (e.g. from data centers) does the filing disclose?
+  where_to_look:
+  - load growth
+  - data center
+  answer_type: text
+  required: false
+- id: leverage_and_equity_needs
+  question: What leverage and equity issuance needs does the filing disclose?
+  where_to_look:
+  - leverage
+  - equity issuance
+  answer_type: text
+  required: false
+expected_drivers:
+- interest rates (high sensitivity)
+- regulatory decisions
+- load growth
+- weather
+validation_rules:
+- must have an answered rate_base_and_growth checklist item
+- must have an answered allowed_vs_earned_roe checklist item

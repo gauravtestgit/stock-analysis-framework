@@ -1,0 +1,70 @@
+id: bank_deposit_lender
+name: Bank / Deposit Lender
+description: 'A deposit-funded bank whose economics turn on net interest margin and asset/liability repricing
+  sensitivity, credit quality, and capital ratios. Confirmed-shape case: Shinhan Financial (SHG).'
+sic_hints:
+- 6020
+- 6036
+description_cues:
+- net interest margin
+- deposits
+- CET1
+- loan loss provision
+- non-performing
+checklist:
+- id: nim_and_rate_sensitivity
+  question: What net interest margin (NIM) does the filing state, and what rate sensitivity (asset vs
+    liability repricing) does it describe?
+  where_to_look:
+  - net interest margin
+  - NIM
+  - repricing
+  answer_type: text
+  required: true
+- id: loan_book_and_credit_quality
+  question: What loan book mix and credit quality (non-performing loans, provisions) does the filing disclose?
+  where_to_look:
+  - loan book
+  - non-performing
+  - provision
+  - NPL
+  answer_type: text
+  required: true
+- id: deposit_base_and_cost
+  question: What deposit base and cost of deposits does the filing state?
+  where_to_look:
+  - deposit
+  - cost of deposits
+  answer_type: text
+  required: false
+- id: capital_ratios
+  question: What capital ratios (CET1) and shareholder return policy does the filing disclose?
+  where_to_look:
+  - CET1
+  - capital ratio
+  - shareholder return
+  answer_type: text
+  required: false
+- id: fee_income_share
+  question: What fee income share does the filing disclose?
+  where_to_look:
+  - fee income
+  answer_type: text
+  required: false
+- id: home_market_fx
+  question: For non-US banks, what home-market FX/currency exposure does the filing describe?
+  where_to_look:
+  - FX
+  - currency
+  - exchange rate
+  answer_type: text
+  required: false
+expected_drivers:
+- policy/short rates
+- yield curve
+- credit cycle
+- local FX
+- regulatory events
+validation_rules:
+- must have an answered nim_and_rate_sensitivity checklist item
+- must have an answered loan_book_and_credit_quality checklist item

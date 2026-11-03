@@ -1,0 +1,89 @@
+id: commodity_producer
+name: Commodity Producer
+description: 'A company that extracts/mines a commodity (metals, oil & gas) and sells it at a price it
+  does not control - unit cost (AISC/cash cost) and hedging determine the margin, not pricing power. Confirmed-shape
+  case: Newmont (NEM) - gold production cost and realized price vs. spot define profitability, not demand/branding.'
+sic_hints:
+- 1000
+- 1499
+description_cues:
+- reserves
+- AISC
+- production guidance
+- realized price
+- per ounce
+- per Mcfe
+- hedge
+checklist:
+- id: main_commodities_and_revenue_share
+  question: What are the main commodities produced and each one's share of revenue?
+  where_to_look:
+  - reserves
+  - production
+  - commodity
+  - revenue
+  answer_type: text
+  required: true
+- id: production_volume_and_guidance
+  question: What production volume and guidance (in units) does the filing state?
+  where_to_look:
+  - production guidance
+  - production volume
+  - tonnes
+  - ounces
+  - Mcfe
+  answer_type: text
+  required: false
+- id: unit_cost
+  question: What unit cost (AISC, lifting cost, or cash cost) does the filing state, and its trend?
+  where_to_look:
+  - AISC
+  - cash cost
+  - lifting cost
+  - unit cost
+  answer_type: text
+  required: true
+- id: realized_price_vs_benchmark
+  question: What realized price does the filing state relative to the benchmark (discount/premium, differentials)?
+  where_to_look:
+  - realized price
+  - benchmark
+  - differential
+  - discount
+  - premium
+  answer_type: text
+  required: false
+- id: hedging
+  question: What share of the next 12-24 months' production is hedged, and at what prices?
+  where_to_look:
+  - hedge
+  - hedged
+  - hedging
+  answer_type: text
+  required: false
+- id: reserve_life_and_capex
+  question: What does the filing say about reserve life/depletion and major projects/capex?
+  where_to_look:
+  - reserve life
+  - depletion
+  - capex
+  - project
+  answer_type: text
+  required: false
+- id: jurisdiction_risk
+  question: What jurisdiction/political risks does the filing mention (royalties, nationalisation, permits)?
+  where_to_look:
+  - royalty
+  - nationalization
+  - permit
+  - jurisdiction
+  answer_type: text
+  required: false
+expected_drivers:
+- commodity price
+- unit cost inputs (energy, labour)
+- FX of producing countries
+- interest rates
+validation_rules:
+- must have an answered main_commodities_and_revenue_share checklist item
+- must have an answered unit_cost checklist item
