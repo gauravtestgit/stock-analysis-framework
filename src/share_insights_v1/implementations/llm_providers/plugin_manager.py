@@ -169,7 +169,8 @@ class LLMPluginManager:
         api_key_map = {
             'groq': 'GROQ_API_KEY',
             'openai': 'OPENAI_API_KEY',
-            'xai': 'XAI_API_KEY'
+            'xai': 'XAI_API_KEY',
+            'claude': 'CLAUDE_API_KEY'
         }
         
         env_var = api_key_map.get(provider_name)

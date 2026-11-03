@@ -44,3 +44,6 @@ src/share_insights_v1/resources/tmp/
 # OS
 .DS_Store
 Thumbs.db
+
+# Scratch output for manual review, never committed
+/tmp/

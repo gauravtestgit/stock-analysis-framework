@@ -64,3 +64,28 @@ llm_providers:
         description: "xAI's conversational AI model"
         context_length: 8192
         cost_per_1k_tokens: 0.005
+
+  - name: "claude"
+    display_name: "Claude"
+    class: "ClaudeProvider"
+    module: "src.share_insights_v1.implementations.llm_providers.claude_provider"
+    description: "Anthropic's Claude models"
+    icon: "🧠"
+    api_key_env: "CLAUDE_API_KEY"
+    default_model: "claude-sonnet-5-5"
+    models:
+      - name: "claude-sonnet-5-5"
+        display_name: "Claude Sonnet 5.5"
+        description: "Strong reasoning and instruction-following, best default for grounded analysis"
+        context_length: 200000
+        cost_per_1k_tokens: 0.003
+      - name: "claude-haiku-5-5"
+        display_name: "Claude Haiku 5.5"
+        description: "Faster and cheaper, good for high-volume checklist/slice extraction"
+        context_length: 200000
+        cost_per_1k_tokens: 0.001
+      - name: "claude-opus-5-5"
+        display_name: "Claude Opus 5.5"
+        description: "Most capable, highest cost - best for the hardest grounding/consistency cases"
+        context_length: 200000
+        cost_per_1k_tokens: 0.015

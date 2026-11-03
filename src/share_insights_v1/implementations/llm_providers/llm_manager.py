@@ -6,6 +6,7 @@ from ...interfaces.llm_provider import ILLMProvider
 from .groq_provider import GroqProvider
 from .openai_provider import OpenAIProvider
 from .xai_provider import XAIProvider
+from .claude_provider import ClaudeProvider
 from .plugin_manager import LLMPluginManager
 from .config_service import LLMConfigService
 from ...utils.debug_printer import debug_print
@@ -187,7 +188,8 @@ class LLMManager:
         provider_map = {
             "groq": GroqProvider,
             "openai": OpenAIProvider,
-            "xai": XAIProvider
+            "xai": XAIProvider,
+            "claude": ClaudeProvider
         }
         
         if provider_name.lower() in provider_map:

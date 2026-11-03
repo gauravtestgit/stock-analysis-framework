@@ -4,6 +4,7 @@ from typing import Dict, Any
 from ...interfaces.data_provider import IDataProvider
 from ...models.financial_metrics import FinancialMetrics
 from ...utils.rate_limit_tracker import rate_tracker
+from ...utils.debug_printer import debug_print
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Suppress noisy yfinance/urllib3 logs (HTTP 401, 404, delisted warnings)
@@ -108,12 +109,29 @@ class YahooFinanceProvider(IDataProvider):
             info = stock.info
             revenue_data = self.get_revenue_trend(stock, info)
             cashflow = stock.cashflow
-            
+
             fcf = 0
             if not cashflow.empty and 'Free Cash Flow' in cashflow.index:
                 fcf_data = cashflow.loc['Free Cash Flow'].dropna()
                 if len(fcf_data) > 0:
                     fcf = fcf_data.iloc[0]
+
+            # info (the quote-summary endpoint) has no balance-sheet fields
+            # at all, not even under a differently-cased key - confirmed
+            # directly: no key containing "asset" exists in info for any
+            # ticker checked. BusinessModelAnalyzer's asset_turnover needed
+            # this and had no real total_assets to divide by, silently
+            # falling back to a denominator of 1 and returning total_revenue
+            # itself (a dollar figure) as if it were a ratio.
+            total_assets = 0
+            try:
+                balance_sheet = stock.balance_sheet
+                if not balance_sheet.empty and 'Total Assets' in balance_sheet.index:
+                    assets_data = balance_sheet.loc['Total Assets'].dropna()
+                    if len(assets_data) > 0:
+                        total_assets = assets_data.iloc[0]
+            except Exception as e:
+                debug_print(f"[YAHOO_DEBUG] Could not fetch total_assets for {ticker}: {e}")
 
             # Extract dividend information
             dividends = stock.dividends
@@ -187,6 +205,7 @@ class YahooFinanceProvider(IDataProvider):
                 'free_cash_flow': fcf,
                 'total_debt': info.get('totalDebt', 0) or 0,
                 'total_cash': info.get('totalCash', 0) or 0,
+                'total_assets': total_assets,
                 'shares_outstanding': info.get('sharesOutstanding', 0),
                 'float_shares': info.get('floatShares', 0),
                 'current_price': info.get('currentPrice') or info.get('regularMarketPrice') or info.get('navPrice') or info.get('previousClose') or info.get('ask') or info.get('bid') or 0,

@@ -21,6 +21,14 @@ description_cues:
   - contract rate
   - fuel surcharge
   - cost recovery
+  # Water-transportation-specific (this archetype's sic_hints are all
+  # water-transportation SIC codes) - was previously hardcoded into
+  # business_model_analyzer.py's generic competitive-differentiation slice
+  # keyword list for EVERY ticker regardless of archetype, which meant a
+  # non-transport company like KO or PRDO was searching its own filing for
+  # "Jones Act" too. Belongs here instead, where it only applies to
+  # companies that actually matched this archetype.
+  - Jones Act
 
 checklist:
   - id: utilization

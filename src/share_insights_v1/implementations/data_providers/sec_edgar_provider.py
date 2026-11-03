@@ -278,7 +278,110 @@ class SECEdgarProvider(SECDataProvider):
             import traceback
             traceback.debug_print_exc()
             return None
-    
+
+    def get_mdna_section(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """Get the latest 10-Q's Item 2 - Management's Discussion and
+        Analysis section.
+
+        Added because the archetype classifier's checklist/universal-
+        checklist Q&A only ever searched the 10-K's Item 1 Business section
+        - confirmed directly why that's a real gap, not just a nice-to-have:
+        FX impact, price/mix commentary, and "latest quarter" KPI moves are
+        routinely disclosed in MD&A, not Item 1, so those checklist
+        questions could never be answered no matter how good the retrieval
+        or the model got. Mirrors get_business_description's shape/contract
+        (full section, uncapped at the provider level) so callers that
+        already know how to use one text source can use this one the same
+        way.
+        """
+        try:
+            debug_print(f"[SEC_DEBUG] Getting MD&A section for {ticker}")
+            cik = self._get_cik(ticker)
+            if not cik:
+                return None
+
+            filing_data = self.get_latest_10q(ticker)
+            if not filing_data:
+                debug_print(f"[SEC_DEBUG] No 10-Q filing found for {ticker}")
+                return None
+
+            content = self._fetch_filing_document(cik, filing_data)
+            if not content:
+                return None
+
+            mdna_section = self._extract_mdna_section(content)
+            debug_print(f"[SEC_DEBUG] MD&A section extracted: {len(mdna_section)} chars")
+
+            return {
+                'ticker': ticker,
+                'filing_date': filing_data['filing_date'],
+                'accession_number': filing_data['accession_number'],
+                'mdna_text': mdna_section,
+                'data_source': 'SEC 10-Q Filing',
+            }
+
+        except Exception as e:
+            debug_print(f"[SEC_DEBUG] Error fetching MD&A section for {ticker}: {e}")
+            return None
+
+    def _extract_mdna_section(self, content: str) -> str:
+        """Extract Item 2 - MD&A from a 10-Q filing.
+
+        Same TOC-vs-real-heading approach as _extract_business_section
+        below (a 10-Q's table of contents also contains an "Item 2."
+        entry, textually indistinguishable from the real heading without
+        the same gap/fresh-sentence checks) - confirmed directly on KO's
+        10-Q: "item 2" occurs in the TOC followed by a page number, then
+        again ~104,000 characters later as the real heading, immediately
+        followed by real MD&A prose ("Item 2. Management's Discussion and
+        Analysis of Financial Condition and Results of Operations When
+        used in this report...").
+        """
+        import re
+        from html import unescape
+
+        text = re.sub(r'<[^>]+>', ' ', content)
+        text = unescape(text)
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        # "Management's" is reliably followed by SOME apostrophe-like
+        # character before "s Discussion" - confirmed directly the real
+        # character isn't always a plain ASCII apostrophe (KO's filing uses
+        # U+2019 RIGHT SINGLE QUOTATION MARK), so this skips up to 3
+        # arbitrary characters there rather than matching one specific
+        # apostrophe variant.
+        start_pattern = re.compile(r"item\s*2\.?\s*man\s*age\s*ment.{0,3}discussion", re.IGNORECASE)
+        end_pattern = re.compile(r'item\s*3\.?\s*quantitative|item\s*4\.?\s*controls', re.IGNORECASE)
+        TOC_GAP_THRESHOLD = 3000
+
+        # No fresh-sentence-follows filter here (unlike _extract_business_
+        # section's start_pattern below) - this heading is much longer than
+        # "Item 1. Business", and this pattern only consumes through
+        # "...Discussion", with "and Analysis of Financial Condition..."
+        # still to come right after, in BOTH the TOC entry and the real
+        # heading. That continuation is lowercase either way, so a "next
+        # char is uppercase" check would reject the real heading too -
+        # confirmed directly on KO, where it did. The gap-based pick-the-
+        # latest-qualifying-start logic below already separates the TOC
+        # entry from the real heading on its own: the TOC entry is always
+        # earlier in the document, and max(candidates, key=start) prefers
+        # whichever qualifying candidate starts latest.
+        starts = [m.start() for m in start_pattern.finditer(text)]
+        end_positions = [m.start() for m in end_pattern.finditer(text)]
+
+        candidates = []
+        for s in starts:
+            qualifying_ends = [e for e in end_positions if e > s and e - s > TOC_GAP_THRESHOLD]
+            if qualifying_ends:
+                candidates.append((s, qualifying_ends[0]))
+
+        if candidates:
+            best_start, best_end = max(candidates, key=lambda pair: pair[0])
+            if best_end - best_start > 200:
+                return text[best_start:min(best_end, best_start + 200000)]
+
+        return ''
+
     def _extract_business_section(self, content: str) -> str:
         """Extract Item 1 - Business section from 10-K filing.
 
@@ -343,7 +446,14 @@ class SECEdgarProvider(SECDataProvider):
         text = re.sub(r'\s+', ' ', text).strip()
 
         start_pattern = re.compile(r'item\s*1\.?\s*busi\s*ness', re.IGNORECASE)
-        end_pattern = re.compile(r'item\s*1a\.?\s*risk\s*factors|item\s*2\.?\s*properties', re.IGNORECASE)
+        # "1a" tolerates a stray space between the digit and letter (e.g.
+        # "Item 1 A. RISK FACTORS"), confirmed on PRDO's 10-K: HTML-tag
+        # stripping splits that heading the same way it splits "Busi ness"
+        # above, and the old literal "1a" never matched it - the real
+        # heading was skipped entirely and extraction fell through to the
+        # keyword fallback, returning "Business description not found in
+        # filing" even though the real section (154K chars) was present.
+        end_pattern = re.compile(r'item\s*1\s*a\.?\s*risk\s*factors|item\s*2\.?\s*properties', re.IGNORECASE)
         TOC_GAP_THRESHOLD = 3000
         # Skips whitespace/quotes AND a trailing period - confirmed needed on
         # ALTO, whose real heading reads "Item 1. Business. Business
