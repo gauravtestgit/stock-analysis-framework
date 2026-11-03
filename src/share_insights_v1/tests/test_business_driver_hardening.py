@@ -151,6 +151,20 @@ def test_ko_golden_assertions():
           result.get('slice_log', {}).get('segment_revenue_data', {}).get('method') == 'structured_filing_data_no_llm',
           result.get('slice_log', {}).get('segment_revenue_data'))
 
+    # KO's segment names (EMEA etc.) are first mentioned in an unrelated
+    # Costa/innocent/dogadan corporate-restructuring footnote, not near the
+    # real brand list - confirmed this fed core_products a mid-sentence
+    # fragment about segment-reporting treatment instead of KO's actual
+    # flagship brands, until product_portfolio slicing was changed to prefer
+    # a brand/trademark keyword slice over the segment-overview one.
+    core_products = result.get('product_portfolio', {}).get('core_products') or []
+    check("KO's product_portfolio slice used the brand/trademark keyword path, not the segment-overview one",
+          result.get('slice_log', {}).get('product_portfolio', {}).get('method') == 'keyword_sentences',
+          result.get('slice_log', {}).get('product_portfolio'))
+    check("KO's core_products names a real flagship brand, not an acquisition-footnote fragment",
+          any(b in ' '.join(core_products) for b in ['Coca-Cola', 'Sprite', 'Fanta', 'Diet Coke']),
+          core_products)
+
     comp = result.get('competitive_differentiation', {})
     competitor_names = ' '.join(c.get('name', '') for c in comp.get('key_competitors') or []).lower()
     check("KO's real named competitor (PepsiCo) is found, not the 'no competitors' fallback",

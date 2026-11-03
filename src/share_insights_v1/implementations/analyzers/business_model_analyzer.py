@@ -28,7 +28,7 @@ class BusinessModelAnalyzer(IAnalyzer):
     # the batch-2 fixes (segment window, KO extraction, name normalization,
     # etc.) - the version string was never bumped, so a KEX result cached
     # under batch 1 kept being served unchanged through all of batch 2.
-    _ANALYZER_VERSION = 'v5-archetype-cost-bearer-wording'
+    _ANALYZER_VERSION = 'v6-product-slice-and-context-trim'
     _CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'cache', 'business_model_analyzer')
 
     def __init__(self, data_provider: IDataProvider, llm_manager: Optional['LLMManager'] = None, sec_provider: Optional[SECDataProvider] = None):
@@ -1000,9 +1000,26 @@ Respond with JSON:
 
             # Build prompt with SEC data if available
             if sec_business_data and sec_business_data.get('business_description'):
-                business_context, slice_meta = self._select_segment_overview_slice(
-                    sec_business_data['business_description'], segment_financials, cap=5000
+                full_text = sec_business_data['business_description']
+                # Prefer the filing's own "Products and Brands"/brand-list
+                # section when it has one - confirmed directly on KO why
+                # the segment-overview slice below is the wrong default
+                # here: KO's "EMEA" (a segment name) is FIRST mentioned
+                # inside an unrelated corporate-restructuring footnote
+                # about the Costa/innocent/dogadan acquisitions, so that
+                # slice fed core_products a mid-sentence fragment about
+                # segment reporting treatment instead of KO's real brand
+                # list (Coca-Cola, Sprite, Fanta, ...). Falls through to
+                # the segment-overview slice for a company with no
+                # brand/trademark language at all (e.g. KEX), where that
+                # slice already does the right thing.
+                business_context, slice_meta = select_keyword_context(
+                    full_text, ['brand', 'trademark', 'Products and Brands', 'our products', 'principal products', 'product line'], cap=5000
                 )
+                if slice_meta.get('method') != 'keyword_sentences':
+                    business_context, slice_meta = self._select_segment_overview_slice(
+                        full_text, segment_financials, cap=5000
+                    )
                 self._slice_log['product_portfolio'] = slice_meta
                 filing_date = sec_business_data.get('filing_date', 'Unknown')
 
@@ -1127,7 +1144,15 @@ Respond with ONLY valid JSON:
                 for item in archetype_result.get('checklist', []):
                     if item.get('status') == 'answered':
                         quote = item['quotes'][0] if item.get('quotes') else ''
-                        context_lines.append(f"- {item['question']} -> {item['value']} (\"{quote}\")")
+                        # A short label (not the full checklist question text)
+                        # - confirmed directly that injecting the full,
+                        # multi-sentence question wording pushed this prompt
+                        # (already the largest/most reasoning-heavy one in
+                        # this analyzer) past 11,000 chars, which plausibly
+                        # raises the odds of a truncated/short business_drivers
+                        # list on this model's reasoning-token-heavy completions.
+                        label = item['question_id'].replace('_', ' ')
+                        context_lines.append(f"- {label}: {item['value']} (\"{quote}\")")
                 if len(context_lines) > 1:
                     business_model_context = "\n".join(context_lines)
             business_model_context_block = (
