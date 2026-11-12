@@ -497,8 +497,18 @@ class TechnicalAnalyzer(IAnalyzer):
                 if center_value == window_data.min():
                     swings.append(float(center_value))
         
-        # Return unique values sorted
-        return sorted(list(set(swings)), reverse=not find_peaks)[:5]
+        # Keep the most prominent swings: the highest peaks for swing highs,
+        # the lowest troughs for swing lows. Was `reverse=not find_peaks`,
+        # which is backwards - for find_peaks=True that sorts ascending and
+        # slices off the 5 SMALLEST peaks, discarding any peak actually near
+        # or above the current price (confirmed on KO: with the bug, 2-year
+        # swing_highs came back as ~$60-61 even though price is $97.57 and
+        # the real 2-year high is $97.83, because those were simply the 5
+        # lowest unique peaks in the whole window) - which is what was
+        # starving resistance_levels for a stock sitting near a high, and
+        # starving support_levels the same way (for swing lows) for a stock
+        # sitting near a low.
+        return sorted(list(set(swings)), reverse=find_peaks)[:5]
     
     def _calculate_volume_profile(self, hist: pd.DataFrame, num_bins: int = 20) -> Dict[str, list]:
         """Calculate volume profile to find high-volume price levels"""

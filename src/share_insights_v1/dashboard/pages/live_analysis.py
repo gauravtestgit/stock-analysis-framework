@@ -25,6 +25,7 @@ from src.share_insights_v1.dashboard.components.theme import (
     rec_pill_class,
     section_label,
     render_kv_table,
+    render_price_ladder,
 )
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
 from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
@@ -285,6 +286,7 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
         level_pairs = [(f"Support S{i}", f"${(lvl or 0):.2f}") for i, lvl in enumerate(support_levels, 1)]
         level_pairs += [(f"Resistance R{i}", f"${(lvl or 0):.2f}") for i, lvl in enumerate(resistance_levels, 1)]
         if level_pairs:
+            render_price_ladder(data.get('current_price'), support_levels, resistance_levels)
             render_kv_table(level_pairs, cols=4)
         else:
             st.caption("No support/resistance levels calculated")

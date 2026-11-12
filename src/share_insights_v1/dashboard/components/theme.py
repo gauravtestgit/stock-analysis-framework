@@ -12,6 +12,8 @@ language. Reskins Streamlit's default chrome via its data-testid hooks
 still needs to be a real interactive Streamlit component.
 """
 
+from typing import Dict
+
 import streamlit as st
 
 THEME_CSS = """
@@ -242,6 +244,44 @@ table.la-table tr:last-child td { border-bottom: none; }
 .la-ticker-mono { font-family: var(--la-font-mono); font-weight: 700; }
 .la-upside-pos { color: var(--la-good); font-family: var(--la-font-mono); font-weight: 700; }
 .la-upside-neg { color: var(--la-bad); font-family: var(--la-font-mono); font-weight: 700; }
+
+/* Support/Resistance number line - points spaced proportionally to their
+   actual price gap (not evenly), so an unusually tight or wide gap between
+   e.g. price and R1 is visually obvious, unlike a flat kv-table of the same
+   numbers. */
+.la-ladder { position: relative; height: 54px; margin: 6px 0 30px; }
+.la-ladder-track {
+    position: absolute; top: 25px; left: 0; right: 0; height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--la-bad) 0%, var(--la-border-strong) 45%, var(--la-border-strong) 55%, var(--la-good) 100%);
+    opacity: 0.55;
+}
+.la-ladder-point { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.la-ladder-dot {
+    width: 9px; height: 9px; border-radius: 50%; margin: 21px auto 5px;
+    background: var(--la-ink-faint); border: 2px solid var(--la-surface-raised);
+}
+.la-ladder-point.la-ladder-support .la-ladder-dot { background: var(--la-bad); }
+.la-ladder-point.la-ladder-resistance .la-ladder-dot { background: var(--la-good); }
+.la-ladder-point.la-ladder-current .la-ladder-dot {
+    width: 13px; height: 13px; margin-top: 19px;
+    background: var(--la-accent); box-shadow: 0 0 0 4px var(--la-accent-soft);
+}
+.la-ladder-label {
+    font-size: 0.68rem; color: var(--la-ink-faint); white-space: nowrap;
+    font-family: var(--la-font-mono); font-variant-numeric: tabular-nums;
+}
+.la-ladder-label-name {
+    display: block; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; font-size: 0.62rem; font-family: var(--la-font-ui);
+}
+.la-ladder-point.la-ladder-current .la-ladder-label { color: var(--la-accent); font-weight: 700; }
+/* When two points sit close together in price (e.g. price trading right on
+   top of a support/resistance level), their centered labels would overlap -
+   stack the label into a lower row instead, while the dot stays exactly on
+   its true proportional position on the track. */
+.la-ladder-point.la-ladder-row1 .la-ladder-label { margin-top: 17px; }
+.la-ladder-point.la-ladder-row2 .la-ladder-label { margin-top: 34px; }
 </style>
 """
 
@@ -262,6 +302,60 @@ def section_label(text: str):
     """One consistent sub-section header style, used across every tab instead
     of ad hoc st.markdown("###"/"####") calls at varying heading levels."""
     st.markdown(f'<div class="la-section-label">{text}</div>', unsafe_allow_html=True)
+
+
+def render_price_ladder(current_price, support_levels, resistance_levels):
+    """Horizontal number-line: S2--S1--Price--R1--R2, each point placed at
+    its actual proportional position between the lowest support and highest
+    resistance rather than evenly spaced, so the gap sizes are meaningful at
+    a glance (e.g. price sitting right on top of S1 vs. having room to fall)."""
+    supports = [lvl for lvl in (support_levels or []) if lvl]
+    resistances = [lvl for lvl in (resistance_levels or []) if lvl]
+    if current_price is None or (not supports and not resistances):
+        return
+
+    # support_levels[0] is S1 (closest below price), support_levels[1] is S2
+    # (further below), etc. - reverse so the furthest support renders
+    # leftmost: S2, S1, Price, R1, R2.
+    points = [(f"S{len(supports) - i}", lvl, 'support') for i, lvl in enumerate(reversed(supports))]
+    points.append(("Price", current_price, 'current'))
+    points += [(f"R{i + 1}", lvl, 'resistance') for i, lvl in enumerate(resistances)]
+
+    values = [p[1] for p in points]
+    lo, hi = min(values), max(values)
+    span = (hi - lo) or 1.0
+
+    def pos(v):
+        return 6 + ((v - lo) / span) * 88  # 6-94% so end labels aren't clipped
+
+    # Points are already in ascending price order, so their raw positions are
+    # monotonic - walk left to right and drop any point whose label would sit
+    # too close to the previous one in the same row into the next row down
+    # instead (dot position is untouched; only the label is restacked).
+    MIN_GAP_PCT = 11.0
+    last_left_in_row: Dict[int, float] = {}
+    rows = []
+    for _, value, _ in points:
+        left = pos(value)
+        row = 0
+        while row in last_left_in_row and left - last_left_in_row[row] < MIN_GAP_PCT:
+            row += 1
+        last_left_in_row[row] = left
+        rows.append(row)
+    max_row = max(rows) if rows else 0
+
+    html_points = ''.join(
+        f'<div class="la-ladder-point la-ladder-{kind} la-ladder-row{row}" style="left:{pos(value):.1f}%;">'
+        f'<div class="la-ladder-dot"></div>'
+        f'<div class="la-ladder-label"><span class="la-ladder-label-name">{label}</span>${value:,.2f}</div>'
+        f'</div>'
+        for (label, value, kind), row in zip(points, rows)
+    )
+    container_style = f'height:{54 + max_row * 17}px;' if max_row else ''
+    st.markdown(
+        f'<div class="la-ladder" style="{container_style}"><div class="la-ladder-track"></div>{html_points}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_kv_table(pairs, cols=2):
