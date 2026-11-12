@@ -248,25 +248,38 @@ table.la-table tr:last-child td { border-bottom: none; }
 /* Support/Resistance number line - points spaced proportionally to their
    actual price gap (not evenly), so an unusually tight or wide gap between
    e.g. price and R1 is visually obvious, unlike a flat kv-table of the same
-   numbers. */
-.la-ladder { position: relative; height: 54px; margin: 6px 0 30px; }
+   numbers. Current price is always rendered ABOVE the track on its own stem
+   line rather than inline with support/resistance labels, so it can never
+   collide with one of them even when price sits right on top of a level. */
+.la-ladder { position: relative; height: 96px; margin: 10px 0 6px; }
 .la-ladder-track {
-    position: absolute; top: 25px; left: 0; right: 0; height: 3px;
+    position: absolute; top: 53px; left: 0; right: 0; height: 3px;
     border-radius: 2px;
     background: linear-gradient(to right, var(--la-bad) 0%, var(--la-border-strong) 45%, var(--la-border-strong) 55%, var(--la-good) 100%);
     opacity: 0.55;
 }
-.la-ladder-point { position: absolute; top: 0; transform: translateX(-50%); text-align: center; }
+.la-ladder-current-wrap {
+    position: absolute; top: 0; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; width: max-content;
+}
+.la-ladder-current-label {
+    font-size: 0.68rem; color: var(--la-accent); font-weight: 700; white-space: nowrap;
+    font-family: var(--la-font-mono); font-variant-numeric: tabular-nums; text-align: center;
+    margin-bottom: 2px;
+}
+.la-ladder-current-stem { width: 2px; height: 26px; background: var(--la-accent); opacity: 0.6; }
+.la-ladder-current-dot {
+    width: 13px; height: 13px; border-radius: 50%; margin-top: -6px;
+    background: var(--la-accent); box-shadow: 0 0 0 4px var(--la-accent-soft);
+    border: 2px solid var(--la-surface-raised);
+}
+.la-ladder-point { position: absolute; top: 53px; transform: translateX(-50%); text-align: center; }
 .la-ladder-dot {
-    width: 9px; height: 9px; border-radius: 50%; margin: 21px auto 5px;
+    width: 9px; height: 9px; border-radius: 50%; margin: -4.5px auto 6px;
     background: var(--la-ink-faint); border: 2px solid var(--la-surface-raised);
 }
 .la-ladder-point.la-ladder-support .la-ladder-dot { background: var(--la-bad); }
 .la-ladder-point.la-ladder-resistance .la-ladder-dot { background: var(--la-good); }
-.la-ladder-point.la-ladder-current .la-ladder-dot {
-    width: 13px; height: 13px; margin-top: 19px;
-    background: var(--la-accent); box-shadow: 0 0 0 4px var(--la-accent-soft);
-}
 .la-ladder-label {
     font-size: 0.68rem; color: var(--la-ink-faint); white-space: nowrap;
     font-family: var(--la-font-mono); font-variant-numeric: tabular-nums;
@@ -275,11 +288,10 @@ table.la-table tr:last-child td { border-bottom: none; }
     display: block; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.03em; font-size: 0.62rem; font-family: var(--la-font-ui);
 }
-.la-ladder-point.la-ladder-current .la-ladder-label { color: var(--la-accent); font-weight: 700; }
-/* When two points sit close together in price (e.g. price trading right on
-   top of a support/resistance level), their centered labels would overlap -
-   stack the label into a lower row instead, while the dot stays exactly on
-   its true proportional position on the track. */
+/* When two support (or two resistance) levels sit close together in price,
+   their centered labels below the track would overlap - stack the label
+   into a lower row instead, while the dot stays exactly on its true
+   proportional position on the track. */
 .la-ladder-point.la-ladder-row1 .la-ladder-label { margin-top: 17px; }
 .la-ladder-point.la-ladder-row2 .la-ladder-label { margin-top: 34px; }
 </style>
@@ -305,10 +317,14 @@ def section_label(text: str):
 
 
 def render_price_ladder(current_price, support_levels, resistance_levels):
-    """Horizontal number-line: S2--S1--Price--R1--R2, each point placed at
-    its actual proportional position between the lowest support and highest
-    resistance rather than evenly spaced, so the gap sizes are meaningful at
-    a glance (e.g. price sitting right on top of S1 vs. having room to fall)."""
+    """Horizontal number-line: S2--S1--(price on a stem above)--R1--R2.
+    Support/resistance points sit directly on the track at their true
+    proportional position; current price is always drawn ABOVE the track on
+    its own connector stem rather than inline with the other labels, so it
+    can never collide with a support/resistance label even when price sits
+    right on top of a level. Support/resistance labels can still collide
+    with each other (e.g. two close support levels) - those fall back to
+    row-stacking, same as before."""
     supports = [lvl for lvl in (support_levels or []) if lvl]
     resistances = [lvl for lvl in (resistance_levels or []) if lvl]
     if current_price is None or (not supports and not resistances):
@@ -316,26 +332,25 @@ def render_price_ladder(current_price, support_levels, resistance_levels):
 
     # support_levels[0] is S1 (closest below price), support_levels[1] is S2
     # (further below), etc. - reverse so the furthest support renders
-    # leftmost: S2, S1, Price, R1, R2.
-    points = [(f"S{len(supports) - i}", lvl, 'support') for i, lvl in enumerate(reversed(supports))]
-    points.append(("Price", current_price, 'current'))
-    points += [(f"R{i + 1}", lvl, 'resistance') for i, lvl in enumerate(resistances)]
+    # leftmost: S2, S1, ..., R1, R2.
+    sr_points = [(f"S{len(supports) - i}", lvl, 'support') for i, lvl in enumerate(reversed(supports))]
+    sr_points += [(f"R{i + 1}", lvl, 'resistance') for i, lvl in enumerate(resistances)]
 
-    values = [p[1] for p in points]
+    values = [current_price] + [p[1] for p in sr_points]
     lo, hi = min(values), max(values)
     span = (hi - lo) or 1.0
 
     def pos(v):
         return 6 + ((v - lo) / span) * 88  # 6-94% so end labels aren't clipped
 
-    # Points are already in ascending price order, so their raw positions are
+    # sr_points is already in ascending price order, so raw positions are
     # monotonic - walk left to right and drop any point whose label would sit
     # too close to the previous one in the same row into the next row down
     # instead (dot position is untouched; only the label is restacked).
     MIN_GAP_PCT = 11.0
     last_left_in_row: Dict[int, float] = {}
     rows = []
-    for _, value, _ in points:
+    for _, value, _ in sr_points:
         left = pos(value)
         row = 0
         while row in last_left_in_row and left - last_left_in_row[row] < MIN_GAP_PCT:
@@ -349,11 +364,18 @@ def render_price_ladder(current_price, support_levels, resistance_levels):
         f'<div class="la-ladder-dot"></div>'
         f'<div class="la-ladder-label"><span class="la-ladder-label-name">{label}</span>${value:,.2f}</div>'
         f'</div>'
-        for (label, value, kind), row in zip(points, rows)
+        for (label, value, kind), row in zip(sr_points, rows)
     )
-    container_style = f'height:{54 + max_row * 17}px;' if max_row else ''
+    current_html = (
+        f'<div class="la-ladder-current-wrap" style="left:{pos(current_price):.1f}%;">'
+        f'<div class="la-ladder-current-label"><span class="la-ladder-label-name">Current Price</span>${current_price:,.2f}</div>'
+        f'<div class="la-ladder-current-stem"></div>'
+        f'<div class="la-ladder-current-dot"></div>'
+        f'</div>'
+    )
+    container_style = f'height:{96 + max_row * 17}px;' if max_row else ''
     st.markdown(
-        f'<div class="la-ladder" style="{container_style}"><div class="la-ladder-track"></div>{html_points}</div>',
+        f'<div class="la-ladder" style="{container_style}"><div class="la-ladder-track"></div>{current_html}{html_points}</div>',
         unsafe_allow_html=True,
     )
 
