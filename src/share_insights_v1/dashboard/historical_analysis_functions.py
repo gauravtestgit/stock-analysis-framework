@@ -466,6 +466,7 @@ def show_bulk_analysis():
             st.info(f"📅 **Latest Analysis Run**: {run_info['date']} | **Batch ID**: {run_info['batch_id']} | **Stocks Analyzed**: {run_info['stock_count']}")
         
         # Display sections
+        show_top_convergent_table(bulk_data, min_our_upside_threshold, min_analyst_upside_threshold)
         show_bullish_convergence_analysis(bulk_data, min_our_upside_threshold, min_analyst_upside_threshold)
         show_exchange_overview(bulk_data)
         show_top_performers(bulk_data)
@@ -559,27 +560,92 @@ def show_exchange_overview(bulk_data):
     # Exchange table
     st.dataframe(exchange_df, use_container_width=True)
 
+def _get_convergence_df(bulk_data, min_our_upside_threshold, min_analyst_upside_threshold):
+    """Shared convergence_df lookup + the "no data"/"nothing cleared the
+    threshold" guards, used by both show_top_convergent_table (headline,
+    rendered right under Latest Analysis Run) and show_bullish_convergence_analysis
+    (the deeper metrics/scatter view further down the page) so the two stay
+    consistent without one depending on the other's render order."""
+    our_label = f"{min_our_upside_threshold:.0f}%"
+    analyst_label = f"{min_analyst_upside_threshold:.0f}%"
+
+    if 'convergence_analysis' not in bulk_data:
+        st.info("No convergence analysis data available")
+        return None
+
+    convergence_df = pd.DataFrame(bulk_data['convergence_analysis'])
+    if convergence_df.empty:
+        st.warning(f"No bullish convergent stocks found at these thresholds (our upside ≥{our_label}, analyst upside ≥{analyst_label}). Try lowering Min Our Upside %/Min Analyst Upside % above.")
+        return None
+    return convergence_df
+
+
+def show_top_convergent_table(bulk_data, min_our_upside_threshold: float = 20.0, min_analyst_upside_threshold: float = 20.0):
+    """Headline Top Convergent Opportunities table - rendered right under
+    Latest Analysis Run so it's the first thing visible, ahead of the
+    Bullish Convergence Analysis metrics/scatter section's own narrower
+    min-methods/min-upside filtering further down the page. Filters here are
+    just ticker/method-count/methods-list on top of the already-thresholded
+    convergence_df (Min Our Upside %/Min Analyst Upside % gate the backend
+    fetch itself, so there's nothing more restrictive to apply here)."""
+    st.subheader("🏆 Top Convergent Opportunities")
+
+    convergence_df = _get_convergence_df(bulk_data, min_our_upside_threshold, min_analyst_upside_threshold)
+    if convergence_df is None:
+        return
+
+    if st.button("🔄 Refresh Analysis", key="refresh_convergence"):
+        st.rerun()
+
+    @st.fragment
+    def table_filters():
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            ticker_filter = st.text_input("Filter by Ticker", "", key="ticker_filter")
+        with col2:
+            method_count_options = [1, 2, 3]
+            method_count_filter = st.multiselect(
+                "Method Count",
+                options=method_count_options,
+                default=method_count_options,
+                key="method_count_filter"
+            )
+        with col3:
+            methods_list_filter = st.text_input("Filter by Methods", "", key="methods_list_filter",
+                                               placeholder="e.g. dcf, technical")
+
+        table_df = convergence_df.copy()
+        if ticker_filter:
+            table_df = table_df[table_df['ticker'].str.contains(ticker_filter.upper(), case=False, na=False)]
+        if method_count_filter:
+            table_df = table_df[table_df['converging_methods'].isin(method_count_filter)]
+        if methods_list_filter:
+            table_df = table_df[table_df['methods_list'].str.contains(methods_list_filter, case=False, na=False)]
+
+        display_df = table_df[['ticker', 'converging_methods', 'methods_list', 'our_upside',
+                                  'analyst_upside', 'analyst_count', 'current_price', 'analyst_target', 'quant_target']].copy()
+        display_df.columns = ['Ticker', 'Methods', 'Methods List', 'Our Upside %',
+                             'Analyst Upside %', 'Analysts', 'Current $', 'Analyst Target $', 'Quant Target $']
+
+        st.info(f"Showing all {len(display_df)} stocks matching filters")
+        st.dataframe(display_df, use_container_width=True)
+
+    table_filters()
+
+
 def show_bullish_convergence_analysis(bulk_data, min_our_upside_threshold: float = 20.0, min_analyst_upside_threshold: float = 20.0):
-    """Show bullish convergence analysis with analyst alignment.
-    min_our_upside_threshold/min_analyst_upside_threshold are the floors already
-    applied upstream (bulk_data's convergence_analysis was computed with them) -
-    the "Minimum Upside %" slider below can only narrow our_upside further from
-    there, never below it, since stocks under either floor were never included
-    in convergence_analysis to begin with."""
+    """Deeper convergence metrics/scatter/method-distribution view, with its
+    own (narrower) min-methods/min-upside filtering - the Top Convergent
+    Opportunities table itself now lives in show_top_convergent_table,
+    rendered earlier on the page."""
     our_label = f"{min_our_upside_threshold:.0f}%"
     analyst_label = f"{min_analyst_upside_threshold:.0f}%"
 
     st.subheader("🎯 Bullish Convergence Analysis (Analyst Aligned)")
     st.markdown(f"*Stocks where our methods show ≥{our_label} upside and analysts show ≥{analyst_label} upside*")
 
-    if 'convergence_analysis' not in bulk_data:
-        st.info("No convergence analysis data available")
-        return
-
-    convergence_df = pd.DataFrame(bulk_data['convergence_analysis'])
-
-    if convergence_df.empty:
-        st.warning(f"No bullish convergent stocks found at these thresholds (our upside ≥{our_label}, analyst upside ≥{analyst_label}). Try lowering Min Our Upside %/Min Analyst Upside % above.")
+    convergence_df = _get_convergence_df(bulk_data, min_our_upside_threshold, min_analyst_upside_threshold)
+    if convergence_df is None:
         return
 
     @st.fragment
@@ -593,31 +659,31 @@ def show_bullish_convergence_analysis(bulk_data, min_our_upside_threshold: float
         with col2:
             threshold_floor = int(min_our_upside_threshold)
             min_upside = st.slider("Minimum Upside %", threshold_floor, 100, threshold_floor)
-        
+
         # Apply filters
         filtered_df = convergence_df[
             (convergence_df['converging_methods'] >= min_methods) &
             (convergence_df['our_upside'] >= min_upside)
         ]
-        
+
         # Convergence metrics
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             st.metric("Convergent Stocks", len(filtered_df))
-        
+
         with col2:
             multi_method = len(filtered_df[filtered_df['converging_methods'] > 1])
             st.metric("Multi-Method", multi_method)
-        
+
         with col3:
             avg_upside = filtered_df['our_upside'].mean() if len(filtered_df) > 0 else 0
             st.metric("Avg Our Upside", f"{avg_upside:.1f}%")
-        
+
         with col4:
             avg_analyst = filtered_df['analyst_upside'].mean() if len(filtered_df) > 0 else 0
             st.metric("Avg Analyst Upside", f"{avg_analyst:.1f}%")
-        
+
         # Convergence scatter plot
         if len(filtered_df) > 0:
             fig = px.scatter(
@@ -635,68 +701,22 @@ def show_bullish_convergence_analysis(bulk_data, min_our_upside_threshold: float
             fig.add_shape(type='line', x0=min_our_upside_threshold, y0=min_analyst_upside_threshold, x1=100, y1=100,
                          line=dict(color='gray', dash='dash'))
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Top convergent stocks table
-            st.subheader("🏆 Top Convergent Opportunities")
-            
-            # Refresh button
-            if st.button("🔄 Refresh Analysis", key="refresh_convergence"):
-                st.rerun()
-            
-            @st.fragment
-            def table_filters():
-                # Additional filters for table - Min Our Upside %/Min Analyst
-                # Upside % live at the top of the page now (they gate the
-                # backend fetch itself), not duplicated here.
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    ticker_filter = st.text_input("Filter by Ticker", "", key="ticker_filter")
-                with col2:
-                    method_count_options = [1, 2, 3]
-                    method_count_filter = st.multiselect(
-                        "Method Count",
-                        options=method_count_options,
-                        default=method_count_options,
-                        key="method_count_filter"
-                    )
-                with col3:
-                    methods_list_filter = st.text_input("Filter by Methods", "", key="methods_list_filter",
-                                                       placeholder="e.g. dcf, technical")
 
-                # Apply table filters
-                table_df = filtered_df.copy()
-                if ticker_filter:
-                    table_df = table_df[table_df['ticker'].str.contains(ticker_filter.upper(), case=False, na=False)]
-                if method_count_filter:
-                    table_df = table_df[table_df['converging_methods'].isin(method_count_filter)]
-                if methods_list_filter:
-                    table_df = table_df[table_df['methods_list'].str.contains(methods_list_filter, case=False, na=False)]
-
-                display_df = table_df[['ticker', 'converging_methods', 'methods_list', 'our_upside', 
-                                          'analyst_upside', 'analyst_count', 'current_price', 'analyst_target', 'quant_target']].copy()
-                display_df.columns = ['Ticker', 'Methods', 'Methods List', 'Our Upside %', 
-                                     'Analyst Upside %', 'Analysts', 'Current $', 'Analyst Target $', 'Quant Target $']
-                
-                st.info(f"Showing all {len(display_df)} stocks matching filters")
-                st.dataframe(display_df, use_container_width=True)
-            
-            table_filters()
-            
             # Method distribution
             st.subheader("📊 Method Distribution")
             method_counts = {}
             for methods_list in filtered_df['methods_list']:
                 for method in methods_list.split(', '):
                     method_counts[method] = method_counts.get(method, 0) + 1
-            
+
             if method_counts:
                 method_df = pd.DataFrame(list(method_counts.items()), columns=['Method', 'Count'])
-                fig_methods = px.bar(method_df, x='Method', y='Count', 
+                fig_methods = px.bar(method_df, x='Method', y='Count',
                                     title="Convergent Stocks by Analysis Method")
                 st.plotly_chart(fig_methods, use_container_width=True)
         else:
             st.info("No stocks meet the current filter criteria")
-    
+
     convergence_filters()
 
 def show_top_performers(bulk_data):
