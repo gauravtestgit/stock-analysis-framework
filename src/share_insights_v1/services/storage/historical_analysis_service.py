@@ -380,7 +380,14 @@ class HistoricalAnalysisService:
         them to surface weaker-upside convergence; the dashboard's own "Min Our
         Upside %"/"Min Analyst Upside %" inputs ARE these thresholds, not a
         separate filter on top - there's nothing more restrictive underneath
-        for them to narrow further."""
+        for them to narrow further.
+
+        Requires analyst consensus data to exist at all: a ticker with no
+        analyst coverage can't be compared against min_analyst_upside_threshold,
+        so it's skipped rather than included with a None analyst_upside (which
+        used to happen via a now-removed "internal convergence" fallback mode -
+        that made the Min Analyst Upside % filter look like it wasn't applying
+        to those rows)."""
         # Group by ticker AND batch_analysis_id to avoid duplicates across batches
         ticker_batch_data = {}
         
@@ -429,54 +436,50 @@ class HistoricalAnalysisService:
                 # Try to get analyst count from raw_data
                 if analyst_analysis.raw_data and isinstance(analyst_analysis.raw_data, dict):
                     analyst_count = analyst_analysis.raw_data.get('num_analysts') or analyst_analysis.raw_data.get('analyst_count', 0)
-            
+
+            # The Min Analyst Upside % filter is always in play (no analyst
+            # data -> no number to compare against it), so a ticker with no
+            # analyst consensus at all can never belong in this result -
+            # there used to be an "internal convergence" fallback mode here
+            # that included it anyway with analyst_upside=None, which made
+            # the Min Analyst Upside % filter look broken for those rows.
+            if analyst_upside is None:
+                continue
+
             # Analyze each method for alignment
             aligned_methods = []
             method_details = {}
-            
+
             for analysis in ticker_analyses:
                 # Skip analyst_consensus and final_recommendation in convergence check
                 if analysis.analysis_type in ['analyst_consensus', 'final_recommendation']:
                     continue
-                
+
                 if not analysis.target_price or analysis.target_price <= 0:
                     continue
-                
+
                 our_upside = ((analysis.target_price - current_price) / current_price * 100)
-                
-                # MODE 1: Analyst alignment (if analyst data available)
-                if analyst_upside is not None:
-                    # Check for bullish convergence (each side clears its own threshold)
-                    if our_upside >= min_our_upside_threshold and analyst_upside >= min_analyst_upside_threshold:
-                        deviation = abs(our_upside - analyst_upside)
-                        
-                        if deviation <= 10:
-                            alignment = 'Precise_Aligned'
-                        elif deviation <= 25:
-                            alignment = 'Moderate_Aligned'
-                        else:
-                            alignment = 'Investment_Aligned'
-                        
-                        aligned_methods.append(analysis.analysis_type)
-                        method_details[analysis.analysis_type] = {
-                            'our_upside': round(our_upside, 1),
-                            'target_price': analysis.target_price,
-                            'alignment': alignment,
-                            'deviation': round(deviation, 1)
-                        }
-                # MODE 2: Internal method convergence (no analyst data)
-                else:
-                    if our_upside >= min_our_upside_threshold:
-                        aligned_methods.append(analysis.analysis_type)
-                        method_details[analysis.analysis_type] = {
-                            'our_upside': round(our_upside, 1),
-                            'target_price': analysis.target_price
-                        }
-            
-            # Require at least 1 method for analyst alignment, 2 methods for internal convergence
-            min_methods = 1 if analyst_upside is not None else 2
-            
-            if len(aligned_methods) >= min_methods:
+
+                # Check for bullish convergence (each side clears its own threshold)
+                if our_upside >= min_our_upside_threshold and analyst_upside >= min_analyst_upside_threshold:
+                    deviation = abs(our_upside - analyst_upside)
+
+                    if deviation <= 10:
+                        alignment = 'Precise_Aligned'
+                    elif deviation <= 25:
+                        alignment = 'Moderate_Aligned'
+                    else:
+                        alignment = 'Investment_Aligned'
+
+                    aligned_methods.append(analysis.analysis_type)
+                    method_details[analysis.analysis_type] = {
+                        'our_upside': round(our_upside, 1),
+                        'target_price': analysis.target_price,
+                        'alignment': alignment,
+                        'deviation': round(deviation, 1)
+                    }
+
+            if len(aligned_methods) >= 1:
                 avg_our_upside = sum(method_details[m]['our_upside'] for m in aligned_methods) / len(aligned_methods)
                 avg_target = sum(method_details[m]['target_price'] for m in aligned_methods) / len(aligned_methods)
                 
@@ -489,7 +492,7 @@ class HistoricalAnalysisService:
                     'converging_methods': len(aligned_methods),
                     'methods_list': ', '.join([m.upper() for m in aligned_methods]),
                     'our_upside': round(avg_our_upside, 1),
-                    'analyst_upside': round(analyst_upside, 1) if analyst_upside is not None else None,
+                    'analyst_upside': round(analyst_upside, 1),
                     'analyst_count': analyst_count,
                     'analyst_target': round(analyst_target, 2) if analyst_target else None,
                     'quant_target': round(quant_target, 2) if quant_target else None,
