@@ -430,11 +430,22 @@ def show_bulk_analysis():
                 st.session_state.selected_batch_id = selected_batch_id
         
         exchange_batch_selector()
-        
+
+        # Outside any @st.fragment deliberately - this threshold gates which
+        # stocks the backend even considers "converging" (see
+        # _calculate_convergence_analysis), not just a display filter on an
+        # already-fetched set, so changing it has to refetch bulk_data at the
+        # new threshold rather than just re-filtering client-side.
+        convergence_threshold = st.number_input(
+            "Convergence Upside Threshold % (both our analysis and analyst consensus must clear this)",
+            min_value=0, max_value=100, value=20, step=5, key="bulk_convergence_threshold"
+        )
+
         # Get bulk analysis data for selected batch
         bulk_data = get_bulk_analysis_data(
             st.session_state.selected_exchange if st.session_state.selected_exchange != 'All Exchanges' else None,
-            st.session_state.selected_batch_id
+            st.session_state.selected_batch_id,
+            convergence_threshold
         )
         
         if not bulk_data:
@@ -448,7 +459,7 @@ def show_bulk_analysis():
         
         # Display sections
         show_exchange_overview(bulk_data)
-        show_bullish_convergence_analysis(bulk_data)
+        show_bullish_convergence_analysis(bulk_data, convergence_threshold)
         show_top_performers(bulk_data)
         
     except Exception as e:
@@ -464,16 +475,16 @@ def get_available_exchanges():
     except:
         return {}
 
-def get_bulk_analysis_data(exchange: str = None, batch_job_id: str = None):
+def get_bulk_analysis_data(exchange: str = None, batch_job_id: str = None, min_upside_threshold: float = 20.0):
     """Get bulk analysis data from database"""
     try:
         url = "http://localhost:8000/api/history/bulk/analysis"
-        params = {}
+        params = {'min_upside_threshold': min_upside_threshold}
         if exchange:
             params['exchange'] = exchange
         if batch_job_id:
             params['batch_job_id'] = batch_job_id
-        
+
         response = requests.get(url, params=params)
         if response.status_code == 200:
             return response.json()
@@ -537,32 +548,38 @@ def show_exchange_overview(bulk_data):
     # Exchange table
     st.dataframe(exchange_df, use_container_width=True)
 
-def show_bullish_convergence_analysis(bulk_data):
-    """Show bullish convergence analysis with analyst alignment"""
-    
+def show_bullish_convergence_analysis(bulk_data, convergence_threshold: float = 20.0):
+    """Show bullish convergence analysis with analyst alignment.
+    convergence_threshold is the floor already applied upstream (bulk_data's
+    convergence_analysis was computed with it) - the "Minimum Upside %" slider
+    below can only narrow further from there, never below it, since stocks
+    under that floor were never included in convergence_analysis to begin with."""
+    threshold_label = f"{convergence_threshold:.0f}%"
+
     st.subheader("🎯 Bullish Convergence Analysis (Analyst Aligned)")
-    st.markdown("*Stocks where our methods agree with analysts on ≥20% upside*")
-    
+    st.markdown(f"*Stocks where our methods agree with analysts on ≥{threshold_label} upside*")
+
     if 'convergence_analysis' not in bulk_data:
         st.info("No convergence analysis data available")
         return
-    
+
     convergence_df = pd.DataFrame(bulk_data['convergence_analysis'])
-    
+
     if convergence_df.empty:
-        st.warning("No bullish convergent stocks found. This means no stocks have both our analysis and analyst consensus showing ≥20% upside.")
+        st.warning(f"No bullish convergent stocks found. This means no stocks have both our analysis and analyst consensus showing ≥{threshold_label} upside. Try lowering the Convergence Upside Threshold above.")
         return
-    
+
     @st.fragment
     def convergence_filters():
         # Filters
         col1, col2 = st.columns(2)
-        
+
         with col1:
             min_methods = st.slider("Minimum Converging Methods", 1, 6, 1)
-        
+
         with col2:
-            min_upside = st.slider("Minimum Upside %", 20, 100, 20)
+            threshold_floor = int(convergence_threshold)
+            min_upside = st.slider("Minimum Upside %", threshold_floor, 100, threshold_floor)
         
         # Apply filters
         filtered_df = convergence_df[
@@ -600,8 +617,9 @@ def show_bullish_convergence_analysis(bulk_data):
                 title="Bullish Convergence: Our Upside vs Analyst Upside",
                 labels={'our_upside': 'Our Upside %', 'analyst_upside': 'Analyst Upside %'}
             )
-            # Add diagonal line (perfect agreement)
-            fig.add_shape(type='line', x0=20, y0=20, x1=100, y1=100, 
+            # Add diagonal line (perfect agreement), starting where the data
+            # actually starts rather than a hardcoded 20
+            fig.add_shape(type='line', x0=convergence_threshold, y0=convergence_threshold, x1=100, y1=100,
                          line=dict(color='gray', dash='dash'))
             st.plotly_chart(fig, use_container_width=True)
             

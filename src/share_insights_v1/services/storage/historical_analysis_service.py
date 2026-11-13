@@ -200,7 +200,7 @@ class HistoricalAnalysisService:
         finally:
             db.close()
     
-    def get_bulk_analysis_data(self, exchange: str = None, batch_job_id: str = None) -> Dict[str, Any]:
+    def get_bulk_analysis_data(self, exchange: str = None, batch_job_id: str = None, min_upside_threshold: float = 20.0) -> Dict[str, Any]:
         """Get bulk analysis data for dashboard"""
         db = SessionLocal()
         try:
@@ -248,7 +248,7 @@ class HistoricalAnalysisService:
             exchange_summary = self._calculate_exchange_summary(analyses)
             
             # Bullish convergence analysis
-            convergence_analysis = self._calculate_convergence_analysis(analyses)
+            convergence_analysis = self._calculate_convergence_analysis(analyses, min_upside_threshold)
             
             # Method performance
             method_performance = self._calculate_method_performance(analyses)
@@ -372,8 +372,13 @@ class HistoricalAnalysisService:
         
         return result
     
-    def _calculate_convergence_analysis(self, analyses: List[AnalysisHistory]) -> List[Dict[str, Any]]:
-        """Calculate bullish convergence analysis with analyst alignment (20% threshold)"""
+    def _calculate_convergence_analysis(self, analyses: List[AnalysisHistory], min_upside_threshold: float = 20.0) -> List[Dict[str, Any]]:
+        """Calculate bullish convergence analysis with analyst alignment.
+        min_upside_threshold gates which methods count as "converging" (both our
+        upside AND analyst upside must clear it) - stocks below it are excluded
+        from the result entirely, not just hidden by a dashboard filter. Lower it
+        to surface weaker-upside convergence; the dashboard's own upside filters
+        can only narrow within whatever this returned, not go below it."""
         # Group by ticker AND batch_analysis_id to avoid duplicates across batches
         ticker_batch_data = {}
         
@@ -439,8 +444,8 @@ class HistoricalAnalysisService:
                 
                 # MODE 1: Analyst alignment (if analyst data available)
                 if analyst_upside is not None:
-                    # Check for bullish convergence (both >= 20% upside)
-                    if our_upside >= 20 and analyst_upside >= 20:
+                    # Check for bullish convergence (both >= threshold)
+                    if our_upside >= min_upside_threshold and analyst_upside >= min_upside_threshold:
                         deviation = abs(our_upside - analyst_upside)
                         
                         if deviation <= 10:
@@ -459,7 +464,7 @@ class HistoricalAnalysisService:
                         }
                 # MODE 2: Internal method convergence (no analyst data)
                 else:
-                    if our_upside >= 20:
+                    if our_upside >= min_upside_threshold:
                         aligned_methods.append(analysis.analysis_type)
                         method_details[analysis.analysis_type] = {
                             'our_upside': round(our_upside, 1),

@@ -72,11 +72,11 @@ async def get_thesis_evolution(ticker: str) -> List[Dict[str, Any]]:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/history/bulk/analysis")
-async def get_bulk_analysis(exchange: str = None, batch_job_id: str = None) -> Dict[str, Any]:
+async def get_bulk_analysis(exchange: str = None, batch_job_id: str = None, min_upside_threshold: float = 20.0) -> Dict[str, Any]:
     """Get bulk analysis data for dashboard"""
     try:
         service = HistoricalAnalysisService()
-        return service.get_bulk_analysis_data(exchange, batch_job_id)
+        return service.get_bulk_analysis_data(exchange, batch_job_id, min_upside_threshold)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
