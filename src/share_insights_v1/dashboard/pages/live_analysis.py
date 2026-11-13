@@ -26,7 +26,9 @@ from src.share_insights_v1.dashboard.components.theme import (
     section_label,
     render_kv_table,
     render_price_ladder,
+    render_rsi_target_ladder,
 )
+from src.share_insights_v1.implementations.analyzers.technical_analyzer import project_rsi_target_price_range
 from src.share_insights_v1.dashboard.login_page import check_authentication, render_navigation
 from src.share_insights_v1.implementations.llm_providers.llm_manager import LLMManager
 from src.share_insights_v1.utils.prompt_loader import ThesisPromptLoader
@@ -306,6 +308,46 @@ def _render_technical_details(data: dict, ticker: str, fm: dict):
                 ("S1", f"${pivots.get('s1', 0) or 0:.2f}"),
                 ("S2", f"${pivots.get('s2', 0) or 0:.2f}"),
             ], cols=5)
+
+    rsi_state = data.get('rsi_wilder_state') or {}
+    if rsi_state and data.get('current_price') is not None:
+        section_label("RSI Target Price Range")
+        st.caption(
+            "Estimated price range needed to move RSI(14) into a target band over N trading days. "
+            "RSI depends on the whole path of daily gains/losses, not just the net price change, so "
+            "this assumes one path (a constant daily % return) - a choppier path to the same RSI "
+            "band can land at a different price."
+        )
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            rsi_target_low = st.number_input(
+                "Target RSI (low)", min_value=1, max_value=98, value=30, key=f"la_rsi_target_low_{ticker}"
+            )
+        with col2:
+            rsi_target_high = st.number_input(
+                "Target RSI (high)", min_value=2, max_value=99, value=70, key=f"la_rsi_target_high_{ticker}"
+            )
+        with col3:
+            rsi_target_days = st.number_input(
+                "Trading days ahead", min_value=1, max_value=60, value=5, key=f"la_rsi_target_days_{ticker}"
+            )
+
+        if rsi_target_low >= rsi_target_high:
+            st.warning("Target RSI (low) must be less than Target RSI (high)")
+        else:
+            projection = project_rsi_target_price_range(
+                data['current_price'], rsi_state['avg_gain'], rsi_state['avg_loss'], rsi_state['period'],
+                rsi_target_low, rsi_target_high, int(rsi_target_days),
+            )
+            if projection:
+                render_rsi_target_ladder(
+                    data['current_price'], projection['price_low'], projection['price_high'],
+                    rsi_target_low, rsi_target_high,
+                )
+                render_kv_table([
+                    (f"Price @ RSI {rsi_target_low:.0f}", f"${projection['price_low']:.2f}"),
+                    (f"Price @ RSI {rsi_target_high:.0f}", f"${projection['price_high']:.2f}"),
+                ], cols=2)
 
     if ticker:
         try:
