@@ -316,41 +316,31 @@ def section_label(text: str):
     st.markdown(f'<div class="la-section-label">{text}</div>', unsafe_allow_html=True)
 
 
-def render_price_ladder(current_price, support_levels, resistance_levels):
-    """Horizontal number-line: S2--S1--(price on a stem above)--R1--R2.
-    Support/resistance points sit directly on the track at their true
-    proportional position; current price is always drawn ABOVE the track on
-    its own connector stem rather than inline with the other labels, so it
-    can never collide with a support/resistance label even when price sits
-    right on top of a level. Support/resistance labels can still collide
-    with each other (e.g. two close support levels) - those fall back to
-    row-stacking, same as before."""
-    supports = [lvl for lvl in (support_levels or []) if lvl]
-    resistances = [lvl for lvl in (resistance_levels or []) if lvl]
-    if current_price is None or (not supports and not resistances):
+def _render_ladder(current_price, points):
+    """Shared number-line renderer: current price always drawn ABOVE the
+    track on its own connector stem (so it can never collide with another
+    label no matter how close it sits to one), while every other `points`
+    entry - (label, value, 'support'|'resistance') - sits on the track at
+    its true proportional position, falling back to row-stacking if two of
+    them land close enough together to collide with each other."""
+    if current_price is None or not points:
         return
 
-    # support_levels[0] is S1 (closest below price), support_levels[1] is S2
-    # (further below), etc. - reverse so the furthest support renders
-    # leftmost: S2, S1, ..., R1, R2.
-    sr_points = [(f"S{len(supports) - i}", lvl, 'support') for i, lvl in enumerate(reversed(supports))]
-    sr_points += [(f"R{i + 1}", lvl, 'resistance') for i, lvl in enumerate(resistances)]
-
-    values = [current_price] + [p[1] for p in sr_points]
+    values = [current_price] + [p[1] for p in points]
     lo, hi = min(values), max(values)
     span = (hi - lo) or 1.0
 
     def pos(v):
         return 6 + ((v - lo) / span) * 88  # 6-94% so end labels aren't clipped
 
-    # sr_points is already in ascending price order, so raw positions are
+    # points is already in ascending value order, so raw positions are
     # monotonic - walk left to right and drop any point whose label would sit
     # too close to the previous one in the same row into the next row down
     # instead (dot position is untouched; only the label is restacked).
     MIN_GAP_PCT = 11.0
     last_left_in_row: Dict[int, float] = {}
     rows = []
-    for _, value, _ in sr_points:
+    for _, value, _ in points:
         left = pos(value)
         row = 0
         while row in last_left_in_row and left - last_left_in_row[row] < MIN_GAP_PCT:
@@ -364,7 +354,7 @@ def render_price_ladder(current_price, support_levels, resistance_levels):
         f'<div class="la-ladder-dot"></div>'
         f'<div class="la-ladder-label"><span class="la-ladder-label-name">{label}</span>${value:,.2f}</div>'
         f'</div>'
-        for (label, value, kind), row in zip(sr_points, rows)
+        for (label, value, kind), row in zip(points, rows)
     )
     current_html = (
         f'<div class="la-ladder-current-wrap" style="left:{pos(current_price):.1f}%;">'
@@ -378,6 +368,35 @@ def render_price_ladder(current_price, support_levels, resistance_levels):
         f'<div class="la-ladder" style="{container_style}"><div class="la-ladder-track"></div>{current_html}{html_points}</div>',
         unsafe_allow_html=True,
     )
+
+
+def render_price_ladder(current_price, support_levels, resistance_levels):
+    """Horizontal number-line: S2--S1--(price on a stem above)--R1--R2."""
+    supports = [lvl for lvl in (support_levels or []) if lvl]
+    resistances = [lvl for lvl in (resistance_levels or []) if lvl]
+    if not supports and not resistances:
+        return
+
+    # support_levels[0] is S1 (closest below price), support_levels[1] is S2
+    # (further below), etc. - reverse so the furthest support renders
+    # leftmost: S2, S1, ..., R1, R2.
+    points = [(f"S{len(supports) - i}", lvl, 'support') for i, lvl in enumerate(reversed(supports))]
+    points += [(f"R{i + 1}", lvl, 'resistance') for i, lvl in enumerate(resistances)]
+    _render_ladder(current_price, points)
+
+
+def render_rsi_target_ladder(current_price, price_low, price_high, rsi_low, rsi_high):
+    """Horizontal number-line showing the price range a target RSI band maps
+    to (see project_rsi_target_price_range) - reuses the same track/stem
+    visual as render_price_ladder, with the band's low/high price in place
+    of support/resistance."""
+    if price_low is None or price_high is None:
+        return
+    points = [
+        (f"RSI {rsi_low:.0f}", price_low, 'support'),
+        (f"RSI {rsi_high:.0f}", price_high, 'resistance'),
+    ]
+    _render_ladder(current_price, points)
 
 
 def render_kv_table(pairs, cols=2):

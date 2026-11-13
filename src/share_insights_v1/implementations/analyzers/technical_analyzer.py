@@ -136,6 +136,23 @@ class TechnicalAnalyzer(IAnalyzer):
             # RSI
             df['rsi'] = pd_ta.rsi(df['Close'], length=14)
             rsi_14 = df['rsi'].iloc[-1] if not df['rsi'].isna().iloc[-1] else None
+
+            # Wilder's smoothed avg gain/loss as of the latest bar - the same
+            # running state pd_ta.rsi keeps internally (it isn't exposed on the
+            # Series it returns). Recomputed here via ewm(alpha=1/14, adjust=False)
+            # rather than pd_ta's own SMA-seeded warm-up, which only differs from
+            # this during the first ~14 bars and is already fully decayed away
+            # for any ticker with real history - this lets rsi_target_price_range
+            # project RSI forward day-by-day from today's actual state instead of
+            # just the single rsi_14 number.
+            rsi_wilder_state = None
+            if rsi_14 is not None and len(df) > 14:
+                delta = df['Close'].diff()
+                gain = delta.clip(lower=0)
+                loss = (-delta).clip(lower=0)
+                avg_gain = gain.ewm(alpha=1 / 14, adjust=False).mean().iloc[-1]
+                avg_loss = loss.ewm(alpha=1 / 14, adjust=False).mean().iloc[-1]
+                rsi_wilder_state = {'avg_gain': float(avg_gain), 'avg_loss': float(avg_loss), 'period': 14}
             
             # MACD
             macd_data = pd_ta.macd(df['Close'])
@@ -232,6 +249,7 @@ class TechnicalAnalyzer(IAnalyzer):
                 'distance_from_low': (current_price - low_52w) / low_52w,
                 'volume_trend': f"Average Daily Volume: {avg_volume:,.0f}, Trend: " + ('Above Average' if recent_volume > avg_volume * 1.2 else 'Below Average' if recent_volume < avg_volume * 0.8 else 'Normal'),
                 'rsi_14': rsi_14,
+                'rsi_wilder_state': rsi_wilder_state,
                 'macd_line': macd_line,
                 'macd_signal': macd_signal,
                 'macd_histogram': macd_histogram,
@@ -664,3 +682,67 @@ class TechnicalAnalyzer(IAnalyzer):
     def is_applicable(self, company_type: str) -> bool:
         """Technical analysis applies to all company types"""
         return True
+
+
+def project_rsi_target_price_range(
+    current_price: float,
+    avg_gain: float,
+    avg_loss: float,
+    period: int,
+    target_rsi_low: float,
+    target_rsi_high: float,
+    days: int,
+) -> Dict[str, Any]:
+    """Derive the price range that would move Wilder's RSI into
+    [target_rsi_low, target_rsi_high] after `days` trading days.
+
+    RSI depends on the whole path of daily gains/losses, not just the net
+    price change, so there's no single price per RSI value for days > 1 -
+    many different paths land on the same RSI at different prices. This
+    picks one path (a constant daily % return, compounded for `days` days)
+    and solves for the return that drives RSI to each target bound, since
+    RSI under that path is monotonic in the daily return. The result is a
+    "if price moves steadily this way" estimate, not a guaranteed bound.
+    """
+    if current_price is None or avg_gain is None or avg_loss is None or days < 1:
+        return None
+
+    alpha = 1.0 / period
+
+    def final_rsi_and_price(daily_return: float):
+        price = current_price
+        ag, al = avg_gain, avg_loss
+        for _ in range(days):
+            new_price = price * (1 + daily_return)
+            change = new_price - price
+            gain = max(change, 0.0)
+            loss = max(-change, 0.0)
+            ag = ag * (1 - alpha) + gain * alpha
+            al = al * (1 - alpha) + loss * alpha
+            price = new_price
+        if al <= 1e-9:
+            return 100.0, price
+        rsi = 100 - 100 / (1 + ag / al)
+        return rsi, price
+
+    def solve_for_rsi(target_rsi: float) -> float:
+        target_rsi = max(0.5, min(99.5, target_rsi))
+        lo_r, hi_r = -0.5, 0.5  # +/-50%/day compounded is far beyond any real path
+        for _ in range(50):
+            mid = (lo_r + hi_r) / 2
+            rsi_mid, _ = final_rsi_and_price(mid)
+            if rsi_mid < target_rsi:
+                lo_r = mid
+            else:
+                hi_r = mid
+        _, price = final_rsi_and_price((lo_r + hi_r) / 2)
+        return price
+
+    price_low, price_high = sorted([solve_for_rsi(target_rsi_low), solve_for_rsi(target_rsi_high)])
+    return {
+        'price_low': price_low,
+        'price_high': price_high,
+        'days': days,
+        'target_rsi_low': target_rsi_low,
+        'target_rsi_high': target_rsi_high,
+    }
