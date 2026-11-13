@@ -458,8 +458,8 @@ def show_bulk_analysis():
             st.info(f"📅 **Latest Analysis Run**: {run_info['date']} | **Batch ID**: {run_info['batch_id']} | **Stocks Analyzed**: {run_info['stock_count']}")
         
         # Display sections
-        show_exchange_overview(bulk_data)
         show_bullish_convergence_analysis(bulk_data, convergence_threshold)
+        show_exchange_overview(bulk_data)
         show_top_performers(bulk_data)
         
     except Exception as e:
