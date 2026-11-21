@@ -1265,6 +1265,48 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
             'Free': [f / i_cf_scale for f in i_free_cf],
         }).set_index('Period'), height=200)
 
+    # Trailing ~2 years of quarterly revenue, independent of fiscal-year
+    # boundaries (unlike the "Current Financial Year So Far" chart above,
+    # which only covers the still-open FY). Each bar's YoY% compares it to
+    # the same quarter ~1 year earlier when Yahoo actually has that quarter -
+    # some tickers (e.g. MEOH) have gaps in quarterly_income_stmt that make
+    # only a subset of quarters YoY-comparable.
+    quarterly_revenue_all = revenue_data_statements.get('quarterly_revenue', {})
+    if quarterly_revenue_all:
+        section_label("Quarterly Revenue — Last 2 Years (YoY)")
+        q_dates = sorted(quarterly_revenue_all.keys())[-8:]
+        q_labels = [d[:7] for d in q_dates]
+        q_values = [quarterly_revenue_all[d] for d in q_dates]
+
+        q_yoy = []
+        for date_str in q_dates:
+            ts = pd.Timestamp(date_str)
+            prior_match = next(
+                (d for d in quarterly_revenue_all
+                 if d != date_str and 350 <= (ts - pd.Timestamp(d)).days <= 380),
+                None
+            )
+            prior_value = quarterly_revenue_all.get(prior_match) if prior_match else None
+            if prior_value:
+                q_yoy.append((quarterly_revenue_all[date_str] - prior_value) / prior_value * 100)
+            else:
+                q_yoy.append(None)
+
+        q_scale, q_rev_label = get_scale_and_label(max(abs(v) for v in q_values))
+        qy_col1, qy_col2 = st.columns(2)
+        with qy_col1:
+            st.markdown(f"**Quarterly Revenue ({q_rev_label})**")
+            st.bar_chart(pd.DataFrame({'Quarter': q_labels, 'Revenue': [v / q_scale for v in q_values]}).set_index('Quarter'),
+                         height=220)
+        with qy_col2:
+            st.markdown("**YoY Change by Quarter (%)**")
+            if any(v is not None for v in q_yoy):
+                st.bar_chart(pd.DataFrame({'Quarter': q_labels, 'YoY %': [v if v is not None else 0 for v in q_yoy]}).set_index('Quarter'),
+                             height=220)
+                st.caption("Each bar compares that quarter's revenue to the same quarter one year earlier. Bars read 0% where Yahoo doesn't have a matching year-ago quarter.")
+            else:
+                st.caption("Not enough quarterly history from Yahoo Finance to compute YoY comparisons.")
+
 
 def _financial_figures_pairs(fm):
     """Revenue/Gross Income/Net Income/Op CF/Free CF plus Gross/Operating/Net
@@ -1361,7 +1403,15 @@ def _render_overview_compact(ticker, data, analyses):
 
     market_cap = fm.get('market_cap') or 0
     roe = fm.get('roe')
+    # Yahoo's info.revenueGrowth: YoY change for ONE specific quarter, not a
+    # trailing-year figure - label it with that quarter so it isn't read as
+    # an annual number (see yearly_revenue_growth below for the real annual calc).
     revenue_growth = fm.get('revenue_growth')
+    revenue_growth_quarter = fm.get('revenue_growth_quarter')
+    revenue_growth_label = "Revenue Growth (Qtr YoY)"
+    if revenue_growth_quarter:
+        revenue_growth_label += f" as of {revenue_growth_quarter[:7]}"
+    yearly_revenue_growth = fm.get('yearly_revenue_growth')
     div_yield = (fm.get('dividend_info') or {}).get('dividend_yield') or 0
 
     dividend_info = fm.get('dividend_info') or {}
@@ -1379,7 +1429,8 @@ def _render_overview_compact(ticker, data, analyses):
         ("P/E Ratio", fm.get('pe_ratio', 'N/A')),
         ("Forward P/E", _fmt_num(forward_pe)),
         ("ROE", f"{roe*100:.1f}%" if isinstance(roe, (int, float)) else "N/A"),
-        ("Revenue Growth", f"{revenue_growth*100:.1f}%" if isinstance(revenue_growth, (int, float)) else "N/A"),
+        ("Revenue Growth (Annual)", f"{yearly_revenue_growth*100:.1f}%" if isinstance(yearly_revenue_growth, (int, float)) else "N/A"),
+        (revenue_growth_label, f"{revenue_growth*100:.1f}%" if isinstance(revenue_growth, (int, float)) else "N/A"),
         ("Forward EPS", _fmt_num(forward_eps, prefix="$")),
         ("Current EPS", _fmt_num(current_eps, prefix="$")),
         ("Dividend Yield", _fmt_num(div_yield, suffix="%")),

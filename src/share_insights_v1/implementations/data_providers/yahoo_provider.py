@@ -98,7 +98,28 @@ class YahooFinanceProvider(IDataProvider):
         revenue_data['revenue_growth'] = info.get('revenueGrowth', 0)
         revenue_data['current_net_income'] = info.get('netIncomeToCommon', 0)
         revenue_data['quarterly_revenue_growth'] = info.get('quarterlyRevenueGrowth', 0)
-        
+
+        # info['revenueGrowth'] is Yahoo's YoY growth for the single most recent
+        # reported quarter, not an annual figure - surface which quarter that is
+        # (and the year-ago quarter it's measured against, when Yahoo actually
+        # has one) so callers can label the number honestly instead of implying
+        # a full-year calculation.
+        quarterly_revenue = revenue_data.get('quarterly_revenue') or {}
+        if quarterly_revenue:
+            from datetime import datetime
+            latest_q = max(quarterly_revenue.keys())
+            revenue_data['revenue_growth_quarter'] = latest_q
+            try:
+                latest_dt = datetime.strptime(latest_q, '%Y-%m-%d %H:%M:%S')
+                prior_q = next(
+                    (d for d in quarterly_revenue
+                     if d != latest_q and 350 <= (latest_dt - datetime.strptime(d, '%Y-%m-%d %H:%M:%S')).days <= 380),
+                    None
+                )
+                revenue_data['revenue_growth_prior_year_quarter'] = prior_q
+            except ValueError:
+                revenue_data['revenue_growth_prior_year_quarter'] = None
+
         return revenue_data
     
     def get_financial_metrics(self, ticker: str) -> Dict[str, Any]:
@@ -197,10 +218,22 @@ class YahooFinanceProvider(IDataProvider):
                 'total_revenue': info.get('totalRevenue', 0),
                 'net_income': info.get('netIncomeToCommon', 0),
                 'current_revenue': f"${revenue_data.get('current_revenue'):,.2f}",
-                'yearly_revenue_growth': revenue_data.get('revenue_growth'),
+                # Was revenue_data['revenue_growth'] (= info['revenueGrowth']), which despite
+                # the 'yearly_' name is Yahoo's single-most-recent-quarter YoY growth, not an
+                # annual figure - a steadily declining annual revenue trend could (and did, for
+                # MEOH) show a large positive "yearly_revenue_growth" driven entirely by one
+                # quarter's comparison. recent_annual_growth is the real FY-over-FY calc from
+                # the annual income statement; /100 converts it from percentage-points to the
+                # same 0-1 fraction convention every consumer of this field already expects.
+                'yearly_revenue_growth': (
+                    revenue_data['recent_annual_growth'] / 100
+                    if revenue_data.get('recent_annual_growth') is not None else None
+                ),
                 'quarterly_revenue_growth': revenue_data.get('quarterly_revenue_growth'),
                 'calculated_annual_growth': revenue_data.get('recent_annual_growth', 0),
                 'calculated_quarterly_growth': revenue_data.get('recent_quarterly_growth', 0),
+                'revenue_growth_quarter': revenue_data.get('revenue_growth_quarter'),
+                'revenue_growth_prior_year_quarter': revenue_data.get('revenue_growth_prior_year_quarter'),
                 'revenue_data_statements': revenue_data,  # Include full revenue trend data
                 'free_cash_flow': fcf,
                 'total_debt': info.get('totalDebt', 0) or 0,
