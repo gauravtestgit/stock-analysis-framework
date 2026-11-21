@@ -1265,47 +1265,41 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
             'Free': [f / i_cf_scale for f in i_free_cf],
         }).set_index('Period'), height=200)
 
-    # Trailing ~2 years of quarterly revenue, independent of fiscal-year
-    # boundaries (unlike the "Current Financial Year So Far" chart above,
-    # which only covers the still-open FY). Each bar's YoY% compares it to
-    # the same quarter ~1 year earlier when Yahoo actually has that quarter -
-    # some tickers (e.g. MEOH) have gaps in quarterly_income_stmt that make
-    # only a subset of quarters YoY-comparable.
+    # Last 4 quarters, each paired side-by-side with the same quarter a year
+    # earlier (independent of fiscal-year boundaries, unlike the "Current
+    # Financial Year So Far" chart above, which only covers the still-open
+    # FY). One grouped bar chart, 2 colors per quarter position, instead of a
+    # separate revenue chart + YoY% chart - some tickers (e.g. MEOH) have
+    # gaps in quarterly_income_stmt that leave a pair incomplete; that pair's
+    # "Last Year" bar just reads 0.
     quarterly_revenue_all = revenue_data_statements.get('quarterly_revenue', {})
     if quarterly_revenue_all:
-        section_label("Quarterly Revenue — Last 2 Years (YoY)")
-        q_dates = sorted(quarterly_revenue_all.keys())[-8:]
-        q_labels = [d[:7] for d in q_dates]
-        q_values = [quarterly_revenue_all[d] for d in q_dates]
+        section_label("Quarterly Revenue — This Year vs Last Year")
+        last_4_desc = sorted(quarterly_revenue_all.keys(), reverse=True)[:4]
+        last_4 = list(reversed(last_4_desc))  # oldest to newest, left to right
 
-        q_yoy = []
-        for date_str in q_dates:
+        q_labels, current_vals, prior_vals = [], [], []
+        for date_str in last_4:
             ts = pd.Timestamp(date_str)
+            q_labels.append(date_str[:7])
+            current_vals.append(quarterly_revenue_all.get(date_str))
             prior_match = next(
                 (d for d in quarterly_revenue_all
                  if d != date_str and 350 <= (ts - pd.Timestamp(d)).days <= 380),
                 None
             )
-            prior_value = quarterly_revenue_all.get(prior_match) if prior_match else None
-            if prior_value:
-                q_yoy.append((quarterly_revenue_all[date_str] - prior_value) / prior_value * 100)
-            else:
-                q_yoy.append(None)
+            prior_vals.append(quarterly_revenue_all.get(prior_match) if prior_match else None)
 
-        q_scale, q_rev_label = get_scale_and_label(max(abs(v) for v in q_values))
-        qy_col1, qy_col2 = st.columns(2)
-        with qy_col1:
+        all_vals = [v for v in current_vals + prior_vals if v]
+        if all_vals:
+            q_scale, q_rev_label = get_scale_and_label(max(abs(v) for v in all_vals))
             st.markdown(f"**Quarterly Revenue ({q_rev_label})**")
-            st.bar_chart(pd.DataFrame({'Quarter': q_labels, 'Revenue': [v / q_scale for v in q_values]}).set_index('Quarter'),
-                         height=220)
-        with qy_col2:
-            st.markdown("**YoY Change by Quarter (%)**")
-            if any(v is not None for v in q_yoy):
-                st.bar_chart(pd.DataFrame({'Quarter': q_labels, 'YoY %': [v if v is not None else 0 for v in q_yoy]}).set_index('Quarter'),
-                             height=220)
-                st.caption("Each bar compares that quarter's revenue to the same quarter one year earlier. Bars read 0% where Yahoo doesn't have a matching year-ago quarter.")
-            else:
-                st.caption("Not enough quarterly history from Yahoo Finance to compute YoY comparisons.")
+            st.bar_chart(pd.DataFrame({
+                'Quarter': q_labels,
+                'This Year': [v / q_scale if v else 0 for v in current_vals],
+                'Last Year': [v / q_scale if v else 0 for v in prior_vals],
+            }).set_index('Quarter'), height=240)
+            st.caption("Each quarter pairs this year's revenue with the same quarter one year earlier. \"Last Year\" reads 0 where Yahoo doesn't have that year-ago quarter.")
 
 
 def _financial_figures_pairs(fm):
