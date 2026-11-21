@@ -1265,30 +1265,31 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
             'Free': [f / i_cf_scale for f in i_free_cf],
         }).set_index('Period'), height=200)
 
-    # Last 4 quarters, each paired side-by-side with the same quarter a year
-    # earlier (independent of fiscal-year boundaries, unlike the "Current
-    # Financial Year So Far" chart above, which only covers the still-open
-    # FY). One grouped bar chart, 2 colors per quarter position, instead of a
-    # separate revenue chart + YoY% chart - some tickers (e.g. MEOH) have
-    # gaps in quarterly_income_stmt that leave a pair incomplete; that pair's
-    # "Last Year" bar just reads 0.
+    # This year's quarters so far (as few as 1 if we're early in the FY)
+    # paired against the full previous calendar year's quarters - not a
+    # trailing "last 4 dates" window, which would silently drop the previous
+    # year's not-yet-lapped quarters (e.g. sitting in Q3 of the current year
+    # would only pull Q4/Q1/Q2/Q3, missing the prior year's Q4 entirely).
+    # Quarters are paired across years by reporting month, since a company's
+    # fiscal quarters recur on the same month every year regardless of
+    # calendar-year boundaries. One grouped bar chart, 2 colors per quarter
+    # position, instead of a separate revenue chart + YoY% chart - some
+    # tickers (e.g. MEOH) have gaps in quarterly_income_stmt that leave a
+    # year's quarter missing; that bar just reads 0.
     quarterly_revenue_all = revenue_data_statements.get('quarterly_revenue', {})
     if quarterly_revenue_all:
         section_label("Quarterly Revenue — This Year vs Last Year")
-        last_4_desc = sorted(quarterly_revenue_all.keys(), reverse=True)[:4]
-        last_4 = list(reversed(last_4_desc))  # oldest to newest, left to right
+        all_dates = sorted(quarterly_revenue_all.keys())
+        current_year = int(all_dates[-1][:4])
+        previous_year = current_year - 1
 
-        q_labels, current_vals, prior_vals = [], [], []
-        for date_str in last_4:
-            ts = pd.Timestamp(date_str)
-            q_labels.append(date_str[:7])
-            current_vals.append(quarterly_revenue_all.get(date_str))
-            prior_match = next(
-                (d for d in quarterly_revenue_all
-                 if d != date_str and 350 <= (ts - pd.Timestamp(d)).days <= 380),
-                None
-            )
-            prior_vals.append(quarterly_revenue_all.get(prior_match) if prior_match else None)
+        current_by_month = {d[5:7]: quarterly_revenue_all[d] for d in all_dates if int(d[:4]) == current_year}
+        previous_by_month = {d[5:7]: quarterly_revenue_all[d] for d in all_dates if int(d[:4]) == previous_year}
+        months = sorted(set(current_by_month) | set(previous_by_month))
+
+        q_labels = [pd.Timestamp(f"2001-{m}-01").strftime("%b") for m in months]
+        current_vals = [current_by_month.get(m) for m in months]
+        prior_vals = [previous_by_month.get(m) for m in months]
 
         all_vals = [v for v in current_vals + prior_vals if v]
         if all_vals:
@@ -1296,10 +1297,10 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
             st.markdown(f"**Quarterly Revenue ({q_rev_label})**")
             st.bar_chart(pd.DataFrame({
                 'Quarter': q_labels,
-                'This Year': [v / q_scale if v else 0 for v in current_vals],
-                'Last Year': [v / q_scale if v else 0 for v in prior_vals],
+                f'{current_year}': [v / q_scale if v else 0 for v in current_vals],
+                f'{previous_year}': [v / q_scale if v else 0 for v in prior_vals],
             }).set_index('Quarter'), height=240)
-            st.caption("Each quarter pairs this year's revenue with the same quarter one year earlier. \"Last Year\" reads 0 where Yahoo doesn't have that year-ago quarter.")
+            st.caption(f"Each quarter-end month pairs {current_year}'s revenue with {previous_year}'s. A bar reads 0 where Yahoo doesn't have that year's quarter.")
 
 
 def _financial_figures_pairs(fm):
