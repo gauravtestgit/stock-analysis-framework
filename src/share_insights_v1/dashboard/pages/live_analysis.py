@@ -1303,7 +1303,7 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
                 'Quarter': q_labels,
                 f'{current_year}': [v / q_scale if v else 0 for v in current_vals],
                 f'{previous_year}': [v / q_scale if v else 0 for v in prior_vals],
-            }).set_index('Quarter'), height=240)
+            }).set_index('Quarter'), height=240, stack=False)  # side-by-side bars, not stacked on top of each other
             st.caption(f"Each quarter-end month pairs {current_year}'s revenue with {previous_year}'s. A bar reads 0 where Yahoo doesn't have that year's quarter.")
 
 
