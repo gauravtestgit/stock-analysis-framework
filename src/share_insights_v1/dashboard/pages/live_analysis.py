@@ -43,6 +43,10 @@ AVAILABLE_ANALYZERS = [
     "competitive_position", "management_quality"
 ]
 
+# industry_analysis and competitive_position are slow/low-signal enough that
+# they shouldn't run by default - still selectable manually from the dropdown.
+DEFAULT_ANALYZERS = [a for a in AVAILABLE_ANALYZERS if a not in ("industry_analysis", "competitive_position")]
+
 ANALYZER_LABELS = {
     'dcf': 'DCF Analysis',
     'technical': 'Technical Analysis',
@@ -1520,7 +1524,7 @@ def render_configure_section():
         # widgets' last known values from session_state (same keys those widgets
         # use further down) since this fires independently of the mode radio.
         if st.button("Analyze All Watchlist Stocks", key="la_analyze_batch", disabled=not watchlist):
-            batch_analyzers = st.session_state.get("la_batch_analyzers", AVAILABLE_ANALYZERS)
+            batch_analyzers = st.session_state.get("la_batch_analyzers", DEFAULT_ANALYZERS)
             batch_web_scraping = st.session_state.get("la_batch_scrape", False)
             batch_llm_sentiment = st.session_state.get("la_batch_llm_sent", False)
             batch_max_news_articles = st.session_state.get("la_batch_news_n", 7)
@@ -1552,7 +1556,7 @@ def render_configure_section():
                 max_news_articles = st.number_input("Max News Articles", min_value=1, max_value=20, value=5, key="la_single_news_n")
 
             selected_analyzers = st.multiselect(
-                "Analyzers to run:", AVAILABLE_ANALYZERS, default=AVAILABLE_ANALYZERS, key="la_single_analyzers"
+                "Analyzers to run:", AVAILABLE_ANALYZERS, default=DEFAULT_ANALYZERS, key="la_single_analyzers"
             )
 
             if st.button("🔍 Analyze Stock", key="la_analyze_single"):
@@ -1587,7 +1591,7 @@ def render_configure_section():
                     batch_max_news_articles = st.number_input("Max News Articles (Batch)", min_value=1, max_value=20, value=7, key="la_batch_news_n")
 
                 batch_analyzers = st.multiselect(
-                    "Analyzers to run:", AVAILABLE_ANALYZERS, default=AVAILABLE_ANALYZERS, key="la_batch_analyzers"
+                    "Analyzers to run:", AVAILABLE_ANALYZERS, default=DEFAULT_ANALYZERS, key="la_batch_analyzers"
                 )
 
     return mode
