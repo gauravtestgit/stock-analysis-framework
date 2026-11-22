@@ -1287,7 +1287,11 @@ def _render_financial_charts(revenue_data_statements, ticker=None):
         previous_by_month = {d[5:7]: quarterly_revenue_all[d] for d in all_dates if int(d[:4]) == previous_year}
         months = sorted(set(current_by_month) | set(previous_by_month))
 
-        q_labels = [pd.Timestamp(f"2001-{m}-01").strftime("%b") for m in months]
+        # st.bar_chart (Vega-Lite underneath) sorts the x-axis alphabetically by
+        # label text, not by row order - a plain "Feb"/"May"/"Aug"/"Nov" label
+        # would render as Aug, Feb, May, Nov. Prefixing with the zero-padded
+        # month number keeps alphabetical sort equal to chronological sort.
+        q_labels = [f"{m}-{pd.Timestamp(f'2001-{m}-01').strftime('%b')}" for m in months]
         current_vals = [current_by_month.get(m) for m in months]
         prior_vals = [previous_by_month.get(m) for m in months]
 
